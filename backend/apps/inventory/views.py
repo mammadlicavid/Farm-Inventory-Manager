@@ -1,7 +1,9 @@
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
-@login_required
 def home(request):
-    return HttpResponse("Home page ✅ You are logged in.")
+    return HttpResponse("Home page")
+
+@login_required
+def dashboard(request):
+    return HttpResponse("Dashboard ✅ You are logged in.")

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign up</title>
+</head>
+<body>
+    <h2>Sign up</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'process_signup' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Create account</button>
+    </form>
+
+    <p>
+      Already have an account?
+      <a href="{% url 'login' %}">Login</a>
+    </p>
+</body>
+</html>
