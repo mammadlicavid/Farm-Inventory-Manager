@@ -1,7 +1,4 @@
 # Farm-Inventory-Manager
-<<<<<<< HEAD
-This is the group repository for the Farm Inventory Project which is part of the Senior Design Project 2025/26.
-=======
 
 This project is a Farm Inventory Manager application, part of the Senior Design Project 2025/26.
 
@@ -29,4 +26,3 @@ Since the database is local, you will need to create your own user account to ac
 python3 manage.py createsuperuser
 ```
 Follow the prompts to set your username and password. Then, use these credentials to log in at [http://127.0.0.1:8000/login/](http://127.0.0.1:8000/login/).
->>>>>>> a60f209 (Integrate dashboard and refactor project structure to separate frontend/backend)
