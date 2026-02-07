@@ -21,7 +21,12 @@ This project is a Farm Inventory Manager application, part of the Senior Design 
     ```
 3.  Open your browser and go to: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/)
 
-## Login Credentials (for Testing)
-- **Username**: `admin`
-- **Password**: `admin123`
+## Creating a User Account
+
+Since the database is local, you will need to create your own user account to access the dashboard:
+
+```bash
+python3 manage.py createsuperuser
+```
+Follow the prompts to set your username and password. Then, use these credentials to log in at [http://127.0.0.1:8000/login/](http://127.0.0.1:8000/login/).
 >>>>>>> a60f209 (Integrate dashboard and refactor project structure to separate frontend/backend)
