@@ -8,6 +8,7 @@ __pycache__/
 
 # Django
 db.sqlite3
+backend/db.sqlite3
 .env
 
 # OS
