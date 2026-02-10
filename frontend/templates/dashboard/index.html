@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="main-header">
+        <div class="header-content">
+            <div class="header-top">
+                <h1>Ferma İdarəsi</h1>
+                <div class="status-badge">
+                    <span class="status-dot"></span> Onlayn
+                </div>
+            </div>
+            <p class="welcome-text">Xoş gəlmisiniz, {{ user_name }}!</p>
+        </div>
+        <div class="header-curve"></div>
+    </header>
+
+    <main class="main-content">
+        <h2>Kateqoriyalar</h2>
+
+        <div class="categories-grid">
+            <a href="{% url 'toxum:seed_list' %}" class="category-card" style="text-decoration: none;">
+                <div class="icon-box green-icon">
+                    <i class="fa-solid fa-seedling"></i>
+                </div>
+                <span>Toxumlar</span>
+            </a>
+
+            <div class="category-card">
+                <div class="icon-box brown-icon">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+                <span>Alətlər</span>
+            </div>
+
+            <div class="category-card">
+                <div class="icon-box lime-icon">
+                    <i class="fa-solid fa-cow"></i>
+                </div>
+                <span>Heyvanlar</span>
+            </div>
+
+            <div class="category-card">
+                <div class="icon-box yellow-icon">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <span>Xərclər</span>
+            </div>
+
+            <div class="category-card">
+                <div class="icon-box dark-green-icon">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </div>
+                <span>Hesabatlar</span>
+            </div>
+
+            <div class="category-card">
+                <div class="icon-box gray-icon">
+                    <i class="fa-solid fa-cloud"></i>
+                </div>
+                <span>Bulud</span>
+            </div>
+        </div>
+
+        <button class="add-new-btn">
+            <i class="fa-solid fa-check"></i> Yeni Əlavə Et
+        </button>
+
+        <div class="stats-footer">
+            <div class="stat-item">
+                <span class="stat-value text-black">{{ stats.new_harvest }}</span>
+                <span class="stat-label">Yeni Məhsul</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value text-yellow">{{ stats.expenses }}₼</span>
+                <span class="stat-label">Xərclər</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value text-green">+{{ stats.animals }}</span>
+                <span class="stat-label">Heyvan</span>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
