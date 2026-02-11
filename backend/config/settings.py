@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "users",
     "dashboard",
     "toxum",
+    "alet",
 ]
 
 

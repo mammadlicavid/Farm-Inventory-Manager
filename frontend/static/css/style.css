@@ -1,5 +1,6 @@
 :root {
-    --primary-green: #2E8B57; /* SeaGreen approx */
+    --primary-green: #2E8B57;
+    /* SeaGreen approx */
     --dark-green: #1E6038;
     --light-bg: #F0F2F5;
     --white: #FFFFFF;
@@ -24,13 +25,15 @@ body {
 }
 
 .dashboard-container {
-    padding-bottom: 80px; /* Space for footer */
-    max-width: 480px; /* Mobile simulation */
+    padding-bottom: 80px;
+    /* Space for footer */
+    max-width: 480px;
+    /* Mobile simulation */
     margin: 0 auto;
     background-color: var(--light-bg);
     min-height: 100vh;
     position: relative;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
 /* Header */
@@ -63,7 +66,7 @@ body {
     display: flex;
     align-items: center;
     gap: 5px;
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .status-dot {
@@ -106,7 +109,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s;
     cursor: pointer;
 }
@@ -130,17 +133,54 @@ body {
     justify-content: center;
     align-items: center;
     font-size: 24px;
-    color: #333; /* Default, overridden often */
+    color: #333;
+    /* Default, overridden often */
     margin-bottom: 5px;
 }
 
-.green-icon { background-color: #4CAF50; color: #1a1a1a; } /* Seeds */
-.brown-icon { background-color: var(--accent-brown); color: white; } /* Tools */
-.lime-icon { background-color: var(--accent-lime); color: #1a1a1a; } /* Animals */
-.yellow-icon { background-color: var(--accent-yellow); color: #1a1a1a; } /* Expenses */
-.dark-green-icon { background-color: var(--accent-dark); color: white; } /* Reports */
-.gray-icon { background-color: var(--accent-gray); color: white; } /* Cloud */
-.green-icon i, .lime-icon i, .yellow-icon i { color: #1a1a1a; opacity: 0.8; stroke-width: 2px; }
+.green-icon {
+    background-color: #4CAF50;
+    color: #1a1a1a;
+}
+
+/* Seeds */
+.brown-icon {
+    background-color: var(--accent-brown);
+    color: white;
+}
+
+/* Tools */
+.lime-icon {
+    background-color: var(--accent-lime);
+    color: #1a1a1a;
+}
+
+/* Animals */
+.yellow-icon {
+    background-color: var(--accent-yellow);
+    color: #1a1a1a;
+}
+
+/* Expenses */
+.dark-green-icon {
+    background-color: var(--accent-dark);
+    color: white;
+}
+
+/* Reports */
+.gray-icon {
+    background-color: var(--accent-gray);
+    color: white;
+}
+
+/* Cloud */
+.green-icon i,
+.lime-icon i,
+.yellow-icon i {
+    color: #1a1a1a;
+    opacity: 0.8;
+    stroke-width: 2px;
+}
 
 /* Custom SVG-like stroke look for icons if using fontawesome */
 .icon-box i {
@@ -180,7 +220,7 @@ body {
     padding: 15px 25px;
     display: flex;
     justify-content: space-between;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .stat-item {
@@ -201,6 +241,14 @@ body {
     margin-top: 2px;
 }
 
-.text-black { color: #000; }
-.text-yellow { color: #F5B726; }
-.text-green { color: #2E8B57; }
+.text-black {
+    color: #000;
+}
+
+.text-yellow {
+    color: #F5B726;
+}
+
+.text-green {
+    color: #2E8B57;
+}
