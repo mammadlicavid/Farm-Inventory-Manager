@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "users",
     "dashboard",
     "toxum",
+    "alet",
 ]
 
 
@@ -129,7 +130,11 @@ USE_TZ = True
 
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR.parent / 'frontend/static']
+STATICFILES_DIRS = [os.path.join(BASE_DIR, '../frontend/static')]
+
+# Media files (Images)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, '../media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
