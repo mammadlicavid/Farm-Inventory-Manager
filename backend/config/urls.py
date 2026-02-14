@@ -28,4 +28,5 @@ urlpatterns = [
     path("", include("inventory.urls")),
     path("toxum/", include("toxum.urls")),
     path("alet/", include("alet.urls")),
+    path("heyvanlar/", include("heyvanlar.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
