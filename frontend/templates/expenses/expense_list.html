@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="main-header" style="padding-bottom: 60px;">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'dashboard' %}" class="back-btn-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Xərclər</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
+        <!-- Weekly Summary Card -->
+        <div class="summary-card-cream">
+            <span class="label">Bu həftə ümumi xərc</span>
+            <span class="value">{{ weekly_total|floatformat:0 }}₼</span>
+        </div>
+
+        <!-- Add Expense Form -->
+        <div class="form-container-white">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Xərc Əlavə Et</h3>
+            <form action="{% url 'expenses:add_expense' %}" method="POST" id="expense-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Ana Kateqoriya</label>
+                    <select id="category-select" required class="custom-input">
+                        <option value="" disabled selected>Kateqoriya seçin</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="subcategory-field-group">
+                    <label>Alt Kateqoriya</label>
+                    <select name="subcategory" id="subcategory-select" required class="custom-input" disabled>
+                        <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="manual-name-group" style="display: none;">
+                    <label>Xərcin Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Xərcin adını daxil edin"
+                        class="custom-input">
+                </div>
+
+                <div class="form-group">
+                    <label>Məbləğ (₼)</label>
+                    <input type="number" name="amount" step="0.01" placeholder="0.00" required class="custom-input">
+                </div>
+
+
+                <div class="form-group">
+                    <label>Əlavə Məlumat</label>
+                    <textarea name="additional_info" placeholder="Məsələn: Əlavə qeydlər..." class="custom-input"
+                        rows="2"></textarea>
+                </div>
+
+                <button type="submit" class="add-expense-btn">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Xərc Əlavə Et</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Recent Expenses History -->
+        <h3 class="recent-expenses-title">Son Xərclər</h3>
+        <div class="expenses-list">
+            {% for expense in expenses %}
+            <div class="expense-item-card">
+                <div class="expense-item-icon">
+                    {% with sub=expense.subcategory.name %}
+                    {% if sub == 'Yem' %}<i class="fa-solid fa-wheat-awn"></i>
+                    {% elif sub == 'Baytarlıq' %}<i class="fa-solid fa-stethoscope"></i>
+                    {% elif sub == 'Peyvəndləmə' %}<i class="fa-solid fa-syringe"></i>
+                    {% elif sub == 'Heyvan alışı' %}<i class="fa-solid fa-plus-circle"></i>
+                    {% elif sub == 'Toxumlar' %}<i class="fa-solid fa-seedling"></i>
+                    {% elif sub == 'Gübrə' %}<i class="fa-solid fa-flask"></i>
+                    {% elif sub == 'Pesticidlər' %}<i class="fa-solid fa-bug-slash"></i>
+                    {% elif sub == 'Suvarma' %}<i class="fa-solid fa-droplet"></i>
+                    {% elif sub == 'Maaşlar' %}<i class="fa-solid fa-money-bill-wave"></i>
+                    {% elif sub == 'Sığorta' %}<i class="fa-solid fa-shield-halved"></i>
+                    {% elif sub == 'Yanacaq' %}<i class="fa-solid fa-gas-pump"></i>
+                    {% elif sub == 'Təmir və Baxım' %}<i class="fa-solid fa-screwdriver-wrench"></i>
+                    {% elif sub == 'Texnika alışı' %}<i class="fa-solid fa-tractor"></i>
+                    {% elif sub == 'Elektrik' %}<i class="fa-solid fa-bolt"></i>
+                    {% elif sub == 'Su' %}<i class="fa-solid fa-faucet-drip"></i>
+                    {% elif sub == 'Tikinti' %}<i class="fa-solid fa-trowel-bricks"></i>
+                    {% elif sub == 'Nəqliyyat' %}<i class="fa-solid fa-truck"></i>
+                    {% elif sub == 'Qablaşdırma' %}<i class="fa-solid fa-box-open"></i>
+                    {% elif sub == 'Vergilər' %}<i class="fa-solid fa-file-invoice-dollar"></i>
+                    {% elif sub == 'Kredit faizləri' %}<i class="fa-solid fa-percent"></i>
+                    {% else %}<i class="fa-solid fa-receipt"></i>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="expense-item-info">
+                    <h4>{{ expense.title }}</h4>
+                    <span>
+                        {% if expense.subcategory %}
+                        {{ expense.subcategory.name }}
+                        {% else %}
+                        {{ expense.manual_name }}
+                        {% endif %} •
+                        {% if expense.date == today %}
+                        Bu gün
+                        {% elif expense.date == yesterday %}
+                        Dünən
+                        {% else %}
+                        {{ expense.date|date:"d.m.Y" }}
+                        {% endif %}
+                        {% if expense.additional_info %}
+                        • {{ expense.additional_info }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="expense-item-amount">
+                    <div style="text-align: right;">
+                        <span style="display: block; font-weight: 700;">-{{ expense.amount|floatformat:0 }}₼</span>
+                        <div
+                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                            <a href="{% url 'expenses:edit_expense' expense.pk %}"
+                                style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                            </a>
+                            <form action="{% url 'expenses:delete_expense' expense.pk %}" method="POST"
+                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;"
+                                onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                    <i class="fa-solid fa-trash"></i> Sil
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 40px; color: #999;">
+                <p>Hələ heç bir xərc qeydə alınmayıb</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+
+<script>
+    const subcategoryData = {
+        {% for cat in categories %}
+    "{{ cat.id }}": [
+        {% for sub in cat.subcategories.all %}
+    { "id": "{{ sub.id }}", "name": "{{ sub.name }}" },
+    {% endfor %}
+            ],
+    {% endfor %}
+    };
+
+    const categorySelect = document.getElementById('category-select');
+    const subcategorySelect = document.getElementById('subcategory-select');
+
+    categorySelect.addEventListener('change', function () {
+        const categoryId = this.value;
+        const categoryText = this.options[this.selectedIndex].text;
+        const subcats = subcategoryData[categoryId] || [];
+        const subcategoryGroup = document.getElementById('subcategory-field-group');
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+
+        if (categoryText === "Digər" || categoryText.includes("Digər")) {
+            subcategoryGroup.style.display = 'none';
+            subcategorySelect.required = false;
+            subcategorySelect.disabled = true;
+
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+
+            subcategoryGroup.style.display = 'block';
+            subcategorySelect.required = true;
+
+            subcategorySelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya seçin</option>';
+
+            subcats.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.id;
+                option.textContent = sub.name;
+                subcategorySelect.appendChild(option);
+            });
+
+            subcategorySelect.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

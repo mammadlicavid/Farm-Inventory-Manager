@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard-container">
+    <header class="main-header" style="padding-bottom: 60px;">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'expenses:expense_list' %}" class="back-btn-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Xərci Düzəlt</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
+        <div class="form-container-white">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Xərc Məlumatlarını Yenilə</h3>
+
+            <form method="POST" id="expense-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <select id="category-select" required class="custom-input">
+                        <option value="" disabled>Kateqoriya seçin</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if expense.subcategory.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="subcategory-field-group" {% if not expense.subcategory %}style="display: none;" {% endif %}>
+                    <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <select name="subcategory" id="subcategory-select" class="custom-input" required {% if not expense.subcategory %}disabled{% endif %}>
+                        <option value="" disabled>Alt kateqoriya seçin</option>
+                        {% if expense.subcategory %}
+                        {% for sub in expense.subcategory.category.subcategories.all %}
+                        <option value="{{ sub.id }}" {% if expense.subcategory_id == sub.id %}selected{% endif %}>{{ sub.name }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="manual-name-group" {% if expense.subcategory %}style="display: none;" {% endif %}>
+                    <label>Xərcin Növü (Digər) <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Xərcin növünü daxil edin"
+                        class="custom-input" value="{{ expense.manual_name|default:'' }}">
+                </div>
+
+
+                <div class="form-group">
+                    <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
+                    <input type="number" name="amount" step="0.01" placeholder="0.00" class="custom-input" required
+                        value="{{ expense.amount|stringformat:'.2f' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Əlavə Məlumat</label>
+                    <textarea name="additional_info" placeholder="Məsələn: Mağaza adı, qəbz nömrəsi və s."
+                        class="custom-input" rows="3">{{ expense.additional_info|default:'' }}</textarea>
+                </div>
+
+                <button type="submit" class="add-expense-btn">
+                    <i class="fa-solid fa-save"></i>
+                    <span>Yadda Saxla</span>
+                </button>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    const subcategoryData = {
+        {% for cat in categories %}
+    "{{ cat.id }}": [
+        {% for sub in cat.subcategories.all %}
+    { "id": "{{ sub.id }}", "name": "{{ sub.name }}" },
+    {% endfor %}
+        ],
+    {% endfor %}
+    };
+
+    const categorySelect = document.getElementById('category-select');
+    const subcategorySelect = document.getElementById('subcategory-select');
+
+    categorySelect.addEventListener('change', function () {
+        const categoryId = this.value;
+        const categoryText = this.options[this.selectedIndex].text;
+        const subcats = subcategoryData[categoryId] || [];
+        const subcategoryGroup = document.getElementById('subcategory-field-group');
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+
+        if (categoryText === "Digər") {
+            subcategoryGroup.style.display = 'none';
+            subcategorySelect.required = false;
+            subcategorySelect.disabled = true;
+
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+
+            subcategoryGroup.style.display = 'block';
+            subcategorySelect.required = true;
+
+            subcategorySelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya seçin</option>';
+
+            if (subcats.length === 0) {
+                subcategorySelect.disabled = true;
+                subcategorySelect.innerHTML = '<option value="" selected>Alt kateqoriya yoxdur</option>';
+            } else {
+                subcats.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub.id;
+                    option.textContent = sub.name;
+                    subcategorySelect.appendChild(option);
+                });
+                subcategorySelect.disabled = false;
+            }
+        }
+    });
+</script>
+{% endblock %}

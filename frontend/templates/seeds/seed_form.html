@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard-container">
+    <header class="main-header" style="padding-bottom: 60px;">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'seeds:seed_list' %}" class="back-btn-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Toxumu Düzəlt</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
+        <div class="form-container-white">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Toxum Məlumatlarını Yenilə</h3>
+
+            <form method="POST" id="seed-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <select id="category-select" name="category" required class="custom-input">
+                        <option value="" disabled>Kateqoriya seçin</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if seed.item.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="item-field-group" {% if not seed.item %}style="display: none;" {% endif %}>
+                    <label>Toxum Növü <span style="color: #dc3545;">*</span></label>
+                    <select id="item-select" name="item" required class="custom-input" {% if not seed.item %}disabled{% endif %}>
+                        <option value="" disabled>Toxum seçin</option>
+                        {% if seed.item %}
+                        {% for item in seed.item.category.items.all %}
+                        <option value="{{ item.id }}" {% if seed.item_id == item.id %}selected{% endif %}>{{ item.name }}
+                        </option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="manual-name-group" {% if seed.item %}style="display: none;" {% endif %}>
+                    <label>Toxumun Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Toxumun adını daxil edin"
+                        class="custom-input" value="{{ seed.manual_name|default:'' }}">
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                        <input type="number" name="quantity" step="0.01" placeholder="0.00" class="custom-input"
+                            required value="{{ seed.quantity|stringformat:'.2f' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
+                        <select name="unit" class="custom-input" required>
+                            <option value="kg" {% if seed.unit == 'kg' %}selected{% endif %}>kg</option>
+                            <option value="ton" {% if seed.unit == 'ton' %}selected{% endif %}>ton</option>
+                            <option value="qram" {% if seed.unit == 'qram' %}selected{% endif %}>qram</option>
+                            <option value="ədəd" {% if seed.unit == 'ədəd' %}selected{% endif %}>ədəd</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Məbləğ (₼)</label>
+                    <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
+                        value="{{ seed.price|stringformat:'.2f' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Əlavə Məlumat</label>
+                    <textarea name="additional_info" placeholder="Məsələn: Toxumun vəziyyəti və s." class="custom-input"
+                        rows="2">{{ seed.additional_info|default:'' }}</textarea>
+                </div>
+
+                <button type="submit" class="add-expense-btn">
+                    <i class="fa-solid fa-save"></i>
+                    <span>Yadda Saxla</span>
+                </button>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    document.getElementById('category-select').addEventListener('change', function () {
+        const categoryId = this.value;
+        const categoryText = this.options[this.selectedIndex].text;
+        const itemSelect = document.getElementById('item-select');
+        const itemGroup = document.getElementById('item-field-group');
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+
+        if (categoryText === "Digər") {
+            itemGroup.style.display = 'none';
+            itemSelect.required = false;
+            itemSelect.disabled = true;
+
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+
+            itemGroup.style.display = 'block';
+            itemSelect.style.display = 'block';
+            itemSelect.required = true;
+
+            itemSelect.disabled = true;
+            itemSelect.innerHTML = '<option value="" disabled selected>Yüklənir...</option>';
+
+            fetch(`{% url 'seeds:get_seed_items' %}?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    itemSelect.innerHTML = '<option value="" disabled selected>Toxum seçin</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.name;
+                        itemSelect.appendChild(option);
+                    });
+                    itemSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching seed items:', error);
+                    itemSelect.innerHTML = '<option value="" disabled selected>Xəta baş verdi</option>';
+                });
+        }
+    });
+</script>
+{% endblock %}

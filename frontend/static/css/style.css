@@ -11,6 +11,10 @@
     --accent-yellow: #F5B726;
     --accent-dark: #2F6F3A;
     --accent-gray: #6C7A6E;
+    --cream-bg: #FCF5E5;
+    --form-bg: #F8F8F8;
+    --expense-red: #E74C3C;
+    --dark-forest: #1D5C32;
 }
 
 * {
@@ -251,4 +255,170 @@ body {
 
 .text-green {
     color: #2E8B57;
+}
+
+/* Expenses UI Refinement */
+.back-btn-box {
+    background-color: var(--dark-forest);
+    padding: 12px 24px;
+    border-radius: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+    color: white;
+    font-weight: 700;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.back-btn-box:active {
+    transform: scale(0.95);
+}
+
+.back-btn-box i {
+    font-size: 18px;
+}
+
+.summary-card-cream {
+    background-color: var(--cream-bg);
+    border-radius: 25px;
+    padding: 35px 20px;
+    text-align: center;
+    margin-bottom: 25px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.summary-card-cream .label {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.summary-card-cream .value {
+    font-size: 52px;
+    font-weight: 800;
+    color: #1a1a1a;
+    display: block;
+}
+
+.form-container-white {
+    background-color: white;
+    border-radius: 35px;
+    padding: 30px;
+    border: 1px solid #E5E7EB;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #444;
+    font-size: 16px;
+}
+
+.custom-input {
+    width: 100%;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1.5px solid #E5E7EB;
+    background-color: var(--form-bg);
+    font-size: 16px;
+    outline: none;
+    color: #333;
+}
+
+select.custom-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 -960 960 960' width='24'%3E%3Cpath d='M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 24px;
+    padding-right: 48px;
+}
+
+.custom-input:focus {
+    border-color: var(--primary-green);
+}
+
+.add-expense-btn {
+    width: 100%;
+    background-color: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 20px;
+    border-radius: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.add-expense-btn:active {
+    transform: scale(0.98);
+}
+
+.recent-expenses-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1a1a1a;
+}
+
+.expense-item-card {
+    background-color: var(--cream-bg);
+    border-radius: 25px;
+    padding: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.expense-item-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #E2E4E7;
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: #1a1a1a;
+}
+
+.expense-item-info {
+    flex: 1;
+    margin-left: 15px;
+}
+
+.expense-item-info h4 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.expense-item-info span {
+    font-size: 14px;
+    color: #888;
+}
+
+.expense-item-amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: #E74C04;
 }

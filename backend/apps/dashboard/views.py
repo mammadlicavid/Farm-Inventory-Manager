@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from toxum.models import Seed
-from heyvanlar.models import Animal
-from alet.models import Alet
+from seeds.models import Seed
+from animals.models import Animal, AnimalCategory, AnimalSubCategory
+from tools.models import Tool
+from expenses.models import Expense
+from django.db.models import Sum
 
 @login_required
 def dashboard(request):
@@ -18,13 +20,15 @@ def dashboard(request):
     new_products = (
         Seed.objects.filter(created_by=request.user, created_at__gte=session_start).count()
          + Animal.objects.filter(created_by=request.user, created_at__gte=session_start).count()
-         + Alet.objects.filter(created_by=request.user, created_at__gte=session_start).count()
+         + Tool.objects.filter(created_by=request.user, created_at__gte=session_start).count()
     )
 
     context = {
         "user_name" : request.user.get_username(),
         "stats" : {
             "new_addition": new_products,
+            "expenses": Expense.objects.filter(created_by=request.user).aggregate(Sum('amount'))['amount__sum'] or 0,
+            "animals": Animal.objects.filter(created_by=request.user).count(),
         },
     }
 

@@ -48,9 +48,10 @@ INSTALLED_APPS = [
     "inventory",
     "users",
     "dashboard",
-    "toxum",
-    "alet",
-    "heyvanlar",
+    "seeds",
+    "tools",
+    "animals",
+    "expenses",
 ]
 
 

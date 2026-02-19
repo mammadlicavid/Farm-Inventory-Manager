@@ -19,33 +19,33 @@
         <h2>Kateqoriyalar</h2>
 
         <div class="categories-grid">
-            <a href="{% url 'toxum:seed_list' %}" class="category-card" style="text-decoration: none;">
+            <a href="{% url 'seeds:seed_list' %}" class="category-card" style="text-decoration: none;">
                 <div class="icon-box green-icon">
                     <i class="fa-solid fa-seedling"></i>
                 </div>
                 <span>Toxumlar</span>
             </a>
 
-            <a href="{% url 'alet:alet_list' %}" class="category-card" style="text-decoration: none;">
+            <a href="{% url 'tools:tool_list' %}" class="category-card" style="text-decoration: none;">
                 <div class="icon-box brown-icon">
                     <i class="fa-solid fa-wrench"></i>
                 </div>
                 <span>Alətlər</span>
             </a>
 
-            <a href="{% url 'heyvanlar:animal_list' %}" class="category-card" style="text-decoration: none;">
+            <a href="{% url 'animals:animal_list' %}" class="category-card" style="text-decoration: none;">
                 <div class="icon-box lime-icon">
                     <i class="fa-solid fa-cow"></i>
                 </div>
                 <span>Heyvanlar</span>
             </a>
 
-            <div class="category-card">
+            <a href="{% url 'expenses:expense_list' %}" class="category-card" style="text-decoration: none;">
                 <div class="icon-box yellow-icon">
                     <i class="fa-solid fa-sack-dollar"></i>
                 </div>
                 <span>Xərclər</span>
-            </div>
+            </a>
 
             <div class="category-card">
                 <div class="icon-box dark-green-icon">

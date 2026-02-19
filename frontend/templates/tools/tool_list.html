@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="main-header" style="padding-bottom: 60px;">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'dashboard' %}" class="back-btn-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Alətlər</span>
+                </a>
+            </div>
+
+            <form method="get" action="" class="search-form" style="margin-top: 20px;">
+                <div style="position: relative;">
+                    <i class="fa-solid fa-search"
+                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                    <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+                        value="{{ request.GET.q|default:'' }}"
+                        style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+                </div>
+            </form>
+        </div>
+    </header>
+
+    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
+        <!-- Add Tool Form -->
+        <div class="form-container-white">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
+
+            {% if messages %}
+            <div class="messages-container" style="margin-bottom: 20px;">
+                {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
+                    style="padding: 12px; border-radius: 10px; background-color: #f8d7da; color: #721c24; margin-bottom: 10px; font-size: 14px;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <select name="category" id="id_category" required class="custom-input">
+                        <option value="">Kateqoriya seçin...</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="item-field-group">
+                    <label>Alət Növü <span style="color: #dc3545;">*</span></label>
+                    <select name="item" id="id_item" required class="custom-input" disabled>
+                        <option value="">Əvvəlcə kateqoriya seçin...</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="manual-name-group" style="display: none;">
+                    <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Alət adını daxil edin"
+                        class="custom-input">
+                </div>
+
+                <div class="form-group">
+                    <label>Miqdar (ədəd) <span style="color: #dc3545;">*</span></label>
+                    <input type="number" name="quantity" placeholder="0" class="custom-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Qiymət (₼)</label>
+                    <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                </div>
+
+                <div class="form-group">
+                    <label>Əlavə Məlumat</label>
+                    <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s." class="custom-input"
+                        rows="2"></textarea>
+                </div>
+
+                <button type="submit" class="add-expense-btn">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Alət Əlavə Et</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Tools List -->
+        <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
+        <div class="alets-list">
+            {% for alet in alets %}
+            <div class="expense-item-card">
+                <div class="expense-item-icon">
+                    {% if alet.item.category.name == 'Elektrikli Alətlər' %}
+                    <i class="fa-solid fa-plug"></i>
+                    {% elif alet.item.category.name == 'Mexaniki Avadanlıqlar' %}
+                    <i class="fa-solid fa-gear"></i>
+                    {% elif alet.item.category.name == 'Əl Alətləri' %}
+                    <i class="fa-solid fa-trowel"></i>
+                    {% else %}
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    {% endif %}
+                </div>
+                <div class="expense-item-info">
+                    <h4>
+                        {% if alet.item %}
+                        {{ alet.item.name }}
+                        <span style="font-size: 12px; font-weight: 400; color: #666;">({{ alet.item.category.name
+                            }})</span>
+                        {% else %}
+                        {{ alet.manual_name }}
+                        <span style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                        {% endif %}
+                    </h4>
+                    <span>
+                        Miqdar: {{ alet.quantity }} ədəd
+                        {% if alet.additional_info %}
+                        • {{ alet.additional_info }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div style="text-align: right;">
+                    <div class="expense-item-amount" style="color: var(--primary-green);">
+                        {{ alet.price|floatformat:0 }}₼
+                    </div>
+                    <div
+                        style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                        <a href="{% url 'tools:tool_update' alet.pk %}"
+                            style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                            <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                        </a>
+                        <form action="{% url 'tools:tool_delete' alet.pk %}" method="POST"
+                            style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                            {% csrf_token %}
+                            <button type="submit"
+                                style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                <i class="fa-solid fa-trash"></i> Sil
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 40px; color: #999;">
+                <p>Hələ heç bir alət qeydə alınmayıb</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+
+<script>
+    document.getElementById('id_category').addEventListener('change', function () {
+        const categoryId = this.value;
+        const categoryText = this.options[this.selectedIndex].text;
+        const itemSelect = document.getElementById('id_item');
+        const itemGroup = document.getElementById('item-field-group');
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+
+        if (categoryText === "Digər") {
+            itemGroup.style.display = 'none';
+            itemSelect.required = false;
+            itemSelect.disabled = true;
+
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+
+            itemGroup.style.display = 'block';
+            itemSelect.required = true;
+
+            if (!categoryId) {
+                itemSelect.disabled = true;
+                itemSelect.innerHTML = '<option value="">Əvvəlcə kateqoriya seçin...</option>';
+                return;
+            }
+
+            fetch(`{% url 'tools:get_tool_items' %}?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    itemSelect.disabled = false;
+                    let html = '<option value="">Seçin...</option>';
+                    data.forEach(item => {
+                        html += `<option value="${item.id}">${item.name}</option>`;
+                    });
+                    itemSelect.innerHTML = html;
+                });
+        }
+    });
+</script>
+
+<style>
+    .icon-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+        background-color: #f0f0f0;
+    }
+</style>
+{% endblock %}
