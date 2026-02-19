@@ -17,7 +17,9 @@ def animal_create(request):
     if request.method == 'POST':
         form = AnimalForm(request.POST)
         if form.is_valid():
-            form.save()
+            obj = form.save(commit=False)
+            obj.created_by = request.user
+            obj.save()
             return redirect('heyvanlar:animal_list')
     else:
         form = AnimalForm()

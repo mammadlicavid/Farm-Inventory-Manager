@@ -1,12 +1,11 @@
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
-
 from .services import auth_api_login 
 from .forms import SignUpForm
-
+from django.utils import timezone
 
 # Create your views here.
 
@@ -23,16 +22,17 @@ def process_login(request):
     username = request.POST.get("username", "").strip()
     password = request.POST.get("password", "")
 
-    result = auth_api_login(username, password)
-
-    if result["code"] == 0:
-        login(request, result["user"])
+    user = authenticate(request, username=username, password=password)
+    if user is not None:
+        login(request, user)
+        request.session["session_start"] = timezone.now().isoformat()
         return redirect("dashboard")
 
-    messages.error(request, result["message"])
+    messages.error(request, "Invalid username or password")
     return redirect("login")
 
 def logout_view(request):
+    request.session.pop("session_start", None)    
     logout(request)
     return redirect("login")
 

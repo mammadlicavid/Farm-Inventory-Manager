@@ -17,7 +17,9 @@ def alet_create(request):
     if request.method == 'POST':
         form = AletForm(request.POST)
         if form.is_valid():
-            form.save()
+            obj = form.save(commit=False)
+            obj.created_by = request.user
+            obj.save()
             return redirect('alet:alet_list')
     else:
         form = AletForm()

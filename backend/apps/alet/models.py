@@ -1,9 +1,18 @@
 from django.db import models
+from django.conf import settings
 
 class Alet(models.Model):
     name = models.CharField(max_length=100, verbose_name="Ad")
     quantity = models.IntegerField(verbose_name="Miqdar")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Qiymət")
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="%(class)s_created",
+    )
     
     TYPE_CHOICES = [
         ('Traktor', 'Traktor'),

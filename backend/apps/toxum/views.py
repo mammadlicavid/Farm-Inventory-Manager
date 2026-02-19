@@ -20,7 +20,9 @@ def seed_create(request):
     if request.method == 'POST':
         form = SeedForm(request.POST)
         if form.is_valid():
-            form.save()
+            obj = form.save(commit=False)
+            obj.created_by = request.user
+            obj.save()
             return redirect('toxum:seed_list')
     else:
         form = SeedForm()
