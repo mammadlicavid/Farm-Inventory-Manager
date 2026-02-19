@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from django.db.models import Sum
 from toxum.models import Seed
 from heyvanlar.models import Animal
 from alet.models import Alet
+from xercler.models import Expense
 
 @login_required
 def dashboard(request):
@@ -21,10 +23,13 @@ def dashboard(request):
          + Alet.objects.filter(created_by=request.user, created_at__gte=session_start).count()
     )
 
+    total_expenses = Expense.objects.filter(created_by=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
+
     context = {
         "user_name" : request.user.get_username(),
         "stats" : {
             "new_addition": new_products,
+            "expenses": total_expenses,
         },
     }
 

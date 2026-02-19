@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "toxum",
     "alet",
     "heyvanlar",
+    "xercler",
 ]
 
 

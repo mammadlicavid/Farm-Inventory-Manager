@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <header class="main-header"
+        style="background-color: #2E8B57; padding: 25px 20px 70px 20px; border-radius: 0; margin-bottom: 0;">
+        <div class="header-content">
+            <div class="header-top" style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="{% url 'dashboard' %}" class="back-btn"
+                    style="text-decoration: none; color: white; background-color: #1a5c38; padding: 12px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none;">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Xərclər</span>
+                </a>
+
+                <a href="{% url 'dashboard' %}" class="close-btn"
+                    style="width: 44px; height: 44px; background-color: #1a5c38; border-radius: 50%; display: flex; justify-content: center; align-items: center; text-decoration: none; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <i class="fa-solid fa-times" style="font-size: 20px;"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content"
+        style="padding-top: 0; margin-top: -50px; position: relative; z-index: 10; padding-left: 20px; padding-right: 20px;">
+
+        <!-- Summary Card -->
+        <div class="summary-card"
+            style="background-color: #FDF6E3; border-radius: 20px; padding: 25px 20px; text-align: center; margin-bottom: 25px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+            <p style="color: #666; font-size: 14px; margin-bottom: 5px;">Bu həftə ümumi xərc</p>
+            <h2 style="font-size: 32px; font-weight: 700; color: #1a1a1a; margin: 0;">{{ weekly_total|default:"0" }}₼
+            </h2>
+        </div>
+
+        <!-- Add Expense Form -->
+        <div class="form-card"
+            style="background-color: white; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #1a1a1a;">Yeni Xərc Əlavə Et</h3>
+
+            <form method="post" action="{% url 'xercler:expense_list' %}">
+                {% csrf_token %}
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; color: #333; margin-bottom: 8px;">Kateqoriya</label>
+                    {{ form.category }}
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; color: #333; margin-bottom: 8px;">Məbləğ (₼)</label>
+                    {{ form.amount }}
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; color: #333; margin-bottom: 8px;">İzah (istəyə
+                        görə)</label>
+                    {{ form.description }}
+                </div>
+
+                <button type="submit" class="add-new-btn" style="background-color: #2E8B57; width: 100%;">
+                    <i class="fa-solid fa-check"></i> Xərc Əlavə Et
+                </button>
+            </form>
+        </div>
+
+        <!-- Recent Expenses List -->
+        <div class="recent-expenses">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #1a1a1a;">Son Xərclər</h3>
+
+            <div class="expenses-list" style="display: flex; flex-direction: column; gap: 12px;">
+                {% for expense in expenses %}
+                <div class="expense-item"
+                    style="background-color: #FDF6E3; border-radius: 16px; padding: 15px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #eee;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="icon-box"
+                            style="width: 40px; height: 40px; background-color: rgba(0,0,0,0.1); border-radius: 10px; display: flex; justify-content: center; align-items: center;">
+                            {% if expense.category == 'YAN' %}
+                            <i class="fa-solid fa-gas-pump" style="font-size: 18px; color: #333;"></i>
+                            {% elif expense.category == 'YEM' %}
+                            <i class="fa-solid fa-wheat" style="font-size: 18px; color: #333;"></i>
+                            {% elif expense.category == 'SƏ' %}
+                            <i class="fa-solid fa-seedling" style="font-size: 18px; color: #333;"></i>
+                            {% elif expense.category == 'GUB' %}
+                            <i class="fa-solid fa-flask" style="font-size: 18px; color: #333;"></i>
+                            {% elif expense.category == 'TEM' %}
+                            <i class="fa-solid fa-wrench" style="font-size: 18px; color: #333;"></i>
+                            {% else %}
+                            <i class="fa-solid fa-receipt" style="font-size: 18px; color: #333;"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div style="font-weight: 500; font-size: 14px; color: #1a1a1a;">
+                                {% if expense.description %}
+                                {{ expense.description }}
+                                {% else %}
+                                {{ expense.get_category_display }}
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 11px; color: #888; margin-top: 2px;">
+                                {% if expense.date == today %}
+                                Bu gün
+                                {% elif expense.date == yesterday %}
+                                Dünən
+                                {% else %}
+                                {{ expense.date|date:"d M Y" }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-weight: 600; color: #dc3545; font-size: 15px;">
+                        -{{ expense.amount|floatformat:0 }}₼
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 20px; color: #888;">
+                    Hələ ki xərc yoxdur
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </main>
+</div>
+{% endblock %}
