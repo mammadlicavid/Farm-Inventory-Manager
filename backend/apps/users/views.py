@@ -3,7 +3,6 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
-from .services import auth_api_login 
 from .forms import SignUpForm
 from django.utils import timezone
 

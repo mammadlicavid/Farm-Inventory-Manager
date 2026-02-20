@@ -26,7 +26,8 @@ urlpatterns = [
     path("dashboard/", include("dashboard.urls")),
     path("", include("users.urls")),
     path("", include("inventory.urls")),
-    path("toxum/", include("toxum.urls")),
-    path("alet/", include("alet.urls")),
-    path("heyvanlar/", include("heyvanlar.urls")),
+    path("seeds/", include("seeds.urls")),
+    path("tools/", include("tools.urls")),
+    path("animals/", include("animals.urls")),
+    path("expenses/", include("expenses.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

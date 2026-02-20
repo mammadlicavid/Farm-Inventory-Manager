@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="main-header" style="padding-bottom: 60px;">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'dashboard' %}" class="back-btn-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Heyvanlar</span>
+                </a>
+            </div>
+
+            <form method="get" action="" class="search-form" style="margin-top: 20px;">
+                <div style="position: relative;">
+                    <i class="fa-solid fa-search"
+                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                    <input type="text" name="q" placeholder="Axtar (ID, Məlumat, Növ)..."
+                        value="{{ request.GET.q|default:'' }}"
+                        style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+                </div>
+            </form>
+        </div>
+    </header>
+
+    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
+        <div class="form-container-white">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Heyvan Əlavə Et</h3>
+
+            {% if messages %}
+            <div class="messages-container" style="margin-bottom: 20px;">
+                {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
+                    style="padding: 12px; border-radius: 10px; background-color: #f8d7da; color: #721c24; margin-bottom: 10px; font-size: 14px;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form action="{% url 'animals:animal_create' %}" method="POST" id="animal-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <select id="category-select" required class="custom-input">
+                        <option value="" disabled selected>Kateqoriya seçin</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="subcategory-field-group">
+                    <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <select name="subcategory" id="subcategory-select" class="custom-input" required disabled>
+                        <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="manual-name-group" style="display: none;">
+                    <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="manual_name" id="manual-name-input"
+                        placeholder="Heyvanın növünü daxil edin" class="custom-input">
+                </div>
+
+                <div class="form-group">
+                    <label>İdentifikasiya No / Qulaq Birki <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="identification_no" placeholder="Məsələn: AZ12345" class="custom-input"
+                        required>
+                </div>
+
+
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
+                        <select name="gender" class="custom-input" required>
+                            <option value="erkek">Erkək</option>
+                            <option value="disi">Dişi</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Məbləğ (₼)</label>
+                        <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
+                    <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Əlavə Məlumat</label>
+                    <textarea name="additional_info" placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
+                        class="custom-input" rows="2"></textarea>
+                </div>
+
+                <button type="submit" class="add-expense-btn">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Heyvan Əlavə Et</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Animals History -->
+        <h3 class="recent-expenses-title">Heyvan Siyahısı</h3>
+        <div class="animals-list">
+            {% for animal in animals %}
+            <div class="expense-item-card">
+                <div class="expense-item-icon">
+                    {% with sub=animal.subcategory.name %}
+                    {% if sub == 'İnək' %}<i class="fa-solid fa-cow"></i>
+                    {% elif sub == 'Dana' %}<i class="fa-solid fa-cow" style="font-size: 0.8em;"></i>
+                    {% elif sub == 'Camış' %}<i class="fa-solid fa-hippo"></i>
+                    {% elif sub == 'Qoyun' %}<i class="fa-solid fa-sheep"></i>
+                    {% elif sub == 'Keçi' %}<i class="fa-solid fa-hand-holding-hand"></i>
+                    {% elif sub == 'Toyuq' %}<i class="fa-solid fa-egg"></i>
+                    {% elif sub == 'Hinduşka' %}<i class="fa-solid fa-turkey"></i>
+                    {% elif sub == 'Qaz' %}<i class="fa-solid fa-dove"></i>
+                    {% elif sub == 'Ördək' %}<i class="fa-solid fa-water"></i>
+                    {% elif sub == 'Bildircin' %}<i class="fa-solid fa-feather-pointed"></i>
+                    {% elif sub == 'At' %}<i class="fa-solid fa-horse"></i>
+                    {% elif sub == 'Eşşək' %}<i class="fa-solid fa-horse-head"></i>
+                    {% elif sub == 'Qatır' %}<i class="fa-solid fa-mule"></i>
+                    {% else %}<i class="fa-solid fa-paw"></i>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="expense-item-info">
+                    <h4>
+                        {% if animal.subcategory %}
+                        {{ animal.subcategory.name }}
+                        {% else %}
+                        {{ animal.manual_name }}
+                        {% endif %}
+                        {% if animal.identification_no %}({{ animal.identification_no }}){% endif %}
+                    </h4>
+                    <span>
+                        {{ animal.gender|title }} •
+                        {% if animal.additional_info %}
+                        {{ animal.additional_info }}
+                        {% else %}
+                        Əlavə məlumat yoxdur
+                        {% endif %}
+                    </span>
+                </div>
+                <div style="text-align: right;">
+                    <div class="expense-item-amount" style="color: var(--primary-green);">
+                        {{ animal.price|floatformat:0 }}₼
+                    </div>
+                    <div <div
+                        style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                        <a href="{% url 'animals:animal_update' animal.pk %}"
+                            style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                            <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                        </a>
+                        <form action="{% url 'animals:animal_delete' animal.pk %}" method="POST"
+                            style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                            {% csrf_token %}
+                            <button type="submit"
+                                style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                <i class="fa-solid fa-trash"></i> Sil
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 40px; color: #999;">
+                <p>Hələ heç bir heyvan qeydə alınmayıb</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+
+<script>
+    const subcategoryData = {
+        {% for cat in categories %}
+    "{{ cat.id }}": [
+        {% for sub in cat.subcategories.all %}
+    { "id": "{{ sub.id }}", "name": "{{ sub.name }}" },
+    {% endfor %}
+        ],
+    {% endfor %}
+    };
+
+    const categorySelect = document.getElementById('category-select');
+    const subcategorySelect = document.getElementById('subcategory-select');
+
+    categorySelect.addEventListener('change', function () {
+        const categoryId = this.value;
+        const categoryText = this.options[this.selectedIndex].text;
+        const subcats = subcategoryData[categoryId] || [];
+        const subcategoryGroup = document.getElementById('subcategory-field-group');
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+
+        if (categoryText === "Digər") {
+            subcategoryGroup.style.display = 'none';
+            subcategorySelect.required = false;
+            subcategorySelect.disabled = true;
+
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+
+            subcategoryGroup.style.display = 'block';
+            subcategorySelect.required = true;
+
+            subcategorySelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya seçin</option>';
+
+            if (subcats.length === 0) {
+                subcategorySelect.disabled = true;
+                subcategorySelect.innerHTML = '<option value="" selected>Alt kateqoriya yoxdur</option>';
+            } else {
+                subcats.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub.id;
+                    option.textContent = sub.name;
+                    subcategorySelect.appendChild(option);
+                });
+                subcategorySelect.disabled = false;
+            }
+        }
+    });
+</script>
+{% endblock %}
