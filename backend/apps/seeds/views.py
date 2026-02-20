@@ -1,23 +1,30 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Seed, SeedCategory, SeedItem
-from .forms import SeedForm
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+
+from .models import Seed, SeedCategory, SeedItem
+from .forms import SeedForm
+from common.messages import add_crud_success_message
+from common.icons import get_seed_icon_for_seed
 from expenses.models import Expense, ExpenseSubCategory
 
 @login_required
 def seed_list(request):
     query = request.GET.get('q')
-    seeds = Seed.objects.filter(created_by=request.user).select_related('item', 'item__category')
-    
+    seeds_qs = Seed.objects.filter(created_by=request.user).select_related('item', 'item__category')
+
     if query:
-        seeds = seeds.filter(item__name__icontains=query) | \
-                seeds.filter(item__category__name__icontains=query) | \
-                seeds.filter(additional_info__icontains=query) | \
-                seeds.filter(manual_name__icontains=query)
-    
+        seeds_qs = seeds_qs.filter(item__name__icontains=query) | \
+                   seeds_qs.filter(item__category__name__icontains=query) | \
+                   seeds_qs.filter(additional_info__icontains=query) | \
+                   seeds_qs.filter(manual_name__icontains=query)
+
+    seeds = list(seeds_qs)
+    for seed in seeds:
+        seed.icon_class = get_seed_icon_for_seed(seed)
+
     categories = SeedCategory.objects.all()
     
     context = {
@@ -75,7 +82,7 @@ def seed_create(request):
                             title=f"Toxum alışı: {item.name if item else manual_name}",
                             amount=price,
                             subcategory=expense_sub,
-                            additional_info=f"Miqdar: {quantity} {unit}",
+                            additional_info=additional_info,
                             created_by=request.user,
                             content_object=seed
                         )
@@ -85,7 +92,7 @@ def seed_create(request):
                             title=f"Toxum alışı: {item.name if item else manual_name}",
                             amount=price,
                             manual_name="Toxum alışı",
-                            additional_info=f"Miqdar: {quantity} {unit}",
+                            additional_info=additional_info,
                             created_by=request.user,
                             content_object=seed
                         )
@@ -93,8 +100,10 @@ def seed_create(request):
                     # Don't let expense creation failure break seed creation
                     print(f"Error creating seed expense: {e}")
         except SeedItem.DoesNotExist:
-            messages.error(request, 'Seçilmiş toxum növü tapılmadı.')
-            
+            messages.error(request, "Seçilmiş toxum növü tapılmadı.")
+        else:
+            add_crud_success_message(request, "Seed", "create")
+
         return redirect('seeds:seed_list')
     
     return redirect('seeds:seed_list')
@@ -142,7 +151,7 @@ def seed_update(request, pk):
             if seed.price and float(seed.price) > 0:
                 linked_expense.amount = seed.price
                 linked_expense.title = f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}"
-                linked_expense.additional_info = f"Miqdar: {seed.quantity} {seed.unit}"
+                linked_expense.additional_info = seed.additional_info
                 linked_expense.save()
             else:
                 linked_expense.delete()
@@ -154,7 +163,7 @@ def seed_update(request, pk):
                     title=f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}",
                     amount=seed.price,
                     subcategory=expense_sub,
-                    additional_info=f"Miqdar: {seed.quantity} {seed.unit}",
+                    additional_info=seed.additional_info,
                     created_by=request.user,
                     content_object=seed
                 )
@@ -163,12 +172,12 @@ def seed_update(request, pk):
                     title=f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}",
                     amount=seed.price,
                     manual_name="Toxum alışı",
-                    additional_info=f"Miqdar: {seed.quantity} {seed.unit}",
+                    additional_info=seed.additional_info,
                     created_by=request.user,
                     content_object=seed
                 )
 
-        messages.success(request, 'Məlumatlar uğurla yeniləndi.')
+        add_crud_success_message(request, "Seed", "update")
         return redirect('seeds:seed_list')
     
     categories = SeedCategory.objects.all()
@@ -185,6 +194,6 @@ def seed_delete(request, pk):
         seed_type = ContentType.objects.get_for_model(Seed)
         Expense.objects.filter(content_type=seed_type, object_id=seed.id).delete()
         seed.delete()
-        messages.success(request, 'Qeyd uğurla silindi.')
+        add_crud_success_message(request, "Seed", "delete")
         return redirect('seeds:seed_list')
     return render(request, 'seeds/seed_confirm_delete.html', {'seed': seed})

@@ -1,26 +1,120 @@
+<!-- templates/registration/signup.html -->
 <!DOCTYPE html>
-<html>
+<html lang="az">
 <head>
-    <title>Sign up</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ferma idarəsi — Qeydiyyat</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f3f5f6; --card:#fff; --text:#0f172a; --muted:#6b7280; --border:#e5e7eb;
+      --green:#2e8b57; --green-hover:#256f46;
+      --shadow:0 12px 30px rgba(15,23,42,.10); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .shell{width:min(900px,100%); display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+    .brand{
+      background:linear-gradient(180deg,var(--green),#2f7d54);
+      color:#fff; border-radius:var(--radius); padding:36px; display:flex; flex-direction:column; justify-content:center;
+    }
+    .brand h1{font-size:34px; margin:10px 0}
+    .brand p{opacity:.9; line-height:1.6; margin:0}
+    .pill{
+      margin-top:18px; display:inline-block; padding:8px 12px; border-radius:999px;
+      background:rgba(255,255,255,.18); margin-right:10px; font-size:13px;
+    }
+    .card{
+      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:28px; display:flex; flex-direction:column; justify-content:center;
+    }
+    h2{margin:0 0 6px}
+    .sub{margin:0 0 18px; color:var(--muted)}
+
+    /* messages from Django */
+    .messages{
+      margin:0 0 12px; padding:12px; border-radius:12px; font-size:13px;
+      background:#e0f2fe; color:#075985;
+    }
+    .messages p{margin:6px 0}
+
+    /* form.as_p output styling */
+    form p{margin:0 0 14px}
+    form label{display:block; font-size:13px; font-weight:600; margin:0 0 8px}
+
+    form input, form select, form textarea{
+      width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
+      font-size:14px; background:#fff;
+    }
+    form input:focus, form select:focus, form textarea:focus{
+      outline:none; border-color:var(--green); box-shadow:0 0 0 3px rgba(46,139,87,.2);
+    }
+
+    /* Django errors + helptext */
+    ul.errorlist{
+      margin:8px 0 0; padding-left:18px; color:#b91c1c; font-size:13px;
+    }
+    .helptext{
+      display:block; margin-top:6px; color:var(--muted); font-size:12px; line-height:1.4;
+    }
+
+    .btn{
+      width:100%; padding:12px; border:none; border-radius:12px;
+      background:var(--green); color:#fff; font-weight:700; cursor:pointer;
+    }
+    .btn:hover{background:var(--green-hover)}
+    .footer{margin-top:14px; text-align:center; font-size:13px; color:var(--muted)}
+    a{color:var(--green); text-decoration:none; font-weight:600}
+    a:hover{text-decoration:underline}
+    @media (max-width:850px){ .shell{grid-template-columns:1fr} .brand{display:none;} }
+  </style>
 </head>
+
 <body>
-    <h2>Sign up</h2>
+  <main class="shell">
+    <section class="brand" aria-label="Brand">
+      <h1>🌿 Ferma idarəsi</h1>
+      <p>Yeni hesab yaradın. Daha sonra admin təsdiqi ilə aktiv olacaq.</p>
+      <div>
+        <span class="pill">🌱 Toxumlar</span>
+        <span class="pill">🐄 Heyvanlar</span>
+        <span class="pill">🔧 Alətlər</span>
+        <span class="pill">💰 Xərclər</span>
+      </div>
+    </section>
 
-    {% if messages %}
-      {% for message in messages %}
-        <p>{{ message }}</p>
-      {% endfor %}
-    {% endif %}
+    <section class="card" aria-label="Signup">
+      <h2>Qeydiyyat</h2>
+      <p class="sub">Məlumatları doldurun</p>
 
-    <form method="post" action="{% url 'process_signup' %}">
+      {% if messages %}
+        <div class="messages" role="status" aria-live="polite">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Must match urls.py: action -> process_signup -->
+      <form method="post" action="{% url 'process_signup' %}" autocomplete="off">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Create account</button>
-    </form>
+        <button class="btn" type="submit">Hesab yarat</button>
+      </form>
 
-    <p>
-      Already have an account?
-      <a href="{% url 'login' %}">Login</a>
-    </p>
+      <div class="footer">
+        Artıq hesabınız var?
+        <a href="{% url 'login' %}">Daxil ol</a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

@@ -1,10 +1,12 @@
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
+
 from .forms import SignUpForm
-from django.utils import timezone
+from common.messages import add_crud_success_message
 
 # Create your views here.
 
@@ -27,7 +29,7 @@ def process_login(request):
         request.session["session_start"] = timezone.now().isoformat()
         return redirect("dashboard")
 
-    messages.error(request, "Invalid username or password")
+    messages.error(request, "İstifadəçi adı və ya şifrə səhvdir.")
     return redirect("login")
 
 def logout_view(request):
@@ -57,8 +59,5 @@ def process_signup(request):
     user.is_active = False  # admin approval required
     user.save()
 
-    messages.success(
-        request,
-        "Account created. Please wait for admin approval."
-    )
+    add_crud_success_message(request, "Account", "create")
     return redirect("login")

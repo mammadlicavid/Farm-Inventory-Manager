@@ -1,23 +1,30 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Tool, ToolCategory, ToolItem
-from .forms import ToolForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+
+from .models import Tool, ToolCategory, ToolItem
+from .forms import ToolForm
+from common.messages import add_crud_success_message
+from common.icons import get_tool_icon_for_tool
 from expenses.models import Expense, ExpenseSubCategory
 
 @login_required
 def tool_list(request):
     query = request.GET.get('q')
-    alets = Tool.objects.filter(created_by=request.user).select_related('item', 'item__category')
-    
+    alets_qs = Tool.objects.filter(created_by=request.user).select_related('item', 'item__category')
+
     if query:
-        alets = alets.filter(item__name__icontains=query) | \
-                alets.filter(item__category__name__icontains=query) | \
-                alets.filter(additional_info__icontains=query) | \
-                alets.filter(manual_name__icontains=query)
-    
+        alets_qs = alets_qs.filter(item__name__icontains=query) | \
+                   alets_qs.filter(item__category__name__icontains=query) | \
+                   alets_qs.filter(additional_info__icontains=query) | \
+                   alets_qs.filter(manual_name__icontains=query)
+
+    alets = list(alets_qs)
+    for alet in alets:
+        alet.icon_class = get_tool_icon_for_tool(alet)
+
     categories = ToolCategory.objects.all()
     
     context = {
@@ -73,7 +80,7 @@ def tool_create(request):
                         title=f"Alət alışı: {item.name if item else manual_name}",
                         amount=price,
                         subcategory=expense_sub,
-                        additional_info=f"Miqdar: {quantity} ədəd",
+                        additional_info=additional_info,
                         created_by=request.user,
                         content_object=tool
                     )
@@ -83,13 +90,15 @@ def tool_create(request):
                         title=f"Alət alışı: {item.name if item else manual_name}",
                         amount=price,
                         manual_name="Alət alışı (Digər)",
-                        additional_info=f"Miqdar: {quantity} ədəd",
+                        additional_info=additional_info,
                         created_by=request.user,
                         content_object=tool
                     )
         except ToolItem.DoesNotExist:
-            messages.error(request, 'Seçilmiş alət növü tapılmadı.')
-            
+            messages.error(request, "Seçilmiş alət növü tapılmadı.")
+        else:
+            add_crud_success_message(request, "Tool", "create")
+
         return redirect('tools:tool_list')
     
     return redirect('tools:tool_list')
@@ -135,7 +144,7 @@ def tool_update(request, pk):
             if tool.price and float(tool.price) > 0:
                 linked_expense.amount = tool.price
                 linked_expense.title = f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}"
-                linked_expense.additional_info = f"Miqdar: {tool.quantity} ədəd"
+                linked_expense.additional_info = tool.additional_info
                 linked_expense.save()
             else:
                 linked_expense.delete()
@@ -147,7 +156,7 @@ def tool_update(request, pk):
                     title=f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}",
                     amount=tool.price,
                     subcategory=expense_sub,
-                    additional_info=f"Miqdar: {tool.quantity} ədəd",
+                    additional_info=tool.additional_info,
                     created_by=request.user,
                     content_object=tool
                 )
@@ -156,12 +165,12 @@ def tool_update(request, pk):
                     title=f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}",
                     amount=tool.price,
                     manual_name="Alət alışı (Digər)",
-                    additional_info=f"Miqdar: {tool.quantity} ədəd",
+                    additional_info=tool.additional_info,
                     created_by=request.user,
                     content_object=tool
                 )
 
-        messages.success(request, 'Məlumatlar uğurla yeniləndi.')
+        add_crud_success_message(request, "Tool", "update")
         return redirect('tools:tool_list')
     
     categories = ToolCategory.objects.all()
@@ -178,5 +187,6 @@ def tool_delete(request, pk):
         tool_type = ContentType.objects.get_for_model(Tool)
         Expense.objects.filter(content_type=tool_type, object_id=tool.id).delete()
         tool.delete()
+        add_crud_success_message(request, "Tool", "delete")
         return redirect('tools:tool_list')
     return render(request, 'tools/tool_confirm_delete.html', {'alet': tool})

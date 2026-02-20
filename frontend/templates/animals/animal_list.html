@@ -27,18 +27,6 @@
     <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
         <div class="form-container-white">
             <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Heyvan Əlavə Et</h3>
-
-            {% if messages %}
-            <div class="messages-container" style="margin-bottom: 20px;">
-                {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
-                    style="padding: 12px; border-radius: 10px; background-color: #f8d7da; color: #721c24; margin-bottom: 10px; font-size: 14px;">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
             <form action="{% url 'animals:animal_create' %}" method="POST" id="animal-form">
                 {% csrf_token %}
                 <div class="form-group">
@@ -110,23 +98,7 @@
             {% for animal in animals %}
             <div class="expense-item-card">
                 <div class="expense-item-icon">
-                    {% with sub=animal.subcategory.name %}
-                    {% if sub == 'İnək' %}<i class="fa-solid fa-cow"></i>
-                    {% elif sub == 'Dana' %}<i class="fa-solid fa-cow" style="font-size: 0.8em;"></i>
-                    {% elif sub == 'Camış' %}<i class="fa-solid fa-hippo"></i>
-                    {% elif sub == 'Qoyun' %}<i class="fa-solid fa-sheep"></i>
-                    {% elif sub == 'Keçi' %}<i class="fa-solid fa-hand-holding-hand"></i>
-                    {% elif sub == 'Toyuq' %}<i class="fa-solid fa-egg"></i>
-                    {% elif sub == 'Hinduşka' %}<i class="fa-solid fa-turkey"></i>
-                    {% elif sub == 'Qaz' %}<i class="fa-solid fa-dove"></i>
-                    {% elif sub == 'Ördək' %}<i class="fa-solid fa-water"></i>
-                    {% elif sub == 'Bildircin' %}<i class="fa-solid fa-feather-pointed"></i>
-                    {% elif sub == 'At' %}<i class="fa-solid fa-horse"></i>
-                    {% elif sub == 'Eşşək' %}<i class="fa-solid fa-horse-head"></i>
-                    {% elif sub == 'Qatır' %}<i class="fa-solid fa-mule"></i>
-                    {% else %}<i class="fa-solid fa-paw"></i>
-                    {% endif %}
-                    {% endwith %}
+                    <i class="{{ animal.icon_class }}"></i>
                 </div>
                 <div class="expense-item-info">
                     <h4>

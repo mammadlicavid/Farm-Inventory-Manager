@@ -27,18 +27,6 @@
         <!-- Add Seed Form -->
         <div class="form-container-white">
             <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Toxum Əlavə Et</h3>
-
-            {% if messages %}
-            <div class="messages-container" style="margin-bottom: 20px;">
-                {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
-                    style="padding: 12px; border-radius: 10px; background-color: #f8d7da; color: #721c24; margin-bottom: 10px; font-size: 14px;">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
             <form action="{% url 'seeds:seed_create' %}" method="POST" id="seed-form">
                 {% csrf_token %}
                 <div class="form-group">
@@ -105,17 +93,15 @@
             {% for seed in seeds %}
             <div class="expense-item-card">
                 <div class="expense-item-icon">
-                    <i class="fa-solid fa-seedling"></i>
+                    <i class="{{ seed.icon_class }}"></i>
                 </div>
                 <div class="expense-item-info">
                     <h4>
                         {% if seed.item %}
-                        {{ seed.item.name }}
-                        <span style="font-size: 12px; font-weight: 400; color: #666;">({{ seed.item.category.name
-                            }})</span>
+                        {{ seed.item.name }} <span style="font-size: 12px; font-weight: 400; color: #666;">({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})</span>
                         {% else %}
-                        {{ seed.manual_name }}
-                        <span style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                        {{ seed.manual_name }} <span
+                            style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
                         {% endif %}
                     </h4>
                     <span>
@@ -129,7 +115,7 @@
                     <div class="expense-item-amount" style="color: var(--primary-green);">
                         {{ seed.price|floatformat:0 }}₼
                     </div>
-                    <div <div
+                    <div
                         style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
                         <a href="{% url 'seeds:seed_update' seed.pk %}"
                             style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">

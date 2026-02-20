@@ -56,7 +56,7 @@
                 <div class="form-group">
                     <label>Əlavə Məlumat</label>
                     <textarea name="additional_info" placeholder="Məsələn: Mağaza adı, qəbz nömrəsi və s."
-                        class="custom-input" rows="3">{{ expense.additional_info|default:'' }}</textarea>
+                        class="custom-input" rows="3">{{ expense.display_additional_info|default:'' }}</textarea>
                 </div>
 
                 <button type="submit" class="add-expense-btn">

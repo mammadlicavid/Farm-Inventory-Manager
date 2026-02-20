@@ -1,22 +1,29 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Animal, AnimalCategory, AnimalSubCategory
-from .forms import AnimalForm
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+
+from .models import Animal, AnimalCategory, AnimalSubCategory
+from .forms import AnimalForm
+from common.messages import add_crud_success_message
+from common.icons import get_animal_icon_for_animal
 from expenses.models import Expense, ExpenseSubCategory
 
 @login_required
 def animal_list(request):
     query = request.GET.get('q')
-    animals = Animal.objects.filter(created_by=request.user).select_related('subcategory', 'subcategory__category')
-    
+    animals_qs = Animal.objects.filter(created_by=request.user).select_related('subcategory', 'subcategory__category')
+
     if query:
-        animals = animals.filter(identification_no__icontains=query) | \
-                  animals.filter(additional_info__icontains=query) | \
-                  animals.filter(subcategory__name__icontains=query) | \
-                  animals.filter(manual_name__icontains=query)
-    
+        animals_qs = animals_qs.filter(identification_no__icontains=query) | \
+                     animals_qs.filter(additional_info__icontains=query) | \
+                     animals_qs.filter(subcategory__name__icontains=query) | \
+                     animals_qs.filter(manual_name__icontains=query)
+
+    animals = list(animals_qs)
+    for animal in animals:
+        animal.icon_class = get_animal_icon_for_animal(animal)
+
     categories = AnimalCategory.objects.all().prefetch_related('subcategories')
     
     context = {
@@ -78,7 +85,7 @@ def animal_create(request):
                         title=f"Heyvan alışı: {subcategory.name if subcategory else manual_name}",
                         amount=price,
                         subcategory=expense_sub,
-                        additional_info=f"İdentifikasiya No: {identification_no}",
+                        additional_info=additional_info,
                         created_by=request.user,
                         content_object=animal
                     )
@@ -88,12 +95,14 @@ def animal_create(request):
                         title=f"Heyvan alışı: {subcategory.name if subcategory else manual_name}",
                         amount=price,
                         manual_name="Heyvan alışı (Digər)",
-                        additional_info=f"İdentifikasiya No: {identification_no}",
+                        additional_info=additional_info,
                         created_by=request.user,
                         content_object=animal
                     )
         except AnimalSubCategory.DoesNotExist:
-            messages.error(request, 'Seçilmiş alt kateqoriya tapılmadı.')
+            messages.error(request, "Seçilmiş alt kateqoriya tapılmadı.")
+        else:
+            add_crud_success_message(request, "Animal", "create")
         return redirect('animals:animal_list')
     
     return redirect('animals:animal_list')
@@ -148,7 +157,7 @@ def animal_update(request, pk):
             if animal.price and float(animal.price) > 0:
                 linked_expense.amount = animal.price
                 linked_expense.title = f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}"
-                linked_expense.additional_info = f"İdentifikasiya No: {animal.identification_no}"
+                linked_expense.additional_info = animal.additional_info
                 linked_expense.save()
             else:
                 linked_expense.delete()
@@ -160,7 +169,7 @@ def animal_update(request, pk):
                     title=f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}",
                     amount=animal.price,
                     subcategory=expense_sub,
-                    additional_info=f"İdentifikasiya No: {animal.identification_no}",
+                    additional_info=animal.additional_info,
                     created_by=request.user,
                     content_object=animal
                 )
@@ -169,12 +178,12 @@ def animal_update(request, pk):
                     title=f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}",
                     amount=animal.price,
                     manual_name="Heyvan alışı (Digər)",
-                    additional_info=f"İdentifikasiya No: {animal.identification_no}",
+                    additional_info=animal.additional_info,
                     created_by=request.user,
                     content_object=animal
                 )
 
-        messages.success(request, 'Məlumatlar uğurla yeniləndi.')
+        add_crud_success_message(request, "Animal", "update")
         return redirect('animals:animal_list')
     
     categories = AnimalCategory.objects.all().prefetch_related('subcategories')
@@ -187,11 +196,8 @@ def animal_update(request, pk):
 def animal_delete(request, pk):
     animal = get_object_or_404(Animal, pk=pk, created_by=request.user)
     if request.method == 'POST':
-        # Linked expenses will be deleted automatically if we set on_delete=models.CASCADE in Expense model
-        # But we used models.CASCADE for content_type, which is standard. 
-        # Manually deleting to be sure or relying on GenericRelation.
-        # Let's delete manually to be safe since we don't have GenericRelation defined in Animal model yet.
         animal_type = ContentType.objects.get_for_model(Animal)
         Expense.objects.filter(content_type=animal_type, object_id=animal.id).delete()
         animal.delete()
+        add_crud_success_message(request, "Animal", "delete")
     return redirect('animals:animal_list')

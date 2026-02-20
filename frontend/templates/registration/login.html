@@ -1,34 +1,110 @@
+<!-- templates/registration/login.html -->
 <!DOCTYPE html>
-<html>
+<html lang="az">
 <head>
-    <title>Login</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ferma idarəsi — Daxil ol</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f3f5f6; --card:#fff; --text:#0f172a; --muted:#6b7280; --border:#e5e7eb;
+      --green:#2e8b57; --green-hover:#256f46;
+      --shadow:0 12px 30px rgba(15,23,42,.10); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .shell{width:min(900px,100%); display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+    .brand{
+      background:linear-gradient(180deg,var(--green),#2f7d54);
+      color:#fff; border-radius:var(--radius); padding:36px; display:flex; flex-direction:column; justify-content:center;
+    }
+    .brand h1{font-size:34px; margin:10px 0}
+    .brand p{opacity:.9; line-height:1.6; margin:0}
+    .pill{
+      margin-top:18px; display:inline-block; padding:8px 12px; border-radius:999px;
+      background:rgba(255,255,255,.18); margin-right:10px; font-size:13px;
+    }
+    .card{
+      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:28px; display:flex; flex-direction:column; justify-content:center;
+    }
+    h2{margin:0 0 6px}
+    .sub{margin:0 0 18px; color:var(--muted)}
+    .messages{
+      margin:0 0 12px; padding:12px; border-radius:12px;
+      background:#fee2e2; color:#b91c1c; font-size:13px;
+    }
+    .messages p{margin:6px 0}
+    label{display:block; font-size:13px; font-weight:600; margin:0 0 8px}
+    input{
+      width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
+      font-size:14px; margin:0 0 14px; background:#fff;
+    }
+    input:focus{outline:none; border-color:var(--green); box-shadow:0 0 0 3px rgba(46,139,87,.2)}
+    .btn{
+      width:100%; padding:12px; border:none; border-radius:12px;
+      background:var(--green); color:#fff; font-weight:700; cursor:pointer;
+    }
+    .btn:hover{background:var(--green-hover)}
+    .footer{margin-top:14px; text-align:center; font-size:13px; color:var(--muted)}
+    a{color:var(--green); text-decoration:none; font-weight:600}
+    a:hover{text-decoration:underline}
+    @media (max-width:850px){ .shell{grid-template-columns:1fr} .brand{display:none;} }
+  </style>
 </head>
+
 <body>
-    <h2>Login</h2>
+  <main class="shell">
+    <section class="brand" aria-label="Brand">
+      <h1>🌿 Ferma idarəsi</h1>
+      <p>Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə.</p>
+      <div>
+        <span class="pill">🌱 Toxumlar</span>
+        <span class="pill">🐄 Heyvanlar</span>
+        <span class="pill">🔧 Alətlər</span>
+        <span class="pill">💰 Xərclər</span>
+      </div>
+    </section>
 
-    {% if messages %}
-      {% for message in messages %}
-        <p style="color:red;">{{ message }}</p>
-      {% endfor %}
-    {% endif %}
+    <section class="card" aria-label="Login">
+      <h2>Daxil ol</h2>
+      <p class="sub">Davam etmək üçün məlumatları daxil edin</p>
 
-<form method="post" action="{% url 'process_login' %}" autocomplete="off">
-  {% csrf_token %}
-  <p>
-    <label>Username:</label>
-    <input type="text" name="username" required autocomplete="off" value="">
-  </p>
-  <p>
-    <label>Password:</label>
-    <input type="password" name="password" required autocomplete="new-password" value="">
-  </p>
-  <button type="submit">Login</button>
-</form>
+      {% if messages %}
+        <div class="messages" role="alert" aria-live="polite">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-<p>
-  Don’t have an account?
-  <a href="{% url 'signup' %}">Sign up</a>
-</p>
+      <!-- Must match urls.py: action -> process_login -->
+      <form method="post" action="{% url 'process_login' %}" autocomplete="off">
+        {% csrf_token %}
 
+        <label for="username">İstifadəçi adı</label>
+        <input id="username" type="text" name="username" required autocomplete="off" value="">
+
+        <label for="password">Şifrə</label>
+        <!-- current-password is the correct autocomplete for login -->
+        <input id="password" type="password" name="password" required autocomplete="current-password" value="">
+
+        <button class="btn" type="submit">Daxil ol</button>
+      </form>
+
+      <div class="footer">
+        Hesabınız yoxdur?
+        <a href="{% url 'signup' %}">Qeydiyyat</a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

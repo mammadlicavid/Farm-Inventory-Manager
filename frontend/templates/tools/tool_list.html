@@ -27,18 +27,6 @@
         <!-- Add Tool Form -->
         <div class="form-container-white">
             <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
-
-            {% if messages %}
-            <div class="messages-container" style="margin-bottom: 20px;">
-                {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
-                    style="padding: 12px; border-radius: 10px; background-color: #f8d7da; color: #721c24; margin-bottom: 10px; font-size: 14px;">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
             <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form">
                 {% csrf_token %}
                 <div class="form-group">
@@ -93,25 +81,15 @@
             {% for alet in alets %}
             <div class="expense-item-card">
                 <div class="expense-item-icon">
-                    {% if alet.item.category.name == 'Elektrikli Alətlər' %}
-                    <i class="fa-solid fa-plug"></i>
-                    {% elif alet.item.category.name == 'Mexaniki Avadanlıqlar' %}
-                    <i class="fa-solid fa-gear"></i>
-                    {% elif alet.item.category.name == 'Əl Alətləri' %}
-                    <i class="fa-solid fa-trowel"></i>
-                    {% else %}
-                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                    {% endif %}
+                    <i class="{{ alet.icon_class }}"></i>
                 </div>
                 <div class="expense-item-info">
                     <h4>
                         {% if alet.item %}
-                        {{ alet.item.name }}
-                        <span style="font-size: 12px; font-weight: 400; color: #666;">({{ alet.item.category.name
-                            }})</span>
+                        {{ alet.item.name }} <span style="font-size: 12px; font-weight: 400; color: #666;">({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})</span>
                         {% else %}
-                        {{ alet.manual_name }}
-                        <span style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                        {{ alet.manual_name }} <span
+                            style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
                         {% endif %}
                     </h4>
                     <span>
