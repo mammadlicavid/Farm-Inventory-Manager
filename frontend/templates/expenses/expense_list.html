@@ -27,7 +27,7 @@
             <form action="{% url 'expenses:add_expense' %}" method="POST" id="expense-form">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label>Ana Kateqoriya</label>
+                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                     <select id="category-select" required class="custom-input">
                         <option value="" disabled selected>Kateqoriya seçin</option>
                         {% for cat in categories %}
@@ -37,7 +37,7 @@
                 </div>
 
                 <div class="form-group" id="subcategory-field-group">
-                    <label>Alt Kateqoriya</label>
+                    <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
                     <select name="subcategory" id="subcategory-select" required class="custom-input" disabled>
                         <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
                     </select>
@@ -50,7 +50,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Məbləğ (₼)</label>
+                    <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
                     <input type="number" name="amount" step="0.01" placeholder="0.00" required class="custom-input">
                 </div>
 
@@ -74,30 +74,7 @@
             {% for expense in expenses %}
             <div class="expense-item-card">
                 <div class="expense-item-icon">
-                    {% with sub=expense.subcategory.name %}
-                    {% if sub == 'Yem' %}<i class="fa-solid fa-wheat-awn"></i>
-                    {% elif sub == 'Baytarlıq' %}<i class="fa-solid fa-stethoscope"></i>
-                    {% elif sub == 'Peyvəndləmə' %}<i class="fa-solid fa-syringe"></i>
-                    {% elif sub == 'Heyvan alışı' %}<i class="fa-solid fa-plus-circle"></i>
-                    {% elif sub == 'Toxumlar' %}<i class="fa-solid fa-seedling"></i>
-                    {% elif sub == 'Gübrə' %}<i class="fa-solid fa-flask"></i>
-                    {% elif sub == 'Pesticidlər' %}<i class="fa-solid fa-bug-slash"></i>
-                    {% elif sub == 'Suvarma' %}<i class="fa-solid fa-droplet"></i>
-                    {% elif sub == 'Maaşlar' %}<i class="fa-solid fa-money-bill-wave"></i>
-                    {% elif sub == 'Sığorta' %}<i class="fa-solid fa-shield-halved"></i>
-                    {% elif sub == 'Yanacaq' %}<i class="fa-solid fa-gas-pump"></i>
-                    {% elif sub == 'Təmir və Baxım' %}<i class="fa-solid fa-screwdriver-wrench"></i>
-                    {% elif sub == 'Texnika alışı' %}<i class="fa-solid fa-tractor"></i>
-                    {% elif sub == 'Elektrik' %}<i class="fa-solid fa-bolt"></i>
-                    {% elif sub == 'Su' %}<i class="fa-solid fa-faucet-drip"></i>
-                    {% elif sub == 'Tikinti' %}<i class="fa-solid fa-trowel-bricks"></i>
-                    {% elif sub == 'Nəqliyyat' %}<i class="fa-solid fa-truck"></i>
-                    {% elif sub == 'Qablaşdırma' %}<i class="fa-solid fa-box-open"></i>
-                    {% elif sub == 'Vergilər' %}<i class="fa-solid fa-file-invoice-dollar"></i>
-                    {% elif sub == 'Kredit faizləri' %}<i class="fa-solid fa-percent"></i>
-                    {% else %}<i class="fa-solid fa-receipt"></i>
-                    {% endif %}
-                    {% endwith %}
+                    <i class="{{ expense.icon_class }}"></i>
                 </div>
                 <div class="expense-item-info">
                     <h4>{{ expense.title }}</h4>
@@ -114,8 +91,8 @@
                         {% else %}
                         {{ expense.date|date:"d.m.Y" }}
                         {% endif %}
-                        {% if expense.additional_info %}
-                        • {{ expense.additional_info }}
+                        {% if expense.display_additional_info %}
+                        • {{ expense.display_additional_info }}
                         {% endif %}
                     </span>
                 </div>
