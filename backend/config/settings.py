@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "tools",
     "animals",
     "expenses",
+    "reports",
 ]
 
 

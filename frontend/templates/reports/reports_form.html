@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="dashboard-container">
+
+    <div class="main-header">
+        <div class="header-top">
+            <h1>Hesabatlar</h1>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                Aktiv
+            </div>
+        </div>
+        <p class="welcome-text">Maliyyə və statistik məlumatlar</p>
+    </div>
+
+    <div class="main-content">
+
+        <div class="reports-summary-card">
+            <span class="reports-summary-label">Ümumi Xərc</span>
+            <span class="reports-summary-value">
+                {{ total_expense }} ₼
+            </span>
+        </div>
+
+        <h2>Aylıq Hesabat</h2>
+
+        <div class="report-table-wrapper">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Ay</th>
+                        <th>Xərc</th>
+                        <th>Gəlir</th>
+                        <th>Balans</th>
+                    </tr>
+                </thead>
+                <tbody> 
+                    {% for r in reports %}
+                    <tr>
+                        <td>{{ r.month }}</td>
+                        <td class="expense-text">-{{ r.expense }} ₼</td>
+                        <td class="income-text">{{ r.income }} ₼</td>
+                        <td>{{ r.balance }} ₼</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="{% url 'reports:form' %}" class="add-new-btn">
+            + Yeni Hesabat Əlavə Et
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}
