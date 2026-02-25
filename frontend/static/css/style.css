@@ -246,10 +246,10 @@ body {
 
 .reports-kpi-card {
     background: var(--white);
-    border-radius: 18px;
-    padding: 14px 14px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .reports-kpi-label {
@@ -274,11 +274,11 @@ body {
 
 .reports-section-card {
     background: var(--white);
-    border-radius: 20px;
-    padding: 14px;
-    margin-bottom: 14px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .reports-section-title {
@@ -340,10 +340,10 @@ body {
 }
 
 .reports-trend-box {
-    background: #F3F4F6;
-    border-radius: 16px;
-    padding: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    background: #F8F9FA;
+    border-radius: 24px;
+    padding: 25px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .reports-trend-placeholder {
@@ -355,8 +355,8 @@ body {
 .reports-months {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
-    font-size: 11px;
+    margin-top: 20px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--accent-gray);
 }
@@ -676,7 +676,8 @@ select.custom-input {
 
     /* Main body padding */
     .main-content {
-        padding: 30px 40px;
+        padding: 50px 60px;
+        /* Increased to push content down and avoid header overlap */
     }
 
     /* 3. Categories Grid (Dashboard / Modules) */
@@ -765,27 +766,76 @@ select.custom-input {
         /* Uniform card heights */
     }
 
-    /* 7. Reports Page 2-Column Layout */
+    /* 7. Reports Page 2-Column Layout & Scaling */
     .reports-desktop-split {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 450px 1fr;
+        /* Fixed left width, expansive chart on right */
         gap: 60px;
-        align-items: start;
+        align-items: stretch;
     }
 
     .reports-desktop-left {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 30px;
     }
 
     .reports-desktop-left .reports-kpi-row,
     .reports-desktop-left .reports-section-card {
         margin-bottom: 0;
-        /* Let flex gap handle spacing */
     }
 
     .reports-kpi-row {
         grid-template-columns: repeat(2, 1fr);
+        gap: 25px;
+    }
+
+    .reports-kpi-card {
+        padding: 35px;
+        border-radius: 30px;
+    }
+
+    .reports-kpi-label {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .reports-kpi-value {
+        font-size: 42px;
+    }
+
+    .reports-section-card {
+        padding: 40px;
+        border-radius: 30px;
+    }
+
+    .reports-section-title {
+        font-size: 24px;
+        margin-bottom: 30px;
+    }
+
+    .reports-break-row {
+        grid-template-columns: 120px 1fr 100px;
+        gap: 25px;
+    }
+
+    .reports-break-label,
+    .reports-break-val {
+        font-size: 18px;
+    }
+
+    .reports-trend-box {
+        padding: 40px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .reports-pdf-btn {
+        padding: 20px;
+        font-size: 18px;
+        border-radius: 20px;
     }
 }

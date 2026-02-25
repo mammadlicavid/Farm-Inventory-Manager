@@ -3,15 +3,16 @@
 
 <div class="dashboard-container">
 
-    <div class="main-header reports-header-compact">
-        <div class="reports-topbar">
-            <a href="javascript:history.back()" class="reports-back">
-                <span class="reports-back-icon">←</span>
-            </a>
-            <div class="reports-topbar-title">Maliyyə Hesabatları</div>
-            <div class="reports-topbar-spacer"></div>
+    <header class="main-header" style="padding-bottom: 60px;">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'dashboard' %}" class="back-btn-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Hesabatlar</span>
+                </a>
+            </div>
         </div>
-    </div>
+    </header>
 
     <div class="main-content reports-content">
 
@@ -63,7 +64,7 @@
                     <div class="reports-section-title">Aylıq Tendensiya</div>
 
                     <div class="reports-trend-box">
-                        <canvas id="reportsTrendChart" height="140"></canvas>
+                        <canvas id="reportsTrendChart" height="300"></canvas>
 
                         <div class="reports-months" id="reportsMonthsRow">
                             {% for m in trend_months %}

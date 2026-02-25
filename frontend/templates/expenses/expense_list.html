@@ -14,21 +14,21 @@
         </div>
     </header>
 
-    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
+    <main class="main-content" style="position: relative; z-index: 10;">
         <!-- Weekly Summary Card -->
-        <div class="summary-card-cream">
+        <div class="summary-card-cream" style="margin-bottom: 30px;">
             <span class="label">Bu həftə ümumi xərc</span>
             <span class="value">{{ weekly_total|floatformat:0 }}₼</span>
         </div>
 
-        <div class="crud-layout-wrapper">
-            <div class="crud-form-section">
+        <div class="crud-desktop-wrapper">
+            <div class="crud-form-column">
                 <!-- Add Expense Form -->
                 <div class="form-container-white">
                     <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Xərc Əlavə Et</h3>
                     <form action="{% url 'expenses:add_expense' %}" method="POST" id="expense-form">
                         {% csrf_token %}
-                        <div class="form-vertical-stack">
+                        <div class="desktop-form-grid">
                             <div class="form-group">
                                 <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                                 <select id="category-select" required class="custom-input">
@@ -81,7 +81,7 @@
                 </div>
             </div>
 
-            <div class="crud-list-section">
+            <div class="crud-list-column">
                 <!-- Recent Expenses History -->
                 <h3 class="recent-expenses-title">Son Xərclər</h3>
                 <div class="expenses-list data-grid-list">
