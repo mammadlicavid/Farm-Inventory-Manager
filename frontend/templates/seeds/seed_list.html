@@ -24,14 +24,14 @@
     </header>
 
     <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <div class="crud-layout-wrapper">
-            <div class="crud-form-section">
+        <div class="crud-desktop-wrapper">
+            <div class="crud-form-column">
                 <!-- Add Seed Form -->
                 <div class="form-container-white">
                     <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Toxum Əlavə Et</h3>
                     <form action="{% url 'seeds:seed_create' %}" method="POST" id="seed-form">
                         {% csrf_token %}
-                        <div class="form-vertical-stack">
+                        <div class="desktop-form-grid">
                             <div class="form-group">
                                 <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                                 <select id="category-select" name="category" required class="custom-input">
@@ -78,13 +78,13 @@
                                 <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group form-full-width">
                                 <label>Əlavə Məlumat</label>
                                 <textarea name="additional_info" placeholder="Məsələn: Toxumun vəziyyəti və s."
                                     class="custom-input" rows="2"></textarea>
                             </div>
 
-                            <button type="submit" class="add-expense-btn" style="width: 100%;">
+                            <button type="submit" class="add-expense-btn">
                                 <i class="fa-solid fa-plus"></i>
                                 Toxum Əlavə Et
                             </button>
@@ -93,7 +93,7 @@
                 </div>
             </div>
 
-            <div class="crud-list-section">
+            <div class="crud-list-column">
                 <!-- Seeds History -->
                 <h3 class="recent-expenses-title">Toxum Siyahısı</h3>
                 <div class="seeds-list data-grid-list">

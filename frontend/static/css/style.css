@@ -701,22 +701,53 @@ select.custom-input {
         font-size: 64px;
     }
 
-    /* 4. Forms & CRUD Layout */
-    .crud-layout-wrapper {
+    /* 4. Forms */
+    .form-container-white {
+        padding: 40px;
+    }
+
+    .desktop-form-grid {
         display: grid;
-        grid-template-columns: 4fr 6fr;
-        /* ~40% left form, ~60% right list */
+        grid-template-columns: 1fr 1fr;
+        gap: 20px 30px;
+        align-items: start;
+    }
+
+    /* Override inner form grid to single column if within the new CRUD layout sidebar */
+    .crud-form-column .desktop-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Utility to force an element to span both columns */
+    .form-full-width {
+        grid-column: 1 / -1;
+    }
+
+    /* Restyle submit button inside grid */
+    .desktop-form-grid .add-expense-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+        /* Make button stretch full width in sidebar */
+        margin-left: 0;
+        padding: 16px 40px;
+    }
+
+    /* 5. CRUD 2-Column Global Layout Wrapper */
+    .crud-desktop-wrapper {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        /* 350px fixed left sidebar for forms, rest for list */
         gap: 40px;
         align-items: start;
     }
 
-    .form-container-white {
-        padding: 40px;
-        margin-bottom: 0;
+    .crud-form-column {
+        /* Optional: Sticky behavior so form stays visible while scrolling list */
+        position: sticky;
+        top: 20px;
     }
 
-
-    /* 5. Cards / Lists */
+    /* 6. Cards / Lists */
     .data-grid-list {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));

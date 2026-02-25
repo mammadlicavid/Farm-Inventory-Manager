@@ -25,13 +25,13 @@
     </header>
 
     <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <div class="crud-layout-wrapper">
-            <div class="crud-form-section">
+        <div class="crud-desktop-wrapper">
+            <div class="crud-form-column">
                 <div class="form-container-white">
                     <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Heyvan Əlavə Et</h3>
                     <form action="{% url 'animals:animal_create' %}" method="POST" id="animal-form">
                         {% csrf_token %}
-                        <div class="form-vertical-stack">
+                        <div class="desktop-form-grid">
                             <div class="form-group">
                                 <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                                 <select id="category-select" required class="custom-input">
@@ -84,14 +84,14 @@
                                     required>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group form-full-width">
                                 <label>Əlavə Məlumat</label>
                                 <textarea name="additional_info"
                                     placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s." class="custom-input"
                                     rows="2"></textarea>
                             </div>
 
-                            <button type="submit" class="add-expense-btn" style="width: 100%;">
+                            <button type="submit" class="add-expense-btn">
                                 <i class="fa-solid fa-plus"></i>
                                 Heyvan Əlavə Et
                             </button>
@@ -100,7 +100,7 @@
                 </div>
             </div>
 
-            <div class="crud-list-section">
+            <div class="crud-list-column">
                 <!-- Animals History -->
                 <h3 class="recent-expenses-title">Heyvan Siyahısı</h3>
                 <div class="animals-list data-grid-list">
@@ -131,7 +131,7 @@
                             <div class="expense-item-amount" style="color: var(--primary-green);">
                                 {{ animal.price|floatformat:0 }}₼
                             </div>
-                            <div <div
+                            <div
                                 style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
                                 <a href="{% url 'animals:animal_update' animal.pk %}"
                                     style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
@@ -149,8 +149,8 @@
                         </div>
                     </div>
                     {% empty %}
-                    <div style="text-align: center; padding: 40px; color: #999;">
-                        <p>Hələ heç bir heyvan qeydə alınmayıb</p>
+                    <div class="expense-item-card" style="justify-content: center;">
+                        <span style="color: #888;">Heç bir heyvan tapılmadı</span>
                     </div>
                     {% endfor %}
                 </div>
