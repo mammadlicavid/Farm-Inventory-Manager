@@ -50,6 +50,10 @@ def expense_list(request):
     for exp in expenses:
         exp.display_additional_info = _get_display_additional_info(exp)
         exp.icon_class = get_expense_icon(exp)
+        if hasattr(exp, 'subcategory') and exp.subcategory:
+            exp.display_name = exp.subcategory.name
+        else:
+            exp.display_name = exp.manual_name
     
     # Categories for the form
     categories = ExpenseCategory.objects.all().prefetch_related('subcategories')

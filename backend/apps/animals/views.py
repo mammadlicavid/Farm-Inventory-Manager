@@ -23,6 +23,12 @@ def animal_list(request):
     animals = list(animals_qs)
     for animal in animals:
         animal.icon_class = get_animal_icon_for_animal(animal)
+        if hasattr(animal, 'subcategory') and animal.subcategory:
+            animal.display_name = animal.subcategory.name
+        else:
+            animal.display_name = animal.manual_name
+        
+        animal.display_subtitle = f"({animal.identification_no})" if getattr(animal, 'identification_no', None) else ""
 
     categories = AnimalCategory.objects.all().prefetch_related('subcategories')
     
