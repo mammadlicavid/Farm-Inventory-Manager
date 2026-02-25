@@ -45,6 +45,37 @@ body {
     .dashboard-container {
         max-width: 480px;
     }
+
+    .reports-desktop-split {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .reports-desktop-left,
+    .reports-desktop-right {
+        display: contents;
+    }
+
+    .reports-kpi-row {
+        order: 1;
+    }
+
+    .reports-breakdown-card {
+        order: 2;
+    }
+
+    .reports-trend-card {
+        order: 3;
+    }
+
+    .reports-pdf-btn {
+        order: 4;
+    }
+
+    .reports-note {
+        order: 5;
+    }
 }
 
 /* Header */
@@ -94,7 +125,7 @@ body {
 
 /* Main Content */
 .main-content {
-    padding: 20px;
+    padding: 10px 20px 20px;
 }
 
 .main-content h2 {
@@ -184,138 +215,78 @@ body {
     color: white;
 }
 
-.reports-header-compact {
-    padding: 16px 16px 22px 16px;
-    border-bottom-left-radius: 22px;
-    border-bottom-right-radius: 22px;
-}
-
-.reports-topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.reports-back {
-    width: 38px;
-    height: 38px;
-    border-radius: 14px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    color: var(--white);
-}
-
-.reports-back:active {
-    transform: scale(0.96);
-}
-
-.reports-back-icon {
-    font-size: 18px;
-    font-weight: 800;
-    line-height: 1;
-}
-
-.reports-topbar-title {
-    color: var(--white);
-    font-size: 16px;
-    font-weight: 800;
-    text-align: center;
-    flex: 1;
-}
-
-.reports-topbar-spacer {
-    width: 38px;
-    height: 38px;
-}
-
-.reports-content {
-    padding-top: 14px;
-}
-
 .reports-kpi-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 16px;
+    margin-bottom: 18px;
 }
 
 .reports-kpi-card {
     background: var(--white);
-    border-radius: 24px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 26px;
+    padding: 22px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E5E7EB;
 }
 
 .reports-kpi-label {
-    color: var(--accent-gray);
-    font-size: 12px;
+    color: #64748B;
+    font-size: 14px;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .reports-kpi-value {
     color: var(--text-dark);
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 900;
-    margin-bottom: 4px;
-}
-
-.reports-kpi-sub {
-    font-size: 12px;
-    color: var(--accent-gray);
-    font-weight: 600;
 }
 
 .reports-section-card {
     background: var(--white);
-    border-radius: 24px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 30px;
+    padding: 26px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border: 1px solid #E5E7EB;
 }
 
 .reports-section-title {
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 800;
     color: var(--text-dark);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .reports-breakdown {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .reports-break-row {
     display: grid;
-    grid-template-columns: 86px 1fr 56px;
-    gap: 10px;
+    grid-template-columns: 120px 1fr 80px;
+    gap: 14px;
     align-items: center;
 }
 
 .reports-break-label {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--text-dark);
 }
 
 .reports-break-val {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
     color: var(--text-dark);
     text-align: right;
 }
 
 .reports-break-bar {
-    height: 8px;
+    height: 10px;
     border-radius: 999px;
     background: #E9ECEF;
     overflow: hidden;
@@ -340,25 +311,24 @@ body {
 }
 
 .reports-trend-box {
-    background: #F8F9FA;
-    border-radius: 24px;
-    padding: 25px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: #F8FAFC;
+    border-radius: 22px;
+    padding: 18px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.reports-trend-placeholder {
-    height: 110px;
-    border-radius: 14px;
-    background: rgba(0, 0, 0, 0.06);
+.reports-trend-box canvas {
+    display: block;
+    width: 100%;
 }
 
 .reports-months {
     display: flex;
     justify-content: space-between;
-    margin-top: 20px;
-    font-size: 13px;
+    margin-top: 14px;
+    font-size: 12px;
     font-weight: 700;
-    color: var(--accent-gray);
+    color: #64748B;
 }
 
 .reports-pdf-btn {
@@ -366,13 +336,13 @@ body {
     background-color: var(--primary-green);
     color: var(--white);
     border: none;
-    padding: 14px 16px;
-    border-radius: 16px;
-    font-size: 14px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    font-size: 15px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(46, 139, 87, 0.25);
-    margin-bottom: 12px;
+    box-shadow: 0 6px 16px rgba(46, 139, 87, 0.25);
+    margin-bottom: 16px;
 }
 
 .reports-pdf-btn:active {
@@ -383,9 +353,9 @@ body {
     background-color: rgba(132, 189, 75, 0.18);
     border: 1px solid rgba(132, 189, 75, 0.22);
     color: var(--text-dark);
-    border-radius: 16px;
-    padding: 12px 14px;
-    font-size: 12px;
+    border-radius: 18px;
+    padding: 14px 16px;
+    font-size: 14px;
     font-weight: 600;
 }
 
@@ -496,21 +466,21 @@ body {
 .summary-card-cream {
     background-color: var(--cream-bg);
     border-radius: 25px;
-    padding: 35px 20px;
+    padding: 26px 20px;
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 16px;
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .summary-card-cream .label {
-    font-size: 18px;
+    font-size: 16px;
     color: #333;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     display: block;
 }
 
 .summary-card-cream .value {
-    font-size: 52px;
+    font-size: 42px;
     font-weight: 800;
     color: #1a1a1a;
     display: block;
@@ -546,6 +516,10 @@ body {
     font-size: 16px;
     outline: none;
     color: #333;
+}
+
+textarea.custom-input {
+    resize: none;
 }
 
 select.custom-input {
@@ -665,10 +639,6 @@ select.custom-input {
         /* Emphasize titles */
     }
 
-    .reports-topbar-title {
-        font-size: 24px;
-    }
-
     .status-badge {
         font-size: 14px;
         padding: 8px 16px;
@@ -676,8 +646,8 @@ select.custom-input {
 
     /* Main body padding */
     .main-content {
-        padding: 50px 60px;
-        /* Increased to push content down and avoid header overlap */
+        padding: 28px 60px 50px;
+        /* Reduced top spacing under header */
     }
 
     /* 3. Categories Grid (Dashboard / Modules) */
@@ -696,11 +666,11 @@ select.custom-input {
     }
 
     .summary-card-cream {
-        padding: 50px 30px;
+        padding: 38px 30px;
     }
 
     .summary-card-cream .value {
-        font-size: 64px;
+        font-size: 54px;
     }
 
     /* 4. Forms */
@@ -769,10 +739,9 @@ select.custom-input {
     /* 7. Reports Page 2-Column Layout & Scaling */
     .reports-desktop-split {
         display: grid;
-        grid-template-columns: 450px 1fr;
-        /* Fixed left width, expansive chart on right */
-        gap: 60px;
-        align-items: stretch;
+        grid-template-columns: 1fr 1.35fr;
+        gap: 70px;
+        align-items: start;
     }
 
     .reports-desktop-left {
@@ -788,54 +757,42 @@ select.custom-input {
 
     .reports-kpi-row {
         grid-template-columns: repeat(2, 1fr);
-        gap: 25px;
+        gap: 20px;
     }
 
     .reports-kpi-card {
-        padding: 35px;
-        border-radius: 30px;
+        padding: 30px;
     }
 
     .reports-kpi-label {
-        font-size: 18px;
-        margin-bottom: 12px;
+        font-size: 16px;
+        margin-bottom: 10px;
     }
 
     .reports-kpi-value {
-        font-size: 42px;
+        font-size: 36px;
     }
 
     .reports-section-card {
-        padding: 40px;
-        border-radius: 30px;
+        padding: 32px;
     }
 
     .reports-section-title {
-        font-size: 24px;
-        margin-bottom: 30px;
+        font-size: 20px;
+        margin-bottom: 22px;
     }
 
     .reports-break-row {
-        grid-template-columns: 120px 1fr 100px;
-        gap: 25px;
+        grid-template-columns: 140px 1fr 90px;
+        gap: 22px;
     }
 
     .reports-break-label,
     .reports-break-val {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .reports-trend-box {
-        padding: 40px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .reports-pdf-btn {
-        padding: 20px;
-        font-size: 18px;
-        border-radius: 20px;
+        padding: 22px;
     }
 }

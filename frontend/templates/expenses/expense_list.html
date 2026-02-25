@@ -11,6 +11,16 @@
                     <span>Xərclər</span>
                 </a>
             </div>
+
+            <form method="get" action="" class="search-form" style="margin-top: 20px;">
+                <div style="position: relative;">
+                    <i class="fa-solid fa-search"
+                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                    <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+                        value="{{ request.GET.q|default:'' }}"
+                        style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+                </div>
+            </form>
         </div>
     </header>
 
@@ -18,7 +28,7 @@
         <!-- Weekly Summary Card -->
         <div class="summary-card-cream" style="margin-bottom: 30px;">
             <span class="label">Bu həftə ümumi xərc</span>
-            <span class="value">{{ weekly_total|floatformat:0 }}₼</span>
+            <span class="value">{{ weekly_total_display }}₼</span>
         </div>
 
         <div class="crud-desktop-wrapper">
@@ -53,23 +63,25 @@
                                     placeholder="Xərcin adını daxil edin" class="custom-input">
                             </div>
 
-                            <div class="form-group">
-                                <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
-                                <input type="number" name="amount" step="0.01" placeholder="0.00" required
-                                    class="custom-input">
-                            </div>
+                            <div class="form-row"
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                                <div class="form-group">
+                                    <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
+                                    <input type="number" name="amount" step="0.01" placeholder="0.00" required
+                                        class="custom-input">
+                                </div>
 
+                                <div class="form-group">
+                                    <label>Tarix <span style="color: #dc3545;">*</span></label>
+                                    <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
+                                        class="custom-input">
+                                </div>
+                            </div>
 
                             <div class="form-group form-full-width">
                                 <label>Əlavə Məlumat</label>
                                 <textarea name="additional_info" placeholder="Məsələn: Əlavə qeydlər..."
-                                    class="custom-input" rows="2"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Tarix <span style="color: #dc3545;">*</span></label>
-                                <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
-                                    class="custom-input">
+                                    class="custom-input" rows="3"></textarea>
                             </div>
 
                             <button type="submit" class="add-expense-btn" style="width: 100%;">
@@ -112,8 +124,7 @@
                         </div>
                         <div class="expense-item-amount">
                             <div style="text-align: right;">
-                                <span style="display: block; font-weight: 700;">-{{ expense.amount|floatformat:0
-                                    }}₼</span>
+                                <span style="display: block; font-weight: 700;">-{{ expense.amount_display }}₼</span>
                                 <div
                                     style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
                                     <a href="{% url 'expenses:edit_expense' expense.pk %}"

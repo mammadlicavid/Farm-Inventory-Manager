@@ -6,6 +6,7 @@ from django.db.models.functions import TruncMonth
 from django.shortcuts import render, redirect
 
 from expenses.models import Expense   # Keep this if expenses is installed as "expenses"
+from common.formatting import format_currency
 
 
 @login_required
@@ -40,6 +41,7 @@ def reports_list(request):
         breakdown_list.append({
             "name": name,
             "amount": float(amt),
+            "amount_display": format_currency(amt, 0),
             "pct": pct
         })
 
@@ -63,6 +65,8 @@ def reports_list(request):
     context = {
     "total_expense": float(total_expense),
     "month_expense": float(month_expense),
+    "total_expense_display": format_currency(total_expense, 0),
+    "month_expense_display": format_currency(month_expense, 0),
     "breakdown_list": breakdown_list,
     "trend_months": trend_months,
     "trend_values": trend_values,

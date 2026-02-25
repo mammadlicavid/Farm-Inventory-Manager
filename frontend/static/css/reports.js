@@ -18,6 +18,9 @@
   const canvas = el;
   const ctx = canvas.getContext("2d");
 
+  const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+  canvas.height = isDesktop ? 260 : 190;
+
   const w = canvas.width = canvas.parentElement.clientWidth - 24;
   const h = canvas.height;
 
@@ -44,6 +47,11 @@
   ctx.lineTo(w - pad, h - pad);
   ctx.stroke();
   ctx.globalAlpha = 1;
+
+  const rootStyles = getComputedStyle(document.documentElement);
+  const lineColor = rootStyles.getPropertyValue("--primary-green").trim() || "#2E8B57";
+  ctx.strokeStyle = lineColor;
+  ctx.fillStyle = lineColor;
 
   // line
   ctx.beginPath();

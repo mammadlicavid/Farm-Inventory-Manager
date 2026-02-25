@@ -56,10 +56,18 @@
                                     placeholder="Heyvanın növünü daxil edin" class="custom-input">
                             </div>
 
-                            <div class="form-group">
-                                <label>İdentifikasiya No / Qulaq Birki <span style="color: #dc3545;">*</span></label>
-                                <input type="text" name="identification_no" placeholder="Məsələn: AZ12345"
-                                    class="custom-input" required>
+                            <div class="form-row"
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                                <div class="form-group">
+                                    <label>İdentifikasiya No <span style="color: #dc3545;">*</span></label>
+                                    <input type="text" name="identification_no" placeholder="Məsələn: AZ12345"
+                                        class="custom-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
+                                    <input type="number" name="weight" step="0.1" placeholder="0.0"
+                                        class="custom-input" required>
+                                </div>
                             </div>
 
                             <div class="form-row"
@@ -78,17 +86,11 @@
                                 </div>
                             </div>
 
-                            <div class="form-group">
-                                <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
-                                <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input"
-                                    required>
-                            </div>
-
                             <div class="form-group form-full-width">
                                 <label>Əlavə Məlumat</label>
                                 <textarea name="additional_info"
                                     placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s." class="custom-input"
-                                    rows="2"></textarea>
+                                    rows="3"></textarea>
                             </div>
 
                             <button type="submit" class="add-expense-btn">
