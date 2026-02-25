@@ -15,14 +15,14 @@
     </header>
 
     <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <div class="desktop-layout-grid">
-            <div class="layout-col-left">
-                <!-- Weekly Summary Card -->
-                <div class="summary-card-cream">
-                    <span class="label">Bu həftə ümumi xərc</span>
-                    <span class="value">{{ weekly_total|floatformat:0 }}₼</span>
-                </div>
+        <!-- Weekly Summary Card -->
+        <div class="summary-card-cream">
+            <span class="label">Bu həftə ümumi xərc</span>
+            <span class="value">{{ weekly_total|floatformat:0 }}₼</span>
+        </div>
 
+        <div class="desktop-layout-grid">
+            <div class="desktop-sidebar">
                 <!-- Add Expense Form -->
                 <div class="form-container-white">
                     <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Xərc Əlavə Et</h3>
@@ -70,9 +70,9 @@
                         </button>
                     </form>
                 </div>
-            </div>
-            <div class="layout-col-right">
 
+            </div>
+            <div class="desktop-main">
                 <!-- Recent Expenses History -->
                 <h3 class="recent-expenses-title">Son Xərclər</h3>
                 <div class="expenses-list">
@@ -131,7 +131,6 @@
                     {% endfor %}
                 </div>
             </div>
-        </div>
     </main>
 </div>
 

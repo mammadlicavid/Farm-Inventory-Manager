@@ -29,10 +29,9 @@ body {
 }
 
 .dashboard-container {
-    padding-bottom: 100px;
+    padding-bottom: 80px;
     /* Space for footer */
     max-width: 1200px;
-    /* Desktop constraint */
     width: 100%;
     margin: 0 auto;
     background-color: var(--light-bg);
@@ -101,7 +100,7 @@ body {
 /* Grid */
 .categories-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 15px;
     margin-bottom: 25px;
 }
@@ -195,8 +194,8 @@ body {
     width: 38px;
     height: 38px;
     border-radius: 14px;
-    background-color: rgba(255,255,255,0.18);
-    border: 1px solid rgba(255,255,255,0.25);
+    background-color: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -242,8 +241,8 @@ body {
     background: var(--white);
     border-radius: 18px;
     padding: 14px 14px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .reports-kpi-label {
@@ -271,8 +270,8 @@ body {
     border-radius: 20px;
     padding: 14px;
     margin-bottom: 14px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .reports-section-title {
@@ -321,21 +320,29 @@ body {
     border-radius: 999px;
 }
 
-.bar-green { background: var(--primary-green); }
-.bar-brown { background: var(--accent-brown); }
-.bar-gray  { background: var(--accent-gray); }
+.bar-green {
+    background: var(--primary-green);
+}
+
+.bar-brown {
+    background: var(--accent-brown);
+}
+
+.bar-gray {
+    background: var(--accent-gray);
+}
 
 .reports-trend-box {
     background: #F3F4F6;
     border-radius: 16px;
     padding: 12px;
-    border: 1px solid rgba(0,0,0,0.04);
+    border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .reports-trend-placeholder {
     height: 110px;
     border-radius: 14px;
-    background: rgba(0,0,0,0.06);
+    background: rgba(0, 0, 0, 0.06);
 }
 
 .reports-months {
@@ -357,7 +364,7 @@ body {
     font-size: 14px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(46,139,87,0.25);
+    box-shadow: 0 4px 10px rgba(46, 139, 87, 0.25);
     margin-bottom: 12px;
 }
 
@@ -366,8 +373,8 @@ body {
 }
 
 .reports-note {
-    background-color: rgba(132,189,75,0.18);
-    border: 1px solid rgba(132,189,75,0.22);
+    background-color: rgba(132, 189, 75, 0.18);
+    border: 1px solid rgba(132, 189, 75, 0.22);
     color: var(--text-dark);
     border-radius: 16px;
     padding: 12px 14px;
@@ -621,56 +628,58 @@ select.custom-input {
     color: #E74C04;
 }
 
-/* =========================================
-   RESPONSIVE DESIGN (Tablet & Desktop)
-   ========================================= */
+/* ========================================================================= */
+/* Responsive Desktop & Tablet Layouts */
+/* ========================================================================= */
 
 @media (min-width: 768px) {
-    /* Tablet layout */
-    .categories-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-    }
-    
-    .stats-footer {
-        padding: 20px 40px;
-    }
-}
-
-@media (min-width: 1024px) {
-    /* Desktop layout */
     .dashboard-container {
         border-radius: 20px;
         margin-top: 20px;
         margin-bottom: 20px;
         min-height: calc(100vh - 40px);
+        padding-bottom: 30px;
     }
 
-    .main-header {
-        border-top-left-radius: 20px;
-        border-top-right-radius: 20px;
-        padding: 40px;
+    .stats-footer {
+        position: static;
+        margin-top: 30px;
+        box-shadow: none;
+        border: 1px solid #E5E7EB;
+        justify-content: space-around;
     }
 
-    .main-content {
-        padding: 40px;
-    }
-    
-    .categories-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 25px;
-    }
-
-    /* Two-column layout utility for forms + lists */
     .desktop-layout-grid {
         display: grid;
         grid-template-columns: 350px 1fr;
-        gap: 40px;
+        gap: 30px;
         align-items: start;
     }
-    
-    .form-container-white {
-        position: sticky;
-        top: 20px;
+
+    .reports-kpi-row {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .categories-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 20px;
+    }
+
+    .main-header {
+        padding: 40px 40px 60px 40px;
+        border-bottom-left-radius: 40px;
+        border-bottom-right-radius: 40px;
+    }
+
+    .header-top h1 {
+        font-size: 32px;
+    }
+
+    .main-content {
+        padding: 30px 40px;
+    }
+
+    .summary-card-cream {
+        padding: 45px 20px;
     }
 }
