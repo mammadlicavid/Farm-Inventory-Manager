@@ -29,55 +29,57 @@
             <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
             <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select name="category" id="id_category" required class="custom-input">
-                        <option value="">Kateqoriya seçin...</option>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <div class="desktop-form-grid">
+                    <div class="form-group">
+                        <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                        <select name="category" id="id_category" required class="custom-input">
+                            <option value="">Kateqoriya seçin...</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                <div class="form-group" id="item-field-group">
-                    <label>Alət Növü <span style="color: #dc3545;">*</span></label>
-                    <select name="item" id="id_item" required class="custom-input" disabled>
-                        <option value="">Əvvəlcə kateqoriya seçin...</option>
-                    </select>
-                </div>
+                    <div class="form-group" id="item-field-group">
+                        <label>Alət Növü <span style="color: #dc3545;">*</span></label>
+                        <select name="item" id="id_item" required class="custom-input" disabled>
+                            <option value="">Əvvəlcə kateqoriya seçin...</option>
+                        </select>
+                    </div>
 
-                <div class="form-group" id="manual-name-group" style="display: none;">
-                    <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Alət adını daxil edin"
-                        class="custom-input">
-                </div>
+                    <div class="form-group" id="manual-name-group" style="display: none;">
+                        <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                        <input type="text" name="manual_name" id="manual-name-input" placeholder="Alət adını daxil edin"
+                            class="custom-input">
+                    </div>
 
-                <div class="form-group">
-                    <label>Miqdar (ədəd) <span style="color: #dc3545;">*</span></label>
-                    <input type="number" name="quantity" placeholder="0" class="custom-input" required>
-                </div>
+                    <div class="form-group">
+                        <label>Miqdar (ədəd) <span style="color: #dc3545;">*</span></label>
+                        <input type="number" name="quantity" placeholder="0" class="custom-input" required>
+                    </div>
 
-                <div class="form-group">
-                    <label>Qiymət (₼)</label>
-                    <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
-                </div>
+                    <div class="form-group">
+                        <label>Qiymət (₼)</label>
+                        <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                    </div>
 
-                <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s." class="custom-input"
-                        rows="2"></textarea>
-                </div>
+                    <div class="form-group form-full-width">
+                        <label>Əlavə Məlumat</label>
+                        <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s."
+                            class="custom-input" rows="2"></textarea>
+                    </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Alət Əlavə Et</span>
-                </button>
+                    <button type="submit" class="add-expense-btn">
+                        <i class="fa-solid fa-plus"></i>
+                        Alət Əlavə Et
+                    </button>
+                </div>
             </form>
         </div>
 
         <!-- Tools List -->
         <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
-        <div class="alets-list">
+        <div class="alets-list data-grid-list">
             {% for alet in alets %}
             <div class="expense-item-card">
                 <div class="expense-item-icon">

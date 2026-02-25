@@ -29,72 +29,73 @@
             <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Heyvan Əlavə Et</h3>
             <form action="{% url 'animals:animal_create' %}" method="POST" id="animal-form">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select id="category-select" required class="custom-input">
-                        <option value="" disabled selected>Kateqoriya seçin</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}">{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group" id="subcategory-field-group">
-                    <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select name="subcategory" id="subcategory-select" class="custom-input" required disabled>
-                        <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
-                    </select>
-                </div>
-
-                <div class="form-group" id="manual-name-group" style="display: none;">
-                    <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="manual_name" id="manual-name-input"
-                        placeholder="Heyvanın növünü daxil edin" class="custom-input">
-                </div>
-
-                <div class="form-group">
-                    <label>İdentifikasiya No / Qulaq Birki <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="identification_no" placeholder="Məsələn: AZ12345" class="custom-input"
-                        required>
-                </div>
-
-
-
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="desktop-form-grid">
                     <div class="form-group">
-                        <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
-                        <select name="gender" class="custom-input" required>
-                            <option value="erkek">Erkək</option>
-                            <option value="disi">Dişi</option>
+                        <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                        <select id="category-select" required class="custom-input">
+                            <option value="" disabled selected>Kateqoriya seçin</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Məbləğ (₼)</label>
-                        <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+
+                    <div class="form-group" id="subcategory-field-group">
+                        <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
+                        <select name="subcategory" id="subcategory-select" class="custom-input" required disabled>
+                            <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
+                        </select>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
-                    <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input" required>
-                </div>
+                    <div class="form-group" id="manual-name-group" style="display: none;">
+                        <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
+                        <input type="text" name="manual_name" id="manual-name-input"
+                            placeholder="Heyvanın növünü daxil edin" class="custom-input">
+                    </div>
 
-                <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
-                        class="custom-input" rows="2"></textarea>
-                </div>
+                    <div class="form-group">
+                        <label>İdentifikasiya No / Qulaq Birki <span style="color: #dc3545;">*</span></label>
+                        <input type="text" name="identification_no" placeholder="Məsələn: AZ12345" class="custom-input"
+                            required>
+                    </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Heyvan Əlavə Et</span>
-                </button>
+                    <div class="form-row"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                        <div class="form-group">
+                            <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
+                            <select name="gender" class="custom-input" required>
+                                <option value="erkek">Erkək</option>
+                                <option value="disi">Dişi</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Məbləğ (₼)</label>
+                            <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
+                        <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input" required>
+                    </div>
+
+                    <div class="form-group form-full-width">
+                        <label>Əlavə Məlumat</label>
+                        <textarea name="additional_info" placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
+                            class="custom-input" rows="2"></textarea>
+                    </div>
+
+                    <button type="submit" class="add-expense-btn">
+                        <i class="fa-solid fa-plus"></i>
+                        Heyvan Əlavə Et
+                    </button>
+                </div>
             </form>
         </div>
 
         <!-- Animals History -->
         <h3 class="recent-expenses-title">Heyvan Siyahısı</h3>
-        <div class="animals-list">
+        <div class="animals-list data-grid-list">
             {% for animal in animals %}
             <div class="expense-item-card">
                 <div class="expense-item-icon">
@@ -102,9 +103,12 @@
                 </div>
                 <div class="expense-item-info">
                     <h4>
-                        {{ animal.display_name }} {% if animal.display_subtitle %}<span
-                            style="font-size: 12px; font-weight: 400; color: #666;">{{ animal.display_subtitle
-                            }}</span>{% endif %}
+                        {% if animal.subcategory %}
+                        {{ animal.subcategory.name }}
+                        {% else %}
+                        {{ animal.manual_name }}
+                        {% endif %}
+                        {% if animal.identification_no %}({{ animal.identification_no }}){% endif %}
                     </h4>
                     <span>
                         {{ animal.gender|title }} •

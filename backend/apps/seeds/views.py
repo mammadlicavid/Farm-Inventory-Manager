@@ -24,13 +24,6 @@ def seed_list(request):
     seeds = list(seeds_qs)
     for seed in seeds:
         seed.icon_class = get_seed_icon_for_seed(seed)
-        if hasattr(seed, 'item') and seed.item:
-            seed.display_name = seed.item.name
-            cat_name = seed.item.category.name if seed.item.category else "Kateqoriya yoxdur"
-            seed.display_subtitle = f"({cat_name})"
-        else:
-            seed.display_name = seed.manual_name
-            seed.display_subtitle = "(Digər)"
 
     categories = SeedCategory.objects.all()
     

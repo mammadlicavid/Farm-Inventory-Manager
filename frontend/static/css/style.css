@@ -31,13 +31,20 @@ body {
 .dashboard-container {
     padding-bottom: 80px;
     /* Space for footer */
-    max-width: 1200px;
-    width: 100%;
+    max-width: 100%;
+    /* Default to fluid, constrained by media queries */
     margin: 0 auto;
     background-color: var(--light-bg);
     min-height: 100vh;
     position: relative;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Base mobile container size (matches original app feel) */
+@media (max-width: 768px) {
+    .dashboard-container {
+        max-width: 480px;
+    }
 }
 
 /* Header */
@@ -100,7 +107,7 @@ body {
 /* Grid */
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 15px;
     margin-bottom: 25px;
 }
@@ -628,58 +635,113 @@ select.custom-input {
     color: #E74C04;
 }
 
-/* ========================================================================= */
-/* Responsive Desktop & Tablet Layouts */
-/* ========================================================================= */
+/* =========================================
+   RESPONSIVE DESIGN OVERHAUL (DESKTOP)
+   ========================================= */
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
+
+    /* 1. Centered Container */
     .dashboard-container {
-        border-radius: 20px;
-        margin-top: 20px;
-        margin-bottom: 20px;
-        min-height: calc(100vh - 40px);
-        padding-bottom: 30px;
+        max-width: 1200px;
+        /* Expands to true desktop width */
+        margin: 40px auto;
+        /* Margin from top/bottom forming an app window look */
+        border-radius: 30px;
+        /* Soften edges on big screens */
+        overflow: hidden;
+        /* Hide anything spilling over rounded corners */
     }
 
-    .stats-footer {
-        position: static;
-        margin-top: 30px;
-        box-shadow: none;
-        border: 1px solid #E5E7EB;
-        justify-content: space-around;
-    }
-
-    .desktop-layout-grid {
-        display: grid;
-        grid-template-columns: 350px 1fr;
-        gap: 30px;
-        align-items: start;
-    }
-
-    .reports-kpi-row {
-        grid-template-columns: repeat(4, 1fr);
-    }
-
-    .categories-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 20px;
-    }
-
+    /* 2. Navigation / Header */
     .main-header {
-        padding: 40px 40px 60px 40px;
-        border-bottom-left-radius: 40px;
-        border-bottom-right-radius: 40px;
+        padding: 40px 60px;
+        /* More breathing room */
     }
 
     .header-top h1 {
         font-size: 32px;
+        /* Emphasize titles */
     }
 
+    .reports-topbar-title {
+        font-size: 24px;
+    }
+
+    .status-badge {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+
+    /* Main body padding */
     .main-content {
-        padding: 30px 40px;
+        padding: 40px 60px;
+    }
+
+    /* 3. Categories Grid (Dashboard / Modules) */
+    .categories-grid {
+        grid-template-columns: repeat(4, 1fr);
+        /* 4 columns on desktop instead of 2 */
+        gap: 25px;
+    }
+
+    .category-card {
+        padding: 30px;
+    }
+
+    .category-card span {
+        font-size: 18px;
     }
 
     .summary-card-cream {
-        padding: 45px 20px;
+        padding: 50px 30px;
+    }
+
+    .summary-card-cream .value {
+        font-size: 64px;
+    }
+
+    /* 4. Forms */
+    .form-container-white {
+        padding: 40px;
+    }
+
+    .desktop-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px 30px;
+        align-items: start;
+    }
+
+    /* Utility to force an element to span both columns */
+    .form-full-width {
+        grid-column: 1 / -1;
+    }
+
+    /* Restyle submit button inside grid */
+    .desktop-form-grid .add-expense-btn {
+        grid-column: 1 / -1;
+        width: max-content;
+        margin-left: auto;
+        /* Align right */
+        padding: 16px 40px;
+    }
+
+    /* 5. Cards / Lists */
+    .data-grid-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .expense-item-card {
+        margin-bottom: 0;
+        /* Remove bottom margin because grid gap handles it */
+        height: 100%;
+        /* Uniform card heights */
+    }
+
+    .reports-kpi-row {
+        grid-template-columns: repeat(4, 1fr);
     }
 }

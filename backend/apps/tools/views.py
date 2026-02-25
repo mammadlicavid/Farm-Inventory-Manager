@@ -24,13 +24,6 @@ def tool_list(request):
     alets = list(alets_qs)
     for alet in alets:
         alet.icon_class = get_tool_icon_for_tool(alet)
-        if hasattr(alet, 'item') and alet.item:
-            alet.display_name = alet.item.name
-            cat_name = alet.item.category.name if alet.item.category else "Kateqoriya yoxdur"
-            alet.display_subtitle = f"({cat_name})"
-        else:
-            alet.display_name = alet.manual_name
-            alet.display_subtitle = "(Digər)"
 
     categories = ToolCategory.objects.all()
     
