@@ -20,44 +20,51 @@
       margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       background:var(--bg); color:var(--text);
       min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+      font-size:17px;
     }
     .shell{width:min(900px,100%); display:grid; grid-template-columns:1fr 1fr; gap:22px;}
     .brand{
       background:linear-gradient(180deg,var(--green),#2f7d54);
       color:#fff; border-radius:var(--radius); padding:36px; display:flex; flex-direction:column; justify-content:center;
     }
-    .brand h1{font-size:34px; margin:10px 0}
-    .brand p{opacity:.9; line-height:1.6; margin:0}
+    .brand h1{font-size:36px; margin:10px 0}
+    .brand p{opacity:.9; line-height:1.6; margin:0; font-size:16px}
     .pill{
       margin-top:18px; display:inline-block; padding:8px 12px; border-radius:999px;
-      background:rgba(255,255,255,.18); margin-right:10px; font-size:13px;
+      background:rgba(255,255,255,.18); margin-right:10px; font-size:14px;
     }
     .card{
       background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
       padding:28px; display:flex; flex-direction:column; justify-content:center;
     }
-    h2{margin:0 0 6px}
-    .sub{margin:0 0 18px; color:var(--muted)}
+    h2{margin:0 0 8px; font-size:26px}
+    .sub{margin:0 0 18px; color:var(--muted); font-size:15px}
     .messages{
       margin:0 0 12px; padding:12px; border-radius:12px;
       background:#fee2e2; color:#b91c1c; font-size:13px;
     }
     .messages p{margin:6px 0}
-    label{display:block; font-size:13px; font-weight:600; margin:0 0 8px}
+    label{display:block; font-size:15px; font-weight:600; margin:0 0 8px}
     input{
       width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
-      font-size:14px; margin:0 0 14px; background:#fff;
+      font-size:16px; margin:0 0 14px; background:#fff;
     }
     input:focus{outline:none; border-color:var(--green); box-shadow:0 0 0 3px rgba(46,139,87,.2)}
     .btn{
-      width:100%; padding:12px; border:none; border-radius:12px;
-      background:var(--green); color:#fff; font-weight:700; cursor:pointer;
+      width:100%; padding:14px; border:none; border-radius:12px;
+      background:var(--green); color:#fff; font-weight:700; cursor:pointer; font-size:16px;
     }
     .btn:hover{background:var(--green-hover)}
-    .footer{margin-top:14px; text-align:center; font-size:13px; color:var(--muted)}
+    .footer{margin-top:14px; text-align:center; font-size:15px; color:var(--muted)}
     a{color:var(--green); text-decoration:none; font-weight:600}
     a:hover{text-decoration:underline}
-    @media (max-width:850px){ .shell{grid-template-columns:1fr} .brand{display:none;} }
+    @media (max-width:850px){
+      .shell{grid-template-columns:1fr; gap:16px;}
+      .brand{order:-1; padding:24px;}
+      .brand h1{font-size:28px;}
+      .brand p{font-size:15px;}
+      .pill{margin-top:12px; font-size:13px;}
+    }
   </style>
 </head>
 

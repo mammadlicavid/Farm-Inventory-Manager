@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from .models import Expense, ExpenseCategory, ExpenseSubCategory
 from common.messages import add_crud_success_message
 from common.icons import get_expense_icon
+from common.formatting import format_currency
 
 
 def _get_display_additional_info(expense: Expense) -> str:
@@ -50,6 +51,7 @@ def expense_list(request):
     for exp in expenses:
         exp.display_additional_info = _get_display_additional_info(exp)
         exp.icon_class = get_expense_icon(exp)
+        exp.amount_display = format_currency(exp.amount, 0)
     
     # Categories for the form
     categories = ExpenseCategory.objects.all().prefetch_related('subcategories')
@@ -58,6 +60,7 @@ def expense_list(request):
         'expenses': expenses,
         'total_amount': total_amount,
         'weekly_total': weekly_total,
+        'weekly_total_display': format_currency(weekly_total, 0),
         'categories': categories,
         'today': timezone.now().date(),
         'yesterday': timezone.now().date() - timedelta(days=1),
