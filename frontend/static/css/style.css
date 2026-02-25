@@ -29,10 +29,11 @@ body {
 }
 
 .dashboard-container {
-    padding-bottom: 80px;
+    padding-bottom: 100px;
     /* Space for footer */
-    max-width: 480px;
-    /* Mobile simulation */
+    max-width: 1200px;
+    /* Desktop constraint */
+    width: 100%;
     margin: 0 auto;
     background-color: var(--light-bg);
     min-height: 100vh;
@@ -618,4 +619,58 @@ select.custom-input {
     font-size: 22px;
     font-weight: 800;
     color: #E74C04;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN (Tablet & Desktop)
+   ========================================= */
+
+@media (min-width: 768px) {
+    /* Tablet layout */
+    .categories-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    .stats-footer {
+        padding: 20px 40px;
+    }
+}
+
+@media (min-width: 1024px) {
+    /* Desktop layout */
+    .dashboard-container {
+        border-radius: 20px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        min-height: calc(100vh - 40px);
+    }
+
+    .main-header {
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        padding: 40px;
+    }
+
+    .main-content {
+        padding: 40px;
+    }
+    
+    .categories-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 25px;
+    }
+
+    /* Two-column layout utility for forms + lists */
+    .desktop-layout-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 40px;
+        align-items: start;
+    }
+    
+    .form-container-white {
+        position: sticky;
+        top: 20px;
+    }
 }

@@ -15,114 +15,122 @@
     </header>
 
     <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <!-- Weekly Summary Card -->
-        <div class="summary-card-cream">
-            <span class="label">Bu həftə ümumi xərc</span>
-            <span class="value">{{ weekly_total|floatformat:0 }}₼</span>
-        </div>
-
-        <!-- Add Expense Form -->
-        <div class="form-container-white">
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Xərc Əlavə Et</h3>
-            <form action="{% url 'expenses:add_expense' %}" method="POST" id="expense-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select id="category-select" required class="custom-input">
-                        <option value="" disabled selected>Kateqoriya seçin</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}">{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
+        <div class="desktop-layout-grid">
+            <div class="layout-col-left">
+                <!-- Weekly Summary Card -->
+                <div class="summary-card-cream">
+                    <span class="label">Bu həftə ümumi xərc</span>
+                    <span class="value">{{ weekly_total|floatformat:0 }}₼</span>
                 </div>
 
-                <div class="form-group" id="subcategory-field-group">
-                    <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select name="subcategory" id="subcategory-select" required class="custom-input" disabled>
-                        <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
-                    </select>
-                </div>
+                <!-- Add Expense Form -->
+                <div class="form-container-white">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Xərc Əlavə Et</h3>
+                    <form action="{% url 'expenses:add_expense' %}" method="POST" id="expense-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select id="category-select" required class="custom-input">
+                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                <div class="form-group" id="manual-name-group" style="display: none;">
-                    <label>Xərcin Adı (Digər) <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Xərcin adını daxil edin"
-                        class="custom-input">
-                </div>
+                        <div class="form-group" id="subcategory-field-group">
+                            <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select name="subcategory" id="subcategory-select" required class="custom-input" disabled>
+                                <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
+                            </select>
+                        </div>
 
-                <div class="form-group">
-                    <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
-                    <input type="number" name="amount" step="0.01" placeholder="0.00" required class="custom-input">
-                </div>
+                        <div class="form-group" id="manual-name-group" style="display: none;">
+                            <label>Xərcin Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                            <input type="text" name="manual_name" id="manual-name-input"
+                                placeholder="Xərcin adını daxil edin" class="custom-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
+                            <input type="number" name="amount" step="0.01" placeholder="0.00" required
+                                class="custom-input">
+                        </div>
 
 
-                <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Əlavə qeydlər..." class="custom-input"
-                        rows="2"></textarea>
-                </div>
+                        <div class="form-group">
+                            <label>Əlavə Məlumat</label>
+                            <textarea name="additional_info" placeholder="Məsələn: Əlavə qeydlər..."
+                                class="custom-input" rows="2"></textarea>
+                        </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Xərc Əlavə Et</span>
-                </button>
-            </form>
-        </div>
+                        <button type="submit" class="add-expense-btn">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Xərc Əlavə Et</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="layout-col-right">
 
-        <!-- Recent Expenses History -->
-        <h3 class="recent-expenses-title">Son Xərclər</h3>
-        <div class="expenses-list">
-            {% for expense in expenses %}
-            <div class="expense-item-card">
-                <div class="expense-item-icon">
-                    <i class="{{ expense.icon_class }}"></i>
-                </div>
-                <div class="expense-item-info">
-                    <h4>{{ expense.title }}</h4>
-                    <span>
-                        {% if expense.subcategory %}
-                        {{ expense.subcategory.name }}
-                        {% else %}
-                        {{ expense.manual_name }}
-                        {% endif %} •
-                        {% if expense.date == today %}
-                        Bu gün
-                        {% elif expense.date == yesterday %}
-                        Dünən
-                        {% else %}
-                        {{ expense.date|date:"d.m.Y" }}
-                        {% endif %}
-                        {% if expense.display_additional_info %}
-                        • {{ expense.display_additional_info }}
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="expense-item-amount">
-                    <div style="text-align: right;">
-                        <span style="display: block; font-weight: 700;">-{{ expense.amount|floatformat:0 }}₼</span>
-                        <div
-                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
-                            <a href="{% url 'expenses:edit_expense' expense.pk %}"
-                                style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
-                                <i class="fa-solid fa-pen-to-square"></i> Düzəliş
-                            </a>
-                            <form action="{% url 'expenses:delete_expense' expense.pk %}" method="POST"
-                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;"
-                                onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
-                                {% csrf_token %}
-                                <button type="submit"
-                                    style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
-                                    <i class="fa-solid fa-trash"></i> Sil
-                                </button>
-                            </form>
+                <!-- Recent Expenses History -->
+                <h3 class="recent-expenses-title">Son Xərclər</h3>
+                <div class="expenses-list">
+                    {% for expense in expenses %}
+                    <div class="expense-item-card">
+                        <div class="expense-item-icon">
+                            <i class="{{ expense.icon_class }}"></i>
+                        </div>
+                        <div class="expense-item-info">
+                            <h4>{{ expense.title }}</h4>
+                            <span>
+                                {% if expense.subcategory %}
+                                {{ expense.subcategory.name }}
+                                {% else %}
+                                {{ expense.manual_name }}
+                                {% endif %} •
+                                {% if expense.date == today %}
+                                Bu gün
+                                {% elif expense.date == yesterday %}
+                                Dünən
+                                {% else %}
+                                {{ expense.date|date:"d.m.Y" }}
+                                {% endif %}
+                                {% if expense.display_additional_info %}
+                                • {{ expense.display_additional_info }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="expense-item-amount">
+                            <div style="text-align: right;">
+                                <span style="display: block; font-weight: 700;">-{{ expense.amount|floatformat:0
+                                    }}₼</span>
+                                <div
+                                    style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                                    <a href="{% url 'expenses:edit_expense' expense.pk %}"
+                                        style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                        <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                                    </a>
+                                    <form action="{% url 'expenses:delete_expense' expense.pk %}" method="POST"
+                                        style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;"
+                                        onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                            style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                            <i class="fa-solid fa-trash"></i> Sil
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    {% empty %}
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <p>Hələ heç bir xərc qeydə alınmayıb</p>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% empty %}
-            <div style="text-align: center; padding: 40px; color: #999;">
-                <p>Hələ heç bir xərc qeydə alınmayıb</p>
-            </div>
-            {% endfor %}
         </div>
     </main>
 </div>

@@ -24,107 +24,114 @@
     </header>
 
     <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <!-- Add Tool Form -->
-        <div class="form-container-white">
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
-            <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select name="category" id="id_category" required class="custom-input">
-                        <option value="">Kateqoriya seçin...</option>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+        <div class="desktop-layout-grid">
+            <div class="layout-col-left">
+                <!-- Add Tool Form -->
+                <div class="form-container-white">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
+                    <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select name="category" id="id_category" required class="custom-input">
+                                <option value="">Kateqoriya seçin...</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                <div class="form-group" id="item-field-group">
-                    <label>Alət Növü <span style="color: #dc3545;">*</span></label>
-                    <select name="item" id="id_item" required class="custom-input" disabled>
-                        <option value="">Əvvəlcə kateqoriya seçin...</option>
-                    </select>
-                </div>
+                        <div class="form-group" id="item-field-group">
+                            <label>Alət Növü <span style="color: #dc3545;">*</span></label>
+                            <select name="item" id="id_item" required class="custom-input" disabled>
+                                <option value="">Əvvəlcə kateqoriya seçin...</option>
+                            </select>
+                        </div>
 
-                <div class="form-group" id="manual-name-group" style="display: none;">
-                    <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Alət adını daxil edin"
-                        class="custom-input">
-                </div>
+                        <div class="form-group" id="manual-name-group" style="display: none;">
+                            <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                            <input type="text" name="manual_name" id="manual-name-input"
+                                placeholder="Alət adını daxil edin" class="custom-input">
+                        </div>
 
-                <div class="form-group">
-                    <label>Miqdar (ədəd) <span style="color: #dc3545;">*</span></label>
-                    <input type="number" name="quantity" placeholder="0" class="custom-input" required>
-                </div>
+                        <div class="form-group">
+                            <label>Miqdar (ədəd) <span style="color: #dc3545;">*</span></label>
+                            <input type="number" name="quantity" placeholder="0" class="custom-input" required>
+                        </div>
 
-                <div class="form-group">
-                    <label>Qiymət (₼)</label>
-                    <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
-                </div>
+                        <div class="form-group">
+                            <label>Qiymət (₼)</label>
+                            <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                        </div>
 
-                <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s." class="custom-input"
-                        rows="2"></textarea>
-                </div>
+                        <div class="form-group">
+                            <label>Əlavə Məlumat</label>
+                            <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s."
+                                class="custom-input" rows="2"></textarea>
+                        </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Alət Əlavə Et</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- Tools List -->
-        <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
-        <div class="alets-list">
-            {% for alet in alets %}
-            <div class="expense-item-card">
-                <div class="expense-item-icon">
-                    <i class="{{ alet.icon_class }}"></i>
-                </div>
-                <div class="expense-item-info">
-                    <h4>
-                        {% if alet.item %}
-                        {{ alet.item.name }} <span style="font-size: 12px; font-weight: 400; color: #666;">({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})</span>
-                        {% else %}
-                        {{ alet.manual_name }} <span
-                            style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
-                        {% endif %}
-                    </h4>
-                    <span>
-                        Miqdar: {{ alet.quantity }} ədəd
-                        {% if alet.additional_info %}
-                        • {{ alet.additional_info }}
-                        {% endif %}
-                    </span>
-                </div>
-                <div style="text-align: right;">
-                    <div class="expense-item-amount" style="color: var(--primary-green);">
-                        {{ alet.price|floatformat:0 }}₼
-                    </div>
-                    <div
-                        style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
-                        <a href="{% url 'tools:tool_update' alet.pk %}"
-                            style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
-                            <i class="fa-solid fa-pen-to-square"></i> Düzəliş
-                        </a>
-                        <form action="{% url 'tools:tool_delete' alet.pk %}" method="POST"
-                            style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
-                            {% csrf_token %}
-                            <button type="submit"
-                                style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
-                                <i class="fa-solid fa-trash"></i> Sil
-                            </button>
-                        </form>
-                    </div>
+                        <button type="submit" class="add-expense-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Alət Əlavə Et</span>
+                        </button>
+                    </form>
                 </div>
             </div>
-            {% empty %}
-            <div style="text-align: center; padding: 40px; color: #999;">
-                <p>Hələ heç bir alət qeydə alınmayıb</p>
+            <div class="layout-col-right">
+
+                <!-- Tools List -->
+                <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
+                <div class="alets-list">
+                    {% for alet in alets %}
+                    <div class="expense-item-card">
+                        <div class="expense-item-icon">
+                            <i class="{{ alet.icon_class }}"></i>
+                        </div>
+                        <div class="expense-item-info">
+                            <h4>
+                                {% if alet.item %}
+                                {{ alet.item.name }} <span style="font-size: 12px; font-weight: 400; color: #666;">({{
+                                    alet.item.category.name|default:"Kateqoriya yoxdur" }})</span>
+                                {% else %}
+                                {{ alet.manual_name }} <span
+                                    style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                                {% endif %}
+                            </h4>
+                            <span>
+                                Miqdar: {{ alet.quantity }} ədəd
+                                {% if alet.additional_info %}
+                                • {{ alet.additional_info }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="expense-item-amount" style="color: var(--primary-green);">
+                                {{ alet.price|floatformat:0 }}₼
+                            </div>
+                            <div
+                                style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                                <a href="{% url 'tools:tool_update' alet.pk %}"
+                                    style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                    <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                                </a>
+                                <form action="{% url 'tools:tool_delete' alet.pk %}" method="POST"
+                                    style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                        <i class="fa-solid fa-trash"></i> Sil
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <p>Hələ heç bir alət qeydə alınmayıb</p>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-            {% endfor %}
         </div>
     </main>
 </div>

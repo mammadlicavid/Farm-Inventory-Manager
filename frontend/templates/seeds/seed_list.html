@@ -24,119 +24,126 @@
     </header>
 
     <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <!-- Add Seed Form -->
-        <div class="form-container-white">
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Toxum Əlavə Et</h3>
-            <form action="{% url 'seeds:seed_create' %}" method="POST" id="seed-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select id="category-select" name="category" required class="custom-input">
-                        <option value="" disabled selected>Kateqoriya seçin</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}">{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+        <div class="desktop-layout-grid">
+            <div class="layout-col-left">
+                <!-- Add Seed Form -->
+                <div class="form-container-white">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Toxum Əlavə Et</h3>
+                    <form action="{% url 'seeds:seed_create' %}" method="POST" id="seed-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select id="category-select" name="category" required class="custom-input">
+                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                <div class="form-group" id="item-field-group">
-                    <label>Toxum Növü <span style="color: #dc3545;">*</span></label>
-                    <select id="item-select" name="item" required class="custom-input" disabled>
-                        <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
-                    </select>
-                </div>
+                        <div class="form-group" id="item-field-group">
+                            <label>Toxum Növü <span style="color: #dc3545;">*</span></label>
+                            <select id="item-select" name="item" required class="custom-input" disabled>
+                                <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
+                            </select>
+                        </div>
 
-                <div class="form-group" id="manual-name-group" style="display: none;">
-                    <label>Toxumun Adı (Digər) <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Toxumun adını daxil edin"
-                        class="custom-input">
-                </div>
+                        <div class="form-group" id="manual-name-group" style="display: none;">
+                            <label>Toxumun Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                            <input type="text" name="manual_name" id="manual-name-input"
+                                placeholder="Toxumun adını daxil edin" class="custom-input">
+                        </div>
 
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group">
-                        <label>Miqdar <span style="color: #dc3545;">*</span></label>
-                        <input type="number" name="quantity" step="0.01" placeholder="0.00" class="custom-input"
-                            required>
-                    </div>
-                    <div class="form-group">
-                        <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
-                        <select name="unit" class="custom-input" required>
-                            <option value="kg">kg</option>
-                            <option value="ton">ton</option>
-                            <option value="qram">qram</option>
-                            <option value="ədəd">ədəd</option>
-                        </select>
-                    </div>
-                </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                                <input type="number" name="quantity" step="0.01" placeholder="0.00" class="custom-input"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
+                                <select name="unit" class="custom-input" required>
+                                    <option value="kg">kg</option>
+                                    <option value="ton">ton</option>
+                                    <option value="qram">qram</option>
+                                    <option value="ədəd">ədəd</option>
+                                </select>
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Məbləğ (₼)</label>
-                    <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
-                </div>
+                        <div class="form-group">
+                            <label>Məbləğ (₼)</label>
+                            <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                        </div>
 
-                <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Toxumun vəziyyəti və s." class="custom-input"
-                        rows="2"></textarea>
-                </div>
+                        <div class="form-group">
+                            <label>Əlavə Məlumat</label>
+                            <textarea name="additional_info" placeholder="Məsələn: Toxumun vəziyyəti və s."
+                                class="custom-input" rows="2"></textarea>
+                        </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Toxum Əlavə Et</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- Seeds History -->
-        <h3 class="recent-expenses-title">Toxum Siyahısı</h3>
-        <div class="seeds-list">
-            {% for seed in seeds %}
-            <div class="expense-item-card">
-                <div class="expense-item-icon">
-                    <i class="{{ seed.icon_class }}"></i>
-                </div>
-                <div class="expense-item-info">
-                    <h4>
-                        {% if seed.item %}
-                        {{ seed.item.name }} <span style="font-size: 12px; font-weight: 400; color: #666;">({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})</span>
-                        {% else %}
-                        {{ seed.manual_name }} <span
-                            style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
-                        {% endif %}
-                    </h4>
-                    <span>
-                        {{ seed.quantity }} {{ seed.unit }}
-                        {% if seed.additional_info %}
-                        • {{ seed.additional_info }}
-                        {% endif %}
-                    </span>
-                </div>
-                <div style="text-align: right;">
-                    <div class="expense-item-amount" style="color: var(--primary-green);">
-                        {{ seed.price|floatformat:0 }}₼
-                    </div>
-                    <div
-                        style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
-                        <a href="{% url 'seeds:seed_update' seed.pk %}"
-                            style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
-                            <i class="fa-solid fa-pen-to-square"></i> Düzəliş
-                        </a>
-                        <form action="{% url 'seeds:seed_delete' seed.pk %}" method="POST"
-                            style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
-                            {% csrf_token %}
-                            <button type="submit"
-                                style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
-                                <i class="fa-solid fa-trash"></i> Sil
-                            </button>
-                        </form>
-                    </div>
+                        <button type="submit" class="add-expense-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Toxum Əlavə Et</span>
+                        </button>
+                    </form>
                 </div>
             </div>
-            {% empty %}
-            <div style="text-align: center; padding: 40px; color: #999;">
-                <p>Hələ heç bir toxum qeydə alınmayıb</p>
+            <div class="layout-col-right">
+
+                <!-- Seeds History -->
+                <h3 class="recent-expenses-title">Toxum Siyahısı</h3>
+                <div class="seeds-list">
+                    {% for seed in seeds %}
+                    <div class="expense-item-card">
+                        <div class="expense-item-icon">
+                            <i class="{{ seed.icon_class }}"></i>
+                        </div>
+                        <div class="expense-item-info">
+                            <h4>
+                                {% if seed.item %}
+                                {{ seed.item.name }} <span style="font-size: 12px; font-weight: 400; color: #666;">({{
+                                    seed.item.category.name|default:"Kateqoriya yoxdur" }})</span>
+                                {% else %}
+                                {{ seed.manual_name }} <span
+                                    style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                                {% endif %}
+                            </h4>
+                            <span>
+                                {{ seed.quantity }} {{ seed.unit }}
+                                {% if seed.additional_info %}
+                                • {{ seed.additional_info }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="expense-item-amount" style="color: var(--primary-green);">
+                                {{ seed.price|floatformat:0 }}₼
+                            </div>
+                            <div
+                                style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                                <a href="{% url 'seeds:seed_update' seed.pk %}"
+                                    style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                    <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                                </a>
+                                <form action="{% url 'seeds:seed_delete' seed.pk %}" method="POST"
+                                    style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                        <i class="fa-solid fa-trash"></i> Sil
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <p>Hələ heç bir toxum qeydə alınmayıb</p>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-            {% endfor %}
         </div>
     </main>
 </div>
