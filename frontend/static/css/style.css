@@ -645,17 +645,18 @@ select.custom-input {
     .dashboard-container {
         max-width: 1200px;
         /* Expands to true desktop width */
-        margin: 40px auto;
+        margin: 2vh auto;
         /* Margin from top/bottom forming an app window look */
-        border-radius: 30px;
+        border-radius: 24px;
         /* Soften edges on big screens */
         overflow: hidden;
         /* Hide anything spilling over rounded corners */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
     /* 2. Navigation / Header */
     .main-header {
-        padding: 40px 60px;
+        padding: 30px 40px;
         /* More breathing room */
     }
 
@@ -675,7 +676,7 @@ select.custom-input {
 
     /* Main body padding */
     .main-content {
-        padding: 40px 60px;
+        padding: 30px 40px;
     }
 
     /* 3. Categories Grid (Dashboard / Modules) */
@@ -714,9 +715,7 @@ select.custom-input {
     }
 
     /* Override inner form grid to single column if within the new CRUD layout sidebar */
-    .crud-form-column .desktop-form-grid {
-        grid-template-columns: 1fr;
-    }
+    /* REMOVED: Since we are going 50/50 split, inner grids can remain 2 columns! */
 
     /* Utility to force an element to span both columns */
     .form-full-width {
@@ -735,10 +734,15 @@ select.custom-input {
     /* 5. CRUD 2-Column Global Layout Wrapper */
     .crud-desktop-wrapper {
         display: grid;
-        grid-template-columns: 350px 1fr;
-        /* 350px fixed left sidebar for forms, rest for list */
-        gap: 40px;
+        grid-template-columns: 1fr 1fr;
+        /* 50/50 fixed split for desktop */
+        gap: 60px;
         align-items: start;
+    }
+
+    .crud-list-column {
+        padding-top: 15px;
+        /* Push item list down slightly as requested */
     }
 
     .crud-form-column {
@@ -761,7 +765,27 @@ select.custom-input {
         /* Uniform card heights */
     }
 
+    /* 7. Reports Page 2-Column Layout */
+    .reports-desktop-split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: start;
+    }
+
+    .reports-desktop-left {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .reports-desktop-left .reports-kpi-row,
+    .reports-desktop-left .reports-section-card {
+        margin-bottom: 0;
+        /* Let flex gap handle spacing */
+    }
+
     .reports-kpi-row {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 }

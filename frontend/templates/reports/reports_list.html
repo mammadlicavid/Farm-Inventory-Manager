@@ -15,46 +15,62 @@
 
     <div class="main-content reports-content">
 
-        <div class="reports-kpi-row">
-            <div class="reports-kpi-card">
-                <div class="reports-kpi-label">Ümumi Xərc</div>
-                <div class="reports-kpi-value">{{ total_expense }}₼</div>
-            </div>
-
-            <div class="reports-kpi-card">
-                <div class="reports-kpi-label">Aylıq Xərc</div>
-                <div class="reports-kpi-value">{{ month_expense }}₼</div>
-            </div>
-        </div>
-
-        <div class="reports-section-card">
-            <div class="reports-section-title">Xərclərin Bölgüsü</div>
-
-            <div class="reports-breakdown">
-                {% for c in breakdown_list %}
-                <div class="reports-break-row">
-                    <div class="reports-break-label">{{ c.name }}</div>
-                    <div class="reports-break-bar">
-                        <span class="bar-fill bar-green" style="width: {{ c.pct }}%"></span>
+        <div class="reports-desktop-split">
+            <!-- LEFT COLUMN -->
+            <div class="reports-desktop-left">
+                <div class="reports-kpi-row">
+                    <div class="reports-kpi-card">
+                        <div class="reports-kpi-label">Ümumi Xərc</div>
+                        <div class="reports-kpi-value">{{ total_expense }}₼</div>
                     </div>
-                    <div class="reports-break-val">{{ c.amount }}₼</div>
+
+                    <div class="reports-kpi-card">
+                        <div class="reports-kpi-label">Aylıq Xərc</div>
+                        <div class="reports-kpi-value">{{ month_expense }}₼</div>
+                    </div>
                 </div>
-                {% empty %}
-                <div class="reports-empty">Məlumat yoxdur</div>
-                {% endfor %}
+
+                <div class="reports-section-card">
+                    <div class="reports-section-title">Xərclərin Bölgüsü</div>
+
+                    <div class="reports-breakdown">
+                        {% for c in breakdown_list %}
+                        <div class="reports-break-row">
+                            <div class="reports-break-label">{{ c.name }}</div>
+                            <div class="reports-break-bar">
+                                <span class="bar-fill bar-green" style="width: {{ c.pct }}%"></span>
+                            </div>
+                            <div class="reports-break-val">{{ c.amount }}₼</div>
+                        </div>
+                        {% empty %}
+                        <div class="reports-empty">Məlumat yoxdur</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="button" class="reports-pdf-btn">
+                    ⬇ Hesabat Yüklə (PDF)
+                </button>
+
+                <div class="reports-note">
+                    Bu hesabatlar üzrə xərclər və vergi qeydlərinizi qeyd edə bilərsiniz
+                </div>
             </div>
-        </div>
 
-        <div class="reports-section-card">
-            <div class="reports-section-title">Aylıq Tendensiya</div>
+            <!-- RIGHT COLUMN -->
+            <div class="reports-desktop-right">
+                <div class="reports-section-card" style="height: 100%;">
+                    <div class="reports-section-title">Aylıq Tendensiya</div>
 
-            <div class="reports-trend-box">
-                <canvas id="reportsTrendChart" height="140"></canvas>
+                    <div class="reports-trend-box">
+                        <canvas id="reportsTrendChart" height="140"></canvas>
 
-                <div class="reports-months" id="reportsMonthsRow">
-                    {% for m in trend_months %}
-                    <span>{{ m }}</span>
-                    {% endfor %}
+                        <div class="reports-months" id="reportsMonthsRow">
+                            {% for m in trend_months %}
+                            <span>{{ m }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -64,15 +80,7 @@
         "months": {{ trend_months|safe }},
         "values": {{ trend_values|safe }}
         }
-</script>
-
-        <button type="button" class="reports-pdf-btn">
-            ⬇ Hesabat Yüklə (PDF)
-        </button>
-
-        <div class="reports-note">
-            Bu hesabatlar üzrə xərclər və vergi qeydlərinizi qeyd edə bilərsiniz
-        </div>
+        </script>
 
     </div>
 
