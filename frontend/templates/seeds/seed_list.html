@@ -97,8 +97,15 @@
                 </div>
                 <div class="expense-item-info">
                     <h4>
-                        {{ seed.display_name }} <span style="font-size: 12px; font-weight: 400; color: #666;">{{
-                            seed.display_subtitle }}</span>
+                        {% if seed.item %}
+                        {{ seed.item.name }}
+                        <span style="font-size: 12px; font-weight: 400; color: #666;">
+                            ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
+                        </span>
+                        {% else %}
+                        {{ seed.manual_name }} <span
+                            style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                        {% endif %}
                     </h4>
                     <span>
                         {{ seed.quantity }} {{ seed.unit }}

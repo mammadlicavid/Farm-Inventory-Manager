@@ -85,8 +85,15 @@
                 </div>
                 <div class="expense-item-info">
                     <h4>
-                        {{ alet.display_name }} <span style="font-size: 12px; font-weight: 400; color: #666;">{{
-                            alet.display_subtitle }}</span>
+                        {% if alet.item %}
+                        {{ alet.item.name }}
+                        <span style="font-size: 12px; font-weight: 400; color: #666;">
+                            ({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})
+                        </span>
+                        {% else %}
+                        {{ alet.manual_name }} <span
+                            style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                        {% endif %}
                     </h4>
                     <span>
                         Miqdar: {{ alet.quantity }} ədəd
