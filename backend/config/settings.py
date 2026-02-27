@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "animals",
     "expenses",
     "reports",
+    "sync",
 ]
 
 
