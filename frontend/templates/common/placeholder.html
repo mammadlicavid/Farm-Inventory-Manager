@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="main-header">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'dashboard' %}" class="back-btn-box" style="margin-top: 10px;">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Tеzliklə</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content" style="text-align: center; padding-top: 100px;">
+        <i class="fa-solid fa-tools" style="font-size: 60px; color: var(--primary-green); margin-bottom: 20px;"></i>
+        <h2 style="font-size: 24px; color: #333;">Tezliklə!</h2>
+        <p style="color: #666; font-size: 16px;">Bu səhifə hazırda hazırlanma mərhələsindədir.</p>
+    </main>
+</div>
+{% endblock %}

@@ -29,7 +29,7 @@ body {
 }
 
 .dashboard-container {
-    padding-bottom: 80px;
+    padding-bottom: 120px;
     /* Space for footer */
     max-width: 100%;
     /* Default to fluid, constrained by media queries */
@@ -397,16 +397,13 @@ body {
 
 /* Footer Stats */
 .stats-footer {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
+    position: relative;
+    width: 100%;
+    margin-top: 20px;
     background: white;
     border-radius: 20px;
-    padding: 15px 25px;
-    display: flex;
-    justify-content: space-between;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    padding: 20px 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
 .stat-item {
@@ -795,4 +792,92 @@ select.custom-input {
     .reports-trend-box {
         padding: 22px;
     }
+}
+
+/* =========================================
+   BOTTOM NAVIGATION BAR
+   ========================================= */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    background-color: var(--white);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 15px 20px;
+    /* Extra padding at bottom */
+    box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    .bottom-nav {
+        max-width: 480px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .bottom-nav {
+        max-width: 1200px;
+        border-bottom-left-radius: 24px;
+        border-bottom-right-radius: 24px;
+        bottom: 2vh;
+        /* Align with dashboard-container margin */
+    }
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #9ca3af;
+    /* Gray text for inactive */
+    font-size: 11px;
+    font-weight: 600;
+    gap: 5px;
+    transition: color 0.2s;
+    min-width: 60px;
+}
+
+.nav-item i {
+    font-size: 20px;
+}
+
+.nav-item.active {
+    color: var(--primary-green);
+}
+
+.nav-item:hover {
+    color: var(--primary-green);
+}
+
+.nav-add-btn {
+    position: relative;
+    top: -20px;
+    /* Overlap slightly out of the bar */
+    background-color: var(--primary-green);
+    color: var(--white);
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    /* Rounded square */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.4);
+    text-decoration: none;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.nav-add-btn:hover {
+    background-color: var(--dark-green);
+}
+
+.nav-add-btn:active {
+    transform: scale(0.95);
 }

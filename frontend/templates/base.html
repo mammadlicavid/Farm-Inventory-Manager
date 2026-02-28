@@ -111,6 +111,44 @@
             });
         })();
     </script>
+
+    <!-- Bottom Navigation Bar -->
+    {% if user.is_authenticated %}
+    <nav class="bottom-nav">
+        <!-- Dashboard / Ana Səhifə -->
+        <a href="{% url 'dashboard' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'index' %}active{% endif %}">
+            <i class="fa-solid fa-house"></i>
+            <span>Ana Səhifə</span>
+        </a>
+
+        <!-- Məhsullar (Products placeholder) -->
+        <a href="{% url 'inventory:products' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
+            <i class="fa-solid fa-cube"></i>
+            <span>Məhsullar</span>
+        </a>
+
+        <!-- Add Button (+) -->
+        <a href="{% url 'inventory:add_placeholder' %}" class="nav-add-btn">
+            <i class="fa-solid fa-plus"></i>
+        </a>
+
+        <!-- Xərclər (Expenses) -->
+        <a href="{% url 'expenses:expense_list' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <span>Xərclər</span>
+        </a>
+
+        <!-- Hesabat (Reports) -->
+        <a href="{% url 'reports:list' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+            <i class="fa-solid fa-file-lines"></i>
+            <span>Hesabat</span>
+        </a>
+    </nav>
+    {% endif %}
 </body>
 
 </html>

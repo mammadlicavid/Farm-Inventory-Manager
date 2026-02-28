@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container" style="background-color: var(--light-bg); min-height: 100vh;">
+    <!-- Header -->
+    <header class="main-header" style="border-radius: 0 0 30px 30px; padding-bottom: 30px;">
+        <div class="header-content" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px;">
+            <a href="{% url 'dashboard' %}" style="color: white; text-decoration: none; font-size: 18px;">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h1 style="font-size: 20px; font-weight: 700; margin: 0;">Yeni Məhsul Əlavə Et</h1>
+        </div>
+    </header>
+
+    <main class="main-content" style="padding: 20px 20px 100px;">
+
+        <!-- Category Dropdown -->
+        <div class="form-group mb-15">
+            <label style="font-size: 14px; color: #333; font-weight: 700; margin-bottom: 8px;">Kateqoriya</label>
+            <select class="custom-input"
+                style="background-color: white; border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); width: 100%; color: #666; font-size: 15px;">
+                <option value="" disabled selected>Kateqoriya seçin</option>
+                <option value="toxumlar">Toxumlar</option>
+                <option value="aletler">Alətlər</option>
+                <option value="heyvanlar">Heyvanlar</option>
+                <option value="xercler">Xərclər</option>
+                <option value="diger">Digər</option>
+            </select>
+        </div>
+
+        <!-- Barcode Scan Button -->
+        <button class="add-action-btn barcode-btn mb-15">
+            <i class="fa-solid fa-camera"></i>
+            <i class="fa-solid fa-barcode"></i> Barkod Skan Et
+        </button>
+
+        <!-- Voice Add Button -->
+        <button class="add-action-btn voice-btn mb-20">
+            <i class="fa-solid fa-microphone"></i>
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Səslə Əlavə Et
+        </button>
+
+        <!-- Product Details Form Container -->
+        <div class="form-container-white" style="border-radius: 20px; padding: 20px; margin-bottom: 30px;">
+
+            <div class="form-group mb-15">
+                <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Adı</label>
+                <input type="text" class="custom-input" placeholder="Məsələn: Buğda toxumu"
+                    style="background-color: #F8F9FA;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Miqdar</label>
+                    <input type="number" class="custom-input" placeholder="0" style="background-color: #F8F9FA;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Qiymət
+                        (₼)</label>
+                    <input type="number" class="custom-input" placeholder="0.00" style="background-color: #F8F9FA;">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Submit Button -->
+        <button class="submit-green-btn">
+            <i class="fa-solid fa-check"></i> Təsdiqlə və Saxla
+        </button>
+
+    </main>
+</div>
+
+<style>
+    .mb-15 {
+        margin-bottom: 15px;
+    }
+
+    .mb-20 {
+        margin-bottom: 20px;
+    }
+
+    .add-action-btn {
+        width: 100%;
+        padding: 20px;
+        border-radius: 12px;
+        border: none;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
+
+    .add-action-btn:active {
+        transform: scale(0.98);
+    }
+
+    .barcode-btn {
+        background-color: #F8F9FA;
+        border: 1px dashed #D1D5DB;
+        color: #333;
+    }
+
+    .barcode-btn i:first-child {
+        color: #666;
+        font-size: 14px;
+        margin-right: -2px;
+    }
+
+    .barcode-btn i:nth-child(2) {
+        color: #4F46E5;
+        font-size: 16px;
+        margin-right: 5px;
+    }
+
+    .voice-btn {
+        background-color: #EEDCC6;
+        color: #333;
+    }
+
+    .voice-btn i:first-child {
+        color: #666;
+        font-size: 14px;
+        margin-right: -2px;
+    }
+
+    .voice-btn i:nth-child(2) {
+        color: #9B6A6C;
+        font-size: 16px;
+        margin-right: 5px;
+    }
+
+    .submit-green-btn {
+        width: 100%;
+        background-color: #388E3C;
+        color: white;
+        padding: 18px;
+        border-radius: 16px;
+        border: none;
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(56, 142, 60, 0.3);
+    }
+
+    .submit-green-btn:active {
+        transform: scale(0.98);
+    }
+</style>
+{% endblock %}
