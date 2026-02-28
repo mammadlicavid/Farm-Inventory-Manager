@@ -62,23 +62,40 @@
             </a>
         </div>
 
-        <button class="add-new-btn">
-            <i class="fa-solid fa-check"></i> Yeni Əlavə Et
-        </button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <a href="{% url 'inventory:add_placeholder' %}" class="add-new-btn"
+                style="text-decoration: none; margin: 0; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                + Yeni Əlavə Et
+            </a>
+            <a href="{% url 'expenses:expense_list' %}"
+                style="text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 8px; background: #F8F9FA; border: 1px solid #E5E7EB; border-radius: 15px; color: #333; font-weight: 600; padding: 16px;">
+                <i class="fa-solid fa-bolt"></i> Tez Xərc
+            </a>
+        </div>
 
         <div class="stats-footer">
-            <div class="stat-item">
-                <span class="stat-value text-black">{{ stats.new_addition }}</span>
-                <span class="stat-label">Yeni Əlavə</span>
+            <h3 style="font-size: 15px; color: #333; margin-bottom: 15px; font-weight: 700;">Bu həftə</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="stat-item">
+                    <span class="stat-value text-black">{{ stats.new_addition }}</span>
+                    <span class="stat-label">Yeni məhsul</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value text-yellow" style="font-size: 26px;">{{ stats.expenses }}₼</span>
+                    <span class="stat-label">Xərclər</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value text-green">+{{ stats.animals }}</span>
+                    <span class="stat-label">Heyvan</span>
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-value text-yellow">{{ stats.expenses }}₼</span>
-                <span class="stat-label">Xərclər</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value text-green">+{{ stats.animals }}</span>
-                <span class="stat-label">Heyvan</span>
-            </div>
+        </div>
+
+        <div
+            style="background-color: #EEF5ED; border: 1px solid #D5E7D3; border-radius: 15px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px;">
+            <i class="fa-solid fa-shield-halved" style="color: #388E3C; font-size: 16px;"></i>
+            <span style="font-size: 12px; font-weight: 600; color: #1a1a1a;">Məlumatlarınız telefonda təhlükəsiz
+                saxlanılır</span>
         </div>
     </main>
 </div>
