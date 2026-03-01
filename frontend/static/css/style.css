@@ -368,6 +368,149 @@ body {
     stroke-width: 2px;
 }
 
+/*Settings*/
+.settings-container {
+    background: #f5f7f5;
+    min-height: 100vh;
+    padding: 16px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* HEADER */
+.settings-header {
+    background: #2e8b57;
+    padding: 20px;
+    border-radius: 0 0 25px 25px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.settings-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* SECTION */
+.settings-section {
+    margin-top: 20px;
+}
+
+.settings-section h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* CARD */
+.settings-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* ROW */
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.settings-row.clickable:active {
+    background: #f0f0f0;
+}
+
+.left {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.icon {
+    width: 38px;
+    height: 38px;
+    background: #f1f1f1;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.subtitle {
+    font-size: 12px;
+    color: gray;
+}
+
+.arrow {
+    font-size: 22px;
+    color: gray;
+}
+
+.divider {
+    height: 1px;
+    background: #eee;
+    margin: 0 16px;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 45px;
+  height: 24px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  background-color: #ccc;
+  border-radius: 34px;
+  inset: 0;
+  transition: 0.3s;
+}
+
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .slider {
+  background-color: #2e8b57;
+}
+
+input:checked + .slider:before {
+  transform: translateX(21px);
+}
+
+/* Units dropdown */
+.radio-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+}
+
 /* Custom SVG-like stroke look for icons if using fontawesome */
 .icon-box i {
     font-size: 28px;

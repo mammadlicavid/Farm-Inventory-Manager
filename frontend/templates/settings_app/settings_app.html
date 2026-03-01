@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <title>Tənzimləmələr</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f6fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .settings-container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            font-size: 20px;
+            margin-right: 15px;
+            color: black;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+        }
+
+        .settings-section h3 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .left {
+            display: flex;
+            align-items: center;
+        }
+
+        .icon {
+            font-size: 22px;
+            margin-right: 15px;
+        }
+
+        .title {
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: gray;
+        }
+
+        .divider {
+            height: 1px;
+            background: #eee;
+            margin: 10px 0;
+        }
+
+        select {
+            padding: 5px;
+            border-radius: 6px;
+        }
+
+        .save-btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px;
+            background-color: #2e8b57;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .save-btn:hover {
+            background-color: #256d46;
+        }
+    </style>
+</head>
+<body>
+
+<div class="settings-container">
+
+    <div class="settings-header">
+        <a href="{% url 'dashboard' %}" class="back-btn">←</a>
+        <h1>Tənzimləmələr</h1>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- SECTION: GÖRÜNÜŞ -->
+        <div class="settings-section">
+            <h3>Görünüş</h3>
+
+            <div class="settings-card">
+                <div class="settings-row">
+                    <div class="left">
+                        <div class="icon">👁️</div>
+                        <div>
+                            <div class="title">Böyük yazı rejimi</div>
+                            <div class="subtitle">Yazıları böyüdür</div>
+                        </div>
+                    </div>
+
+                    <input type="checkbox" name="big_text"
+                        {% if settings.big_text %}checked{% endif %}>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ÖLÇÜLƏR -->
+        <div class="settings-section">
+            <h3>Ölçülər</h3>
+
+            <div class="settings-card">
+
+                <div class="settings-row">
+                    <div class="left">
+                        <div class="icon">⚖️</div>
+                        <div>
+                            <div class="title">Vahid</div>
+                            <div class="subtitle">Çəki və say vahidləri</div>
+                        </div>
+                    </div>
+
+                    <select name="unit">
+                        <option value="kg" {% if settings.unit == "kg" %}selected{% endif %}>kg</option>
+                        <option value="litr" {% if settings.unit == "litr" %}selected{% endif %}>litr</option>
+                        <option value="bas" {% if settings.unit == "bas" %}selected{% endif %}>baş</option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="settings-row">
+                    <div class="left">
+                        <div class="icon">🌐</div>
+                        <div>
+                            <div class="title">Valyuta</div>
+                            <div class="subtitle">Seçilmiş valyuta</div>
+                        </div>
+                    </div>
+
+                    <select name="currency">
+                        <option value="AZN" {% if settings.currency == "AZN" %}selected{% endif %}>AZN</option>
+                        <option value="USD" {% if settings.currency == "USD" %}selected{% endif %}>USD</option>
+                        <option value="EUR" {% if settings.currency == "EUR" %}selected{% endif %}>EUR</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION: SİNXRONİZASİYA -->
+        <div class="settings-section">
+            <h3>Sinxronizasiya</h3>
+
+            <div class="settings-card">
+                <div class="settings-row">
+                    <div class="left">
+                        <div class="icon">☁️</div>
+                        <div>
+                            <div class="title">Avtomatik sinxron</div>
+                            <div class="subtitle">Onlayn olduqda yüklə</div>
+                        </div>
+                    </div>
+
+                    <input type="checkbox" name="auto_sync"
+                        {% if settings.auto_sync %}checked{% endif %}>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="save-btn">Yadda Saxla</button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

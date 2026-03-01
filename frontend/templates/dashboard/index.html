@@ -4,10 +4,18 @@
 <div class="dashboard-container">
     <header class="main-header">
         <div class="header-content">
-            <div class="header-top">
+            <div class="header-top" style="display:flex; justify-content:space-between; align-items:center;">
                 <h1>Ferma İdarəsi</h1>
-                <div class="status-badge">
-                    <span class="status-dot"></span> Onlayn
+
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div class="status-badge">
+                        <span class="status-dot"></span> Onlayn
+                    </div>
+
+                    <!-- SETTINGS ICON -->
+                    <a href="{% url 'settings:page' %}" style="color:white; font-size:20px;">
+                        <i class="fa-solid fa-gear"></i>
+                    </a>
                 </div>
             </div>
             <p class="welcome-text">Xoş gəlmisiniz, {{ user_name }}!</p>
