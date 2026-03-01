@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "expenses",
     "reports",
     "sync",
+    "settings_app",
 ]
 
 
