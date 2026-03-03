@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Green Header -->
+    <header class="tez-xerc-header">
+        <div class="tez-xerc-header-content">
+            <a href="{% url 'dashboard' %}" class="tez-xerc-back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h1 class="tez-xerc-title">Tez Əlavə Et</h1>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- One-Tap Expenses Section -->
+        <div class="tez-xerc-section">
+            <h2 class="tez-xerc-section-title">Bir toxunuşla xərc</h2>
+            <div class="quick-tap-grid">
+                {% for item in quick_items %}
+                <form method="POST" action="{% url 'tez_xerc' %}" class="quick-tap-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="quick_add">
+                    <input type="hidden" name="name" value="{{ item.name }}">
+                    <input type="hidden" name="amount" value="{{ item.amount }}">
+                    <button type="submit" class="quick-tap-card">
+                        <span class="quick-tap-icon">{{ item.icon }}</span>
+                        <span class="quick-tap-name">{{ item.name }}</span>
+                        <span class="quick-tap-amount">{{ item.amount }}₼</span>
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Custom Amount Section -->
+        <div class="tez-xerc-section">
+            <h2 class="tez-xerc-section-title">Xüsusi məbləğ</h2>
+            <form method="POST" action="{% url 'tez_xerc' %}" class="custom-amount-row">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="custom_amount">
+                <input type="number" name="amount" step="0.01" min="0.01" placeholder="Məbləğ (₼)"
+                    class="custom-amount-input" required>
+                <button type="submit" class="custom-amount-btn">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Templates Section -->
+        <div class="tez-xerc-section">
+            <div class="templates-header">
+                <h2 class="tez-xerc-section-title">Şablonlar</h2>
+                <span class="templates-new-badge">
+                    <i class="fa-regular fa-star"></i> Yeni
+                </span>
+            </div>
+
+            <div class="templates-list">
+                {% for tmpl in templates %}
+                <form method="POST" action="{% url 'tez_xerc' %}" class="template-item-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="template_add">
+                    <input type="hidden" name="template_id" value="{{ tmpl.pk }}">
+                    <button type="submit" class="template-item">
+                        <div class="template-item-left">
+                            <span class="template-item-title">{{ tmpl.title }}</span>
+                            <div class="template-item-tags">
+                                {% for tag in tmpl.tags %}
+                                <span class="template-tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="template-item-right">
+                            <span class="template-item-amount">{{ tmpl.amount_display }}₼</span>
+                            <i class="fa-solid fa-check template-item-check"></i>
+                        </div>
+                    </button>
+                </form>
+                {% empty %}
+                <div class="templates-empty">
+                    <p>Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
