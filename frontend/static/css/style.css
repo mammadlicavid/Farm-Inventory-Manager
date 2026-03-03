@@ -881,3 +881,306 @@ select.custom-input {
 .nav-add-btn:active {
     transform: scale(0.95);
 }
+
+/* =========================================
+   TEZ XƏRC (Quick Expense) PAGE
+   ========================================= */
+
+/* Header */
+.tez-xerc-header {
+    background: linear-gradient(135deg, #2E8B57 0%, #3AA866 100%);
+    color: #fff;
+    padding: 22px 20px 28px;
+    border-bottom-left-radius: 28px;
+    border-bottom-right-radius: 28px;
+    position: relative;
+}
+
+.tez-xerc-header-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tez-xerc-back-btn {
+    color: #fff;
+    font-size: 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    transition: background 0.2s;
+}
+
+.tez-xerc-back-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.tez-xerc-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+/* Sections */
+.tez-xerc-section {
+    margin-bottom: 28px;
+}
+
+.tez-xerc-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 14px;
+}
+
+/* Quick-Tap Grid */
+.quick-tap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.quick-tap-form {
+    display: contents;
+}
+
+.quick-tap-card {
+    background: #fff;
+    border: 1px solid #EAEEF2;
+    border-radius: 20px;
+    padding: 22px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    font-family: inherit;
+    outline: none;
+}
+
+.quick-tap-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.quick-tap-card:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.quick-tap-icon {
+    font-size: 38px;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.quick-tap-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.quick-tap-amount {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+/* Custom Amount Row */
+.custom-amount-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.custom-amount-input {
+    flex: 1;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1.5px solid #E5E7EB;
+    background: #F8F8F8;
+    font-size: 16px;
+    outline: none;
+    color: #333;
+    font-family: inherit;
+}
+
+.custom-amount-input:focus {
+    border-color: var(--primary-green);
+}
+
+.custom-amount-input::placeholder {
+    color: #aaa;
+}
+
+.custom-amount-btn {
+    width: 56px;
+    min-height: 56px;
+    border-radius: 18px;
+    border: none;
+    background: var(--primary-green);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+    transition: background 0.2s, transform 0.15s;
+}
+
+.custom-amount-btn:hover {
+    background: var(--dark-green);
+}
+
+.custom-amount-btn:active {
+    transform: scale(0.95);
+}
+
+/* Templates Section */
+.templates-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.templates-header .tez-xerc-section-title {
+    margin-bottom: 0;
+}
+
+.templates-new-badge {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-green);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.template-item-form {
+    display: contents;
+}
+
+.template-item {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #EAEEF2;
+    border-radius: 18px;
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+    font-family: inherit;
+    outline: none;
+}
+
+.template-item:hover {
+    background: #F8FAF8;
+    transform: translateX(2px);
+}
+
+.template-item:active {
+    transform: scale(0.99);
+}
+
+.template-item-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.template-item-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.template-item-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.template-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--primary-green);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.template-item-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.template-item-amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a1a;
+}
+
+.template-item-check {
+    color: var(--primary-green);
+    font-size: 18px;
+}
+
+.templates-empty {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-size: 14px;
+}
+
+/* Desktop overrides for Tez Xərc */
+@media (min-width: 1024px) {
+    .tez-xerc-header {
+        padding: 30px 60px 36px;
+    }
+
+    .tez-xerc-title {
+        font-size: 28px;
+    }
+
+    .quick-tap-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .quick-tap-card {
+        padding: 30px 20px;
+    }
+
+    .quick-tap-icon {
+        font-size: 48px;
+    }
+
+    .custom-amount-row {
+        max-width: 500px;
+    }
+
+    .templates-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+}
