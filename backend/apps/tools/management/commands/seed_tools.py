@@ -8,10 +8,14 @@ class Command(BaseCommand):
         data = {
             "Əl Alətləri": ["Bel", "Kürək", "Dırmıq", "Balta", "Bıçaq", "Mala"],
             "Suvarma Alətləri": ["Şlanq", "Püskürdücü", "Nasos", "Vedrə"],
-            "Kənd Təsərrüfatı Texnikası": ["Traktor", "Kultivator", "Kotan", "Səpən"],
+            "Kənd Texnikası": ["Traktor", "Kultivator", "Kotan", "Səpən"],
             "Baxım və Təmir": ["Açar dəsti", "Drel", "Çəkic", "Lir"],
             "Digər": []
         }
+
+        for cat_name, items in data.items():
+            if cat_name != "Digər" and "Digər" not in items:
+                items.append("Digər")
 
         for cat_name, items in data.items():
             category, created = ToolCategory.objects.get_or_create(name=cat_name)

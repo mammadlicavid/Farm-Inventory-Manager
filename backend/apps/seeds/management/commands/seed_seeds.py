@@ -12,9 +12,13 @@ class Command(BaseCommand):
             "Yem Bitkiləri": ["Yonca", "Koronilla", "Seradella"],
             "Tərəvəzlər": ["Pomidor", "Xiyar", "Bibər", "Badımcan", "Kahı", "İspanaq"],
             "Bostan Bitkiləri": ["Qarpız", "Yemiş", "Boranı"],
-            "Meyvə Bitkiləri": [],
+            "Meyvə Bitkiləri": ["Alma", "Armud", "Şaftalı", "Ərik", "Albalı", "Gilas", "Nar", "Üzüm", "Gavalı", "Heyva"],
             "Digər": []
         }
+
+        for cat_name, items in data.items():
+            if cat_name != "Digər" and "Digər" not in items:
+                items.append("Digər")
 
         total_items = 0
         for cat_name, items in data.items():

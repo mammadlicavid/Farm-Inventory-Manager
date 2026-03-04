@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard-container">
     <header class="main-header">
         <div class="header-content">
             <div class="header-top">
@@ -16,7 +15,6 @@
     </header>
 
     <main class="main-content">
-        <h2>Kateqoriyalar</h2>
 
         <div class="categories-grid">
             <a href="{% url 'seeds:seed_list' %}" class="category-card" style="text-decoration: none;">
@@ -26,13 +24,6 @@
                 <span>Toxumlar</span>
             </a>
 
-            <a href="{% url 'tools:tool_list' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box brown-icon">
-                    <i class="fa-solid fa-wrench"></i>
-                </div>
-                <span>Alətlər</span>
-            </a>
-
             <a href="{% url 'animals:animal_list' %}" class="category-card" style="text-decoration: none;">
                 <div class="icon-box lime-icon">
                     <i class="fa-solid fa-cow"></i>
@@ -40,11 +31,11 @@
                 <span>Heyvanlar</span>
             </a>
 
-            <a href="{% url 'expenses:expense_list' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box yellow-icon">
-                    <i class="fa-solid fa-sack-dollar"></i>
+            <a href="{% url 'tools:tool_list' %}" class="category-card" style="text-decoration: none;">
+                <div class="icon-box brown-icon">
+                    <i class="fa-solid fa-wrench"></i>
                 </div>
-                <span>Xərclər</span>
+                <span>Alətlər</span>
             </a>
 
             <a href="{% url 'reports:list' %}" class="category-card" style="text-decoration: none;">
@@ -52,6 +43,13 @@
                     <i class="fa-solid fa-clipboard-list"></i>
                 </div>
                 <span>Hesabatlar</span>
+            </a>
+
+            <a href="{% url 'expenses:expense_list' %}" class="category-card" style="text-decoration: none;">
+                <div class="icon-box yellow-icon">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <span>Xərclər</span>
             </a>
 
             <a href="{% url 'sync:page' %}" class="category-card" style="text-decoration: none;">
@@ -62,20 +60,9 @@
             </a>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
-            <a href="{% url 'inventory:add_placeholder' %}" class="add-new-btn"
-                style="text-decoration: none; margin: 0; display: flex; justify-content: center; align-items: center; gap: 8px;">
-                + Yeni Əlavə Et
-            </a>
-            <a href="{% url 'tez_xerc' %}"
-                style="text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 8px; background: #F8F9FA; border: 1px solid #E5E7EB; border-radius: 15px; color: #333; font-weight: 600; padding: 16px;">
-                <i class="fa-solid fa-bolt"></i> Tez Xərc
-            </a>
-        </div>
-
         <div class="stats-footer">
-            <h3 style="font-size: 15px; color: #333; margin-bottom: 15px; font-weight: 700;">Bu həftə</h3>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 20px; color: #333; margin-bottom: 6px; font-weight: 700;">Bu həftə</h3>
+            <div class="stats-row">
                 <div class="stat-item">
                     <span class="stat-value text-black">{{ stats.new_addition }}</span>
                     <span class="stat-label">Yeni məhsul</span>
@@ -91,12 +78,6 @@
             </div>
         </div>
 
-        <div
-            style="background-color: #EEF5ED; border: 1px solid #D5E7D3; border-radius: 15px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px;">
-            <i class="fa-solid fa-shield-halved" style="color: #388E3C; font-size: 16px;"></i>
-            <span style="font-size: 12px; font-weight: 600; color: #1a1a1a;">Məlumatlarınız telefonda təhlükəsiz
-                saxlanılır</span>
-        </div>
+
     </main>
-</div>
 {% endblock %}

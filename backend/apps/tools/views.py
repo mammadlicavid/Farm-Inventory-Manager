@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Case, IntegerField, When
 
 from .models import Tool, ToolCategory, ToolItem
 from .forms import ToolForm
@@ -25,7 +26,12 @@ def tool_list(request):
     for alet in alets:
         alet.icon_class = get_tool_icon_for_tool(alet)
 
-    categories = ToolCategory.objects.all()
+    category_order = Case(
+        When(name="Digər", then=1),
+        default=0,
+        output_field=IntegerField(),
+    )
+    categories = ToolCategory.objects.all().order_by(category_order, "name")
     
     context = {
         'alets': alets,
@@ -173,7 +179,12 @@ def tool_update(request, pk):
         add_crud_success_message(request, "Tool", "update")
         return redirect('tools:tool_list')
     
-    categories = ToolCategory.objects.all()
+    category_order = Case(
+        When(name="Digər", then=1),
+        default=0,
+        output_field=IntegerField(),
+    )
+    categories = ToolCategory.objects.all().order_by(category_order, "name")
     return render(request, 'tools/tool_form.html', {
         'alet': tool,
         'categories': categories,
