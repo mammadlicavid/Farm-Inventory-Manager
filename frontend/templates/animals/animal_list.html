@@ -62,20 +62,19 @@
                                     class="custom-input">
                             </div>
                             <div class="form-group">
-                                <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
-                                <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input"
-                                    required>
+                                <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
+                                <select name="gender" class="custom-input" required>
+                                    <option value="erkek">Erkək</option>
+                                    <option value="disi">Dişi</option>
+                                </select>
                             </div>
                         </div>
 
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
-                                <select name="gender" class="custom-input" required>
-                                    <option value="erkek">Erkək</option>
-                                    <option value="disi">Dişi</option>
-                                </select>
+                                <label>Çəki (kq)</label>
+                                <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input">
                             </div>
                             <div class="form-group">
                                 <label>Məbləğ (₼)</label>
@@ -116,8 +115,12 @@
                         <h4>
                             {% if animal.subcategory %}
                             {{ animal.subcategory.name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ animal.subcategory.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
                             {% else %}
                             {{ animal.manual_name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">(Digər)</span>
                             {% endif %}
                             {% if animal.identification_no %}({{ animal.identification_no }}){% endif %}
                         </h4>
@@ -165,6 +168,7 @@
     </div>
 </main>
 
+{{ subcategory_data|json_script:"animal-subcats-data" }}
 <script>
     const ANIMAL_STATE_KEY = "animal_form_state_session_v1";
     const ANIMAL_KEEP_KEY = "animal_form_keep_v1";
@@ -201,15 +205,9 @@
         if (gender) gender.value = "erkek";
     }
 
-    const subcategoryData = {
-        {% for cat in categories %}
-    "{{ cat.id }}": [
-        {% for sub in cat.subcategories.all %}
-    { "id": "{{ sub.id }}", "name": "{{ sub.name }}" },
-    {% endfor %}
-        ],
-    {% endfor %}
-    };
+    const subcategoryData = JSON.parse(
+        document.getElementById('animal-subcats-data').textContent
+    );
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');

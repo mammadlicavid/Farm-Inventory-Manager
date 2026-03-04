@@ -35,7 +35,7 @@ def dashboard(request):
 
 
 @login_required
-def tez_xerc(request):
+def quick_expense(request):
     from expenses.models import Expense, ExpenseSubCategory
     from common.formatting import format_currency
     from django.contrib import messages as django_messages
@@ -44,7 +44,7 @@ def tez_xerc(request):
     QUICK_ITEMS = [
         {"name": "Yem", "icon": "🐄", "amount": 50},
         {"name": "Yanacaq", "icon": "⛽", "amount": 80},
-        {"name": "Gübrə", "icon": "🧪", "amount": 120},
+        {"name": "Gübrə", "icon": "🪴", "amount": 120},
         {"name": "Baytar", "icon": "💉", "amount": 100},
     ]
 
@@ -66,10 +66,10 @@ def tez_xerc(request):
                     pass
 
             if amount_val > 0:
-                # Try to find matching subcategory (prefer Bitkiçilik for Gübrə)
+                # Try to find matching subcategory (prefer Heyvandarlıq for Gübrə)
                 subcat_qs = ExpenseSubCategory.objects.filter(name__iexact=name).select_related("category")
                 if name.lower() == "gübrə":
-                    subcat = subcat_qs.filter(category__name="Bitkiçilik").first() or subcat_qs.first()
+                    subcat = subcat_qs.filter(category__name="Heyvandarlıq").first() or subcat_qs.first()
                 else:
                     subcat = subcat_qs.first()
                 Expense.objects.create(
@@ -122,7 +122,7 @@ def tez_xerc(request):
                 except Expense.DoesNotExist:
                     pass
 
-        return redirect("tez_xerc")
+        return redirect("quick_expense")
 
     # GET — build context
     # Recent expenses as "templates" (last 10 unique by title)
@@ -142,6 +142,20 @@ def tez_xerc(request):
         if exp.title not in seen_titles and len(templates) < 8:
             seen_titles.add(exp.title)
             exp.amount_display = format_currency(exp.amount, 0)
+            exp.display_title = exp.title
+            if exp.title:
+                title_stripped = exp.title.strip()
+                if ":" in title_stripped:
+                    base, rest = title_stripped.split(":", 1)
+                    base = base.strip()
+                    rest = rest.strip()
+                    if base and rest and base.lower() in {
+                        "heyvan alışı",
+                        "toxum alışı",
+                        "alət alışı",
+                        "texnika alışı",
+                    }:
+                        exp.display_title = rest
             # Build tags
             tags = []
             if exp.subcategory:
@@ -184,11 +198,19 @@ def tez_xerc(request):
 
             exp.subcategory_name = sub_name
             exp.category_name = cat_name
-            exp.primary_tags = [sub_name or "Digər", cat_name or "Digər"]
+            cat_tag = cat_name or "Digər"
+            sub_tag = sub_name or "Digər"
+            # If template came from expenses page (no linked object), show only main category.
+            if getattr(exp, "content_object", None) is None:
+                exp.primary_tags = [cat_tag]
+            elif sub_name:
+                exp.primary_tags = [cat_tag, sub_tag]
+            else:
+                exp.primary_tags = [cat_tag]
             templates.append(exp)
 
     context = {
         "quick_items": QUICK_ITEMS,
         "templates": templates,
     }
-    return render(request, "dashboard/tez_xerc.html", context)
+    return render(request, "dashboard/quick_expense.html", context)

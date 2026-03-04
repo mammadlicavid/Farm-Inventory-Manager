@@ -11,6 +11,11 @@ from common.messages import add_crud_success_message
 from common.icons import get_expense_icon
 from common.formatting import format_currency
 
+def _build_subcategory_data(categories):
+    return {
+        str(cat.id): [{"id": sub.id, "name": sub.name} for sub in cat.subcategories.all()]
+        for cat in categories
+    }
 
 def _get_display_additional_info(expense: Expense) -> str:
     """
@@ -57,6 +62,22 @@ def expense_list(request):
         exp.display_additional_info = _get_display_additional_info(exp)
         exp.icon_class = get_expense_icon(exp)
         exp.amount_display = format_currency(exp.amount, 0)
+        exp.display_title = exp.title
+        exp.display_type_tag = ""
+        if exp.title:
+            title_stripped = exp.title.strip()
+            if ":" in title_stripped:
+                base, rest = title_stripped.split(":", 1)
+                base = base.strip()
+                rest = rest.strip()
+                if base and rest and base.lower() in {
+                    "heyvan alışı",
+                    "toxum alışı",
+                    "alət alışı",
+                    "texnika alışı",
+                }:
+                    exp.display_title = rest
+                    exp.display_type_tag = base
         if exp.subcategory and exp.subcategory.category:
             exp.display_category_name = exp.subcategory.category.name
         else:
@@ -82,6 +103,7 @@ def expense_list(request):
         'weekly_total': weekly_total,
         'weekly_total_display': format_currency(weekly_total, 0),
         'categories': categories,
+        'subcategory_data': _build_subcategory_data(categories),
         'today': timezone.now().date(),
         'yesterday': timezone.now().date() - timedelta(days=1),
     }
@@ -113,8 +135,8 @@ def add_expense(request):
         Expense.objects.create(
             title=title,
             amount=amount,
-            subcategory=None,
-            manual_name=title,
+            subcategory=subcategory,
+            manual_name=None if subcategory else title,
             additional_info=additional_info,
             created_by=request.user
         )
@@ -142,15 +164,17 @@ def edit_expense(request, pk):
         
         if not (subcategory or manual_name) or not amount:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            categories = ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories')
             return render(request, 'expenses/expense_form.html', {
                 'expense': expense,
-                'categories': ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories'),
+                'categories': categories,
+                'subcategory_data': _build_subcategory_data(categories),
             })
             
         expense.title = title if title else (subcategory.name if subcategory else manual_name)
         expense.amount = amount
-        expense.subcategory = None
-        expense.manual_name = title if title else manual_name
+        expense.subcategory = subcategory
+        expense.manual_name = None if subcategory else (title if title else manual_name)
         expense.additional_info = additional_info
         expense.save()
 
@@ -162,6 +186,8 @@ def edit_expense(request, pk):
                 item.price = expense.amount
             elif hasattr(item, 'amount'):
                 item.amount = expense.amount
+            if hasattr(item, 'additional_info'):
+                item.additional_info = additional_info
             
             # Optionally update title/name if it changed? 
             # Usually inventory name is more specific, so we might keep it.
@@ -180,6 +206,7 @@ def edit_expense(request, pk):
     return render(request, 'expenses/expense_form.html', {
         'expense': expense,
         'categories': categories,
+        'subcategory_data': _build_subcategory_data(categories),
     })
 
 @login_required

@@ -30,7 +30,7 @@
             <span class="label">Bu həftə ümumi xərc</span>
             <span class="value">{{ weekly_total_display }}₼</span>
         </div>
-        <a href="{% url 'tez_xerc' %}" class="summary-card-quick">
+        <a href="{% url 'quick_expense' %}" class="summary-card-quick">
             <i class="fa-solid fa-bolt"></i>
             <span>Tez Xərc</span>
         </a>
@@ -111,9 +111,12 @@
                         {% endif %}
                     </div>
                     <div class="expense-item-info">
-                        <h4>{{ expense.title }}</h4>
+                        <h4>{{ expense.display_title }}</h4>
                         <span>
                             {{ expense.display_category_name }} •
+                            {% if expense.display_type_tag %}
+                            {{ expense.display_type_tag }} •
+                            {% endif %}
                             {% if expense.date == today %}
                             Bu gün
                             {% elif expense.date == yesterday %}
@@ -158,16 +161,11 @@
     </div>
 </main>
 
+{{ subcategory_data|json_script:"expense-subcats-data" }}
 <script>
-    const subcategoryData = {
-        {% for cat in categories %}
-    "{{ cat.id }}": [
-        {% for sub in cat.subcategories.all %}
-    { "id": "{{ sub.id }}", "name": "{{ sub.name }}" },
-    {% endfor %}
-            ],
-    {% endfor %}
-    };
+    const subcategoryData = JSON.parse(
+        document.getElementById('expense-subcats-data').textContent
+    );
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');
