@@ -1,157 +1,162 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard-container">
-    <header class="main-header" style="padding-bottom: 60px;">
-        <div class="header-content">
-            <div class="header-top">
-                <a href="{% url 'dashboard' %}" class="back-btn-box">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Toxumlar</span>
-                </a>
-            </div>
-
-            <form method="get" action="" class="search-form" style="margin-top: 20px;">
-                <div style="position: relative;">
-                    <i class="fa-solid fa-search"
-                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                    <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
-                        value="{{ request.GET.q|default:'' }}"
-                        style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
-                </div>
-            </form>
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'dashboard' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Toxumlar</span>
+            </a>
         </div>
-    </header>
 
-    <main class="main-content" style="position: relative; z-index: 10;">
-        <div class="crud-desktop-wrapper">
-            <div class="crud-form-column">
-                <!-- Add Seed Form -->
-                <div class="form-container-white">
-                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Toxum Əlavə Et</h3>
-                    <form action="{% url 'seeds:seed_create' %}" method="POST" id="seed-form">
-                        {% csrf_token %}
-                        <div class="desktop-form-grid">
-                            <div class="form-group">
-                                <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                                <select id="category-select" name="category" required class="custom-input">
-                                    <option value="" disabled selected>Kateqoriya seçin</option>
-                                    {% for cat in categories %}
-                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="form-group" id="item-field-group">
-                                <label>Toxum Növü <span style="color: #dc3545;">*</span></label>
-                                <select id="item-select" name="item" required class="custom-input" disabled>
-                                    <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group" id="manual-name-group" style="display: none;">
-                                <label>Toxumun Adı (Digər) <span style="color: #dc3545;">*</span></label>
-                                <input type="text" name="manual_name" id="manual-name-input"
-                                    placeholder="Toxumun adını daxil edin" class="custom-input">
-                            </div>
-
-                            <div class="form-row"
-                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
-                                <div class="form-group">
-                                    <label>Miqdar <span style="color: #dc3545;">*</span></label>
-                                    <input type="number" name="quantity" step="0.01" placeholder="0.00"
-                                        class="custom-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
-                                    <select name="unit" class="custom-input" required>
-                                        <option value="kg">kg</option>
-                                        <option value="ton">ton</option>
-                                        <option value="qram">qram</option>
-                                        <option value="ədəd">ədəd</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Məbləğ (₼)</label>
-                                <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
-                            </div>
-
-                            <div class="form-group form-full-width">
-                                <label>Əlavə Məlumat</label>
-                                <textarea name="additional_info" placeholder="Məsələn: Toxumun vəziyyəti və s."
-                                    class="custom-input" rows="3"></textarea>
-                            </div>
-
-                            <button type="submit" class="add-expense-btn">
-                                <i class="fa-solid fa-plus"></i>
-                                Toxum Əlavə Et
-                            </button>
-                        </div>
-                    </form>
-                </div>
+        <form method="get" action="" class="search-form" style="margin-top: 20px;">
+            <div style="position: relative;" class="click-focus">
+                <i class="fa-solid fa-search"
+                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+                    value="{{ request.GET.q|default:'' }}" autocomplete="off"
+                    style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
             </div>
+        </form>
+    </div>
+</header>
 
-            <div class="crud-list-column">
-                <!-- Seeds History -->
-                <h3 class="recent-expenses-title">Toxum Siyahısı</h3>
-                <div class="seeds-list data-grid-list">
-                    {% for seed in seeds %}
-                    <div class="expense-item-card">
-                        <div class="expense-item-icon">
-                            <i class="{{ seed.icon_class }}"></i>
+<main class="main-content" style="position: relative; z-index: 10;">
+    <div class="crud-desktop-wrapper">
+        <div class="crud-form-column">
+            <!-- Add Seed Form -->
+            <div class="form-container-white">
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Toxum Əlavə Et</h3>
+                <form action="{% url 'seeds:seed_create' %}" method="POST" id="seed-form">
+                    {% csrf_token %}
+                    <div class="desktop-form-grid">
+                        <div class="form-group">
+                            <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select id="category-select" name="category" required class="custom-input">
+                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
-                        <div class="expense-item-info">
-                            <h4>
-                                {% if seed.item %}
-                                {{ seed.item.name }}
-                                <span style="font-size: 12px; font-weight: 400; color: #666;">
-                                    ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
-                                </span>
-                                {% else %}
-                                {{ seed.manual_name }} <span
-                                    style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
-                                {% endif %}
-                            </h4>
-                            <span>
-                                {{ seed.quantity }} {{ seed.unit }}
-                                {% if seed.additional_info %}
-                                • {{ seed.additional_info }}
-                                {% endif %}
+
+                        <div class="form-group" id="item-field-group">
+                            <label>Toxum Növü <span style="color: #dc3545;">*</span></label>
+                            <select id="item-select" name="item" required class="custom-input" disabled>
+                                <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="manual-name-group" style="display: none;">
+                            <label>Toxumun Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                            <input type="text" name="manual_name" id="manual-name-input"
+                                placeholder="Toxumun adını daxil edin" class="custom-input">
+                        </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                            <div class="form-group">
+                                <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                                <input type="number" name="quantity" step="0.01" placeholder="0.00" class="custom-input"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
+                                <select name="unit" class="custom-input" required>
+                                    <option value="kg">kg</option>
+                                    <option value="ton">ton</option>
+                                    <option value="qram">qram</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Məbləğ (₼)</label>
+                            <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                        </div>
+
+                        <div class="form-group form-full-width">
+                            <label>Əlavə Məlumat</label>
+                            <textarea name="additional_info" placeholder="Məsələn: Toxumun vəziyyəti və s."
+                                class="custom-input" rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="add-expense-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            Toxum Əlavə Et
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="crud-list-column">
+            <!-- Seeds History -->
+            <h3 class="recent-expenses-title">Toxum Siyahısı</h3>
+            <div class="seeds-list data-grid-list">
+                {% for seed in seeds %}
+                <div class="expense-item-card">
+                    <div class="expense-item-icon">
+                        {% if seed.icon_class|slice:":6" == "emoji:" %}
+                        <span class="emoji-icon">{{ seed.icon_class|slice:"6:" }}</span>
+                        {% else %}
+                        <i class="{{ seed.icon_class }}"></i>
+                        {% endif %}
+                    </div>
+                    <div class="expense-item-info">
+                        <h4>
+                            {% if seed.item %}
+                            {{ seed.item.name }}
+                            <span style="font-size: 12px; font-weight: 400; color: #666;">
+                                ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
                             </span>
+                            {% else %}
+                            {{ seed.manual_name }} <span
+                                style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
+                            {% endif %}
+                        </h4>
+                        <span>
+                            {{ seed.quantity }} {{ seed.unit }}
+                            {% if seed.additional_info %}
+                            {% if seed.additional_info == "Məhsullar səhifəsindən düzəliş" %}
+                            <br>{{ seed.additional_info }}
+                            {% else %}
+                            • {{ seed.additional_info }}
+                            {% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="expense-item-amount" style="color: var(--primary-green);">
+                            {{ seed.price|floatformat:0 }}₼
                         </div>
-                        <div style="text-align: right;">
-                            <div class="expense-item-amount" style="color: var(--primary-green);">
-                                {{ seed.price|floatformat:0 }}₼
-                            </div>
-                            <div
-                                style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
-                                <a href="{% url 'seeds:seed_update' seed.pk %}"
-                                    style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
-                                    <i class="fa-solid fa-pen-to-square"></i> Düzəliş
-                                </a>
-                                <form action="{% url 'seeds:seed_delete' seed.pk %}" method="POST"
-                                    style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                        style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
-                                        <i class="fa-solid fa-trash"></i> Sil
-                                    </button>
-                                </form>
-                            </div>
+                        <div
+                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                            <a href="{% url 'seeds:seed_update' seed.pk %}"
+                                style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                            </a>
+                            <form action="{% url 'seeds:seed_delete' seed.pk %}" method="POST"
+                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                    <i class="fa-solid fa-trash"></i> Sil
+                                </button>
+                            </form>
                         </div>
                     </div>
-                    {% empty %}
-                    <div style="text-align: center; padding: 40px; color: #999;">
-                        <p>Hələ heç bir toxum qeydə alınmayıb</p>
-                    </div>
-                    {% endfor %}
                 </div>
+                {% empty %}
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <p>Hələ heç bir toxum qeydə alınmayıb</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
-    </main>
-</div>
+    </div>
+</main>
 
 <style>
     .icon-btn {
@@ -171,6 +176,42 @@
     }
 </style>
 <script>
+    const SEED_STATE_KEY = "seed_form_state_session_v1";
+    const SEED_KEEP_KEY = "seed_form_keep_v1";
+
+    function saveSeedState(categoryId, itemId) {
+        sessionStorage.setItem(SEED_STATE_KEY, JSON.stringify({ categoryId, itemId }));
+    }
+
+    function loadSeedState() {
+        try {
+            return JSON.parse(sessionStorage.getItem(SEED_STATE_KEY) || "{}");
+        } catch {
+            return {};
+        }
+    }
+
+    function clearSeedState() {
+        sessionStorage.removeItem(SEED_STATE_KEY);
+        sessionStorage.removeItem(SEED_KEEP_KEY);
+    }
+
+    function resetSeedOtherFields() {
+        document.querySelector('input[name="manual_name"]')?.setAttribute("value", "");
+        const manualInput = document.getElementById("manual-name-input");
+        if (manualInput) manualInput.value = "";
+        const qty = document.querySelector('input[name="quantity"]');
+        if (qty) qty.value = "";
+        const price = document.querySelector('input[name="price"]');
+        if (price) price.value = "";
+        const info = document.querySelector('textarea[name="additional_info"]');
+        if (info) info.value = "";
+        const unit = document.querySelector('select[name="unit"]');
+        if (unit) unit.value = "kg";
+    }
+
+    let pendingSeedItemId = null;
+
     document.getElementById('category-select').addEventListener('change', function () {
         const categoryId = this.value;
         const categoryText = this.options[this.selectedIndex].text;
@@ -183,6 +224,9 @@
             itemGroup.style.display = 'none';
             itemSelect.required = false;
             itemSelect.disabled = true;
+            saveSeedState(categoryId, "");
+            resetSeedOtherFields();
+            sessionStorage.removeItem(SEED_KEEP_KEY);
 
             manualGroup.style.display = 'block';
             manualInput.required = true;
@@ -209,11 +253,51 @@
                         itemSelect.appendChild(option);
                     });
                     itemSelect.disabled = false;
+                    if (pendingSeedItemId) {
+                        itemSelect.value = pendingSeedItemId;
+                        pendingSeedItemId = null;
+                        sessionStorage.removeItem(SEED_KEEP_KEY);
+                    }
+                    resetSeedOtherFields();
+                    saveSeedState(categoryId, itemSelect.value || "");
                 })
                 .catch(error => {
                     console.error('Error fetching seed items:', error);
                     itemSelect.innerHTML = '<option value="" disabled selected>Xəta baş verdi</option>';
                 });
+        }
+    });
+
+    document.getElementById('item-select').addEventListener('change', function () {
+        const categoryId = document.getElementById('category-select').value;
+        saveSeedState(categoryId, this.value);
+    });
+
+    const seedForm = document.getElementById('seed-form');
+    if (seedForm) {
+        seedForm.addEventListener('submit', () => {
+            sessionStorage.setItem(SEED_KEEP_KEY, "1");
+            const categoryId = document.getElementById('category-select').value;
+            const itemId = document.getElementById('item-select')?.value || "";
+            saveSeedState(categoryId, itemId);
+        });
+    }
+
+    (function restoreSeedState() {
+        const saved = loadSeedState();
+        if (sessionStorage.getItem(SEED_KEEP_KEY) !== "1" || !saved.categoryId) {
+            clearSeedState();
+            return;
+        }
+        pendingSeedItemId = saved.itemId || null;
+        const categorySelect = document.getElementById('category-select');
+        categorySelect.value = saved.categoryId;
+        categorySelect.dispatchEvent(new Event('change'));
+    })();
+
+    window.addEventListener("pagehide", () => {
+        if (sessionStorage.getItem(SEED_KEEP_KEY) !== "1") {
+            clearSeedState();
         }
     });
 </script>

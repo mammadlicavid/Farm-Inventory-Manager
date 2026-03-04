@@ -30,7 +30,6 @@ class Seed(models.Model):
         ('kg', 'kg'),
         ('ton', 'ton'),
         ('qram', 'qram'),
-        ('ədəd', 'ədəd'),
     ], default='kg', verbose_name="Ölçü Vahidi")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Qiymət", default=0, null=True, blank=True)
     

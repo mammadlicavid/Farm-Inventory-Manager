@@ -10,15 +10,18 @@ class Command(BaseCommand):
         ExpenseCategory.objects.all().delete()
 
         data = {
-            "Heyvandarlıq": ["Yem", "Baytarlıq", "Peyvəndləmə", "Heyvan alışı"],
+            "Heyvandarlıq": ["Yem", "Baytar", "Peyvəndləmə", "Heyvan alışı"],
             "Bitkiçilik": ["Toxumlar", "Gübrə", "Pesticidlər", "Suvarma"],
             "İşçi qüvvəsi": ["Maaşlar", "Sığorta"],
             "Texnika və Maşınlar": ["Yanacaq", "Təmir və Baxım", "Texnika alışı"],
             "İnfrastruktur": ["Elektrik", "Su", "Tikinti"],
             "Logistika və Satış": ["Nəqliyyat", "Qablaşdırma"],
-            "Maliyyə və Digər": ["Vergilər", "Kredit faizləri"],
             "Digər": []
         }
+
+        for cat_name, subcats in data.items():
+            if cat_name != "Digər" and "Digər" not in subcats:
+                subcats.append("Digər")
 
         for cat_name, subcats in data.items():
             category, created = ExpenseCategory.objects.get_or_create(name=cat_name)

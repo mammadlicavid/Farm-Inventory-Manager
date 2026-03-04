@@ -47,14 +47,34 @@ def expense_list(request):
     # Convert to list for secondary processing (attaching display info)
     expenses = list(expenses_qs)
 
+    subcat_lookup = {
+        s.name.lower(): s
+        for s in ExpenseSubCategory.objects.select_related("category").all()
+    }
+
     # Attach display-only additional info and icon class
     for exp in expenses:
         exp.display_additional_info = _get_display_additional_info(exp)
         exp.icon_class = get_expense_icon(exp)
         exp.amount_display = format_currency(exp.amount, 0)
+        if exp.subcategory and exp.subcategory.category:
+            exp.display_category_name = exp.subcategory.category.name
+        else:
+            match = None
+            if exp.manual_name:
+                match = subcat_lookup.get(exp.manual_name.lower())
+            if not match and exp.title:
+                match = subcat_lookup.get(exp.title.lower())
+            if match and match.category:
+                exp.display_category_name = match.category.name
+            else:
+                exp.display_category_name = "Digər"
     
     # Categories for the form
-    categories = ExpenseCategory.objects.all().prefetch_related('subcategories')
+    categories = (
+        ExpenseCategory.objects.exclude(name="Maliyyə və Digər")
+        .prefetch_related('subcategories')
+    )
     
     context = {
         'expenses': expenses,
@@ -89,12 +109,12 @@ def add_expense(request):
         
         if not title:
             title = subcategory.name if subcategory else manual_name
-        
+
         Expense.objects.create(
             title=title,
             amount=amount,
-            subcategory=subcategory,
-            manual_name=manual_name if not subcategory else None,
+            subcategory=None,
+            manual_name=title,
             additional_info=additional_info,
             created_by=request.user
         )
@@ -124,13 +144,13 @@ def edit_expense(request, pk):
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
             return render(request, 'expenses/expense_form.html', {
                 'expense': expense,
-                'categories': ExpenseCategory.objects.all().prefetch_related('subcategories'),
+                'categories': ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories'),
             })
             
         expense.title = title if title else (subcategory.name if subcategory else manual_name)
         expense.amount = amount
-        expense.subcategory = subcategory
-        expense.manual_name = manual_name if not subcategory else None
+        expense.subcategory = None
+        expense.manual_name = title if title else manual_name
         expense.additional_info = additional_info
         expense.save()
 
@@ -153,7 +173,10 @@ def edit_expense(request, pk):
 
     # Initial GET render: compute display_additional_info for textarea
     expense.display_additional_info = _get_display_additional_info(expense)
-    categories = ExpenseCategory.objects.all().prefetch_related('subcategories')
+    categories = (
+        ExpenseCategory.objects.exclude(name="Maliyyə və Digər")
+        .prefetch_related('subcategories')
+    )
     return render(request, 'expenses/expense_form.html', {
         'expense': expense,
         'categories': categories,

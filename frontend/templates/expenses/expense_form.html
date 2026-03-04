@@ -1,72 +1,75 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="dashboard-container">
-    <header class="main-header" style="padding-bottom: 60px;">
-        <div class="header-content">
-            <div class="header-top">
-                <a href="{% url 'expenses:expense_list' %}" class="back-btn-box">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Xərci Düzəlt</span>
-                </a>
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'expenses:expense_list' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Xərci Düzəlt</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
+    <div class="form-container-white">
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Xərc Məlumatlarını Yenilə</h3>
+
+        <form method="POST" id="expense-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                <select id="category-select" required class="custom-input">
+                    <option value="" disabled>Kateqoriya seçin</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if expense.subcategory.category_id==cat.id %}selected{% endif %}>{{
+                        cat.name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-        </div>
-    </header>
 
-    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <div class="form-container-white">
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Xərc Məlumatlarını Yenilə</h3>
+            <div class="form-group" id="subcategory-field-group" {% if not expense.subcategory %}style="display: none;"
+                {% endif %}>
+                <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
+                <select name="subcategory" id="subcategory-select" class="custom-input" required {% if not
+                    expense.subcategory %}disabled{% endif %}>
+                    <option value="" disabled>Alt kateqoriya seçin</option>
+                    {% if expense.subcategory %}
+                    {% for sub in expense.subcategory.category.subcategories.all %}
+                    <option value="{{ sub.id }}" {% if expense.subcategory_id==sub.id %}selected{% endif %}>{{ sub.name
+                        }}</option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
 
-            <form method="POST" id="expense-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select id="category-select" required class="custom-input">
-                        <option value="" disabled>Kateqoriya seçin</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if expense.subcategory.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group" id="subcategory-field-group" {% if not expense.subcategory %}style="display: none;" {% endif %}>
-                    <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
-                    <select name="subcategory" id="subcategory-select" class="custom-input" required {% if not expense.subcategory %}disabled{% endif %}>
-                        <option value="" disabled>Alt kateqoriya seçin</option>
-                        {% if expense.subcategory %}
-                        {% for sub in expense.subcategory.category.subcategories.all %}
-                        <option value="{{ sub.id }}" {% if expense.subcategory_id == sub.id %}selected{% endif %}>{{ sub.name }}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                </div>
-
-                <div class="form-group" id="manual-name-group" {% if expense.subcategory %}style="display: none;" {% endif %}>
-                    <label>Xərcin Növü (Digər) <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Xərcin növünü daxil edin"
-                        class="custom-input" value="{{ expense.manual_name|default:'' }}">
-                </div>
+            <div class="form-group" id="manual-name-group" {% if expense.subcategory %}style="display: none;" {% endif
+                %}>
+                <label>Xərcin Növü (Digər) <span style="color: #dc3545;">*</span></label>
+                <input type="text" name="manual_name" id="manual-name-input" placeholder="Xərcin növünü daxil edin"
+                    class="custom-input" value="{{ expense.manual_name|default:'' }}">
+            </div>
 
 
-                <div class="form-group">
-                    <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
-                    <input type="number" name="amount" step="0.01" placeholder="0.00" class="custom-input" required
-                        value="{{ expense.amount|stringformat:'.2f' }}">
-                </div>
+            <div class="form-group">
+                <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
+                <input type="number" name="amount" step="0.01" placeholder="0.00" class="custom-input" required
+                    value="{{ expense.amount|stringformat:'.2f' }}">
+            </div>
 
-                <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Mağaza adı, qəbz nömrəsi və s."
-                        class="custom-input" rows="3">{{ expense.display_additional_info|default:'' }}</textarea>
-                </div>
+            <div class="form-group">
+                <label>Əlavə Məlumat</label>
+                <textarea name="additional_info" placeholder="Məsələn: Mağaza adı, qəbz nömrəsi və s."
+                    class="custom-input" rows="3">{{ expense.display_additional_info|default:'' }}</textarea>
+            </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-save"></i>
-                    <span>Yadda Saxla</span>
-                </button>
-            </form>
-        </div>
-    </main>
-</div>
+            <button type="submit" class="add-expense-btn">
+                <i class="fa-solid fa-save"></i>
+                <span>Yadda Saxla</span>
+            </button>
+        </form>
+    </div>
+</main>
 
 <script>
     const subcategoryData = {

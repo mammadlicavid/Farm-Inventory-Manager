@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Case, IntegerField, When
 
 from .models import Animal, AnimalCategory, AnimalSubCategory
 from .forms import AnimalForm
@@ -24,7 +25,12 @@ def animal_list(request):
     for animal in animals:
         animal.icon_class = get_animal_icon_for_animal(animal)
 
-    categories = AnimalCategory.objects.all().prefetch_related('subcategories')
+    category_order = Case(
+        When(name="Digər", then=1),
+        default=0,
+        output_field=IntegerField(),
+    )
+    categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
     
     context = {
         'animals': animals,
@@ -45,7 +51,7 @@ def animal_create(request):
         manual_name = request.POST.get('manual_name')
         
         # Backend Validation
-        if not (subcategory_id or manual_name) or not identification_no or not gender or not weight:
+        if not (subcategory_id or manual_name) or not gender or not weight:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
             return redirect('animals:animal_list')
 
@@ -121,12 +127,12 @@ def animal_update(request, pk):
         manual_name = request.POST.get('manual_name')
         
         # Backend Validation
-        if not (subcategory_id or manual_name) or not identification_no or not gender or not weight:
+        if not (subcategory_id or manual_name) or not gender or not weight:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
             return render(request, 'animals/animal_form.html', {
                 'form': AnimalForm(instance=animal),
                 'animal': animal,
-                'categories': AnimalCategory.objects.all().prefetch_related('subcategories')
+                'categories': AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
             })
 
         # Update animal object
@@ -186,7 +192,12 @@ def animal_update(request, pk):
         add_crud_success_message(request, "Animal", "update")
         return redirect('animals:animal_list')
     
-    categories = AnimalCategory.objects.all().prefetch_related('subcategories')
+    category_order = Case(
+        When(name="Digər", then=1),
+        default=0,
+        output_field=IntegerField(),
+    )
+    categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
     return render(request, 'animals/animal_form.html', {
         'animal': animal,
         'categories': categories,

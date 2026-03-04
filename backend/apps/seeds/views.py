@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Case, IntegerField, When
 
 from .models import Seed, SeedCategory, SeedItem
 from .forms import SeedForm
@@ -25,7 +26,12 @@ def seed_list(request):
     for seed in seeds:
         seed.icon_class = get_seed_icon_for_seed(seed)
 
-    categories = SeedCategory.objects.all()
+    category_order = Case(
+        When(name="Digər", then=1),
+        default=0,
+        output_field=IntegerField(),
+    )
+    categories = SeedCategory.objects.all().order_by(category_order, "name")
     
     context = {
         'seeds': seeds,
@@ -180,7 +186,12 @@ def seed_update(request, pk):
         add_crud_success_message(request, "Seed", "update")
         return redirect('seeds:seed_list')
     
-    categories = SeedCategory.objects.all()
+    category_order = Case(
+        When(name="Digər", then=1),
+        default=0,
+        output_field=IntegerField(),
+    )
+    categories = SeedCategory.objects.all().order_by(category_order, "name")
     return render(request, 'seeds/seed_form.html', {
         'seed': seed,
         'categories': categories,
