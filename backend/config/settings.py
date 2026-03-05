@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "users",
     "dashboard",
     "seeds",
+    "farm_products",
     "tools",
     "animals",
     "expenses",

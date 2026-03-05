@@ -106,20 +106,24 @@
                     </div>
                     <div class="expense-item-info">
                         <h4>
-                            {% if seed.item %}
+                            {% if seed.item and seed.item.name != "Digər" %}
                             {{ seed.item.name }}
                             <span style="font-size: 15px; font-weight: 400; color: #666;">
                                 ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
                             </span>
+                            {% elif seed.item and seed.item.name == "Digər" %}
+                            {{ seed.manual_name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
                             {% else %}
-                            {{ seed.manual_name }} <span
-                                style="font-size: 15px; font-weight: 400; color: #666;">(Digər)</span>
+                            {{ seed.manual_name }}
                             {% endif %}
                         </h4>
                         <span>
                             {{ seed.quantity }} {{ seed.unit }}
                             {% if seed.additional_info %}
-                            {% if seed.additional_info == "Məhsullar səhifəsindən düzəliş" %}
+                            {% if seed.additional_info == "Stok səhifəsindən düzəliş" %}
                             <br>{{ seed.additional_info }}
                             {% else %}
                             • {{ seed.additional_info }}
@@ -256,10 +260,10 @@
                     if (pendingSeedItemId) {
                         itemSelect.value = pendingSeedItemId;
                         pendingSeedItemId = null;
-                        sessionStorage.removeItem(SEED_KEEP_KEY);
                     }
                     resetSeedOtherFields();
                     saveSeedState(categoryId, itemSelect.value || "");
+                    handleSeedItemSelection();
                 })
                 .catch(error => {
                     console.error('Error fetching seed items:', error);
@@ -268,9 +272,25 @@
         }
     });
 
+    function handleSeedItemSelection() {
+        const selected = document.getElementById('item-select').options[document.getElementById('item-select').selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else if (manualGroup) {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
     document.getElementById('item-select').addEventListener('change', function () {
         const categoryId = document.getElementById('category-select').value;
         saveSeedState(categoryId, this.value);
+        handleSeedItemSelection();
     });
 
     const seedForm = document.getElementById('seed-form');
@@ -293,6 +313,7 @@
         const categorySelect = document.getElementById('category-select');
         categorySelect.value = saved.categoryId;
         categorySelect.dispatchEvent(new Event('change'));
+        sessionStorage.removeItem(SEED_KEEP_KEY);
     })();
 
     window.addEventListener("pagehide", () => {

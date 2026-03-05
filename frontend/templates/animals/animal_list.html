@@ -113,21 +113,25 @@
                     </div>
                     <div class="expense-item-info">
                         <h4>
-                            {% if animal.subcategory %}
+                            {% if animal.subcategory and animal.subcategory.name != "Digər" %}
                             {{ animal.subcategory.name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ animal.subcategory.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
+                            {% elif animal.subcategory and animal.subcategory.name == "Digər" %}
+                            {{ animal.manual_name }}
                             <span style="font-size: 15px; font-weight: 400; color: #666;">
                                 ({{ animal.subcategory.category.name|default:"Kateqoriya yoxdur" }})
                             </span>
                             {% else %}
                             {{ animal.manual_name }}
-                            <span style="font-size: 15px; font-weight: 400; color: #666;">(Digər)</span>
                             {% endif %}
                             {% if animal.identification_no %}({{ animal.identification_no }}){% endif %}
                         </h4>
                         <span>
                             {{ animal.gender|title }}
                             {% if animal.additional_info %}
-                            {% if animal.additional_info == "Məhsullar səhifəsindən düzəliş" %}
+                            {% if animal.additional_info == "Stok səhifəsindən düzəliş" %}
                             <br>{{ animal.additional_info }}
                             {% else %}
                             • {{ animal.additional_info }}
@@ -256,17 +260,33 @@
                 if (pendingAnimalSubId) {
                     subcategorySelect.value = pendingAnimalSubId;
                     pendingAnimalSubId = null;
-                    sessionStorage.removeItem(ANIMAL_KEEP_KEY);
                 }
+                handleAnimalSubcategorySelection();
             }
             resetAnimalOtherFields();
             saveAnimalState(categoryId, subcategorySelect.value || "");
         }
     });
 
+    function handleAnimalSubcategorySelection() {
+        const selected = subcategorySelect.options[subcategorySelect.selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else if (manualGroup) {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
     subcategorySelect.addEventListener('change', function () {
         const categoryId = categorySelect.value;
         saveAnimalState(categoryId, this.value);
+        handleAnimalSubcategorySelection();
     });
 
     const animalForm = document.getElementById('animal-form');
@@ -288,6 +308,7 @@
         pendingAnimalSubId = saved.subcategoryId || null;
         categorySelect.value = saved.categoryId;
         categorySelect.dispatchEvent(new Event('change'));
+        sessionStorage.removeItem(ANIMAL_KEEP_KEY);
     })();
 
     window.addEventListener("pagehide", () => {

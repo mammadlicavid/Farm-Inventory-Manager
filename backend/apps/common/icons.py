@@ -210,6 +210,108 @@ def get_seed_icon_for_seed(seed) -> str:
     return get_seed_icon_by_name(name)
 
 
+def get_farm_product_icon_by_name(name: Optional[str]) -> str:
+    raw = (name or "").strip().lower()
+    if not raw:
+        return _emoji("🧺")
+
+    mapping = {
+        "süd": _emoji("🥛"),
+        "pendir": _emoji("🧀"),
+        "qatıq": _emoji("🥣"),
+        "yogurt": _emoji("🥣"),
+        "ayran": _emoji("🥛"),
+        "kərə yağı": _emoji("🧈"),
+        "qaymaq": _emoji("🥛"),
+        "yumurta": _emoji("🥚"),
+        "mal əti": _emoji("🍖"),
+        "dana əti": _emoji("🍖"),
+        "camış əti": _emoji("🍖"),
+        "qoyun əti": _emoji("🍖"),
+        "keçi əti": _emoji("🍖"),
+        "toyuq əti": _emoji("🍗"),
+        "hinduşka": _emoji("🦃"),
+        "qaz əti": _emoji("🪿"),
+        "ördək əti": _emoji("🦆"),
+        "bildircin əti": _emoji("🐦"),
+        "bal": _emoji("🍯"),
+        "arı": _emoji("🐝"),
+        "gübrə": _emoji("🪴"),
+        "gubre": _emoji("🪴"),
+        "kompost": _emoji("🪴"),
+        "peyini": _emoji("🪴"),
+        "buğda": _emoji("🌾"),
+        "bugda": _emoji("🌾"),
+        "arpa": _emoji("🌾"),
+        "çovdar": _emoji("🌾"),
+        "covdar": _emoji("🌾"),
+        "vələmir": _emoji("🌾"),
+        "velemir": _emoji("🌾"),
+        "qarğıdalı": _emoji("🌽"),
+        "qargidali": _emoji("🌽"),
+        "çəltik": _emoji("🌾"),
+        "celtik": _emoji("🌾"),
+        "yonca": _emoji("🍀"),
+        "koronilla": _emoji("🍀"),
+        "seradella": _emoji("🍀"),
+        "qarpız": _emoji("🍉"),
+        "qarpiz": _emoji("🍉"),
+        "yemiş": _emoji("🍈"),
+        "yemis": _emoji("🍈"),
+        "boranı": _emoji("🎃"),
+        "borani": _emoji("🎃"),
+        "pomidor": _emoji("🍅"),
+        "xiyar": _emoji("🥒"),
+        "bibər": _emoji("🌶️"),
+        "biber": _emoji("🌶️"),
+        "badımcan": _emoji("🍆"),
+        "badimcan": _emoji("🍆"),
+        "kahı": _emoji("🥬"),
+        "kahi": _emoji("🥬"),
+        "ispanaq": _emoji("🥬"),
+        "soğan": _emoji("🧅"),
+        "sogan": _emoji("🧅"),
+        "sarımsaq": _emoji("🧄"),
+        "sarismaq": _emoji("🧄"),
+        "kartof": _emoji("🥔"),
+        "alma": _emoji("🍎"),
+        "armud": _emoji("🍐"),
+        "şaftalı": _emoji("🍑"),
+        "safteri": _emoji("🍑"),
+        "ərik": _emoji("🍑"),
+        "erik": _emoji("🍑"),
+        "albalı": _emoji("🍒"),
+        "albali": _emoji("🍒"),
+        "gilas": _emoji("🍒"),
+        "nar": _emoji("🍎"),
+        "üzüm": _emoji("🍇"),
+        "uzum": _emoji("🍇"),
+        "gavalı": _emoji("🍑"),
+        "gavali": _emoji("🍑"),
+        "heyva": _emoji("🍐"),
+        "keşniş": _emoji("🥬"),
+        "kesnis": _emoji("🥬"),
+        "şüyüt": _emoji("🥬"),
+        "suyut": _emoji("🥬"),
+        "cəfəri": _emoji("🥬"),
+        "ceferi": _emoji("🥬"),
+        "reyhan": _emoji("🌿"),
+        "tərxun": _emoji("🌿"),
+        "terxun": _emoji("🌿"),
+    }
+
+    for key, icon in mapping.items():
+        if key in raw:
+            return icon
+
+    return _emoji("🧺")
+
+
+def get_farm_product_icon_for_product(product) -> str:
+    name = getattr(getattr(product, "item", None), "name", None) or getattr(product, "manual_name", None)
+    return get_farm_product_icon_by_name(name)
+
+
 def get_expense_icon(expense) -> str:
     """
     Determine the icon for an Expense.

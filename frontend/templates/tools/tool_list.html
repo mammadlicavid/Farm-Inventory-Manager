@@ -94,20 +94,24 @@
                     </div>
                     <div class="expense-item-info">
                         <h4>
-                            {% if alet.item %}
+                            {% if alet.item and alet.item.name != "Digər" %}
                             {{ alet.item.name }}
                             <span style="font-size: 15px; font-weight: 400; color: #666;">
                                 ({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})
                             </span>
+                            {% elif alet.item and alet.item.name == "Digər" %}
+                            {{ alet.manual_name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
                             {% else %}
-                            {{ alet.manual_name }} <span
-                                style="font-size: 15px; font-weight: 400; color: #666;">(Digər)</span>
+                            {{ alet.manual_name }}
                             {% endif %}
                         </h4>
                         <span>
                             Miqdar: {{ alet.quantity }} ədəd
                             {% if alet.additional_info %}
-                            {% if alet.additional_info == "Məhsullar səhifəsindən düzəliş" %}
+                            {% if alet.additional_info == "Stok səhifəsindən düzəliş" %}
                             <br>{{ alet.additional_info }}
                             {% else %}
                             • {{ alet.additional_info }}
@@ -224,17 +228,33 @@
                     if (pendingToolItemId) {
                         itemSelect.value = pendingToolItemId;
                         pendingToolItemId = null;
-                        sessionStorage.removeItem(TOOL_KEEP_KEY);
                     }
                     resetToolOtherFields();
                     saveToolState(categoryId, itemSelect.value || "");
+                    handleToolItemSelection();
                 });
         }
     });
 
+    function handleToolItemSelection() {
+        const selected = document.getElementById('id_item').options[document.getElementById('id_item').selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else if (manualGroup) {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
     document.getElementById('id_item').addEventListener('change', function () {
         const categoryId = document.getElementById('id_category').value;
         saveToolState(categoryId, this.value);
+        handleToolItemSelection();
     });
 
     const toolForm = document.getElementById('tool-form');
@@ -257,6 +277,7 @@
         const categorySelect = document.getElementById('id_category');
         categorySelect.value = saved.categoryId;
         categorySelect.dispatchEvent(new Event('change'));
+        sessionStorage.removeItem(TOOL_KEEP_KEY);
     })();
 
     window.addEventListener("pagehide", () => {

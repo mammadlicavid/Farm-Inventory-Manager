@@ -67,10 +67,13 @@ def seed_create(request):
             item = None
             if item_id:
                 item = SeedItem.objects.get(id=item_id)
+                if item.name == "Digər" and not manual_name:
+                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    return redirect('seeds:seed_list')
             
             seed = Seed.objects.create(
                 item=item,
-                manual_name=manual_name if not item else None,
+                manual_name=manual_name if (not item or item.name == "Digər") else None,
                 quantity=quantity,
                 unit=unit,
                 price=price,
@@ -137,7 +140,17 @@ def seed_update(request, pk):
         seed.quantity = quantity
         seed.unit = unit
         seed.additional_info = additional_info
-        seed.manual_name = manual_name if not item_id else None
+        if item_id:
+            item = SeedItem.objects.get(id=item_id)
+            if item.name == "Digər" and not manual_name:
+                messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
+                return render(request, 'seeds/seed_form.html', {
+                    'seed': seed,
+                    'categories': SeedCategory.objects.all(),
+                })
+            seed.manual_name = manual_name if item.name == "Digər" else None
+        else:
+            seed.manual_name = manual_name
         
         # Handle empty price
         seed.price = price if price and price.strip() else 0

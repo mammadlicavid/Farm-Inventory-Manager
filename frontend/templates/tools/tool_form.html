@@ -41,7 +41,7 @@
                     </select>
                 </div>
 
-                <div class="form-group" id="manual-name-group" {% if alet.item %}style="display: none;" {% endif %}>
+                <div class="form-group" id="manual-name-group" {% if alet.item and alet.item.name != "Digər" %}style="display: none;" {% endif %}>
                     <label>Alətin Adı (Digər) <span style="color: #dc3545;">*</span></label>
                     <input type="text" name="manual_name" id="manual-name-input" placeholder="Alətin adını daxil edin"
                         class="custom-input" value="{{ alet.manual_name|default:'' }}">
@@ -114,6 +114,7 @@
                         itemSelect.appendChild(option);
                     });
                     itemSelect.disabled = false;
+                    handleToolItemSelection();
                 })
                 .catch(error => {
                     console.error('Error fetching tool items:', error);
@@ -121,5 +122,27 @@
                 });
         }
     });
+
+    function handleToolItemSelection() {
+        const selected = document.getElementById('item-select').options[document.getElementById('item-select').selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
+    document.getElementById('item-select').addEventListener('change', handleToolItemSelection);
+
+    (function initSelection() {
+        const itemSelect = document.getElementById('item-select');
+        if (itemSelect && itemSelect.value) {
+            handleToolItemSelection();
+        }
+    })();
 </script>
 {% endblock %}
