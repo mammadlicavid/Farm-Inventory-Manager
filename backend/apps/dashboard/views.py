@@ -16,7 +16,7 @@ def dashboard(request):
         hour=0, minute=0, second=0, microsecond=0
     )
 
-    new_products = (
+    new_stocks = (
         Seed.objects.filter(created_by=request.user, created_at__gte=start_of_week).count()
         + Animal.objects.filter(created_by=request.user, created_at__gte=start_of_week).count()
         + Tool.objects.filter(created_by=request.user, created_at__gte=start_of_week).count()
@@ -25,7 +25,7 @@ def dashboard(request):
     context = {
         "user_name" : request.user.get_username(),
         "stats" : {
-            "new_addition": new_products,
+            "new_addition": new_stocks,
             "expenses": Expense.objects.filter(created_by=request.user, created_at__gte=start_of_week).aggregate(Sum('amount'))['amount__sum'] or 0,
             "animals": Animal.objects.filter(created_by=request.user, created_at__gte=start_of_week).count(),
         },

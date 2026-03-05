@@ -76,10 +76,13 @@ def animal_create(request):
             subcategory = None
             if subcategory_id:
                 subcategory = AnimalSubCategory.objects.get(id=subcategory_id)
+                if subcategory.name == "Digər" and not manual_name:
+                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    return redirect('animals:animal_list')
             
             animal = Animal.objects.create(
                 subcategory=subcategory,
-                manual_name=manual_name if not subcategory else None,
+                manual_name=manual_name if (not subcategory or subcategory.name == "Digər") else None,
                 identification_no=identification_no,
                 additional_info=additional_info,
                 gender=gender,
@@ -153,7 +156,20 @@ def animal_update(request, pk):
         animal.identification_no = identification_no
         animal.additional_info = additional_info
         animal.gender = gender
-        animal.manual_name = manual_name if not subcategory_id else None
+        if subcategory_id:
+            subcategory = AnimalSubCategory.objects.get(id=subcategory_id)
+            if subcategory.name == "Digər" and not manual_name:
+                messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
+                categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
+                return render(request, 'animals/animal_form.html', {
+                    'form': AnimalForm(instance=animal),
+                    'animal': animal,
+                    'categories': categories,
+                    'subcategory_data': _build_subcategory_data(categories),
+                })
+            animal.manual_name = manual_name if subcategory.name == "Digər" else None
+        else:
+            animal.manual_name = manual_name
         
         # Handle empty numeric fields
         animal.weight = weight if weight and weight.strip() else None

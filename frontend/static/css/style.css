@@ -1595,7 +1595,7 @@ body.drawer-open #menuToggle {
     .expense-item-card,
     .reports-kpi-row,
     .reports-section-card,
-    .products-grid,
+    .stocks-grid,
     .templates-list {
         transition: transform 0.3s ease, width 0.3s ease, grid-template-columns 0.3s ease, padding 0.3s ease;
     }
@@ -1606,7 +1606,7 @@ body.drawer-open #menuToggle {
         grid-template-columns: repeat(auto-fit, minmax(max(25%, 220px), 1fr));
     }
 
-    .drawer-open .products-grid {
+    .drawer-open .stocks-grid {
         /* Prevents more than 3 columns (33.33%) while squeezing */
         grid-template-columns: repeat(auto-fill, minmax(max(33.33%, 380px), 1fr)) !important;
     }

@@ -4,23 +4,38 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.db.models import Case, IntegerField, When
+from django.db.models import Case, IntegerField, When, Q
 
-from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name
+from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name, get_farm_product_icon_by_name
 from common.messages import add_crud_success_message
 from animals.models import Animal, AnimalCategory, AnimalSubCategory
+from farm_products.models import FarmProduct, FarmProductCategory, FarmProductItem
 from seeds.models import Seed, SeedCategory, SeedItem
 from tools.models import Tool, ToolCategory, ToolItem
 
 def home(request):
     return HttpResponse("Home page")
 
+
+def _convert_farm_qty(value: Decimal, unit: str, base_unit: str) -> Decimal:
+    if base_unit == "kq":
+        if unit == "ton":
+            return value * Decimal("1000")
+        if unit == "qram":
+            return value / Decimal("1000")
+        return value
+    if base_unit == "litr":
+        if unit == "ml":
+            return value / Decimal("1000")
+        return value
+    return value
+
 @login_required
 def dashboard(request):
     return HttpResponse("Dashboard ✅ You are logged in.")
 
 @login_required
-def products_placeholder(request):
+def stocks_placeholder(request):
     user = request.user
 
     category_order = Case(
@@ -31,6 +46,8 @@ def products_placeholder(request):
     seed_categories = list(SeedCategory.objects.all().order_by(category_order, "name"))
     tool_categories = list(ToolCategory.objects.all().order_by(category_order, "name"))
     animal_categories = list(AnimalCategory.objects.all().order_by(category_order, "name"))
+    farm_product_categories = list(FarmProductCategory.objects.all().order_by(category_order, "name"))
+    farm_diger_category_id = next((cat.id for cat in farm_product_categories if cat.name == "Digər"), None)
 
     def to_kg(quantity: Decimal, unit: str) -> Decimal:
         if unit == "kg":
@@ -210,7 +227,8 @@ def products_placeholder(request):
     # Seeds manual
     seed_other_totals = {}
     seed_other_qs = (
-        Seed.objects.filter(created_by=user, item__isnull=True)
+        Seed.objects.filter(created_by=user)
+        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
         .exclude(manual_name__isnull=True)
         .exclude(manual_name="")
         .exclude(manual_name__iexact="Digər")
@@ -247,7 +265,8 @@ def products_placeholder(request):
     # Tools manual
     tool_other_totals = {}
     tool_other_qs = (
-        Tool.objects.filter(created_by=user, item__isnull=True)
+        Tool.objects.filter(created_by=user)
+        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
         .exclude(manual_name__isnull=True)
         .exclude(manual_name="")
         .exclude(manual_name__iexact="Digər")
@@ -284,7 +303,8 @@ def products_placeholder(request):
     # Animals manual
     animal_other_totals = {}
     animal_other_qs = (
-        Animal.objects.filter(created_by=user, subcategory__isnull=True, status="aktiv")
+        Animal.objects.filter(created_by=user, status="aktiv")
+        .filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
         .exclude(manual_name__isnull=True)
         .exclude(manual_name="")
         .exclude(manual_name__iexact="Digər")
@@ -328,27 +348,140 @@ def products_placeholder(request):
             }
         )
 
+    def _is_forage_item(name: str) -> bool:
+        return (name or "").strip().lower() in {"yonca", "koronilla", "seradella"}
+
+    # Farm products (item-based)
+    farm_totals = {}
+    farm_qs = (
+        FarmProduct.objects.filter(created_by=user, item__isnull=False)
+        .select_related("item", "item__category")
+    )
+    for product in farm_qs:
+        if not product.item:
+            continue
+        if (product.item.name or "").strip().lower() == "digər":
+            continue
+        is_forage = _is_forage_item(product.item.name)
+        if is_forage and product.unit == "bağlama":
+            base_unit = "bağlama"
+        elif product.unit in {"kq", "ton", "qram"}:
+            base_unit = "kq"
+        elif product.unit in {"litr", "ml"}:
+            base_unit = "litr"
+        else:
+            base_unit = product.unit
+
+        key = (product.item_id, product.unit) if base_unit == "bağlama" else (product.item_id, "base")
+        payload = farm_totals.setdefault(
+            key,
+            {
+                "name": product.item.name,
+                "category_id": product.item.category_id,
+                "category_name": product.item.category.name if product.item.category else "",
+                "total_qty": Decimal("0"),
+                "unit": product.unit if base_unit == "bağlama" else (product.item.unit or product.unit),
+                "base_unit": base_unit,
+            },
+        )
+        payload["total_qty"] += _convert_farm_qty(Decimal(product.quantity), product.unit, payload["base_unit"])
+
+    farm_items = FarmProductItem.objects.select_related("category").exclude(name__iexact="Digər")
+    for item in farm_items:
+        key = (item.id, "base")
+        if key not in farm_totals:
+            farm_totals[key] = {
+                "name": item.name,
+                "category_id": item.category_id,
+                "category_name": item.category.name if item.category else "",
+                "total_qty": Decimal("0"),
+                "unit": item.unit,
+                "base_unit": item.unit,
+            }
+
+    for item_id, payload in farm_totals.items():
+        qty_display = f"{payload['total_qty']:.2f}"
+        update_id = f"{item_id[0]}||{payload['unit']}" if payload["base_unit"] == "bağlama" else str(item_id[0])
+        items.append(
+            {
+                "main": "teserrufat",
+                "sub_key": f"farmcat-{payload['category_id']}",
+                "title": payload["name"],
+                "subtitle": payload["category_name"],
+                "quantity": payload["total_qty"],
+                "quantity_display": qty_display,
+                "unit": payload["unit"] or "",
+                "icon": get_farm_product_icon_by_name(payload["name"]),
+                "update_type": "farm_product",
+                "update_id": update_id,
+                "input_step": "0.01",
+            }
+        )
+
+    # Farm products manual (Digər)
+    farm_other_totals = {}
+    farm_other_qs = (
+        FarmProduct.objects.filter(created_by=user)
+        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
+        .exclude(manual_name__isnull=True)
+        .exclude(manual_name="")
+        .exclude(manual_name__iexact="Digər")
+    )
+    for product in farm_other_qs:
+        name_key = product.manual_name.strip()
+        unit_key = product.unit or ""
+        key = f"{name_key}||{unit_key}"
+        payload = farm_other_totals.setdefault(
+            key,
+            {
+                "name": name_key,
+                "unit": unit_key,
+                "total_qty": Decimal("0"),
+            },
+        )
+        payload["total_qty"] += Decimal(product.quantity)
+
+    for key, payload in farm_other_totals.items():
+        qty_display = f"{payload['total_qty']:.2f}"
+        sub_key = f"farmcat-{farm_diger_category_id}" if farm_diger_category_id else "farmcat-diger"
+        items.append(
+            {
+                "main": "teserrufat",
+                "sub_key": sub_key,
+                "title": payload["name"],
+                "subtitle": "Təsərrüfat Məhsulları (Digər)",
+                "quantity": payload["total_qty"],
+                "quantity_display": qty_display,
+                "unit": payload["unit"],
+                "icon": get_farm_product_icon_by_name(payload["name"]),
+                "update_type": "farm_product_other",
+                "update_id": key,
+                "input_step": "0.01",
+            }
+        )
+
     context = {
         "seed_categories": seed_categories,
         "tool_categories": tool_categories,
         "animal_categories": animal_categories,
+        "farm_product_categories": farm_product_categories,
         "items": sorted(
             items,
             key=lambda item: (
                 1 if Decimal(str(item["quantity"])) == 0 else 0,
-                {"toxumlar": 0, "aletler": 1, "heyvanlar": 2, "diger": 3}.get(item["main"], 9),
+                {"toxumlar": 0, "aletler": 1, "heyvanlar": 2, "teserrufat": 3, "diger": 4}.get(item["main"], 9),
                 (item.get("subtitle") or "").lower(),
                 (item.get("title") or "").lower(),
             ),
         ),
     }
-    return render(request, "inventory/products.html", context)
+    return render(request, "inventory/stocks.html", context)
 
 
 @login_required
-def update_product_quantity(request):
+def update_stock_quantity(request):
     if request.method != "POST":
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
 
     update_type = request.POST.get("update_type")
     update_id = request.POST.get("update_id")
@@ -356,15 +489,15 @@ def update_product_quantity(request):
 
     if not update_type or not update_id or target_raw is None:
         messages.error(request, "Məlumatlar natamamdır.")
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
 
     try:
         target_value = Decimal(str(target_raw))
     except Exception:
         messages.error(request, "Miqdar düzgün deyil.")
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
 
-    note = "Məhsullar səhifəsindən düzəliş"
+    note = "Stok səhifəsindən düzəliş"
 
     if update_type == "seed":
         seed_qs = Seed.objects.filter(created_by=request.user, item_id=update_id)
@@ -390,10 +523,13 @@ def update_product_quantity(request):
                 created_by=request.user,
             )
             add_crud_success_message(request, "Seed", "update")
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
 
     if update_type == "seed_other":
-        seed_qs = Seed.objects.filter(created_by=request.user, item__isnull=True, manual_name=update_id)
+        seed_qs = Seed.objects.filter(
+            created_by=request.user,
+            manual_name=update_id,
+        ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
         current_total = Decimal("0")
         for seed in seed_qs:
             if seed.unit == "kg":
@@ -417,13 +553,13 @@ def update_product_quantity(request):
                 created_by=request.user,
             )
             add_crud_success_message(request, "Seed", "update")
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
 
     if update_type == "tool":
         tool_qs = Tool.objects.filter(created_by=request.user, item_id=update_id)
         if target_value % 1 != 0:
             messages.error(request, "Alətlər üçün miqdar tam ədəd olmalıdır.")
-            return redirect("inventory:products")
+            return redirect("inventory:stocks")
         current_total = sum(int(t.quantity) for t in tool_qs)
         delta = int(target_value) - current_total
         if delta != 0:
@@ -435,13 +571,16 @@ def update_product_quantity(request):
                 created_by=request.user,
             )
             add_crud_success_message(request, "Tool", "update")
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
 
     if update_type == "tool_other":
-        tool_qs = Tool.objects.filter(created_by=request.user, item__isnull=True, manual_name=update_id)
+        tool_qs = Tool.objects.filter(
+            created_by=request.user,
+            manual_name=update_id,
+        ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
         if target_value % 1 != 0:
             messages.error(request, "Alətlər üçün miqdar tam ədəd olmalıdır.")
-            return redirect("inventory:products")
+            return redirect("inventory:stocks")
         current_total = sum(int(t.quantity) for t in tool_qs)
         delta = int(target_value) - current_total
         if delta != 0:
@@ -454,21 +593,88 @@ def update_product_quantity(request):
                 created_by=request.user,
             )
             add_crud_success_message(request, "Tool", "update")
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
+
+    if update_type == "farm_product":
+        unit_key = None
+        if "||" in str(update_id):
+            raw_id, unit_key = str(update_id).rsplit("||", 1)
+            update_id = raw_id
+
+        product_qs = FarmProduct.objects.filter(created_by=request.user, item_id=update_id)
+        current_total = Decimal("0")
+        try:
+            item = FarmProductItem.objects.get(id=update_id)
+        except FarmProductItem.DoesNotExist:
+            messages.error(request, "Məhsul tapılmadı.")
+            return redirect("inventory:stocks")
+
+        is_forage = _is_forage_item(item.name)
+        base_unit = item.unit or "kq"
+        if unit_key:
+            product_qs = product_qs.filter(unit=unit_key)
+            if unit_key == "bağlama":
+                base_unit = "bağlama"
+        for product in product_qs:
+            current_total += _convert_farm_qty(Decimal(product.quantity), product.unit, base_unit)
+        unit_value = unit_key or base_unit
+
+        delta = target_value - current_total
+        if delta != 0:
+            FarmProduct.objects.create(
+                item_id=update_id,
+                quantity=delta,
+                unit=unit_value,
+                price=0,
+                additional_info=note,
+                created_by=request.user,
+            )
+            add_crud_success_message(request, "FarmProduct", "update")
+        return redirect("inventory:stocks")
+
+    if update_type == "farm_product_other":
+        if "||" not in update_id:
+            messages.error(request, "Məlumatlar natamamdır.")
+            return redirect("inventory:stocks")
+        name_key, unit_key = update_id.rsplit("||", 1)
+        product_qs = FarmProduct.objects.filter(
+            created_by=request.user,
+        ).filter(
+            Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+            manual_name=name_key,
+            unit=unit_key,
+        )
+        current_total = Decimal("0")
+        for product in product_qs:
+            current_total += Decimal(product.quantity)
+
+        delta = target_value - current_total
+        if delta != 0:
+            FarmProduct.objects.create(
+                item=None,
+                manual_name=name_key,
+                quantity=delta,
+                unit=unit_key,
+                price=0,
+                additional_info=note,
+                created_by=request.user,
+            )
+            add_crud_success_message(request, "FarmProduct", "update")
+        return redirect("inventory:stocks")
 
     if update_type in {"animal_sub", "animal_other"}:
         male_raw = request.POST.get("male_target")
         female_raw = request.POST.get("female_target")
         if male_raw is None or female_raw is None:
             messages.error(request, "Məlumatlar natamamdır.")
-            return redirect("inventory:products")
+            return redirect("inventory:stocks")
 
         try:
             male_target = int(male_raw)
             female_target = int(female_raw)
         except Exception:
             messages.error(request, "Heyvanlar üçün miqdar tam ədəd olmalıdır.")
-            return redirect("inventory:products")
+            return redirect("inventory:stocks")
 
         if update_type == "animal_sub":
             animals_qs = Animal.objects.filter(
@@ -479,10 +685,9 @@ def update_product_quantity(request):
         else:
             animals_qs = Animal.objects.filter(
                 created_by=request.user,
-                subcategory__isnull=True,
                 manual_name=update_id,
                 status="aktiv",
-            )
+            ).filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
 
         current_male = animals_qs.filter(gender="erkek").count()
         current_female = animals_qs.filter(gender="disi").count()
@@ -537,10 +742,10 @@ def update_product_quantity(request):
 
         if male_delta != 0 or female_delta != 0:
             add_crud_success_message(request, "Animal", "update")
-        return redirect("inventory:products")
+        return redirect("inventory:stocks")
 
     messages.error(request, "Bu kateqoriya üçün yeniləmə dəstəklənmir.")
-    return redirect("inventory:products")
+    return redirect("inventory:stocks")
 
 @login_required
 def add_product(request):

@@ -66,10 +66,13 @@ def tool_create(request):
             item = None
             if item_id:
                 item = ToolItem.objects.get(id=item_id)
+                if item.name == "Digər" and not manual_name:
+                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    return redirect('tools:tool_list')
             
             tool = Tool.objects.create(
                 item=item,
-                manual_name=manual_name if not item else None,
+                manual_name=manual_name if (not item or item.name == "Digər") else None,
                 quantity=quantity,
                 price=price,
                 additional_info=additional_info,
@@ -130,7 +133,17 @@ def tool_update(request, pk):
         # Update tool object
         tool.quantity = quantity
         tool.additional_info = additional_info
-        tool.manual_name = manual_name if not item_id else None
+        if item_id:
+            item = ToolItem.objects.get(id=item_id)
+            if item.name == "Digər" and not manual_name:
+                messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
+                return render(request, 'tools/tool_form.html', {
+                    'alet': tool,
+                    'categories': ToolCategory.objects.all(),
+                })
+            tool.manual_name = manual_name if item.name == "Digər" else None
+        else:
+            tool.manual_name = manual_name
         
         # Handle empty price
         tool.price = price if price and price.strip() else 0

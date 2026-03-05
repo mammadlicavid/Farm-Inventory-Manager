@@ -10,8 +10,25 @@ class Command(BaseCommand):
         ExpenseCategory.objects.all().delete()
 
         data = {
-            "Heyvandarlıq": ["Yem", "Baytar", "Peyvəndləmə", "Heyvan alışı", "Gübrə"],
-            "Bitkiçilik": ["Toxumlar", "Pesticidlər", "Suvarma"],
+            "Heyvandarlıq": [
+                "Yem",
+                "Baytar",
+                "Peyvəndləmə",
+                "Heyvan alışı",
+                "Gübrə",
+                "Süd məhsulları",
+                "Yumurta",
+                "Ət",
+                "Arıçılıq",
+            ],
+            "Bitkiçilik": [
+                "Toxumlar",
+                "Pesticidlər",
+                "Suvarma",
+                "Meyvə-Tərəvəz alışı",
+                "Taxıl alışı",
+                "Yem bitkisi alışı",
+            ],
             "İşçi qüvvəsi": ["Maaşlar", "Sığorta"],
             "Texnika və Maşınlar": ["Yanacaq", "Təmir və Baxım", "Texnika alışı"],
             "İnfrastruktur": ["Elektrik", "Su", "Tikinti"],

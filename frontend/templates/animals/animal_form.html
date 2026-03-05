@@ -43,7 +43,7 @@
                     </select>
                 </div>
 
-                <div class="form-group" id="manual-name-group" {% if animal.subcategory %}style="display: none;" {% endif %}>
+                <div class="form-group" id="manual-name-group" {% if animal.subcategory and animal.subcategory.name != "Digər" %}style="display: none;" {% endif %}>
                     <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
                     <input type="text" name="manual_name" id="manual-name-input"
                         placeholder="Heyvanın növünü daxil edin" class="custom-input"
@@ -138,8 +138,32 @@
                     subcategorySelect.appendChild(option);
                 });
                 subcategorySelect.disabled = false;
+                handleAnimalSubcategorySelection();
             }
         }
     });
+
+    function handleAnimalSubcategorySelection() {
+        const selected = subcategorySelect.options[subcategorySelect.selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else if (manualGroup) {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
+    subcategorySelect.addEventListener('change', handleAnimalSubcategorySelection);
+
+    (function initSelection() {
+        if (subcategorySelect && subcategorySelect.value) {
+            handleAnimalSubcategorySelection();
+        }
+    })();
 </script>
 {% endblock %}

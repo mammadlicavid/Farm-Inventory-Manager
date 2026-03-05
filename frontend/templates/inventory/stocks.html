@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="products-page">
+<div class="stocks-page">
     <header class="main-header" style="padding-bottom: 55px;">
         <div class="header-content">
             <div class="header-top">
                 <a href="{% url 'dashboard' %}" class="back-btn-box">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>Məhsullar</span>
+                    <span>Stok</span>
                 </a>
             </div>
 
-            <div class="products-filter">
+            <div class="stocks-filter">
                 <div class="filter-field">
                     <label for="main-category-select">Ana Kateqoriya</label>
                     <div class="filter-input click-focus">
@@ -20,6 +20,7 @@
                             <option value="toxumlar">Toxumlar</option>
                             <option value="aletler">Alətlər</option>
                             <option value="heyvanlar">Heyvanlar</option>
+                            <option value="teserrufat">Təsərrüfat Məhsulları</option>
                         </select>
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
@@ -34,9 +35,9 @@
                     </div>
                 </div>
                 <div class="filter-field">
-                    <label for="products-search">Axtarış</label>
+                    <label for="stocks-search">Axtarış</label>
                     <div class="filter-input click-focus search-field">
-                        <input id="products-search" type="text" placeholder="Axtar..." autocomplete="off" />
+                        <input id="stocks-search" type="text" placeholder="Axtar..." autocomplete="off" />
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </div>
                 </div>
@@ -45,7 +46,7 @@
     </header>
 
     <main class="main-content" style="position: relative; z-index: 10;">
-        <div class="products-grid" id="products-grid">
+        <div class="stocks-grid" id="stocks-grid">
             {% for item in items %}
             <div class="product-card" data-main="{{ item.main }}" data-sub="{{ item.sub_key }}">
                 <div class="product-icon">
@@ -85,19 +86,19 @@
             </div>
             {% endfor %}
         </div>
-        <div class="product-empty" id="products-empty" style="display: none;">
+        <div class="product-empty" id="stocks-empty" style="display: none;">
             Bu filtrə uyğun məhsul yoxdur.
         </div>
     </main>
 </div>
 
 <style>
-    .products-page {
+    .stocks-page {
         max-width: 1400px;
         margin: 0 auto;
     }
 
-    .products-filter {
+    .stocks-filter {
         margin-top: 18px;
         display: flex;
         /* Changed from grid to flex for better wrapping control */
@@ -163,20 +164,20 @@
         font-size: 15px;
     }
 
-    .products-grid {
+    .stocks-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: 18px;
     }
 
     @media (min-width: 640px) {
-        .products-grid {
+        .stocks-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 
     @media (min-width: 1024px) {
-        .products-grid {
+        .stocks-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
@@ -379,7 +380,7 @@
     }
 
     @media (max-width: 860px) {
-        .products-filter {
+        .stocks-filter {
             grid-template-columns: 1fr;
         }
 
@@ -398,7 +399,7 @@
     <div class="modal">
         <div class="modal-title" id="modal-title">Məhsul</div>
         <div class="modal-subtitle" id="modal-subtitle"></div>
-        <form id="product-modal-form" action="{% url 'inventory:products_update_quantity' %}" method="POST">
+        <form id="product-modal-form" action="{% url 'inventory:stocks_update_quantity' %}" method="POST">
             {% csrf_token %}
             <input type="hidden" name="update_type" id="modal-update-type">
             <input type="hidden" name="update_id" id="modal-update-id">
@@ -452,13 +453,19 @@
     { value: "animalcat-{{ cat.id }}", label: "{{ cat.name }}" },
     {% endfor %}
         ],
+    teserrufat: [
+        { value: "all", label: "Hamısı" },
+        {% for cat in farm_product_categories %}
+    { value: "farmcat-{{ cat.id }}", label: "{{ cat.name }}" },
+    {% endfor %}
+        ],
     };
 
     const mainSelect = document.getElementById("main-category-select");
     const subSelect = document.getElementById("subcategory-select");
-    const searchInput = document.getElementById("products-search");
+    const searchInput = document.getElementById("stocks-search");
     const cards = Array.from(document.querySelectorAll(".product-card"));
-    const emptyState = document.getElementById("products-empty");
+    const emptyState = document.getElementById("stocks-empty");
     const modalBackdrop = document.getElementById("product-modal");
     const modalForm = document.getElementById("product-modal-form");
     const modalTitle = document.getElementById("modal-title");
@@ -473,8 +480,8 @@
     const modalFemale = document.getElementById("modal-female");
     const modalTotal = document.getElementById("modal-total");
 
-    const FILTER_KEY = "products_filters_session_v1";
-    const KEEP_KEY = "products_filters_keep_v1";
+    const FILTER_KEY = "stocks_filters_session_v1";
+    const KEEP_KEY = "stocks_filters_keep_v1";
 
     function saveFilters() {
         const payload = {
