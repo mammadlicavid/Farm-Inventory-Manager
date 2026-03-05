@@ -1,83 +1,83 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <header class="main-header">
-        <div class="header-content">
-            <div class="header-top">
-                <h1>Ferma İdarəsi</h1>
-                <div class="status-badge">
-                    <span class="status-dot"></span> Onlayn
-                </div>
-            </div>
-            <p class="welcome-text">Xoş gəlmisiniz, {{ user_name }}!</p>
-        </div>
-        <div class="header-curve"></div>
-    </header>
-
-    <main class="main-content">
-
-        <div class="categories-grid">
-            <a href="{% url 'seeds:seed_list' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box green-icon">
-                    <i class="fa-solid fa-seedling"></i>
-                </div>
-                <span>Toxumlar</span>
-            </a>
-
-            <a href="{% url 'animals:animal_list' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box lime-icon">
-                    <i class="fa-solid fa-cow"></i>
-                </div>
-                <span>Heyvanlar</span>
-            </a>
-
-            <a href="{% url 'tools:tool_list' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box brown-icon">
-                    <i class="fa-solid fa-wrench"></i>
-                </div>
-                <span>Alətlər</span>
-            </a>
-
-            <a href="{% url 'reports:list' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box dark-green-icon">
-                    <i class="fa-solid fa-clipboard-list"></i>
-                </div>
-                <span>Hesabatlar</span>
-            </a>
-
-            <a href="{% url 'expenses:expense_list' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box yellow-icon">
-                    <i class="fa-solid fa-sack-dollar"></i>
-                </div>
-                <span>Xərclər</span>
-            </a>
-
-            <a href="{% url 'sync:page' %}" class="category-card" style="text-decoration: none;">
-                <div class="icon-box gray-icon">
-                    <i class="fa-solid fa-cloud"></i>
-                </div>
-                <span>Bulud</span>
-            </a>
-        </div>
-
-        <div class="stats-footer">
-            <h3 style="font-size: 20px; color: #333; margin-bottom: 6px; font-weight: 700;">Bu həftə</h3>
-            <div class="stats-row">
-                <div class="stat-item">
-                    <span class="stat-value text-black">{{ stats.new_addition }}</span>
-                    <span class="stat-label">Yeni məhsul</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value text-yellow" style="font-size: 26px;">{{ stats.expenses }}₼</span>
-                    <span class="stat-label">Xərclər</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value text-green">+{{ stats.animals }}</span>
-                    <span class="stat-label">Heyvan</span>
-                </div>
+<header class="main-header">
+    <div class="header-content">
+        <div class="header-top">
+            <h1>Ferma İdarəsi</h1>
+            <div class="status-badge">
+                <span class="status-dot"></span> Onlayn
             </div>
         </div>
+        <p class="welcome-text">Xoş gəlmisiniz, {{ user_name }}!</p>
+    </div>
+    <div class="header-curve"></div>
+</header>
+
+<main class="main-content">
+
+    <div class="categories-grid">
+        <a href="{% url 'seeds:seed_list' %}" class="category-card" style="text-decoration: none;">
+            <div class="icon-box green-icon">
+                <i class="fa-solid fa-seedling"></i>
+            </div>
+            <span>Toxumlar</span>
+        </a>
+
+        <a href="{% url 'animals:animal_list' %}" class="category-card" style="text-decoration: none;">
+            <div class="icon-box lime-icon">
+                <i class="fa-solid fa-cow"></i>
+            </div>
+            <span>Heyvanlar</span>
+        </a>
+
+        <a href="{% url 'tools:tool_list' %}" class="category-card" style="text-decoration: none;">
+            <div class="icon-box brown-icon">
+                <i class="fa-solid fa-wrench"></i>
+            </div>
+            <span>Alətlər</span>
+        </a>
+
+        <a href="{% url 'expenses:expense_list' %}" class="category-card" style="text-decoration: none;">
+            <div class="icon-box yellow-icon">
+                <i class="fa-solid fa-sack-dollar"></i>
+            </div>
+            <span>Xərclər</span>
+        </a>
+
+        <a href="{% url 'reports:list' %}" class="category-card" style="text-decoration: none;">
+            <div class="icon-box dark-green-icon">
+                <i class="fa-solid fa-clipboard-list"></i>
+            </div>
+            <span>Hesabatlar</span>
+        </a>
+
+        <a href="{% url 'sync:page' %}" class="category-card" style="text-decoration: none;">
+            <div class="icon-box gray-icon">
+                <i class="fa-solid fa-cloud"></i>
+            </div>
+            <span>Bulud</span>
+        </a>
+    </div>
+
+    <div class="stats-footer">
+        <h3 style="font-size: 20px; color: #333; margin-bottom: 6px; font-weight: 700;">Bu həftə</h3>
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-value text-black">{{ stats.new_addition }}</span>
+                <span class="stat-label">Yeni məhsul</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value text-yellow" style="font-size: 26px;">{{ stats.expenses }}₼</span>
+                <span class="stat-label">Xərclər</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value text-green">+{{ stats.animals }}</span>
+                <span class="stat-label">Heyvan</span>
+            </div>
+        </div>
+    </div>
 
 
-    </main>
+</main>
 {% endblock %}

@@ -10,6 +10,12 @@ from common.messages import add_crud_success_message
 from common.icons import get_animal_icon_for_animal
 from expenses.models import Expense, ExpenseSubCategory
 
+def _build_subcategory_data(categories):
+    return {
+        str(cat.id): [{"id": sub.id, "name": sub.name} for sub in cat.subcategories.all()]
+        for cat in categories
+    }
+
 @login_required
 def animal_list(request):
     query = request.GET.get('q')
@@ -35,6 +41,7 @@ def animal_list(request):
     context = {
         'animals': animals,
         'categories': categories,
+        'subcategory_data': _build_subcategory_data(categories),
     }
     return render(request, 'animals/animal_list.html', context)
 
@@ -116,6 +123,11 @@ def animal_create(request):
 @login_required
 def animal_update(request, pk):
     animal = get_object_or_404(Animal, pk=pk, created_by=request.user)
+    category_order = Case(
+        When(name="Digər", then=1),
+        default=0,
+        output_field=IntegerField(),
+    )
     if request.method == 'POST':
         subcategory_id = request.POST.get('subcategory')
         identification_no = request.POST.get('identification_no')
@@ -129,10 +141,12 @@ def animal_update(request, pk):
         # Backend Validation
         if not (subcategory_id or manual_name) or not gender or not weight:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
             return render(request, 'animals/animal_form.html', {
                 'form': AnimalForm(instance=animal),
                 'animal': animal,
-                'categories': AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
+                'categories': categories,
+                'subcategory_data': _build_subcategory_data(categories),
             })
 
         # Update animal object
@@ -201,6 +215,7 @@ def animal_update(request, pk):
     return render(request, 'animals/animal_form.html', {
         'animal': animal,
         'categories': categories,
+        'subcategory_data': _build_subcategory_data(categories),
     })
 
 @login_required

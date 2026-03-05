@@ -754,18 +754,11 @@ select.custom-input {
     margin-bottom: 15px;
     border: 1px solid rgba(0, 0, 0, 0.03);
     transition: all 0.3s ease;
-    cursor: pointer;
+    cursor: default;
 }
 
 .expense-item-card:hover {
-    transform: translateX(8px);
-    background-color: #FDF9F0;
     border-color: rgba(46, 139, 87, 0.1);
-    box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.04);
-}
-
-.expense-item-card:active {
-    transform: scale(0.98);
 }
 
 .expense-item-icon {
@@ -1140,7 +1133,7 @@ body.drawer-open #menuToggle {
 }
 
 /* Header */
-.tez-xerc-header {
+.quick-expense-header {
     background: linear-gradient(135deg, #2E8B57 0%, #3AA866 100%);
     color: #fff;
     padding: 22px 20px 28px;
@@ -1149,13 +1142,13 @@ body.drawer-open #menuToggle {
     position: relative;
 }
 
-.tez-xerc-header-content {
+.quick-expense-header-content {
     display: flex;
     align-items: center;
     gap: 14px;
 }
 
-.tez-xerc-back-btn {
+.quick-expense-back-btn {
     color: #fff;
     font-size: 20px;
     text-decoration: none;
@@ -1169,22 +1162,22 @@ body.drawer-open #menuToggle {
     transition: background 0.2s;
 }
 
-.tez-xerc-back-btn:hover {
+.quick-expense-back-btn:hover {
     background: rgba(255, 255, 255, 0.25);
 }
 
-.tez-xerc-title {
+.quick-expense-title {
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.3px;
 }
 
 /* Sections */
-.tez-xerc-section {
+.quick-expense-section {
     margin-bottom: 28px;
 }
 
-.tez-xerc-section-title {
+.quick-expense-section-title {
     font-size: 20px;
     font-weight: 700;
     color: #222;
@@ -1308,7 +1301,7 @@ body.drawer-open #menuToggle {
     margin-bottom: 14px;
 }
 
-.templates-header .tez-xerc-section-title {
+.templates-header .quick-expense-section-title {
     margin-bottom: 0;
 }
 
@@ -1411,11 +1404,11 @@ body.drawer-open #menuToggle {
 
 /* Desktop overrides for Tez Xərc */
 @media (min-width: 1024px) {
-    .tez-xerc-header {
+    .quick-expense-header {
         padding: 30px 60px 36px;
     }
 
-    .tez-xerc-title {
+    .quick-expense-title {
         font-size: 28px;
     }
 
