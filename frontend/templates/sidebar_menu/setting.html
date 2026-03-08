@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Parametrlər{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  <div class="page-header">
+    <a href="javascript:history.back()" class="back-btn">
+      <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <h2 class="page-title">Parametrlər</h2>
+  </div>
+
+  <div class="form-card">
+    <form method="POST" action="{% url 'sidebar_menu:setting' %}">
+      {% csrf_token %}
+
+      <!-- Language & Region -->
+      <p class="section-label">Dil və Bölgə</p>
+
+      <div class="param-row click-focus">
+        <div class="param-info">
+          <i class="fa-solid fa-globe param-icon"></i>
+          <div>
+            <span class="param-title">Dil</span>
+            <span class="param-sub">İnterfeys dili</span>
+          </div>
+        </div>
+        <select name="language" class="param-select">
+          <option value="az" {% if user_settings.language == 'az' %}selected{% endif %}>AZ</option>
+          <option value="en" {% if user_settings.language == 'en' %}selected{% endif %}>EN</option>
+          <option value="ru" {% if user_settings.language == 'ru' %}selected{% endif %}>RU</option>
+        </select>
+      </div>
+
+      <div class="param-row click-focus">
+        <div class="param-info">
+          <i class="fa-solid fa-clock param-icon"></i>
+          <div>
+            <span class="param-title">Vaxt zonası</span>
+            <span class="param-sub">Sistem saatı</span>
+          </div>
+        </div>
+        <select name="timezone" class="param-select">
+          <option value="Asia/Baku"     {% if user_settings.timezone == 'Asia/Baku'     %}selected{% endif %}>UTC+4 Bakı</option>
+          <option value="Europe/London" {% if user_settings.timezone == 'Europe/London' %}selected{% endif %}>UTC+0 London</option>
+          <option value="Europe/Moscow" {% if user_settings.timezone == 'Europe/Moscow' %}selected{% endif %}>UTC+3 Moskva</option>
+        </select>
+      </div>
+
+      <!-- Units -->
+      <p class="section-label" style="margin-top:24px;">Ölçü Vahidləri</p>
+
+      <div class="param-row click-focus">
+        <div class="param-info">
+          <i class="fa-solid fa-weight-hanging param-icon"></i>
+          <div>
+            <span class="param-title">Vahid</span>
+            <span class="param-sub">Çəki / Həcm ölçüsü</span>
+          </div>
+        </div>
+        <select name="unit" class="param-select">
+          <option value="kg"   {% if user_settings.unit == 'kg'   %}selected{% endif %}>kg</option>
+          <option value="litr" {% if user_settings.unit == 'litr' %}selected{% endif %}>litr</option>
+          <option value="bas"  {% if user_settings.unit == 'bas'  %}selected{% endif %}>baş</option>
+        </select>
+      </div>
+
+      <!-- Currency -->
+      <p class="section-label" style="margin-top:24px;">Maliyyə</p>
+
+      <div class="param-row click-focus">
+        <div class="param-info">
+          <i class="fa-solid fa-coins param-icon"></i>
+          <div>
+            <span class="param-title">Valyuta</span>
+            <span class="param-sub">Əsas valyuta</span>
+          </div>
+        </div>
+        <select name="currency" class="param-select">
+          <option value="AZN" {% if user_settings.currency == 'AZN' %}selected{% endif %}>AZN ₼</option>
+          <option value="EUR" {% if user_settings.currency == 'EUR' %}selected{% endif %}>EUR €</option>
+          <option value="USD" {% if user_settings.currency == 'USD' %}selected{% endif %}>USD $</option>
+        </select>
+      </div>
+
+      <!-- Notifications -->
+      <p class="section-label" style="margin-top:24px;">Bildirişlər</p>
+
+      <div class="param-row">
+        <div class="param-info">
+          <i class="fa-solid fa-envelope param-icon"></i>
+          <div>
+            <span class="param-title">E-poçt bildirişləri</span>
+            <span class="param-sub">Yeniləmələri e-poçtla al</span>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" name="email_notifications" id="emailNotif"
+                 {% if user_settings.email_notifications %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="param-row">
+        <div class="param-info">
+          <i class="fa-solid fa-bell param-icon"></i>
+          <div>
+            <span class="param-title">Sistem bildirişləri</span>
+            <span class="param-sub">Tətbiq daxili bildirişlər</span>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" name="system_notifications" id="sysNotif"
+                 {% if user_settings.system_notifications %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="save-btn">
+          <i class="fa-solid fa-floppy-disk"></i> Yadda saxla
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<style>
+  .page-container {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 16px 16px 100px;
+  }
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .back-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex; align-items: center; justify-content: center;
+    color: #374151;
+    text-decoration: none;
+    font-size: 15px;
+    transition: background 0.15s;
+  }
+  .back-btn:hover { background: #e5e7eb; }
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+  .form-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    padding: 8px 0;
+    overflow: hidden;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #9ca3af;
+    padding: 12px 20px 4px;
+    margin: 0;
+  }
+  .param-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .param-row:last-of-type { border-bottom: none; }
+  .param-row:hover { background: #f9fafb; }
+  .param-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .param-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: #f0fdf4;
+    color: #16a34a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .param-info > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .param-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .param-sub {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+  .param-select {
+    border: none;
+    outline: none;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    min-width: 90px;
+    text-align: right;
+  }
+  /* Toggle */
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px; height: 24px;
+    cursor: pointer;
+  }
+  .toggle-switch input { display: none; }
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #d1d5db;
+    border-radius: 999px;
+    transition: background 0.2s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #16a34a; }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+  /* Save button */
+  .form-actions {
+    padding: 16px 20px 8px;
+  }
+  .save-btn {
+    width: 100%;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .save-btn:hover  { background: #15803d; }
+  .save-btn:active { transform: scale(0.98); }
+</style>
+{% endblock %}
