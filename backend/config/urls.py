@@ -33,4 +33,5 @@ urlpatterns = [
     path("expenses/", include("expenses.urls")),
     path("reports/", include("apps.reports.urls")),
     path("sync/", include(("sync.urls", "sync"), namespace="sync")),
+    path("menu/", include("sidebar_menu.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

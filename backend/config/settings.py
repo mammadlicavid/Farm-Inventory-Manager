@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "expenses",
     "reports",
     "sync",
+    "sidebar_menu.apps.SidebarMenuConfig"
 ]
 
 
