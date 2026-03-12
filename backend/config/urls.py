@@ -31,6 +31,7 @@ urlpatterns = [
     path("tools/", include("tools.urls")),
     path("animals/", include("animals.urls")),
     path("expenses/", include("expenses.urls")),
+    path("incomes/", include("incomes.urls")),
     path("reports/", include("apps.reports.urls")),
     path("sync/", include(("sync.urls", "sync"), namespace="sync")),
     path("menu/", include("sidebar_menu.urls")),

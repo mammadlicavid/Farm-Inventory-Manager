@@ -76,9 +76,17 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label>Məbləğ (₼)</label>
-                            <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                            <div class="form-group">
+                                <label>Məbləğ (₼)</label>
+                                <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Tarix <span style="color: #dc3545;">*</span></label>
+                                <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
+                                    class="custom-input">
+                            </div>
                         </div>
 
                         <div class="form-group form-full-width">
@@ -125,15 +133,22 @@
                             {% endif %}
                         </h4>
                         <span>
-                            {{ product.quantity }} {{ product.unit }}
+                            {{ product.quantity }} {{ product.unit }} •
+                            {% if product.date == today %}
+                            Bu gün
+                            {% elif product.date == yesterday %}
+                            Dünən
+                            {% else %}
+                            {{ product.date|date:"d.m.Y" }}
+                            {% endif %}
                             {% if product.additional_info %}
                             • {{ product.additional_info }}
                             {% endif %}
                         </span>
                     </div>
                     <div style="text-align: right;">
-                        <div class="expense-item-amount" style="color: var(--primary-green);">
-                            {{ product.price|floatformat:0 }}₼
+                        <div class="expense-item-amount" style="{% if product.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
+                            {% if product.quantity < 0 %}+{% else %}-{% endif %}{{ product.price_display }}₼
                         </div>
                         <div
                             style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">

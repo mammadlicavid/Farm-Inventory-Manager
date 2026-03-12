@@ -7,7 +7,9 @@ from seeds.models import Seed
 from animals.models import Animal, AnimalCategory, AnimalSubCategory
 from tools.models import Tool
 from expenses.models import Expense
+from incomes.models import Income
 from django.db.models import Sum
+from common.formatting import format_currency
 
 @login_required
 def dashboard(request):
@@ -22,11 +24,26 @@ def dashboard(request):
         + Tool.objects.filter(created_by=request.user, created_at__gte=start_of_week).count()
     )
 
+    weekly_expenses = (
+        Expense.objects.filter(created_by=request.user, created_at__gte=start_of_week)
+        .aggregate(Sum("amount"))
+        .get("amount__sum")
+        or 0
+    )
+    weekly_income = (
+        Income.objects.filter(created_by=request.user, created_at__gte=start_of_week)
+        .aggregate(Sum("amount"))
+        .get("amount__sum")
+        or 0
+    )
+    weekly_net = weekly_income - weekly_expenses
+
     context = {
         "user_name" : request.user.get_username(),
         "stats" : {
             "new_addition": new_stocks,
-            "expenses": Expense.objects.filter(created_by=request.user, created_at__gte=start_of_week).aggregate(Sum('amount'))['amount__sum'] or 0,
+            "weekly_net": weekly_net,
+            "weekly_net_display": format_currency(weekly_net, 2),
             "animals": Animal.objects.filter(created_by=request.user, created_at__gte=start_of_week).count(),
         },
     }
@@ -141,7 +158,7 @@ def quick_expense(request):
     for exp in recent_expenses:
         if exp.title not in seen_titles and len(templates) < 8:
             seen_titles.add(exp.title)
-            exp.amount_display = format_currency(exp.amount, 0)
+            exp.amount_display = format_currency(exp.amount, 2)
             exp.display_title = exp.title
             if exp.title:
                 title_stripped = exp.title.strip()

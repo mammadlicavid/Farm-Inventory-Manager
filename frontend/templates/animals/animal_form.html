@@ -53,10 +53,18 @@
 
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
+                    <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                    <input type="number" name="quantity" step="1" placeholder="1"
+                        class="custom-input" value="{{ animal.quantity|default_if_none:1 }}" required>
+                </div>
+                <div class="form-group">
                     <label>İdentifikasiya No</label>
                     <input type="text" name="identification_no" placeholder="Məsələn: AZ12345" class="custom-input"
                         value="{{ animal.identification_no|default_if_none:'' }}">
                 </div>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
                     <select name="gender" class="custom-input" required>
@@ -64,18 +72,23 @@
                         <option value="disi" {% if animal.gender == 'disi' %}selected{% endif %}>Dişi</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>Çəki (kq)</label>
                     <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input"
                         value="{{ animal.weight|stringformat:'.1f' }}">
                 </div>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>Məbləğ (₼)</label>
                     <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
                         value="{{ animal.price|stringformat:'.2f' }}">
+                </div>
+                <div class="form-group">
+                    <label>Tarix <span style="color: #dc3545;">*</span></label>
+                    <input type="date" name="date" required value="{{ animal.date|date:'Y-m-d' }}"
+                        class="custom-input">
                 </div>
             </div>
 
@@ -101,6 +114,8 @@
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');
+    const qtyInput = document.querySelector('input[name="quantity"]');
+    const idInput = document.querySelector('input[name="identification_no"]');
 
     categorySelect.addEventListener('change', function () {
         const categoryId = this.value;
@@ -160,7 +175,35 @@
 
     subcategorySelect.addEventListener('change', handleAnimalSubcategorySelection);
 
+    function syncIdByQty() {
+        if (!qtyInput || !idInput) return;
+        const qty = parseInt(qtyInput.value || "1", 10);
+        if (Math.abs(qty) !== 1) {
+            idInput.value = "";
+            idInput.disabled = true;
+            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
+        } else {
+            idInput.disabled = false;
+            idInput.placeholder = "Məsələn: AZ12345";
+        }
+    }
+
+    if (qtyInput) {
+        qtyInput.addEventListener('input', syncIdByQty);
+        syncIdByQty();
+    }
+
     (function initSelection() {
+        const initialCategoryId = "{{ animal.subcategory.category_id|default:'' }}";
+        const initialSubcategoryId = "{{ animal.subcategory_id|default:'' }}";
+
+        if (initialCategoryId) {
+            categorySelect.value = initialCategoryId;
+            categorySelect.dispatchEvent(new Event('change'));
+        }
+        if (initialSubcategoryId) {
+            subcategorySelect.value = initialSubcategoryId;
+        }
         if (subcategorySelect && subcategorySelect.value) {
             handleAnimalSubcategorySelection();
         }

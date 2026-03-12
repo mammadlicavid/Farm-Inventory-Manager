@@ -1,4 +1,7 @@
 from django.core.management.base import BaseCommand
+from django.db.models import Value
+from django.db.models.functions import Concat
+
 from seeds.models import SeedCategory, SeedItem
 
 class Command(BaseCommand):
@@ -6,15 +9,33 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         data = {
-            "Taxıl Bitkiləri": ["Buğda", "Arpa", "Çovdar", "Vələmir", "Qarğıdalı", "Çəltik"],
-            "Paxlalılar": ["Lobya", "Noxud", "Mərcimək"],
-            "Yağlı Bitkilər": ["Günəbaxan", "Pambıq", "Soya", "Şəkər çuğunduru"],
-            "Yem Bitkiləri": ["Yonca", "Koronilla", "Seradella"],
-            "Tərəvəzlər": ["Pomidor", "Xiyar", "Bibər", "Badımcan", "Kahı", "İspanaq"],
-            "Bostan Bitkiləri": ["Qarpız", "Yemiş", "Boranı"],
-            "Meyvə Bitkiləri": ["Alma", "Armud", "Şaftalı", "Ərik", "Albalı", "Gilas", "Nar", "Üzüm", "Gavalı", "Heyva"],
+            "Taxıl toxumları": ["Buğda toxumu", "Arpa toxumu", "Çovdar toxumu", "Vələmir toxumu", "Qarğıdalı toxumu", "Çəltik toxumu"],
+            "Paxlalı toxumları": ["Lobya toxumu", "Noxud toxumu", "Mərcimək toxumu"],
+            "Yağlı bitki toxumları": ["Günəbaxan toxumu", "Pambıq toxumu", "Soya toxumu", "Şəkər çuğunduru toxumu"],
+            "Yem bitki toxumları": ["Yonca toxumu", "Koronilla toxumu", "Seradella toxumu"],
+            "Tərəvəz toxumları": ["Pomidor toxumu", "Xiyar toxumu", "Bibər toxumu", "Badımcan toxumu", "Kahı toxumu", "İspanaq toxumu"],
+            "Bostan toxumları": ["Qarpız toxumu", "Yemiş toxumu", "Boranı toxumu"],
+            "Meyvə toxumları": ["Alma toxumu", "Armud toxumu", "Şaftalı toxumu", "Ərik toxumu", "Albalı toxumu", "Gilas toxumu", "Nar toxumu", "Üzüm toxumu", "Gavalı toxumu", "Heyva toxumu"],
             "Digər": []
         }
+
+        rename_categories = {
+            "Taxıl Bitkiləri": "Taxıl toxumları",
+            "Paxlalılar": "Paxlalı toxumları",
+            "Yağlı Bitkilər": "Yağlı bitki toxumları",
+            "Yem Bitkiləri": "Yem bitki toxumları",
+            "Tərəvəzlər": "Tərəvəz toxumları",
+            "Bostan Bitkiləri": "Bostan toxumları",
+            "Meyvə Bitkiləri": "Meyvə toxumları",
+            "Digər toxumlar": "Digər",
+        }
+
+        for old_name, new_name in rename_categories.items():
+            SeedCategory.objects.filter(name=old_name).update(name=new_name)
+
+        SeedItem.objects.exclude(name__iexact="Digər").exclude(name__iendswith="toxumu").update(
+            name=Concat("name", Value(" toxumu"))
+        )
 
         for cat_name, items in data.items():
             if cat_name != "Digər" and "Digər" not in items:

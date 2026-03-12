@@ -2,24 +2,61 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Case, IntegerField, When
+import re
+from datetime import date, timedelta
+from django.utils import timezone
 
 from .models import Animal, AnimalCategory, AnimalSubCategory
 from .forms import AnimalForm
 from common.messages import add_crud_success_message
+from common.category_order import (
+    ANIMAL_CATEGORY_ORDER,
+    ANIMAL_SUBCATEGORY_ORDER,
+    order_queryset_by_name_list,
+    sort_objects_by_name_list,
+)
 from common.icons import get_animal_icon_for_animal
 from expenses.models import Expense, ExpenseSubCategory
 
 def _build_subcategory_data(categories):
-    return {
-        str(cat.id): [{"id": sub.id, "name": sub.name} for sub in cat.subcategories.all()]
-        for cat in categories
-    }
+    payload = {}
+    for cat in categories:
+        order_list = ANIMAL_SUBCATEGORY_ORDER.get(cat.name, [])
+        subs = sort_objects_by_name_list(cat.subcategories.all(), order_list)
+        payload[str(cat.id)] = [{"id": sub.id, "name": sub.name} for sub in subs]
+    return payload
+
+
+def _parse_date(value: str | None):
+    if not value:
+        return timezone.now().date()
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return timezone.now().date()
+
+
+def _clean_additional_info(value: str | None) -> str | None:
+    if not value:
+        return None
+    cleaned = re.sub(r"\s*\|\s*income:\d+\b", "", value)
+    cleaned = re.sub(r"\bincome:\d+\b", "", cleaned)
+    cleaned = cleaned.strip()
+    return cleaned or None
+
+
+def _ordered_animal_categories():
+    return order_queryset_by_name_list(AnimalCategory.objects.all(), ANIMAL_CATEGORY_ORDER)
 
 @login_required
 def animal_list(request):
     query = request.GET.get('q')
-    animals_qs = Animal.objects.filter(created_by=request.user).select_related('subcategory', 'subcategory__category')
+    animals_qs = (
+        Animal.objects.filter(created_by=request.user)
+        .exclude(quantity=0)
+        .exclude(additional_info__icontains="Gəlir stoku | income:")
+        .select_related('subcategory', 'subcategory__category')
+    )
 
     if query:
         animals_qs = animals_qs.filter(identification_no__icontains=query) | \
@@ -30,18 +67,17 @@ def animal_list(request):
     animals = list(animals_qs)
     for animal in animals:
         animal.icon_class = get_animal_icon_for_animal(animal)
+        animal.display_additional_info = _clean_additional_info(animal.additional_info)
 
-    category_order = Case(
-        When(name="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
-    )
-    categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
+    categories = _ordered_animal_categories().prefetch_related('subcategories')
     
+    today = timezone.now().date()
     context = {
         'animals': animals,
         'categories': categories,
         'subcategory_data': _build_subcategory_data(categories),
+        'today': today,
+        'yesterday': today - timedelta(days=1),
     }
     return render(request, 'animals/animal_list.html', context)
 
@@ -50,25 +86,33 @@ def animal_create(request):
     if request.method == 'POST':
         subcategory_id = request.POST.get('subcategory')
         identification_no = request.POST.get('identification_no')
+        quantity_raw = request.POST.get('quantity')
         additional_info = request.POST.get('additional_info')
         gender = request.POST.get('gender')
         weight = request.POST.get('weight')
         price = request.POST.get('price')
-        status = request.POST.get('status')
         manual_name = request.POST.get('manual_name')
+        date_raw = request.POST.get('date')
+        entry_date = _parse_date(date_raw)
         
         # Backend Validation
-        if not (subcategory_id or manual_name) or not gender or not weight:
+        if not (subcategory_id or manual_name) or not gender:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            return redirect('animals:animal_list')
+
+        try:
+            quantity = int(quantity_raw or "1")
+        except (TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            return redirect('animals:animal_list')
+        if quantity == 0:
+            messages.error(request, "Miqdar 0 ola bilməz.")
             return redirect('animals:animal_list')
 
         # Handle empty numeric fields
         weight = weight if weight and weight.strip() else None
         price = price if price and price.strip() else 0
         
-        # Ensure non-nullable fields have defaults if missing from form
-        if not status:
-            status = 'aktiv'
         if not gender:
             gender = 'erkek'
             
@@ -79,16 +123,25 @@ def animal_create(request):
                 if subcategory.name == "Digər" and not manual_name:
                     messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
                     return redirect('animals:animal_list')
+
+            if abs(quantity) != 1:
+                identification_no = None
+            elif identification_no:
+                if Animal.objects.filter(identification_no=identification_no).exists():
+                    messages.error(request, "Bu identifikasiya nömrəsi artıq mövcuddur.")
+                    return redirect('animals:animal_list')
             
+            manual_value = manual_name if (not subcategory or subcategory.name == "Digər") else None
             animal = Animal.objects.create(
                 subcategory=subcategory,
-                manual_name=manual_name if (not subcategory or subcategory.name == "Digər") else None,
+                manual_name=manual_value,
                 identification_no=identification_no,
                 additional_info=additional_info,
                 gender=gender,
                 weight=weight,
                 price=price,
-                status=status,
+                quantity=quantity,
+                date=entry_date,
                 created_by=request.user
             )
 
@@ -126,25 +179,43 @@ def animal_create(request):
 @login_required
 def animal_update(request, pk):
     animal = get_object_or_404(Animal, pk=pk, created_by=request.user)
-    category_order = Case(
-        When(name="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
-    )
     if request.method == 'POST':
         subcategory_id = request.POST.get('subcategory')
         identification_no = request.POST.get('identification_no')
+        quantity_raw = request.POST.get('quantity')
         additional_info = request.POST.get('additional_info')
         gender = request.POST.get('gender')
         weight = request.POST.get('weight')
         price = request.POST.get('price')
-        status = request.POST.get('status')
         manual_name = request.POST.get('manual_name')
+        date_raw = request.POST.get('date')
+        entry_date = _parse_date(date_raw)
         
         # Backend Validation
-        if not (subcategory_id or manual_name) or not gender or not weight:
+        if not (subcategory_id or manual_name) or not gender:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
+            categories = _ordered_animal_categories().prefetch_related('subcategories')
+            return render(request, 'animals/animal_form.html', {
+                'form': AnimalForm(instance=animal),
+                'animal': animal,
+                'categories': categories,
+                'subcategory_data': _build_subcategory_data(categories),
+            })
+
+        try:
+            quantity = int(quantity_raw or "1")
+        except (TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            categories = _ordered_animal_categories().prefetch_related('subcategories')
+            return render(request, 'animals/animal_form.html', {
+                'form': AnimalForm(instance=animal),
+                'animal': animal,
+                'categories': categories,
+                'subcategory_data': _build_subcategory_data(categories),
+            })
+        if quantity == 0:
+            messages.error(request, "Miqdar 0 ola bilməz.")
+            categories = _ordered_animal_categories().prefetch_related('subcategories')
             return render(request, 'animals/animal_form.html', {
                 'form': AnimalForm(instance=animal),
                 'animal': animal,
@@ -153,14 +224,28 @@ def animal_update(request, pk):
             })
 
         # Update animal object
+        if abs(quantity) != 1:
+            identification_no = None
+        elif identification_no:
+            if Animal.objects.filter(identification_no=identification_no).exclude(pk=animal.pk).exists():
+                messages.error(request, "Bu identifikasiya nömrəsi artıq mövcuddur.")
+                categories = _ordered_animal_categories().prefetch_related('subcategories')
+                return render(request, 'animals/animal_form.html', {
+                    'form': AnimalForm(instance=animal),
+                    'animal': animal,
+                    'categories': categories,
+                    'subcategory_data': _build_subcategory_data(categories),
+                })
         animal.identification_no = identification_no
+        animal.quantity = quantity
         animal.additional_info = additional_info
         animal.gender = gender
+        animal.date = entry_date
         if subcategory_id:
             subcategory = AnimalSubCategory.objects.get(id=subcategory_id)
             if subcategory.name == "Digər" and not manual_name:
                 messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
-                categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
+                categories = _ordered_animal_categories().prefetch_related('subcategories')
                 return render(request, 'animals/animal_form.html', {
                     'form': AnimalForm(instance=animal),
                     'animal': animal,
@@ -175,9 +260,6 @@ def animal_update(request, pk):
         animal.weight = weight if weight and weight.strip() else None
         animal.price = price if price and price.strip() else 0
         
-        if status:
-            animal.status = status
-            
         if subcategory_id:
             animal.subcategory = AnimalSubCategory.objects.get(id=subcategory_id)
         else:
@@ -222,12 +304,7 @@ def animal_update(request, pk):
         add_crud_success_message(request, "Animal", "update")
         return redirect('animals:animal_list')
     
-    category_order = Case(
-        When(name="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
-    )
-    categories = AnimalCategory.objects.all().order_by(category_order, "name").prefetch_related('subcategories')
+    categories = _ordered_animal_categories().prefetch_related('subcategories')
     return render(request, 'animals/animal_form.html', {
         'animal': animal,
         'categories': categories,

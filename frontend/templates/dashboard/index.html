@@ -52,6 +52,13 @@
             <span>Xərclər</span>
         </a>
 
+        <a href="{% url 'incomes:income_list' %}" class="category-card" style="text-decoration: none;">
+            <div class="icon-box dark-green-icon">
+                <i class="fa-solid fa-money-bill-trend-up"></i>
+            </div>
+            <span>Gəlirlər</span>
+        </a>
+
         <a href="{% url 'reports:list' %}" class="category-card" style="text-decoration: none;">
             <div class="icon-box dark-green-icon">
                 <i class="fa-solid fa-clipboard-list"></i>
@@ -75,8 +82,10 @@
                 <span class="stat-label">Yeni məhsul</span>
             </div>
             <div class="stat-item">
-                <span class="stat-value text-yellow" style="font-size: 26px;">{{ stats.expenses }}₼</span>
-                <span class="stat-label">Xərclər</span>
+                <span class="stat-value text-green" style="font-size: 26px;">
+                    {% if stats.weekly_net >= 0 %}+{% endif %}{{ stats.weekly_net_display }}₼
+                </span>
+                <span class="stat-label">Qazanc</span>
             </div>
             <div class="stat-item">
                 <span class="stat-value text-green">+{{ stats.animals }}</span>

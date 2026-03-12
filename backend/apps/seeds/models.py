@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 class SeedCategory(models.Model):
     name = models.CharField(max_length=100, verbose_name="Kateqoriya Adı")
@@ -34,6 +35,7 @@ class Seed(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Qiymət", default=0, null=True, blank=True)
     
     additional_info = models.TextField(blank=True, null=True, verbose_name="Əlavə məlumat")
+    date = models.DateField(default=timezone.now, verbose_name="Tarix")
     
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -53,4 +55,4 @@ class Seed(models.Model):
     class Meta:
         verbose_name = "Toxum Inventarı"
         verbose_name_plural = "Toxum Inventarları"
-        ordering = ['-created_at']
+        ordering = ['-date', '-created_at']

@@ -71,9 +71,17 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label>Məbləğ (₼)</label>
-                            <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                            <div class="form-group">
+                                <label>Məbləğ (₼)</label>
+                                <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Tarix <span style="color: #dc3545;">*</span></label>
+                                <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
+                                    class="custom-input">
+                            </div>
                         </div>
 
                         <div class="form-group form-full-width">
@@ -121,7 +129,14 @@
                             {% endif %}
                         </h4>
                         <span>
-                            {{ seed.quantity }} {{ seed.unit }}
+                            {{ seed.quantity }} {{ seed.unit }} •
+                            {% if seed.date == today %}
+                            Bu gün
+                            {% elif seed.date == yesterday %}
+                            Dünən
+                            {% else %}
+                            {{ seed.date|date:"d.m.Y" }}
+                            {% endif %}
                             {% if seed.additional_info %}
                             {% if seed.additional_info == "Stok səhifəsindən düzəliş" %}
                             <br>{{ seed.additional_info }}
@@ -132,8 +147,8 @@
                         </span>
                     </div>
                     <div style="text-align: right;">
-                        <div class="expense-item-amount" style="color: var(--primary-green);">
-                            {{ seed.price|floatformat:0 }}₼
+                        <div class="expense-item-amount" style="{% if seed.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
+                            {% if seed.quantity < 0 %}+{% else %}-{% endif %}{{ seed.price_display }}₼
                         </div>
                         <div
                             style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
