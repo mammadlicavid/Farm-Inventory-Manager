@@ -2,13 +2,87 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Case, IntegerField, When
+from django.utils import timezone
+from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
+from decimal import Decimal, InvalidOperation
+from datetime import date, timedelta
+from django.utils import timezone
 
 from .models import FarmProduct, FarmProductCategory, FarmProductItem
 from common.messages import add_crud_success_message
+from common.category_order import (
+    FARM_PRODUCT_CATEGORY_ORDER,
+    FARM_PRODUCT_ITEM_ORDER,
+    order_queryset_by_name_list,
+)
 from common.icons import get_farm_product_icon_for_product
 from expenses.models import Expense, ExpenseCategory, ExpenseSubCategory
+from incomes.models import Income
+
+
+def _is_forage_item(name: str) -> bool:
+    return (name or "").strip().lower() in {"yonca", "koronilla", "seradella"}
+
+
+def _farm_base_unit(unit: str) -> str:
+    if unit in {"kq", "ton", "qram"}:
+        return "kq"
+    if unit in {"litr", "ml"}:
+        return "litr"
+    return unit
+
+
+def _farm_to_base(value: Decimal, unit: str, base_unit: str) -> Decimal:
+    if base_unit == "kq":
+        if unit == "ton":
+            return value * Decimal("1000")
+        if unit == "qram":
+            return value / Decimal("1000")
+        return value
+    if base_unit == "litr":
+        if unit == "ml":
+            return value / Decimal("1000")
+        return value
+    return value
+
+
+def _farm_stock_base(user, item, manual_name: str | None, base_unit: str) -> Decimal:
+    if item:
+        qs = FarmProduct.objects.filter(created_by=user, item=item)
+    else:
+        qs = FarmProduct.objects.filter(created_by=user).filter(
+            Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+            manual_name=manual_name,
+        )
+    total = Decimal("0")
+    for product in qs:
+        if base_unit == "bağlama":
+            if product.unit != "bağlama":
+                continue
+            total += Decimal(product.quantity)
+        elif base_unit == "kq":
+            if product.unit not in {"kq", "ton", "qram"}:
+                continue
+            total += _farm_to_base(Decimal(product.quantity), product.unit, "kq")
+        elif base_unit == "litr":
+            if product.unit not in {"litr", "ml"}:
+                continue
+            total += _farm_to_base(Decimal(product.quantity), product.unit, "litr")
+        else:
+            if product.unit != base_unit:
+                continue
+            total += Decimal(product.quantity)
+    return total
+
+
+def _parse_date(value: str | None):
+    if not value:
+        return timezone.now().date()
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return timezone.now().date()
 
 
 @login_required
@@ -27,17 +101,22 @@ def farm_product_list(request):
     products = list(products_qs)
     for product in products:
         product.icon_class = get_farm_product_icon_for_product(product)
+        try:
+            product.price_display = abs(Decimal(product.price))
+        except Exception:
+            product.price_display = product.price
 
-    category_order = Case(
-        When(name__startswith="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
+    categories = order_queryset_by_name_list(
+        FarmProductCategory.objects.all(),
+        FARM_PRODUCT_CATEGORY_ORDER,
     )
-    categories = FarmProductCategory.objects.all().order_by(category_order, "name")
 
+    today = timezone.now().date()
     context = {
         "products": products,
         "categories": categories,
+        "today": today,
+        "yesterday": today - timedelta(days=1),
     }
     return render(request, "farm_products/farm_product_list.html", context)
 
@@ -45,11 +124,16 @@ def farm_product_list(request):
 @login_required
 def get_farm_product_items(request):
     category_id = request.GET.get("category_id")
+    category = None
     if category_id:
         category = FarmProductCategory.objects.filter(id=category_id).first()
         if category and category.name.startswith("Digər"):
             return JsonResponse([], safe=False)
-    items = FarmProductItem.objects.filter(category_id=category_id).values("id", "name", "unit")
+    items_qs = FarmProductItem.objects.filter(category_id=category_id)
+    if category:
+        order_list = FARM_PRODUCT_ITEM_ORDER.get(category.name, [])
+        items_qs = order_queryset_by_name_list(items_qs, order_list)
+    items = items_qs.values("id", "name", "unit")
     return JsonResponse(list(items), safe=False)
 
 
@@ -62,12 +146,19 @@ def farm_product_create(request):
         price = request.POST.get("price")
         manual_name = request.POST.get("manual_name")
         additional_info = request.POST.get("additional_info")
+        date_raw = request.POST.get("date")
+        entry_date = _parse_date(date_raw)
 
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, "Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
             return redirect("farm_products:product_list")
 
         price = price if price and price.strip() else 0
+        try:
+            quantity_val = Decimal(str(quantity))
+        except (InvalidOperation, TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            return redirect("farm_products:product_list")
 
         def allowed_units_for_item(item_obj):
             forage_items = {"yonca", "koronilla", "seradella"}
@@ -106,6 +197,19 @@ def farm_product_create(request):
                     effective_unit = unit
                 effective_manual = None if item.name != "Digər" else effective_manual
 
+            if quantity_val < 0:
+                base_unit = "bağlama" if (item and _is_forage_item(item.name) and effective_unit == "bağlama") else _farm_base_unit(effective_unit)
+                available_base = _farm_stock_base(
+                    request.user,
+                    item,
+                    effective_manual if (not item or item.name == "Digər") else None,
+                    base_unit,
+                )
+                needed_base = _farm_to_base(abs(quantity_val), effective_unit, base_unit)
+                if available_base < needed_base:
+                    messages.error(request, "Stokda kifayət qədər məhsul yoxdur.")
+                    return redirect("farm_products:product_list")
+
             product = FarmProduct.objects.create(
                 item=item,
                 manual_name=effective_manual,
@@ -113,10 +217,34 @@ def farm_product_create(request):
                 unit=effective_unit,
                 price=price,
                 additional_info=additional_info,
+                date=entry_date,
                 created_by=request.user,
             )
 
-            if price and float(price) > 0:
+            if quantity_val < 0:
+                try:
+                    amount_val = abs(float(price))
+                except (TypeError, ValueError):
+                    amount_val = 0
+                if amount_val <= 0:
+                    messages.error(request, "Gəlir üçün məbləğ daxil edin.")
+                    product.delete()
+                    return redirect("farm_products:product_list")
+
+                category_name = item.category.name if item and item.category else "Digər"
+                Income.objects.create(
+                    category=category_name,
+                    item_name=item.name if item else effective_manual,
+                    quantity=abs(quantity_val),
+                    unit=effective_unit,
+                    amount=amount_val,
+                    additional_info=additional_info,
+                    date=entry_date,
+                    created_by=request.user,
+                    content_object=product,
+                )
+
+            if quantity_val > 0 and price and float(price) > 0:
                 item_name = item.name if item else manual_name
                 category_name = item.category.name if item and item.category else None
                 subcat = _resolve_expense_subcategory(category_name)
@@ -159,6 +287,8 @@ def farm_product_update(request, pk):
         price = request.POST.get("price")
         manual_name = request.POST.get("manual_name")
         additional_info = request.POST.get("additional_info")
+        date_raw = request.POST.get("date")
+        entry_date = _parse_date(date_raw)
 
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, "Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -169,6 +299,15 @@ def farm_product_update(request, pk):
             )
 
         price = price if price and price.strip() else 0
+        try:
+            quantity_val = Decimal(str(quantity))
+        except (InvalidOperation, TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            return render(
+                request,
+                "farm_products/farm_product_form.html",
+                {"product": product, "categories": FarmProductCategory.objects.all()},
+            )
 
         def allowed_units_for_item(item_obj):
             forage_items = {"yonca", "koronilla", "seradella"}
@@ -182,9 +321,15 @@ def farm_product_update(request, pk):
                 return {"litr", "ml"}
             return {item_obj.unit}
 
+        prev_quantity = Decimal(str(product.quantity))
+        prev_unit = product.unit
+        prev_item = product.item
+        prev_manual = product.manual_name
+
         product.quantity = quantity
         product.additional_info = additional_info
         product.price = price
+        product.date = entry_date
 
         if item_id:
             item = FarmProductItem.objects.get(id=item_id)
@@ -234,12 +379,83 @@ def farm_product_update(request, pk):
             product.manual_name = manual_name
             product.unit = unit
 
+        if quantity_val < 0:
+            new_item = product.item
+            new_manual = product.manual_name
+            new_unit = product.unit
+            base_unit = "bağlama" if (new_item and _is_forage_item(new_item.name) and new_unit == "bağlama") else _farm_base_unit(new_unit)
+            available_base = _farm_stock_base(
+                request.user,
+                new_item,
+                new_manual if (not new_item or (new_item and new_item.name == "Digər")) else None,
+                base_unit,
+            )
+
+            prev_add_back = Decimal("0")
+            if prev_item == new_item and prev_manual == new_manual:
+                if base_unit == "bağlama" and prev_unit == "bağlama":
+                    prev_add_back = prev_quantity
+                elif base_unit == "kq" and prev_unit in {"kq", "ton", "qram"}:
+                    prev_add_back = _farm_to_base(prev_quantity, prev_unit, "kq")
+                elif base_unit == "litr" and prev_unit in {"litr", "ml"}:
+                    prev_add_back = _farm_to_base(prev_quantity, prev_unit, "litr")
+                elif base_unit not in {"kq", "litr", "bağlama"} and prev_unit == base_unit:
+                    prev_add_back = prev_quantity
+
+            needed_base = _farm_to_base(abs(quantity_val), new_unit, base_unit)
+            if available_base + prev_add_back < needed_base:
+                messages.error(request, "Stokda kifayət qədər məhsul yoxdur.")
+                return render(
+                    request,
+                    "farm_products/farm_product_form.html",
+                    {"product": product, "categories": FarmProductCategory.objects.all()},
+                )
+
         product.save()
+
+        product_type = ContentType.objects.get_for_model(FarmProduct)
+        linked_income = Income.objects.filter(content_type=product_type, object_id=product.id).first()
+
+        if quantity_val < 0:
+            try:
+                amount_val = abs(float(product.price))
+            except (TypeError, ValueError):
+                amount_val = 0
+
+            category_name = product.item.category.name if product.item and product.item.category else "Digər"
+            if linked_income:
+                if amount_val > 0:
+                    linked_income.category = category_name
+                    linked_income.item_name = product.item.name if product.item else product.manual_name
+                    linked_income.quantity = abs(quantity_val)
+                    linked_income.unit = product.unit
+                    linked_income.amount = amount_val
+                    linked_income.additional_info = product.additional_info
+                    linked_income.date = product.date
+                    linked_income.save()
+                else:
+                    linked_income.delete()
+            else:
+                if amount_val > 0:
+                    Income.objects.create(
+                        category=category_name,
+                        item_name=product.item.name if product.item else product.manual_name,
+                        quantity=abs(quantity_val),
+                        unit=product.unit,
+                        amount=amount_val,
+                        additional_info=product.additional_info,
+                        date=product.date,
+                        created_by=request.user,
+                        content_object=product,
+                    )
+        else:
+            if linked_income:
+                linked_income.delete()
 
         product_type = ContentType.objects.get_for_model(FarmProduct)
         linked_expense = Expense.objects.filter(content_type=product_type, object_id=product.id).first()
 
-        if product.price and float(product.price) > 0:
+        if quantity_val > 0 and product.price and float(product.price) > 0:
             item_name = product.item.name if product.item else product.manual_name
             category_name = product.item.category.name if product.item and product.item.category else None
             subcat = _resolve_expense_subcategory(category_name)
@@ -268,12 +484,10 @@ def farm_product_update(request, pk):
         add_crud_success_message(request, "FarmProduct", "update")
         return redirect("farm_products:product_list")
 
-    category_order = Case(
-        When(name__startswith="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
+    categories = order_queryset_by_name_list(
+        FarmProductCategory.objects.all(),
+        FARM_PRODUCT_CATEGORY_ORDER,
     )
-    categories = FarmProductCategory.objects.all().order_by(category_order, "name")
     return render(
         request,
         "farm_products/farm_product_form.html",
@@ -287,6 +501,7 @@ def farm_product_delete(request, pk):
     if request.method == "POST":
         product_type = ContentType.objects.get_for_model(FarmProduct)
         Expense.objects.filter(content_type=product_type, object_id=product.id).delete()
+        Income.objects.filter(content_type=product_type, object_id=product.id).delete()
         product.delete()
         add_crud_success_message(request, "FarmProduct", "delete")
         return redirect("farm_products:product_list")

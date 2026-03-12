@@ -4,14 +4,26 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.db.models import Case, IntegerField, When, Q
+from django.db.models import Q
+from django.utils import timezone
 
 from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name, get_farm_product_icon_by_name
 from common.messages import add_crud_success_message
+from common.category_order import (
+    ANIMAL_CATEGORY_ORDER,
+    FARM_PRODUCT_CATEGORY_ORDER,
+    SEED_CATEGORY_ORDER,
+    TOOL_CATEGORY_ORDER,
+    order_queryset_by_name_list,
+)
 from animals.models import Animal, AnimalCategory, AnimalSubCategory
 from farm_products.models import FarmProduct, FarmProductCategory, FarmProductItem
 from seeds.models import Seed, SeedCategory, SeedItem
 from tools.models import Tool, ToolCategory, ToolItem
+
+
+def _is_forage_item(name: str) -> bool:
+    return (name or "").strip().lower() in {"yonca", "koronilla", "seradella"}
 
 def home(request):
     return HttpResponse("Home page")
@@ -38,15 +50,12 @@ def dashboard(request):
 def stocks_placeholder(request):
     user = request.user
 
-    category_order = Case(
-        When(name="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
+    seed_categories = list(order_queryset_by_name_list(SeedCategory.objects.all(), SEED_CATEGORY_ORDER))
+    tool_categories = list(order_queryset_by_name_list(ToolCategory.objects.all(), TOOL_CATEGORY_ORDER))
+    animal_categories = list(order_queryset_by_name_list(AnimalCategory.objects.all(), ANIMAL_CATEGORY_ORDER))
+    farm_product_categories = list(
+        order_queryset_by_name_list(FarmProductCategory.objects.all(), FARM_PRODUCT_CATEGORY_ORDER)
     )
-    seed_categories = list(SeedCategory.objects.all().order_by(category_order, "name"))
-    tool_categories = list(ToolCategory.objects.all().order_by(category_order, "name"))
-    animal_categories = list(AnimalCategory.objects.all().order_by(category_order, "name"))
-    farm_product_categories = list(FarmProductCategory.objects.all().order_by(category_order, "name"))
     farm_diger_category_id = next((cat.id for cat in farm_product_categories if cat.name == "Digər"), None)
 
     def to_kg(quantity: Decimal, unit: str) -> Decimal:
@@ -162,10 +171,11 @@ def stocks_placeholder(request):
             }
         )
 
-    # Animals (count active by subcategory)
+    # Animals (sum quantity by subcategory)
     animal_totals = {}
     animal_qs = (
-        Animal.objects.filter(created_by=user, subcategory__isnull=False, status="aktiv")
+        Animal.objects.filter(created_by=user, subcategory__isnull=False)
+        .exclude(quantity=0)
         .select_related("subcategory", "subcategory__category")
     )
     for animal in animal_qs:
@@ -185,11 +195,12 @@ def stocks_placeholder(request):
                 "female_qty": 0,
             },
         )
-        payload["total_qty"] += 1
+        qty_val = int(getattr(animal, "quantity", 1) or 1)
+        payload["total_qty"] += qty_val
         if animal.gender == "erkek":
-            payload["male_qty"] += 1
+            payload["male_qty"] += qty_val
         elif animal.gender == "disi":
-            payload["female_qty"] += 1
+            payload["female_qty"] += qty_val
 
     animal_subs = AnimalSubCategory.objects.select_related("category").exclude(name__iexact="Digər")
     for sub in animal_subs:
@@ -303,7 +314,8 @@ def stocks_placeholder(request):
     # Animals manual
     animal_other_totals = {}
     animal_other_qs = (
-        Animal.objects.filter(created_by=user, status="aktiv")
+        Animal.objects.filter(created_by=user)
+        .exclude(quantity=0)
         .filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
         .exclude(manual_name__isnull=True)
         .exclude(manual_name="")
@@ -320,11 +332,12 @@ def stocks_placeholder(request):
                 "female_qty": 0,
             },
         )
-        payload["total_qty"] += 1
+        qty_val = int(getattr(animal, "quantity", 1) or 1)
+        payload["total_qty"] += qty_val
         if animal.gender == "erkek":
-            payload["male_qty"] += 1
+            payload["male_qty"] += qty_val
         elif animal.gender == "disi":
-            payload["female_qty"] += 1
+            payload["female_qty"] += qty_val
 
     for name, payload in animal_other_totals.items():
         qty_display = str(payload["total_qty"])
@@ -347,9 +360,6 @@ def stocks_placeholder(request):
                 "input_step": "1",
             }
         )
-
-    def _is_forage_item(name: str) -> bool:
-        return (name or "").strip().lower() in {"yonca", "koronilla", "seradella"}
 
     # Farm products (item-based)
     farm_totals = {}
@@ -680,17 +690,15 @@ def update_stock_quantity(request):
             animals_qs = Animal.objects.filter(
                 created_by=request.user,
                 subcategory_id=update_id,
-                status="aktiv",
-            )
+            ).exclude(quantity=0)
         else:
             animals_qs = Animal.objects.filter(
                 created_by=request.user,
                 manual_name=update_id,
-                status="aktiv",
-            ).filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
+            ).exclude(quantity=0).filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
 
-        current_male = animals_qs.filter(gender="erkek").count()
-        current_female = animals_qs.filter(gender="disi").count()
+        current_male = sum(int(getattr(a, "quantity", 1) or 1) for a in animals_qs.filter(gender="erkek"))
+        current_female = sum(int(getattr(a, "quantity", 1) or 1) for a in animals_qs.filter(gender="disi"))
 
         male_delta = male_target - current_male
         female_delta = female_target - current_female
@@ -698,47 +706,65 @@ def update_stock_quantity(request):
         def create_animals(count, gender_value):
             if count <= 0:
                 return
-            new_animals = []
-            for _ in range(count):
-                if update_type == "animal_sub":
-                    new_animals.append(
-                        Animal(
-                            subcategory_id=update_id,
-                            gender=gender_value,
-                            additional_info=note,
-                            created_by=request.user,
-                        )
-                    )
-                else:
-                    new_animals.append(
-                        Animal(
-                            subcategory=None,
-                            manual_name=update_id,
-                            gender=gender_value,
-                            additional_info=note,
-                            created_by=request.user,
-                        )
-                    )
-            Animal.objects.bulk_create(new_animals)
+            payload = {
+                "gender": gender_value,
+                "additional_info": note,
+                "created_by": request.user,
+                "quantity": count,
+            }
+            if update_type == "animal_sub":
+                payload["subcategory_id"] = update_id
+            else:
+                payload["subcategory"] = None
+                payload["manual_name"] = update_id
+            Animal.objects.create(**payload)
 
         def disable_animals(count, gender_value):
             if count <= 0:
                 return
-            to_disable_ids = list(
-                animals_qs.filter(gender=gender_value).order_by("-created_at").values_list("id", flat=True)[:count]
-            )
-            if to_disable_ids:
-                Animal.objects.filter(id__in=to_disable_ids).update(status="satilib")
+            remaining = count
+            for animal in animals_qs.filter(gender=gender_value).order_by("-created_at"):
+                qty_val = int(getattr(animal, "quantity", 1) or 1)
+                if qty_val <= remaining:
+                    remaining -= qty_val
+                    animal.quantity = 0
+                    animal.additional_info = note
+                    animal.save(update_fields=["quantity", "additional_info"])
+                else:
+                    animal.quantity = qty_val - remaining
+                    animal.additional_info = note
+                    animal.save(update_fields=["quantity", "additional_info"])
+                    remaining = 0
+                if remaining <= 0:
+                    break
+
+        def add_negative_entry(count, gender_value):
+            if count <= 0:
+                return
+            payload = {
+                "gender": gender_value,
+                "quantity": -abs(int(count)),
+                "additional_info": "Stok azaldı",
+                "created_by": request.user,
+            }
+            if update_type == "animal_sub":
+                payload["subcategory_id"] = update_id
+            else:
+                payload["subcategory"] = None
+                payload["manual_name"] = update_id
+            Animal.objects.create(**payload)
 
         if male_delta > 0:
             create_animals(male_delta, "erkek")
         elif male_delta < 0:
             disable_animals(abs(male_delta), "erkek")
+            add_negative_entry(abs(male_delta), "erkek")
 
         if female_delta > 0:
             create_animals(female_delta, "disi")
         elif female_delta < 0:
             disable_animals(abs(female_delta), "disi")
+            add_negative_entry(abs(female_delta), "disi")
 
         if male_delta != 0 or female_delta != 0:
             add_crud_success_message(request, "Animal", "update")
@@ -749,4 +775,4 @@ def update_stock_quantity(request):
 
 @login_required
 def add_product(request):
-    return render(request, "inventory/add_product.html")
+    return render(request, "inventory/add_product.html", {"today": timezone.now().date()})

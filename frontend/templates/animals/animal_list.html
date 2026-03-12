@@ -57,10 +57,19 @@
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
+                                <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                                <input type="number" name="quantity" step="1" placeholder="1"
+                                    class="custom-input" value="1" required>
+                            </div>
+                            <div class="form-group">
                                 <label>İdentifikasiya No</label>
                                 <input type="text" name="identification_no" placeholder="Məsələn: AZ12345"
                                     class="custom-input">
                             </div>
+                        </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
                                 <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
                                 <select name="gender" class="custom-input" required>
@@ -68,17 +77,22 @@
                                     <option value="disi">Dişi</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label>Çəki (kq)</label>
+                                <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input">
+                            </div>
                         </div>
 
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Çəki (kq)</label>
-                                <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input">
-                            </div>
-                            <div class="form-group">
                                 <label>Məbləğ (₼)</label>
                                 <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Tarix <span style="color: #dc3545;">*</span></label>
+                                <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
+                                    class="custom-input">
                             </div>
                         </div>
 
@@ -129,12 +143,20 @@
                             {% if animal.identification_no %}({{ animal.identification_no }}){% endif %}
                         </h4>
                         <span>
-                            {{ animal.gender|title }}
-                            {% if animal.additional_info %}
-                            {% if animal.additional_info == "Stok səhifəsindən düzəliş" %}
-                            <br>{{ animal.additional_info }}
+                            Miqdar: {{ animal.quantity|default_if_none:1 }} ədəd •
+                            {% if animal.date == today %}
+                            Bu gün
+                            {% elif animal.date == yesterday %}
+                            Dünən
                             {% else %}
-                            • {{ animal.additional_info }}
+                            {{ animal.date|date:"d.m.Y" }}
+                            {% endif %}
+                            <br>{{ animal.gender|title }}
+                            {% if animal.display_additional_info %}
+                            {% if animal.display_additional_info == "Stok səhifəsindən düzəliş" %}
+                            <br>{{ animal.display_additional_info }}
+                            {% else %}
+                            • {{ animal.display_additional_info }}
                             {% endif %}
                             {% else %}
                             • Əlavə məlumat yoxdur
@@ -142,8 +164,8 @@
                         </span>
                     </div>
                     <div style="text-align: right;">
-                        <div class="expense-item-amount" style="color: var(--primary-green);">
-                            {{ animal.price|floatformat:0 }}₼
+                        <div class="expense-item-amount" style="{% if animal.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
+                            {% if animal.quantity < 0 %}+{% else %}-{% endif %}{{ animal.price }}₼
                         </div>
                         <div
                             style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
@@ -199,6 +221,8 @@
         if (manualInput) manualInput.value = "";
         const idNo = document.querySelector('input[name="identification_no"]');
         if (idNo) idNo.value = "";
+        const qty = document.querySelector('input[name="quantity"]');
+        if (qty) qty.value = "1";
         const weight = document.querySelector('input[name="weight"]');
         if (weight) weight.value = "";
         const price = document.querySelector('input[name="price"]');
@@ -215,8 +239,28 @@
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');
+    const qtyInput = document.querySelector('input[name="quantity"]');
+    const idInput = document.querySelector('input[name="identification_no"]');
 
     let pendingAnimalSubId = null;
+
+    function syncIdByQty() {
+        if (!qtyInput || !idInput) return;
+        const qty = parseInt(qtyInput.value || "1", 10);
+        if (Math.abs(qty) !== 1) {
+            idInput.value = "";
+            idInput.disabled = true;
+            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
+        } else {
+            idInput.disabled = false;
+            idInput.placeholder = "Məsələn: AZ12345";
+        }
+    }
+
+    if (qtyInput) {
+        qtyInput.addEventListener('input', syncIdByQty);
+        syncIdByQty();
+    }
 
     categorySelect.addEventListener('change', function () {
         const categoryId = this.value;

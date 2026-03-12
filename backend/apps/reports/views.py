@@ -41,7 +41,7 @@ def reports_list(request):
         breakdown_list.append({
             "name": name,
             "amount": float(amt),
-            "amount_display": format_currency(amt, 0),
+            "amount_display": format_currency(amt, 2),
             "pct": pct
         })
 
@@ -65,8 +65,8 @@ def reports_list(request):
     context = {
     "total_expense": float(total_expense),
     "month_expense": float(month_expense),
-    "total_expense_display": format_currency(total_expense, 0),
-    "month_expense_display": format_currency(month_expense, 0),
+    "total_expense_display": format_currency(total_expense, 2),
+    "month_expense_display": format_currency(month_expense, 2),
     "breakdown_list": breakdown_list,
     "trend_months": trend_months,
     "trend_values": trend_values,

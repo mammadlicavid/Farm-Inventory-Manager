@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% block content %}
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'incomes:income_list' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Gəliri Düzəlt</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="main-content" style="margin-top: -20px; position: relative; z-index: 10;">
+    <div class="form-container-white">
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Gəlir Məlumatlarını Yenilə</h3>
+
+        <form method="POST" id="income-form">
+            {% csrf_token %}
+            <div class="desktop-form-grid">
+                <div class="form-group">
+                    <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <select id="category-select" name="category" required class="custom-input">
+                        <option value="" disabled>Kateqoriya seçin</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if income.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="item-field-group">
+                    <label>Məhsul <span style="color: #dc3545;">*</span></label>
+                    <select id="item-select" name="item_name" required class="custom-input"></select>
+                </div>
+
+                <div class="form-group" id="manual-name-group" style="display: none;">
+                    <label>Məhsulun Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Məhsulun adını daxil edin"
+                        class="custom-input">
+                </div>
+
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                    <div class="form-group">
+                        <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                        <input type="number" name="quantity" step="0.01" min="0" placeholder="0.00" required
+                            class="custom-input" value="{{ income.quantity|stringformat:'.2f' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
+                        <select name="unit" id="unit-select" class="custom-input" required></select>
+                    </div>
+                </div>
+
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                    <div class="form-group" id="gender-group" style="display: none;">
+                        <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
+                        <select id="gender-select" name="gender" class="custom-input">
+                            <option value="" disabled>Cinsiyyət seçin</option>
+                            <option value="erkek" {% if income.gender == "erkek" %}selected{% endif %}>Erkək</option>
+                            <option value="disi" {% if income.gender == "disi" %}selected{% endif %}>Dişi</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="animal-id-group" style="display: none;">
+                        <label>İdentifikasiya No</label>
+                        <input type="text" name="identification_no" id="animal-id-input"
+                            placeholder="Məsələn: AZ12345" class="custom-input">
+                    </div>
+                </div>
+
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                    <div class="form-group">
+                        <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
+                        <input type="number" name="amount" step="0.01" min="0" placeholder="0.00" required
+                            class="custom-input" value="{{ income.amount|stringformat:'.2f' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Tarix <span style="color: #dc3545;">*</span></label>
+                        <input type="date" name="date" required value="{{ income.date|date:'Y-m-d' }}"
+                            class="custom-input">
+                    </div>
+                </div>
+
+                <div class="form-group form-full-width">
+                    <label>Əlavə Məlumat</label>
+                    <textarea name="additional_info" placeholder="Məsələn: satış yeri, qeyd və s."
+                        class="custom-input" rows="3">{{ income.additional_info|default:'' }}</textarea>
+                </div>
+
+                <button type="submit" class="add-expense-btn" style="width: 100%;">
+                    <i class="fa-solid fa-save"></i>
+                    <span>Yadda Saxla</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+{{ category_data|json_script:"income-categories-data" }}
+<script>
+    const incomeData = JSON.parse(
+        document.getElementById('income-categories-data').textContent
+    );
+
+    const categorySelect = document.getElementById('category-select');
+    const itemSelect = document.getElementById('item-select');
+    const manualGroup = document.getElementById('manual-name-group');
+    const manualInput = document.getElementById('manual-name-input');
+    const unitSelect = document.getElementById('unit-select');
+    const genderGroup = document.getElementById('gender-group');
+    const genderSelect = document.getElementById('gender-select');
+    const itemGroup = document.getElementById('item-field-group');
+    const animalIdGroup = document.getElementById('animal-id-group');
+    const animalIdInput = document.getElementById('animal-id-input');
+    const qtyInput = document.querySelector('input[name="quantity"]');
+
+    const initialCategory = "{{ income.category|escapejs }}";
+    const initialItem = "{{ income.item_name|escapejs }}";
+    const initialUnit = "{{ income.unit|escapejs }}";
+
+    const allUnits = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
+    const seedUnits = ["kq", "ton", "qram"];
+    const animalUnits = ["ədəd"];
+    const forageItems = new Set(["yonca", "koronilla", "seradella"]);
+
+    function setUnits(units, currentValue) {
+        unitSelect.innerHTML = '';
+        units.forEach(unit => {
+            const option = document.createElement('option');
+            option.value = unit;
+            option.textContent = unit;
+            if (currentValue && currentValue === unit) {
+                option.selected = true;
+            }
+            unitSelect.appendChild(option);
+        });
+        if (!currentValue && units.length) {
+            unitSelect.value = units[0];
+        }
+    }
+
+    function resolveFarmUnits(itemName, itemUnit) {
+        if (!itemName) {
+            return allUnits;
+        }
+        const key = itemName.trim().toLowerCase();
+        if (forageItems.has(key)) {
+            return ["kq", "bağlama"];
+        }
+        if (!itemUnit) {
+            return allUnits;
+        }
+        if (itemUnit === "kq") {
+            return ["kq", "ton", "qram"];
+        }
+        if (itemUnit === "litr") {
+            return ["litr", "ml"];
+        }
+        return [itemUnit];
+    }
+
+    function updateManualState(showManual, manualValue) {
+        if (showManual) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+            if (manualValue) {
+                manualInput.value = manualValue;
+            }
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
+    function updateGenderState(type) {
+        if (type === "animal") {
+            genderGroup.style.display = 'block';
+            genderSelect.required = true;
+        } else {
+            genderGroup.style.display = 'none';
+            genderSelect.required = false;
+            genderSelect.value = '';
+        }
+        syncAnimalIdVisibility();
+    }
+
+    function syncAnimalIdVisibility() {
+        if (!animalIdGroup || !qtyInput) return;
+        const category = categorySelect.value;
+        const data = incomeData[category];
+        const isAnimal = data && data.type === "animal";
+        const qtyVal = parseFloat(qtyInput.value || "0");
+        if (isAnimal && Math.abs(qtyVal) === 1) {
+            animalIdGroup.style.display = 'block';
+        } else {
+            animalIdGroup.style.display = 'none';
+            if (animalIdInput) animalIdInput.value = '';
+        }
+    }
+
+    function populateItems(category, selectedItem) {
+        const data = incomeData[category];
+        if (!data) {
+            itemSelect.disabled = true;
+            itemSelect.innerHTML = '<option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>';
+            updateManualState(false);
+            updateGenderState('');
+            setUnits(allUnits, initialUnit);
+            return;
+        }
+
+        updateGenderState(data.type);
+
+        if (category === "Digər") {
+            itemGroup.style.display = 'none';
+            itemSelect.required = false;
+            itemSelect.disabled = true;
+            updateManualState(true, selectedItem || initialItem);
+            setUnits(allUnits, initialUnit);
+            return;
+        }
+
+        itemGroup.style.display = 'block';
+        itemSelect.required = true;
+        itemSelect.disabled = false;
+        itemSelect.innerHTML = '';
+
+        let matched = false;
+        data.items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.name;
+            option.textContent = item.name;
+            option.dataset.unit = item.unit || '';
+            if (selectedItem && item.name === selectedItem) {
+                option.selected = true;
+                matched = true;
+            }
+            itemSelect.appendChild(option);
+        });
+
+        if (!matched) {
+            const digerOption = Array.from(itemSelect.options).find(opt => opt.value === "Digər");
+            if (digerOption) {
+                digerOption.selected = true;
+            }
+            updateManualState(true, selectedItem || initialItem);
+        } else {
+            updateManualState(false);
+        }
+
+        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+        const itemName = selectedOption ? selectedOption.value : '';
+        const itemUnit = selectedOption ? selectedOption.dataset.unit : '';
+
+        if (data.type === "seed") {
+            setUnits(seedUnits, initialUnit);
+        } else if (data.type === "animal") {
+            setUnits(animalUnits, initialUnit);
+        } else if (data.type === "farm") {
+            if (itemName === "Digər") {
+                setUnits(allUnits, initialUnit);
+            } else {
+                setUnits(resolveFarmUnits(itemName, itemUnit), initialUnit);
+            }
+        } else {
+            setUnits(allUnits, initialUnit);
+        }
+    }
+
+    function handleItemChange() {
+        const category = categorySelect.value;
+        const data = incomeData[category];
+        if (!data) return;
+
+        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+        const itemName = selectedOption ? selectedOption.value : '';
+        const itemUnit = selectedOption ? selectedOption.dataset.unit : '';
+
+        if (itemName === "Digər") {
+            updateManualState(true, initialItem);
+        } else {
+            updateManualState(false);
+        }
+
+        if (data.type === "seed") {
+            setUnits(seedUnits);
+        } else if (data.type === "animal") {
+            setUnits(animalUnits);
+        } else if (data.type === "farm") {
+            if (itemName === "Digər") {
+                setUnits(allUnits);
+            } else {
+                setUnits(resolveFarmUnits(itemName, itemUnit));
+            }
+        } else {
+            setUnits(allUnits);
+        }
+    }
+
+    categorySelect.addEventListener('change', function () {
+        populateItems(this.value, null);
+        syncAnimalIdVisibility();
+    });
+
+    itemSelect.addEventListener('change', function () {
+        handleItemChange();
+        syncAnimalIdVisibility();
+    });
+
+    if (initialCategory) {
+        populateItems(initialCategory, initialItem);
+    }
+    if (qtyInput) {
+        qtyInput.addEventListener('input', syncAnimalIdVisibility);
+        syncAnimalIdVisibility();
+    }
+</script>
+{% endblock %}

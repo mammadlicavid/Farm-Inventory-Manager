@@ -1,10 +1,18 @@
 from django import forms
 from .models import FarmProduct, FarmProductCategory, FarmProductItem
+from common.category_order import (
+    FARM_PRODUCT_CATEGORY_ORDER,
+    FARM_PRODUCT_ITEM_ORDER,
+    order_queryset_by_name_list,
+)
 
 
 class FarmProductForm(forms.ModelForm):
     category = forms.ModelChoiceField(
-        queryset=FarmProductCategory.objects.all(),
+        queryset=order_queryset_by_name_list(
+            FarmProductCategory.objects.all(),
+            FARM_PRODUCT_CATEGORY_ORDER,
+        ),
         label="Kateqoriya",
         widget=forms.Select(attrs={"class": "custom-input"}),
         required=True,
@@ -29,11 +37,21 @@ class FarmProductForm(forms.ModelForm):
         if "category" in self.data:
             try:
                 category_id = int(self.data.get("category"))
-                self.fields["item"].queryset = FarmProductItem.objects.filter(
-                    category_id=category_id
-                ).order_by("name")
+                category = FarmProductCategory.objects.filter(id=category_id).first()
+                items_qs = FarmProductItem.objects.filter(category_id=category_id)
+                if category:
+                    items_qs = order_queryset_by_name_list(
+                        items_qs,
+                        FARM_PRODUCT_ITEM_ORDER.get(category.name, []),
+                    )
+                self.fields["item"].queryset = items_qs
             except (ValueError, TypeError):
                 pass
         elif self.instance.pk and self.instance.item:
             self.fields["category"].initial = self.instance.item.category
-            self.fields["item"].queryset = self.instance.item.category.items.order_by("name")
+            items_qs = self.instance.item.category.items.all()
+            items_qs = order_queryset_by_name_list(
+                items_qs,
+                FARM_PRODUCT_ITEM_ORDER.get(self.instance.item.category.name, []),
+            )
+            self.fields["item"].queryset = items_qs

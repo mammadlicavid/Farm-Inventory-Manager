@@ -3,13 +3,48 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Case, IntegerField, When
+from datetime import date, timedelta
+from django.utils import timezone
+from django.db.models import Q
 
 from .models import Tool, ToolCategory, ToolItem
 from .forms import ToolForm
 from common.messages import add_crud_success_message
+from common.category_order import (
+    TOOL_CATEGORY_ORDER,
+    TOOL_ITEM_ORDER,
+    order_queryset_by_name_list,
+)
 from common.icons import get_tool_icon_for_tool
 from expenses.models import Expense, ExpenseSubCategory
+from incomes.models import Income
+
+
+def _tool_stock_total(user, item, manual_name: str | None) -> int:
+    if item:
+        qs = Tool.objects.filter(created_by=user, item=item)
+    else:
+        qs = Tool.objects.filter(created_by=user).filter(
+            Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+            manual_name=manual_name,
+        )
+    total = 0
+    for tool in qs:
+        total += int(tool.quantity)
+    return total
+
+
+def _parse_date(value: str | None):
+    if not value:
+        return timezone.now().date()
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return timezone.now().date()
+
+
+def _ordered_tool_categories():
+    return order_queryset_by_name_list(ToolCategory.objects.all(), TOOL_CATEGORY_ORDER)
 
 @login_required
 def tool_list(request):
@@ -25,24 +60,33 @@ def tool_list(request):
     alets = list(alets_qs)
     for alet in alets:
         alet.icon_class = get_tool_icon_for_tool(alet)
+        try:
+            alet.price_display = abs(float(alet.price))
+        except Exception:
+            alet.price_display = alet.price
 
-    category_order = Case(
-        When(name="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
-    )
-    categories = ToolCategory.objects.all().order_by(category_order, "name")
+    categories = _ordered_tool_categories()
     
+    today = timezone.now().date()
     context = {
         'alets': alets,
         'categories': categories,
+        'today': today,
+        'yesterday': today - timedelta(days=1),
     }
     return render(request, 'tools/tool_list.html', context)
 
 @login_required
 def get_tool_items(request):
     category_id = request.GET.get('category_id')
-    items = ToolItem.objects.filter(category_id=category_id).values('id', 'name')
+    category = ToolCategory.objects.filter(id=category_id).first()
+    items_qs = ToolItem.objects.filter(category_id=category_id)
+    if category:
+        items_qs = order_queryset_by_name_list(
+            items_qs,
+            TOOL_ITEM_ORDER.get(category.name, []),
+        )
+    items = items_qs.values('id', 'name')
     return JsonResponse(list(items), safe=False)
 
 @login_required
@@ -53,6 +97,8 @@ def tool_create(request):
         price = request.POST.get('price')
         manual_name = request.POST.get('manual_name')
         additional_info = request.POST.get('additional_info')
+        date_raw = request.POST.get('date')
+        entry_date = _parse_date(date_raw)
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
@@ -61,6 +107,12 @@ def tool_create(request):
 
         # Handle empty price
         price = price if price and price.strip() else 0
+
+        try:
+            quantity_val = int(quantity)
+        except (TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            return redirect('tools:tool_list')
         
         try:
             item = None
@@ -70,17 +122,50 @@ def tool_create(request):
                     messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
                     return redirect('tools:tool_list')
             
+            if quantity_val < 0:
+                available = _tool_stock_total(
+                    request.user,
+                    item,
+                    manual_name if (not item or item.name == "Digər") else None,
+                )
+                if available < abs(quantity_val):
+                    messages.error(request, "Stokda kifayət qədər alət yoxdur.")
+                    return redirect('tools:tool_list')
+
             tool = Tool.objects.create(
                 item=item,
                 manual_name=manual_name if (not item or item.name == "Digər") else None,
                 quantity=quantity,
                 price=price,
                 additional_info=additional_info,
+                date=entry_date,
                 created_by=request.user
             )
 
+            if quantity_val < 0:
+                try:
+                    amount_val = abs(float(price))
+                except (TypeError, ValueError):
+                    amount_val = 0
+                if amount_val <= 0:
+                    messages.error(request, "Gəlir üçün məbləğ daxil edin.")
+                    tool.delete()
+                    return redirect('tools:tool_list')
+
+                Income.objects.create(
+                    category="Digər",
+                    item_name=item.name if item else manual_name,
+                    quantity=abs(quantity_val),
+                    unit="ədəd",
+                    amount=amount_val,
+                    additional_info=additional_info,
+                    date=entry_date,
+                    created_by=request.user,
+                    content_object=tool,
+                )
+
             # Automatic Expense Integration
-            if price and float(price) > 0:
+            if quantity_val > 0 and price and float(price) > 0:
                 try:
                     # 'Texnika alışı' is a suitable subcategory, or 'Təmir və Baxım'
                     # But if it's a new tool, 'Texnika alışı' is better.
@@ -121,25 +206,41 @@ def tool_update(request, pk):
         price = request.POST.get('price')
         manual_name = request.POST.get('manual_name')
         additional_info = request.POST.get('additional_info')
+        date_raw = request.POST.get('date')
+        entry_date = _parse_date(date_raw)
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
             return render(request, 'tools/tool_form.html', {
                 'alet': tool,
-                'categories': ToolCategory.objects.all(),
+                'categories': _ordered_tool_categories(),
             })
+
+        try:
+            quantity_val = int(quantity)
+        except (TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            return render(request, 'tools/tool_form.html', {
+                'alet': tool,
+                'categories': _ordered_tool_categories(),
+            })
+
+        prev_quantity = int(tool.quantity)
+        prev_item = tool.item
+        prev_manual = tool.manual_name
 
         # Update tool object
         tool.quantity = quantity
         tool.additional_info = additional_info
+        tool.date = entry_date
         if item_id:
             item = ToolItem.objects.get(id=item_id)
             if item.name == "Digər" and not manual_name:
                 messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
                 return render(request, 'tools/tool_form.html', {
                     'alet': tool,
-                    'categories': ToolCategory.objects.all(),
+                    'categories': _ordered_tool_categories(),
                 })
             tool.manual_name = manual_name if item.name == "Digər" else None
         else:
@@ -152,22 +253,74 @@ def tool_update(request, pk):
             tool.item = ToolItem.objects.get(id=item_id)
         else:
             tool.item = None
+
+        if quantity_val < 0:
+            available = _tool_stock_total(
+                request.user,
+                tool.item,
+                tool.manual_name if (not tool.item or (tool.item and tool.item.name == "Digər")) else None,
+            )
+            if prev_item == tool.item and prev_manual == tool.manual_name:
+                available += prev_quantity
+            if available < abs(quantity_val):
+                messages.error(request, "Stokda kifayət qədər alət yoxdur.")
+                return render(request, 'tools/tool_form.html', {
+                    'alet': tool,
+                    'categories': _ordered_tool_categories(),
+                })
             
         tool.save()
+
+        tool_type = ContentType.objects.get_for_model(Tool)
+        linked_income = Income.objects.filter(content_type=tool_type, object_id=tool.id).first()
+
+        if quantity_val < 0:
+            try:
+                amount_val = abs(float(tool.price))
+            except (TypeError, ValueError):
+                amount_val = 0
+            if linked_income:
+                if amount_val > 0:
+                    linked_income.category = "Digər"
+                    linked_income.item_name = tool.item.name if tool.item else tool.manual_name
+                    linked_income.quantity = abs(quantity_val)
+                    linked_income.unit = "ədəd"
+                    linked_income.amount = amount_val
+                    linked_income.additional_info = tool.additional_info
+                    linked_income.date = tool.date
+                    linked_income.save()
+                else:
+                    linked_income.delete()
+            else:
+                if amount_val > 0:
+                    Income.objects.create(
+                        category="Digər",
+                        item_name=tool.item.name if tool.item else tool.manual_name,
+                        quantity=abs(quantity_val),
+                        unit="ədəd",
+                        amount=amount_val,
+                        additional_info=tool.additional_info,
+                        date=tool.date,
+                        created_by=request.user,
+                        content_object=tool,
+                    )
+        else:
+            if linked_income:
+                linked_income.delete()
 
         # Update linked Expense if exists
         tool_type = ContentType.objects.get_for_model(Tool)
         linked_expense = Expense.objects.filter(content_type=tool_type, object_id=tool.id).first()
         
         if linked_expense:
-            if tool.price and float(tool.price) > 0:
+            if quantity_val > 0 and tool.price and float(tool.price) > 0:
                 linked_expense.amount = tool.price
                 linked_expense.title = f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}"
                 linked_expense.additional_info = tool.additional_info
                 linked_expense.save()
             else:
                 linked_expense.delete()
-        elif tool.price and float(tool.price) > 0:
+        elif quantity_val > 0 and tool.price and float(tool.price) > 0:
             # Create new expense if price was previously 0 or null
             try:
                 expense_sub = ExpenseSubCategory.objects.get(name='Texnika alışı')
@@ -192,12 +345,7 @@ def tool_update(request, pk):
         add_crud_success_message(request, "Tool", "update")
         return redirect('tools:tool_list')
     
-    category_order = Case(
-        When(name="Digər", then=1),
-        default=0,
-        output_field=IntegerField(),
-    )
-    categories = ToolCategory.objects.all().order_by(category_order, "name")
+    categories = _ordered_tool_categories()
     return render(request, 'tools/tool_form.html', {
         'alet': tool,
         'categories': categories,
@@ -210,6 +358,7 @@ def tool_delete(request, pk):
         # Manually delete linked expenses
         tool_type = ContentType.objects.get_for_model(Tool)
         Expense.objects.filter(content_type=tool_type, object_id=tool.id).delete()
+        Income.objects.filter(content_type=tool_type, object_id=tool.id).delete()
         tool.delete()
         add_crud_success_message(request, "Tool", "delete")
         return redirect('tools:tool_list')

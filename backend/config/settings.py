@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "tools",
     "animals",
     "expenses",
+    "incomes",
     "reports",
     "sync",
     "sidebar_menu.apps.SidebarMenuConfig"

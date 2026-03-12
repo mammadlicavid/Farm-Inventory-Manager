@@ -61,7 +61,7 @@ def expense_list(request):
     for exp in expenses:
         exp.display_additional_info = _get_display_additional_info(exp)
         exp.icon_class = get_expense_icon(exp)
-        exp.amount_display = format_currency(exp.amount, 0)
+        exp.amount_display = format_currency(exp.amount, 2)
         exp.display_title = exp.title
         exp.display_type_tag = ""
         if exp.title:
@@ -101,7 +101,7 @@ def expense_list(request):
         'expenses': expenses,
         'total_amount': total_amount,
         'weekly_total': weekly_total,
-        'weekly_total_display': format_currency(weekly_total, 0),
+        'weekly_total_display': format_currency(weekly_total, 2),
         'categories': categories,
         'subcategory_data': _build_subcategory_data(categories),
         'today': timezone.now().date(),
@@ -128,13 +128,21 @@ def add_expense(request):
         if not (subcategory or manual_name) or not amount:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
             return redirect('expenses:expense_list')
+
+        try:
+            amount_val = float(amount)
+        except (TypeError, ValueError):
+            amount_val = 0
+        if amount_val <= 0:
+            messages.error(request, 'Məbləğ düzgün deyil.')
+            return redirect('expenses:expense_list')
         
         if not title:
             title = subcategory.name if subcategory else manual_name
 
         Expense.objects.create(
             title=title,
-            amount=amount,
+            amount=amount_val,
             subcategory=subcategory,
             manual_name=None if subcategory else title,
             additional_info=additional_info,
@@ -170,9 +178,22 @@ def edit_expense(request, pk):
                 'categories': categories,
                 'subcategory_data': _build_subcategory_data(categories),
             })
+
+        try:
+            amount_val = float(amount)
+        except (TypeError, ValueError):
+            amount_val = 0
+        if amount_val <= 0:
+            messages.error(request, 'Məbləğ düzgün deyil.')
+            categories = ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories')
+            return render(request, 'expenses/expense_form.html', {
+                'expense': expense,
+                'categories': categories,
+                'subcategory_data': _build_subcategory_data(categories),
+            })
             
         expense.title = title if title else (subcategory.name if subcategory else manual_name)
-        expense.amount = amount
+        expense.amount = amount_val
         expense.subcategory = subcategory
         expense.manual_name = None if subcategory else (title if title else manual_name)
         expense.additional_info = additional_info

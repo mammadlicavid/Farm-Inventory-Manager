@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 class AnimalCategory(models.Model):
     name = models.CharField(max_length=100, verbose_name="Kateqoriya Adı")
@@ -28,11 +29,6 @@ class Animal(models.Model):
         ('disi', 'Dişi'),
     ]
     
-    STATUS_CHOICES = [
-        ('aktiv', 'Aktiv'),
-        ('satilib', 'Satılıb'),
-        ('telef', 'Tələf olub'),
-    ]
 
     subcategory = models.ForeignKey(
         AnimalSubCategory, 
@@ -50,7 +46,8 @@ class Animal(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name="Cinsiyyət", default='erkek')
     weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Çəki", null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Qiymət", default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aktiv', verbose_name="Status")
+    quantity = models.IntegerField(default=1, verbose_name="Miqdar")
+    date = models.DateField(default=timezone.now, verbose_name="Tarix")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -70,4 +67,4 @@ class Animal(models.Model):
     class Meta:
         verbose_name = "Heyvan"
         verbose_name_plural = "Heyvanlar"
-        ordering = ['-created_at']
+        ordering = ['-date', '-created_at']
