@@ -6,11 +6,24 @@
         <div class="header-content">
             <div class="header-top">
                 <h1>Ferma İdarəsi</h1>
-                <div class="status-badge">
-                    <span class="status-dot"></span> Onlayn
+                <div class="header-actions">
+                    <div class="status-badge">
+                        <i class="fa-solid fa-wifi" style="font-size: 10px;"></i> Onlayn
+                    </div>
+                    <button class="header-icon-btn"><i class="fa-regular fa-bell"></i></button>
+                    <button class="header-icon-btn"><i class="fa-solid fa-gear"></i></button>
                 </div>
             </div>
-            <p class="welcome-text">Xoş gəlmisiniz, {{ user_name }}!</p>
+            
+            <a href="{% url 'profile:profile_page' %}" class="dashboard-profile-card">
+                <div class="dp-avatar">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <div class="dp-info">
+                    <h3>Xoş gəlmisiniz, {{ user_name }}! 👋</h3>
+                    <span>Profilə keçin →</span>
+                </div>
+            </a>
         </div>
         <div class="header-curve"></div>
     </header>

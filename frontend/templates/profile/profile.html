@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container profile-container">
+
+    <!-- ===== PROFILE HEADER ===== -->
+    <header class="profile-header">
+        <div class="profile-header-top">
+            <a href="{% url 'dashboard' %}" class="profile-back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <span class="profile-header-title">Profil</span>
+            <span class="profile-header-icon">
+                <i class="fa-solid fa-user"></i>
+            </span>
+            <span style="flex:1;"></span>
+            <a href="#" class="profile-edit-btn">
+                <i class="fa-regular fa-pen-to-square"></i>
+            </a>
+        </div>
+    </header>
+
+    <main class="profile-main">
+
+        <!-- ===== AVATAR CARD ===== -->
+        <div class="profile-avatar-card">
+            <div class="profile-avatar-wrap">
+                <div class="profile-avatar-circle">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <div class="profile-avatar-cam">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+            </div>
+            <h2 class="profile-name">{{ user.get_full_name|default:user.username }}</h2>
+            <p class="profile-location">
+                <i class="fa-solid fa-location-dot"></i>
+                Gəncə, Azərbaycan
+            </p>
+            <span class="profile-badge">
+                <i class="fa-solid fa-seedling"></i> Fermer
+            </span>
+        </div>
+
+        <!-- ===== STATS ROW ===== -->
+        <div class="profile-stats-row">
+            <div class="profile-stat-card">
+                <span class="profile-stat-value stat-black">{{ total_products|default:"85" }}</span>
+                <span class="profile-stat-label">Məhsul</span>
+            </div>
+            <div class="profile-stat-card">
+                <span class="profile-stat-value stat-gold">{{ total_expenses|default:"4,500"|floatformat:0 }} ₼</span>
+                <span class="profile-stat-label">Xərclər</span>
+            </div>
+            <div class="profile-stat-card">
+                <span class="profile-stat-value stat-green">{{ membership_months|default:"12" }} ay</span>
+                <span class="profile-stat-label">Üzvlük</span>
+            </div>
+        </div>
+
+        <!-- ===== INFO CARD ===== -->
+        <div class="profile-info-card">
+
+            <!-- Ad Soyad -->
+            <div class="profile-info-row">
+                <div class="profile-info-icon-wrap">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <div class="profile-info-text">
+                    <span class="profile-info-label">Ad Soyad</span>
+                    <span class="profile-info-value">{{ user.get_full_name|default:"Əli Məmmədov" }}</span>
+                </div>
+            </div>
+            <div class="profile-info-sep"></div>
+
+            <!-- Telefon -->
+            <div class="profile-info-row">
+                <div class="profile-info-icon-wrap">
+                    <i class="fa-solid fa-phone"></i>
+                </div>
+                <div class="profile-info-text">
+                    <span class="profile-info-label">Telefon</span>
+                    <span class="profile-info-value">{{ user.profile.phone|default:"+994 50 123 4567" }}</span>
+                </div>
+            </div>
+            <div class="profile-info-sep"></div>
+
+            <!-- Ferma adı -->
+            <div class="profile-info-row">
+                <div class="profile-info-icon-wrap">
+                    <i class="fa-solid fa-seedling"></i>
+                </div>
+                <div class="profile-info-text">
+                    <span class="profile-info-label">Ferma adı</span>
+                    <span class="profile-info-value">{{ user.profile.farm_name|default:"Gəncə Ferması" }}</span>
+                </div>
+            </div>
+            <div class="profile-info-sep"></div>
+
+            <!-- Ünvan -->
+            <div class="profile-info-row">
+                <div class="profile-info-icon-wrap">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div class="profile-info-text">
+                    <span class="profile-info-label">Ünvan</span>
+                    <span class="profile-info-value">{{ user.profile.location|default:"Gəncə, Azərbaycan" }}</span>
+                </div>
+            </div>
+            <div class="profile-info-sep"></div>
+
+            <!-- Qoşulma tarixi -->
+            <div class="profile-info-row" style="padding-bottom: 20px;">
+                <div class="profile-info-icon-wrap">
+                    <i class="fa-regular fa-calendar"></i>
+                </div>
+                <div class="profile-info-text">
+                    <span class="profile-info-label">Qoşulma tarixi</span>
+                    <span class="profile-info-value">{{ join_date|default:"2024-01-15" }}</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== PRIVACY CARD ===== -->
+        <a href="#" class="profile-action-card profile-privacy-card">
+            <div class="profile-action-left">
+                <div class="profile-info-icon-wrap">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <span class="profile-action-label">Məxfilik &amp; Güvən</span>
+            </div>
+        </a>
+
+        <!-- ===== LOGOUT CARD ===== -->
+        <a href="{% url 'logout' %}" class="profile-action-card profile-logout-card">
+            <div class="profile-action-left">
+                <div class="profile-info-icon-wrap red-icon">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </div>
+                <span class="profile-action-label profile-logout-label">ÇIXIŞ</span>
+            </div>
+        </a>
+
+    </main>
+</div>
+{% endblock %}
