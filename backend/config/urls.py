@@ -27,10 +27,13 @@ urlpatterns = [
     path("", include("users.urls")),
     path("", include("inventory.urls")),
     path("seeds/", include("seeds.urls")),
+    path("farm-products/", include("farm_products.urls")),
     path("tools/", include("tools.urls")),
     path("animals/", include("animals.urls")),
     path("expenses/", include("expenses.urls")),
+    path("incomes/", include("incomes.urls")),
     path("reports/", include("apps.reports.urls")),
     path("sync/", include(("sync.urls", "sync"), namespace="sync")),
     path("profile/", include(("user_profile.urls", "profile"), namespace="profile")),
+    path("menu/", include("sidebar_menu.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

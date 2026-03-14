@@ -3,12 +3,57 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
+from decimal import Decimal, InvalidOperation
+from datetime import date, timedelta
+from django.utils import timezone
 
 from .models import Seed, SeedCategory, SeedItem
 from .forms import SeedForm
 from common.messages import add_crud_success_message
+from common.category_order import (
+    SEED_CATEGORY_ORDER,
+    SEED_ITEM_ORDER,
+    order_queryset_by_name_list,
+)
 from common.icons import get_seed_icon_for_seed
 from expenses.models import Expense, ExpenseSubCategory
+from incomes.models import Income
+
+
+def _seed_to_kg(value: Decimal, unit: str) -> Decimal:
+    if unit == "ton":
+        return value * Decimal("1000")
+    if unit == "qram":
+        return value / Decimal("1000")
+    return value
+
+
+def _seed_stock_kg(user, item, manual_name: str | None) -> Decimal:
+    if item:
+        qs = Seed.objects.filter(created_by=user, item=item)
+    else:
+        qs = Seed.objects.filter(created_by=user).filter(
+            Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+            manual_name=manual_name,
+        )
+    total = Decimal("0")
+    for seed in qs:
+        total += _seed_to_kg(Decimal(seed.quantity), seed.unit)
+    return total
+
+
+def _parse_date(value: str | None):
+    if not value:
+        return timezone.now().date()
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return timezone.now().date()
+
+
+def _ordered_seed_categories():
+    return order_queryset_by_name_list(SeedCategory.objects.all(), SEED_CATEGORY_ORDER)
 
 @login_required
 def seed_list(request):
@@ -24,19 +69,33 @@ def seed_list(request):
     seeds = list(seeds_qs)
     for seed in seeds:
         seed.icon_class = get_seed_icon_for_seed(seed)
+        try:
+            seed.price_display = abs(Decimal(seed.price))
+        except Exception:
+            seed.price_display = seed.price
 
-    categories = SeedCategory.objects.all()
+    categories = _ordered_seed_categories()
     
+    today = timezone.now().date()
     context = {
         'seeds': seeds,
         'categories': categories,
+        'today': today,
+        'yesterday': today - timedelta(days=1),
     }
     return render(request, 'seeds/seed_list.html', context)
 
 @login_required
 def get_seed_items(request):
     category_id = request.GET.get('category_id')
-    items = SeedItem.objects.filter(category_id=category_id).values('id', 'name')
+    category = SeedCategory.objects.filter(id=category_id).first()
+    items_qs = SeedItem.objects.filter(category_id=category_id)
+    if category:
+        items_qs = order_queryset_by_name_list(
+            items_qs,
+            SEED_ITEM_ORDER.get(category.name, []),
+        )
+    items = items_qs.values('id', 'name')
     return JsonResponse(list(items), safe=False)
 
 @login_required
@@ -48,7 +107,9 @@ def seed_create(request):
         price = request.POST.get('price')
         manual_name = request.POST.get('manual_name')
         additional_info = request.POST.get('additional_info')
-        
+        date_raw = request.POST.get('date')
+        entry_date = _parse_date(date_raw)
+
         # Backend Validation
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
@@ -56,24 +117,78 @@ def seed_create(request):
 
         # Handle empty numeric fields
         price = price if price and price.strip() else 0
+
+        try:
+            quantity_val = Decimal(str(quantity))
+        except (InvalidOperation, TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            return redirect('seeds:seed_list')
         
         try:
             item = None
             if item_id:
                 item = SeedItem.objects.get(id=item_id)
+                if item.name == "Digər" and not manual_name:
+                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    return redirect('seeds:seed_list')
             
+            if quantity_val < 0:
+                available_kg = _seed_stock_kg(
+                    request.user,
+                    item,
+                    manual_name if (not item or item.name == "Digər") else None,
+                )
+                needed_kg = _seed_to_kg(abs(quantity_val), unit)
+                if available_kg < needed_kg:
+                    messages.error(request, "Stokda kifayət qədər toxum yoxdur.")
+                    return redirect('seeds:seed_list')
+
             seed = Seed.objects.create(
                 item=item,
-                manual_name=manual_name if not item else None,
+                manual_name=manual_name if (not item or item.name == "Digər") else None,
                 quantity=quantity,
                 unit=unit,
                 price=price,
                 additional_info=additional_info,
+                date=entry_date,
                 created_by=request.user
             )
 
+            if quantity_val < 0:
+                try:
+                    amount_val = abs(float(price))
+                except (TypeError, ValueError):
+                    amount_val = 0
+                if amount_val <= 0:
+                    messages.error(request, "Gəlir üçün məbləğ daxil edin.")
+                    seed.delete()
+                    return redirect('seeds:seed_list')
+
+                category_name = item.category.name if item and item.category else "Digər"
+                income_category_map = {
+                    "Taxıl toxumları": "Taxıl və Paxlalı Toxumları",
+                    "Paxlalı toxumları": "Taxıl və Paxlalı Toxumları",
+                    "Yem bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+                    "Yağlı bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+                    "Tərəvəz toxumları": "Tərəvəz və Bostan Toxumları",
+                    "Bostan toxumları": "Tərəvəz və Bostan Toxumları",
+                    "Meyvə toxumları": "Meyvə Toxumları",
+                }
+                income_category = income_category_map.get(category_name, "Digər")
+                Income.objects.create(
+                    category=income_category,
+                    item_name=item.name if item else manual_name,
+                    quantity=abs(quantity_val),
+                    unit="kq" if unit == "kg" else unit,
+                    amount=amount_val,
+                    additional_info=additional_info,
+                    date=entry_date,
+                    created_by=request.user,
+                    content_object=seed,
+                )
+
             # Automatic Expense Integration
-            if price and float(price) > 0:
+            if quantity_val > 0 and price and float(price) > 0:
                 try:
                     # Try to find 'Toxumlar' subcategory
                     expense_sub = ExpenseSubCategory.objects.filter(name__icontains='Toxum').first()
@@ -118,20 +233,47 @@ def seed_update(request, pk):
         price = request.POST.get('price')
         manual_name = request.POST.get('manual_name')
         additional_info = request.POST.get('additional_info')
+        date_raw = request.POST.get('date')
+        entry_date = _parse_date(date_raw)
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
             return render(request, 'seeds/seed_form.html', {
                 'seed': seed,
-                'categories': SeedCategory.objects.all(),
+                'categories': _ordered_seed_categories(),
             })
+
+        try:
+            quantity_val = Decimal(str(quantity))
+        except (InvalidOperation, TypeError, ValueError):
+            messages.error(request, "Miqdar düzgün deyil.")
+            return render(request, 'seeds/seed_form.html', {
+                'seed': seed,
+                'categories': _ordered_seed_categories(),
+            })
+
+        prev_quantity = Decimal(str(seed.quantity))
+        prev_unit = seed.unit
+        prev_item = seed.item
+        prev_manual = seed.manual_name
 
         # Update seed object
         seed.quantity = quantity
         seed.unit = unit
         seed.additional_info = additional_info
-        seed.manual_name = manual_name if not item_id else None
+        seed.date = entry_date
+        if item_id:
+            item = SeedItem.objects.get(id=item_id)
+            if item.name == "Digər" and not manual_name:
+                messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
+                return render(request, 'seeds/seed_form.html', {
+                    'seed': seed,
+                    'categories': _ordered_seed_categories(),
+                })
+            seed.manual_name = manual_name if item.name == "Digər" else None
+        else:
+            seed.manual_name = manual_name
         
         # Handle empty price
         seed.price = price if price and price.strip() else 0
@@ -141,21 +283,84 @@ def seed_update(request, pk):
         else:
             seed.item = None
             
+        # Prevent negative stock on update
+        if quantity_val < 0:
+            prev_total = _seed_to_kg(prev_quantity, prev_unit)
+            available_kg = _seed_stock_kg(request.user, seed.item, seed.manual_name)
+            if prev_item == seed.item and prev_manual == seed.manual_name:
+                available_kg += prev_total
+            needed_kg = _seed_to_kg(abs(quantity_val), unit)
+            if available_kg < needed_kg:
+                messages.error(request, "Stokda kifayət qədər toxum yoxdur.")
+                return render(request, 'seeds/seed_form.html', {
+                    'seed': seed,
+                    'categories': _ordered_seed_categories(),
+                })
+
         seed.save()
+
+        seed_type = ContentType.objects.get_for_model(Seed)
+        linked_income = Income.objects.filter(content_type=seed_type, object_id=seed.id).first()
+
+        if quantity_val < 0:
+            try:
+                amount_val = abs(float(seed.price))
+            except (TypeError, ValueError):
+                amount_val = 0
+
+            category_name = seed.item.category.name if seed.item and seed.item.category else "Digər"
+            income_category_map = {
+                "Taxıl toxumları": "Taxıl və Paxlalı Toxumları",
+                "Paxlalı toxumları": "Taxıl və Paxlalı Toxumları",
+                "Yem bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+                "Yağlı bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+                "Tərəvəz toxumları": "Tərəvəz və Bostan Toxumları",
+                "Bostan toxumları": "Tərəvəz və Bostan Toxumları",
+                "Meyvə toxumları": "Meyvə Toxumları",
+            }
+            income_category = income_category_map.get(category_name, "Digər")
+            if linked_income:
+                if amount_val > 0:
+                    linked_income.category = income_category
+                    linked_income.item_name = seed.item.name if seed.item else seed.manual_name
+                    linked_income.quantity = abs(quantity_val)
+                    linked_income.unit = "kq" if seed.unit == "kg" else seed.unit
+                    linked_income.amount = amount_val
+                    linked_income.additional_info = seed.additional_info
+                    linked_income.date = seed.date
+                    linked_income.save()
+                else:
+                    linked_income.delete()
+            else:
+                if amount_val > 0:
+                    Income.objects.create(
+                        category=income_category,
+                        item_name=seed.item.name if seed.item else seed.manual_name,
+                        quantity=abs(quantity_val),
+                        unit="kq" if seed.unit == "kg" else seed.unit,
+                        amount=amount_val,
+                        additional_info=seed.additional_info,
+                        date=seed.date,
+                        created_by=request.user,
+                        content_object=seed,
+                    )
+        else:
+            if linked_income:
+                linked_income.delete()
 
         # Update linked Expense if exists
         seed_type = ContentType.objects.get_for_model(Seed)
         linked_expense = Expense.objects.filter(content_type=seed_type, object_id=seed.id).first()
         
         if linked_expense:
-            if seed.price and float(seed.price) > 0:
+            if quantity_val > 0 and seed.price and float(seed.price) > 0:
                 linked_expense.amount = seed.price
                 linked_expense.title = f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}"
                 linked_expense.additional_info = seed.additional_info
                 linked_expense.save()
             else:
                 linked_expense.delete()
-        elif seed.price and float(seed.price) > 0:
+        elif quantity_val > 0 and seed.price and float(seed.price) > 0:
             # Create new expense if price was previously 0 or null
             expense_sub = ExpenseSubCategory.objects.filter(name__icontains='Toxum').first()
             if expense_sub:
@@ -180,7 +385,7 @@ def seed_update(request, pk):
         add_crud_success_message(request, "Seed", "update")
         return redirect('seeds:seed_list')
     
-    categories = SeedCategory.objects.all()
+    categories = _ordered_seed_categories()
     return render(request, 'seeds/seed_form.html', {
         'seed': seed,
         'categories': categories,
@@ -193,6 +398,7 @@ def seed_delete(request, pk):
         # Manually delete linked expenses
         seed_type = ContentType.objects.get_for_model(Seed)
         Expense.objects.filter(content_type=seed_type, object_id=seed.id).delete()
+        Income.objects.filter(content_type=seed_type, object_id=seed.id).delete()
         seed.delete()
         add_crud_success_message(request, "Seed", "delete")
         return redirect('seeds:seed_list')

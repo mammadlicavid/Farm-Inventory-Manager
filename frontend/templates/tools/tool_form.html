@@ -1,23 +1,23 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="dashboard-container">
-    <header class="main-header" style="padding-bottom: 60px;">
-        <div class="header-content">
-            <div class="header-top">
-                <a href="{% url 'tools:tool_list' %}" class="back-btn-box">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Aləti Düzəlt</span>
-                </a>
-            </div>
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'tools:tool_list' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Aləti Düzəlt</span>
+            </a>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <div class="form-container-white">
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Alət Məlumatlarını Yenilə</h3>
+<main class="main-content" style="margin-top: -20px; position: relative; z-index: 10;">
+    <div class="form-container-white">
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Alət Məlumatlarını Yenilə</h3>
 
-            <form method="POST" id="tool-form">
-                {% csrf_token %}
+        <form method="POST" id="tool-form">
+            {% csrf_token %}
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                     <select id="category-select" name="category" required class="custom-input">
@@ -41,39 +41,45 @@
                     </select>
                 </div>
 
-                <div class="form-group" id="manual-name-group" {% if alet.item %}style="display: none;" {% endif %}>
+                <div class="form-group" id="manual-name-group" {% if alet.item and alet.item.name != "Digər" %}style="display: none;" {% endif %}>
                     <label>Alətin Adı (Digər) <span style="color: #dc3545;">*</span></label>
                     <input type="text" name="manual_name" id="manual-name-input" placeholder="Alətin adını daxil edin"
                         class="custom-input" value="{{ alet.manual_name|default:'' }}">
                 </div>
+            </div>
 
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group">
-                        <label>Miqdar <span style="color: #dc3545;">*</span></label>
-                        <input type="number" name="quantity" placeholder="0" class="custom-input" required
-                            value="{{ alet.quantity }}">
-                    </div>
-                    <div class="form-group">
-                        <label>Cəmi Məbləğ (₼)</label>
-                        <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
-                            value="{{ alet.price|stringformat:'.2f' }}">
-                    </div>
-                </div>
-
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s." class="custom-input"
-                        rows="3">{{ alet.additional_info|default:'' }}</textarea>
+                    <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                    <input type="number" name="quantity" placeholder="0" class="custom-input" required
+                        value="{{ alet.quantity }}">
                 </div>
+                <div class="form-group">
+                    <label>Cəmi Məbləğ (₼)</label>
+                    <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
+                        value="{{ alet.price|stringformat:'.2f' }}">
+                </div>
+            </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-save"></i>
-                    <span>Yadda Saxla</span>
-                </button>
-            </form>
-        </div>
-    </main>
-</div>
+            <div class="form-group">
+                <label>Tarix <span style="color: #dc3545;">*</span></label>
+                <input type="date" name="date" required value="{{ alet.date|date:'Y-m-d' }}"
+                    class="custom-input">
+            </div>
+
+            <div class="form-group">
+                <label>Əlavə Məlumat</label>
+                <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s." class="custom-input"
+                    rows="3">{{ alet.additional_info|default:'' }}</textarea>
+            </div>
+
+            <button type="submit" class="add-expense-btn">
+                <i class="fa-solid fa-save"></i>
+                <span>Yadda Saxla</span>
+            </button>
+        </form>
+    </div>
+</main>
 
 <script>
     document.getElementById('category-select').addEventListener('change', function () {
@@ -114,6 +120,7 @@
                         itemSelect.appendChild(option);
                     });
                     itemSelect.disabled = false;
+                    handleToolItemSelection();
                 })
                 .catch(error => {
                     console.error('Error fetching tool items:', error);
@@ -121,5 +128,27 @@
                 });
         }
     });
+
+    function handleToolItemSelection() {
+        const selected = document.getElementById('item-select').options[document.getElementById('item-select').selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
+    document.getElementById('item-select').addEventListener('change', handleToolItemSelection);
+
+    (function initSelection() {
+        const itemSelect = document.getElementById('item-select');
+        if (itemSelect && itemSelect.value) {
+            handleToolItemSelection();
+        }
+    })();
 </script>
 {% endblock %}

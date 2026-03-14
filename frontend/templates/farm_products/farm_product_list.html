@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'dashboard' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Təsərrüfat Məhsulları</span>
+            </a>
+        </div>
+
+        <form method="get" action="" class="search-form" style="margin-top: 20px;">
+            <div style="position: relative;" class="click-focus">
+                <i class="fa-solid fa-search"
+                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+                    value="{{ request.GET.q|default:'' }}" autocomplete="off"
+                    style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+            </div>
+        </form>
+    </div>
+</header>
+
+<main class="main-content" style="position: relative; z-index: 10;">
+    <div class="crud-desktop-wrapper">
+        <div class="crud-form-column">
+            <div class="form-container-white">
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Məhsul Əlavə Et</h3>
+                <form action="{% url 'farm_products:product_create' %}" method="POST" id="farm-product-form">
+                    {% csrf_token %}
+                    <div class="desktop-form-grid">
+                        <div class="form-group">
+                            <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select id="category-select" name="category" required class="custom-input">
+                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="item-field-group">
+                            <label>Məhsul Növü <span style="color: #dc3545;">*</span></label>
+                            <select id="item-select" name="item" required class="custom-input" disabled>
+                                <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="manual-name-group" style="display: none;">
+                            <label>Məhsulun Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                            <input type="text" name="manual_name" id="manual-name-input"
+                                placeholder="Məhsulun adını daxil edin" class="custom-input">
+                        </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                            <div class="form-group">
+                                <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                                <input type="number" name="quantity" step="0.01" placeholder="0.00" class="custom-input"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
+                                <select name="unit" id="unit-select" class="custom-input" required>
+                                    <option value="kq">kq</option>
+                                    <option value="ton">ton</option>
+                                    <option value="qram">qram</option>
+                                    <option value="litr">litr</option>
+                                    <option value="ml">millilitr</option>
+                                    <option value="ədəd">ədəd</option>
+                                    <option value="dəstə">dəstə</option>
+                                    <option value="bağlama">bağlama</option>
+                                </select>
+                                <input type="hidden" id="unit-hidden" name="unit_disabled" value="">
+                            </div>
+                        </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                            <div class="form-group">
+                                <label>Məbləğ (₼)</label>
+                                <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Tarix <span style="color: #dc3545;">*</span></label>
+                                <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
+                                    class="custom-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group form-full-width">
+                            <label>Əlavə Məlumat</label>
+                            <textarea name="additional_info" placeholder="Məsələn: Məhsulun vəziyyəti və s."
+                                class="custom-input" rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="add-expense-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            Məhsul Əlavə Et
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="crud-list-column">
+            <h3 class="recent-expenses-title">Təsərrüfat Məhsulları Siyahısı</h3>
+            <div class="seeds-list data-grid-list">
+                {% for product in products %}
+                <div class="expense-item-card">
+                    <div class="expense-item-icon">
+                        {% if product.icon_class|slice:":6" == "emoji:" %}
+                        <span class="emoji-icon">{{ product.icon_class|slice:"6:" }}</span>
+                        {% else %}
+                        <i class="{{ product.icon_class }}"></i>
+                        {% endif %}
+                    </div>
+                    <div class="expense-item-info">
+                        <h4>
+                            {% if product.item and product.item.name != "Digər" %}
+                            {{ product.item.name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ product.item.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
+                            {% elif product.item and product.item.name == "Digər" %}
+                            {{ product.manual_name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ product.item.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
+                            {% else %}
+                            {{ product.manual_name }}
+                            {% endif %}
+                        </h4>
+                        <span>
+                            {{ product.quantity }} {{ product.unit }} •
+                            {% if product.date == today %}
+                            Bu gün
+                            {% elif product.date == yesterday %}
+                            Dünən
+                            {% else %}
+                            {{ product.date|date:"d.m.Y" }}
+                            {% endif %}
+                            {% if product.additional_info %}
+                            • {{ product.additional_info }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="expense-item-amount" style="{% if product.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
+                            {% if product.quantity < 0 %}+{% else %}-{% endif %}{{ product.price_display }}₼
+                        </div>
+                        <div
+                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                            <a href="{% url 'farm_products:product_update' product.pk %}"
+                                style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                            </a>
+                            <form action="{% url 'farm_products:product_delete' product.pk %}" method="POST"
+                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                    <i class="fa-solid fa-trash"></i> Sil
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="expense-item-card" style="justify-content: center;">
+                    <span style="color: #888;">Heç bir məhsul tapılmadı</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const FARM_PRODUCT_STATE_KEY = "farm_product_form_state_session_v1";
+    const FARM_PRODUCT_KEEP_KEY = "farm_product_form_keep_v1";
+    const unitSelect = document.getElementById("unit-select");
+    const manualGroup = document.getElementById("manual-name-group");
+    const manualInput = document.getElementById("manual-name-input");
+    const unitHidden = document.getElementById("unit-hidden");
+
+    function saveFarmProductState(categoryId, itemId) {
+        sessionStorage.setItem(FARM_PRODUCT_STATE_KEY, JSON.stringify({ categoryId, itemId }));
+    }
+
+    function loadFarmProductState() {
+        try {
+            return JSON.parse(sessionStorage.getItem(FARM_PRODUCT_STATE_KEY) || "{}");
+        } catch {
+            return {};
+        }
+    }
+
+    function clearFarmProductState() {
+        sessionStorage.removeItem(FARM_PRODUCT_STATE_KEY);
+        sessionStorage.removeItem(FARM_PRODUCT_KEEP_KEY);
+    }
+
+    function resetFarmProductOtherFields() {
+        if (manualInput) manualInput.value = "";
+        const qty = document.querySelector('input[name="quantity"]');
+        if (qty) qty.value = "";
+        const price = document.querySelector('input[name="price"]');
+        if (price) price.value = "";
+        const info = document.querySelector('textarea[name="additional_info"]');
+        if (info) info.value = "";
+        if (unitSelect) unitSelect.value = "kq";
+    }
+
+    const ALL_UNITS = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
+    const UNIT_LABELS = {
+        kq: "kq",
+        ton: "ton",
+        qram: "qram",
+        litr: "litr",
+        ml: "millilitr",
+        "ədəd": "ədəd",
+        "dəstə": "dəstə",
+        "bağlama": "bağlama",
+    };
+
+    function applyUnitOptions(allowed, defaultValue) {
+        if (!unitSelect) return;
+        unitSelect.innerHTML = "";
+        allowed.forEach(value => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = UNIT_LABELS[value] || value;
+            unitSelect.appendChild(option);
+        });
+        if (defaultValue && allowed.includes(defaultValue)) {
+            unitSelect.value = defaultValue;
+        } else if (allowed.length) {
+            unitSelect.value = allowed[0];
+        }
+    }
+
+    function setUnitForItem(unitValue, isLocked, allowedUnits) {
+        if (!unitSelect) return;
+        if (allowedUnits && allowedUnits.length) {
+            applyUnitOptions(allowedUnits, unitValue);
+        } else if (unitValue) {
+            unitSelect.value = unitValue;
+        }
+        unitSelect.disabled = isLocked;
+        if (unitHidden) {
+            if (isLocked) {
+                unitSelect.name = "unit_disabled";
+                unitHidden.name = "unit";
+                unitHidden.value = unitSelect.value || unitValue || "";
+            } else {
+                unitSelect.name = "unit";
+                unitHidden.name = "unit_disabled";
+                unitHidden.value = "";
+            }
+        }
+        if (!unitSelect.options.length && allowedUnits && allowedUnits.length) {
+            applyUnitOptions(allowedUnits, unitValue);
+        }
+    }
+
+    function handleItemSelection(option) {
+        const itemName = option?.dataset?.name || "";
+        const itemUnit = option?.dataset?.unit || "";
+        const isOther = itemName === "Digər" || !itemUnit;
+        let allowed = ALL_UNITS;
+        let lockUnit = false;
+
+        const isForage = ["yonca", "koronilla", "seradella"].includes(itemName.toLowerCase());
+        if (isForage) {
+            allowed = ["kq", "bağlama"];
+        } else if (itemUnit === "kq") {
+            allowed = ["kq", "ton", "qram"];
+        } else if (itemUnit === "litr") {
+            allowed = ["litr", "ml"];
+        } else if (itemUnit) {
+            allowed = [itemUnit];
+            lockUnit = true;
+        }
+
+        if (isOther) {
+            manualGroup.style.display = "block";
+            manualInput.required = true;
+            setUnitForItem("kq", false, ALL_UNITS);
+        } else {
+            manualGroup.style.display = "none";
+            manualInput.required = false;
+            manualInput.value = "";
+            setUnitForItem(itemUnit, lockUnit, allowed);
+        }
+    }
+
+    let pendingItemId = null;
+
+    document.getElementById("category-select").addEventListener("change", function () {
+        const categoryId = this.value;
+        const categoryText = this.options[this.selectedIndex]?.text || "";
+        const itemSelect = document.getElementById("item-select");
+        const itemGroup = document.getElementById("item-field-group");
+
+        if (categoryText.startsWith("Digər")) {
+            itemGroup.style.display = "none";
+            itemSelect.required = false;
+            itemSelect.disabled = true;
+            itemSelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya yoxdur</option>';
+            manualGroup.style.display = "block";
+            manualInput.required = true;
+            setUnitForItem("kq", false);
+            resetFarmProductOtherFields();
+            saveFarmProductState(categoryId, "");
+            return;
+        }
+
+        itemGroup.style.display = "block";
+        itemSelect.required = true;
+        itemSelect.disabled = true;
+        itemSelect.innerHTML = '<option value="" disabled selected>Yüklənir...</option>';
+
+        fetch(`{% url 'farm_products:get_items' %}?category_id=${categoryId}`)
+            .then(response => response.json())
+            .then(data => {
+                itemSelect.innerHTML = '<option value="" disabled selected>Məhsul seçin</option>';
+                data.forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item.id;
+                    option.textContent = item.name;
+                    option.dataset.name = item.name;
+                    option.dataset.unit = item.unit || "";
+                    itemSelect.appendChild(option);
+                });
+                itemSelect.disabled = false;
+                if (pendingItemId) {
+                    itemSelect.value = pendingItemId;
+                    pendingItemId = null;
+                }
+                resetFarmProductOtherFields();
+                const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+                if (selectedOption && selectedOption.value) {
+                    handleItemSelection(selectedOption);
+                } else {
+                    manualGroup.style.display = "none";
+                    manualInput.required = false;
+                    setUnitForItem("kq", false, ALL_UNITS);
+                }
+                saveFarmProductState(categoryId, itemSelect.value || "");
+            })
+            .catch(error => {
+                console.error("Error fetching farm product items:", error);
+                itemSelect.innerHTML = '<option value="" disabled selected>Xəta baş verdi</option>';
+            });
+    });
+
+    document.getElementById("item-select").addEventListener("change", function () {
+        const categoryId = document.getElementById("category-select").value;
+        saveFarmProductState(categoryId, this.value);
+        const selectedOption = this.options[this.selectedIndex];
+        handleItemSelection(selectedOption);
+    });
+
+    const farmProductForm = document.getElementById("farm-product-form");
+    if (farmProductForm) {
+        farmProductForm.addEventListener("submit", () => {
+            sessionStorage.setItem(FARM_PRODUCT_KEEP_KEY, "1");
+            const categoryId = document.getElementById("category-select").value;
+            const itemId = document.getElementById("item-select")?.value || "";
+            saveFarmProductState(categoryId, itemId);
+        });
+    }
+
+    (function restoreFarmProductState() {
+        const saved = loadFarmProductState();
+        if (sessionStorage.getItem(FARM_PRODUCT_KEEP_KEY) !== "1" || !saved.categoryId) {
+            clearFarmProductState();
+            return;
+        }
+        pendingItemId = saved.itemId || null;
+        const categorySelect = document.getElementById("category-select");
+        categorySelect.value = saved.categoryId;
+        categorySelect.dispatchEvent(new Event("change"));
+        sessionStorage.removeItem(FARM_PRODUCT_KEEP_KEY);
+    })();
+
+    window.addEventListener("pagehide", () => {
+        if (sessionStorage.getItem(FARM_PRODUCT_KEEP_KEY) !== "1") {
+            clearFarmProductState();
+        }
+    });
+</script>
+{% endblock %}

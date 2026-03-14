@@ -12,6 +12,6 @@ class AnimalSubCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Animal)
 class AnimalAdmin(admin.ModelAdmin):
-    list_display = ('subcategory', 'identification_no', 'gender', 'status', 'created_at')
-    list_filter = ('status', 'gender', 'subcategory__category')
+    list_display = ('subcategory', 'identification_no', 'gender', 'created_at')
+    list_filter = ('gender', 'subcategory__category')
     search_fields = ('identification_no', 'breed', 'subcategory__name')

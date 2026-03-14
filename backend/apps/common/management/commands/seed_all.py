@@ -11,6 +11,7 @@ class Command(BaseCommand):
             ('seed_animals', 'Animals'),
             ('seed_expenses', 'Expenses'),
             ('seed_seeds', 'Seeds'),
+            ('seed_farm_products', 'Farm Products'),
             ('seed_tools', 'Tools'),
         ]
 

@@ -1,146 +1,204 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard-container">
-    <header class="main-header" style="padding-bottom: 60px;">
-        <div class="header-content">
-            <div class="header-top">
-                <a href="{% url 'dashboard' %}" class="back-btn-box">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Alətlər</span>
-                </a>
-            </div>
-
-            <form method="get" action="" class="search-form" style="margin-top: 20px;">
-                <div style="position: relative;">
-                    <i class="fa-solid fa-search"
-                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                    <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
-                        value="{{ request.GET.q|default:'' }}"
-                        style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
-                </div>
-            </form>
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'dashboard' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Alətlər</span>
+            </a>
         </div>
-    </header>
 
-    <main class="main-content" style="position: relative; z-index: 10;">
-        <div class="crud-desktop-wrapper">
-            <div class="crud-form-column">
-                <!-- Add Tool Form -->
-                <div class="form-container-white">
-                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
-                    <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form">
-                        {% csrf_token %}
-                        <div class="desktop-form-grid">
-                            <div class="form-group">
-                                <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                                <select name="category" id="id_category" required class="custom-input">
-                                    <option value="">Kateqoriya seçin...</option>
-                                    {% for category in categories %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+        <form method="get" action="" class="search-form" style="margin-top: 20px;">
+            <div style="position: relative;" class="click-focus">
+                <i class="fa-solid fa-search"
+                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+                    value="{{ request.GET.q|default:'' }}" autocomplete="off"
+                    style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+            </div>
+        </form>
+    </div>
+</header>
 
-                            <div class="form-group" id="item-field-group">
-                                <label>Alət Növü <span style="color: #dc3545;">*</span></label>
-                                <select name="item" id="id_item" required class="custom-input" disabled>
-                                    <option value="">Əvvəlcə kateqoriya seçin...</option>
-                                </select>
-                            </div>
+<main class="main-content" style="position: relative; z-index: 10;">
+    <div class="crud-desktop-wrapper">
+        <div class="crud-form-column">
+            <!-- Add Tool Form -->
+            <div class="form-container-white">
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
+                <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form">
+                    {% csrf_token %}
+                    <div class="desktop-form-grid">
+                        <div class="form-group">
+                            <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select name="category" id="id_category" required class="custom-input">
+                                <option value="">Kateqoriya seçin...</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                            <div class="form-group" id="manual-name-group" style="display: none;">
-                                <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
-                                <input type="text" name="manual_name" id="manual-name-input"
-                                    placeholder="Alət adını daxil edin" class="custom-input">
-                            </div>
+                        <div class="form-group" id="item-field-group">
+                            <label>Alət Növü <span style="color: #dc3545;">*</span></label>
+                            <select name="item" id="id_item" required class="custom-input" disabled>
+                                <option value="">Əvvəlcə kateqoriya seçin...</option>
+                            </select>
+                        </div>
 
-                            <div class="form-group">
-                                <label>Miqdar (ədəd) <span style="color: #dc3545;">*</span></label>
-                                <input type="number" name="quantity" placeholder="0" class="custom-input" required>
-                            </div>
+                        <div class="form-group" id="manual-name-group" style="display: none;">
+                            <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
+                            <input type="text" name="manual_name" id="manual-name-input"
+                                placeholder="Alət adını daxil edin" class="custom-input">
+                        </div>
 
+                        <div class="form-group">
+                            <label>Miqdar (ədəd) <span style="color: #dc3545;">*</span></label>
+                        <input type="number" name="quantity" placeholder="0" class="custom-input" required>
+                        </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
                                 <label>Qiymət (₼)</label>
                                 <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
                             </div>
-
-                            <div class="form-group form-full-width">
-                                <label>Əlavə Məlumat</label>
-                                <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s."
-                                    class="custom-input" rows="3"></textarea>
-                            </div>
-
-                            <button type="submit" class="add-expense-btn">
-                                <i class="fa-solid fa-plus"></i>
-                                Alət Əlavə Et
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="crud-list-column">
-                <!-- Tools List -->
-                <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
-                <div class="alets-list data-grid-list">
-                    {% for alet in alets %}
-                    <div class="expense-item-card">
-                        <div class="expense-item-icon">
-                            <i class="{{ alet.icon_class }}"></i>
-                        </div>
-                        <div class="expense-item-info">
-                            <h4>
-                                {% if alet.item %}
-                                {{ alet.item.name }}
-                                <span style="font-size: 12px; font-weight: 400; color: #666;">
-                                    ({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})
-                                </span>
-                                {% else %}
-                                {{ alet.manual_name }} <span
-                                    style="font-size: 12px; font-weight: 400; color: #666;">(Digər)</span>
-                                {% endif %}
-                            </h4>
-                            <span>
-                                Miqdar: {{ alet.quantity }} ədəd
-                                {% if alet.additional_info %}
-                                • {{ alet.additional_info }}
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div style="text-align: right;">
-                            <div class="expense-item-amount" style="color: var(--primary-green);">
-                                {{ alet.price|floatformat:0 }}₼
-                            </div>
-                            <div
-                                style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
-                                <a href="{% url 'tools:tool_update' alet.pk %}"
-                                    style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
-                                    <i class="fa-solid fa-pen-to-square"></i> Düzəliş
-                                </a>
-                                <form action="{% url 'tools:tool_delete' alet.pk %}" method="POST"
-                                    style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                        style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
-                                        <i class="fa-solid fa-trash"></i> Sil
-                                    </button>
-                                </form>
+                            <div class="form-group">
+                                <label>Tarix <span style="color: #dc3545;">*</span></label>
+                                <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
+                                    class="custom-input">
                             </div>
                         </div>
+
+                        <div class="form-group form-full-width">
+                            <label>Əlavə Məlumat</label>
+                            <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s."
+                                class="custom-input" rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="add-expense-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            Alət Əlavə Et
+                        </button>
                     </div>
-                    {% empty %}
-                    <div class="expense-item-card" style="justify-content: center;">
-                        <span style="color: #888;">Heç bir alət tapılmadı</span>
-                    </div>
-                    {% endfor %}
-                </div>
+                </form>
             </div>
         </div>
-    </main>
-</div>
+
+        <div class="crud-list-column">
+            <!-- Tools List -->
+            <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
+            <div class="alets-list data-grid-list">
+                {% for alet in alets %}
+                <div class="expense-item-card">
+                    <div class="expense-item-icon">
+                        {% if alet.icon_class|slice:":6" == "emoji:" %}
+                        <span class="emoji-icon">{{ alet.icon_class|slice:"6:" }}</span>
+                        {% else %}
+                        <i class="{{ alet.icon_class }}"></i>
+                        {% endif %}
+                    </div>
+                    <div class="expense-item-info">
+                        <h4>
+                            {% if alet.item and alet.item.name != "Digər" %}
+                            {{ alet.item.name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
+                            {% elif alet.item and alet.item.name == "Digər" %}
+                            {{ alet.manual_name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ alet.item.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
+                            {% else %}
+                            {{ alet.manual_name }}
+                            {% endif %}
+                        </h4>
+                        <span>
+                            Miqdar: {{ alet.quantity }} ədəd •
+                            {% if alet.date == today %}
+                            Bu gün
+                            {% elif alet.date == yesterday %}
+                            Dünən
+                            {% else %}
+                            {{ alet.date|date:"d.m.Y" }}
+                            {% endif %}
+                            {% if alet.additional_info %}
+                            {% if alet.additional_info == "Stok səhifəsindən düzəliş" %}
+                            <br>{{ alet.additional_info }}
+                            {% else %}
+                            • {{ alet.additional_info }}
+                            {% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="expense-item-amount" style="{% if alet.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
+                            {% if alet.quantity < 0 %}+{% else %}-{% endif %}{{ alet.price_display }}₼
+                        </div>
+                        <div
+                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                            <a href="{% url 'tools:tool_update' alet.pk %}"
+                                style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                            </a>
+                            <form action="{% url 'tools:tool_delete' alet.pk %}" method="POST"
+                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                    <i class="fa-solid fa-trash"></i> Sil
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="expense-item-card" style="justify-content: center;">
+                    <span style="color: #888;">Heç bir alət tapılmadı</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</main>
 
 <script>
+    const TOOL_STATE_KEY = "tool_form_state_session_v1";
+    const TOOL_KEEP_KEY = "tool_form_keep_v1";
+
+    function saveToolState(categoryId, itemId) {
+        sessionStorage.setItem(TOOL_STATE_KEY, JSON.stringify({ categoryId, itemId }));
+    }
+
+    function loadToolState() {
+        try {
+            return JSON.parse(sessionStorage.getItem(TOOL_STATE_KEY) || "{}");
+        } catch {
+            return {};
+        }
+    }
+
+    function clearToolState() {
+        sessionStorage.removeItem(TOOL_STATE_KEY);
+        sessionStorage.removeItem(TOOL_KEEP_KEY);
+    }
+
+    function resetToolOtherFields() {
+        const manualInput = document.getElementById("manual-name-input");
+        if (manualInput) manualInput.value = "";
+        const qty = document.querySelector('input[name="quantity"]');
+        if (qty) qty.value = "";
+        const price = document.querySelector('input[name="price"]');
+        if (price) price.value = "";
+        const info = document.querySelector('textarea[name="additional_info"]');
+        if (info) info.value = "";
+    }
+
+    let pendingToolItemId = null;
+
     document.getElementById('id_category').addEventListener('change', function () {
         const categoryId = this.value;
         const categoryText = this.options[this.selectedIndex].text;
@@ -153,6 +211,9 @@
             itemGroup.style.display = 'none';
             itemSelect.required = false;
             itemSelect.disabled = true;
+            saveToolState(categoryId, "");
+            resetToolOtherFields();
+            sessionStorage.removeItem(TOOL_KEEP_KEY);
 
             manualGroup.style.display = 'block';
             manualInput.required = true;
@@ -179,7 +240,64 @@
                         html += `<option value="${item.id}">${item.name}</option>`;
                     });
                     itemSelect.innerHTML = html;
+                    if (pendingToolItemId) {
+                        itemSelect.value = pendingToolItemId;
+                        pendingToolItemId = null;
+                    }
+                    resetToolOtherFields();
+                    saveToolState(categoryId, itemSelect.value || "");
+                    handleToolItemSelection();
                 });
+        }
+    });
+
+    function handleToolItemSelection() {
+        const selected = document.getElementById('id_item').options[document.getElementById('id_item').selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else if (manualGroup) {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
+    document.getElementById('id_item').addEventListener('change', function () {
+        const categoryId = document.getElementById('id_category').value;
+        saveToolState(categoryId, this.value);
+        handleToolItemSelection();
+    });
+
+    const toolForm = document.getElementById('tool-form');
+    if (toolForm) {
+        toolForm.addEventListener('submit', () => {
+            sessionStorage.setItem(TOOL_KEEP_KEY, "1");
+            const categoryId = document.getElementById('id_category').value;
+            const itemId = document.getElementById('id_item')?.value || "";
+            saveToolState(categoryId, itemId);
+        });
+    }
+
+    (function restoreToolState() {
+        const saved = loadToolState();
+        if (sessionStorage.getItem(TOOL_KEEP_KEY) !== "1" || !saved.categoryId) {
+            clearToolState();
+            return;
+        }
+        pendingToolItemId = saved.itemId || null;
+        const categorySelect = document.getElementById('id_category');
+        categorySelect.value = saved.categoryId;
+        categorySelect.dispatchEvent(new Event('change'));
+        sessionStorage.removeItem(TOOL_KEEP_KEY);
+    })();
+
+    window.addEventListener("pagehide", () => {
+        if (sessionStorage.getItem(TOOL_KEEP_KEY) !== "1") {
+            clearToolState();
         }
     });
 </script>

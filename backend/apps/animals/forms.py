@@ -6,7 +6,7 @@ class AnimalForm(forms.ModelForm):
         model = Animal
         fields = [
             'subcategory', 'identification_no', 'additional_info', 
-            'gender', 'weight', 'price', 'status', 'manual_name'
+            'gender', 'weight', 'price', 'quantity', 'manual_name'
         ]
         widgets = {
             'subcategory': forms.Select(attrs={'class': 'custom-input'}),
@@ -15,5 +15,5 @@ class AnimalForm(forms.ModelForm):
             'gender': forms.Select(attrs={'class': 'custom-input'}),
             'weight': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': 'Çəki (kq)'}),
             'price': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': 'Qiymət (AZN)'}),
-            'status': forms.Select(attrs={'class': 'custom-input'}),
+            'quantity': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': 'Miqdar'}),
         }

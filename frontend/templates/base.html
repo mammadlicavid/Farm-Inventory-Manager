@@ -1,154 +1,217 @@
 <!DOCTYPE html>
 <html lang="az">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ferma İdarəsi</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  </head>
 
-<body>
-    {% block content %}
-    {% endblock %}
+  <body>
+    <div class="dashboard-container">
+      {% block content %}
+
+      {% endblock %}
+
+      <!-- Side Drawer -->
+      <div class="side-drawer-mask">
+        <div id="sideDrawer" class="side-drawer">
+          <div class="drawer-header">
+            <h3>Menyu</h3>
+          </div>
+          <div class="drawer-content">
+            <ul class="drawer-menu">
+              <li>
+                <a href="{% url 'sidebar_menu:profile' %}"><i class="fa-solid fa-user"></i> Profil</a>
+              </li>
+              <li>
+                <a href="{% url 'sidebar_menu:setting' %}"><i class="fa-solid fa-gear"></i> Parametrlər</a>
+              </li>
+              <li>
+                <a href="{% url 'sidebar_menu:help' %}"><i class="fa-solid fa-question-circle"></i> Kömək</a>
+              </li>
+              <li>
+                <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Çıxış</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
 
     {% if messages %}
-    <div id="toast-container">
+      <div id="toast-container">
         {% for message in messages %}
-        <div class="toast-message toast-{{ message.tags|default:'info' }}">
+          <div class="toast-message toast-{{ message.tags|default:'info' }}">
             <span class="toast-text">{{ message }}</span>
-        </div>
+          </div>
         {% endfor %}
-    </div>
+      </div>
     {% endif %}
 
     <style>
-        #toast-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 9999;
-            pointer-events: none;
+      #toast-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 9999;
+        pointer-events: none;
+      }
+      
+      .toast-message {
+        min-width: 260px;
+        max-width: 420px;
+        background: rgba(34, 197, 94, 0.98);
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 999px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        animation: toast-slide-in 0.25s ease-out;
+        pointer-events: auto;
+      }
+      
+      .toast-error {
+        background: rgba(239, 68, 68, 0.98);
+      }
+      
+      .toast-warning {
+        background: rgba(245, 158, 11, 0.98);
+      }
+      
+      .toast-info {
+        background: rgba(59, 130, 246, 0.98);
+      }
+      
+      .toast-text {
+        font-weight: 500;
+      }
+      
+      @keyframes toast-slide-in {
+        from {
+          transform: translate(-50%, 16px);
+          opacity: 0;
         }
-
-        .toast-message {
-            min-width: 260px;
-            max-width: 420px;
-            background: rgba(34, 197, 94, 0.98);
-            color: #fff;
-            padding: 12px 18px;
-            border-radius: 999px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            animation: toast-slide-in 0.25s ease-out;
-            pointer-events: auto;
+      
+        to {
+          transform: translate(-50%, 0);
+          opacity: 1;
         }
-
-        .toast-error {
-            background: rgba(239, 68, 68, 0.98);
-        }
-
-        .toast-warning {
-            background: rgba(245, 158, 11, 0.98);
-        }
-
-        .toast-info {
-            background: rgba(59, 130, 246, 0.98);
-        }
-
-        .toast-text {
-            font-weight: 500;
-        }
-
-        @keyframes toast-slide-in {
-            from {
-                transform: translate(-50%, 16px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translate(-50%, 0);
-                opacity: 1;
-            }
-        }
+      }
     </style>
 
     <script>
-        (function () {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
+      ;(function () {
+        const container = document.getElementById('toast-container')
+        if (!container) return
+      
+        const TOAST_LIFETIME = 2000 // 2 seconds
+        const toasts = Array.from(container.children)
+      
+        toasts.forEach((toast, index) => {
+          const delay = index * 150
+          setTimeout(() => {
+            toast.style.opacity = '1'
+          }, delay)
+      
+          setTimeout(() => {
+            toast.style.transition = 'opacity 0.25s ease-out, transform 0.25s ease-out'
+            toast.style.opacity = '0'
+            toast.style.transform = 'translateY(8px)'
+            setTimeout(() => {
+              toast.remove()
+              if (!container.hasChildNodes()) {
+                container.remove()
+              }
+            }, 300)
+          }, TOAST_LIFETIME + delay)
+        })
+      })()
+    </script>
 
-            const TOAST_LIFETIME = 2000; // 2 seconds
-            const toasts = Array.from(container.children);
-
-            toasts.forEach((toast, index) => {
-                const delay = index * 150;
-                setTimeout(() => {
-                    toast.style.opacity = '1';
-                }, delay);
-
-                setTimeout(() => {
-                    toast.style.transition = 'opacity 0.25s ease-out, transform 0.25s ease-out';
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateY(8px)';
-                    setTimeout(() => {
-                        toast.remove();
-                        if (!container.hasChildNodes()) {
-                            container.remove();
-                        }
-                    }, 300);
-                }, TOAST_LIFETIME + delay);
-            });
-        })();
+    <script>
+      ;(function () {
+        document.addEventListener('click', (event) => {
+          const wrapper = event.target.closest('.click-focus')
+          if (!wrapper) return
+          const field = wrapper.querySelector('input, select, textarea')
+          if (!field || field.disabled) return
+          field.focus()
+          if (field.tagName === 'SELECT') {
+            field.click()
+          }
+        })
+      })()
     </script>
 
     <!-- Bottom Navigation Bar -->
     {% if user.is_authenticated %}
-    <nav class="bottom-nav">
+      <nav class="bottom-nav">
         <!-- Dashboard / Ana Səhifə -->
-        <a href="{% url 'dashboard' %}"
-            class="nav-item {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'index' %}active{% endif %}">
-            <i class="fa-solid fa-house"></i>
-            <span>Ana Səhifə</span>
+        <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'index' %}active{% endif %}">
+          <i class="fa-solid fa-house"></i>
+          <span>Ana Səhifə</span>
         </a>
 
-        <!-- Məhsullar (Products placeholder) -->
-        <a href="{% url 'inventory:products' %}"
-            class="nav-item {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
-            <i class="fa-solid fa-cube"></i>
-            <span>Məhsullar</span>
+        <!-- Stok (Products placeholder) -->
+        <a href="{% url 'inventory:stocks' %}" class="nav-item {% if request.resolver_match.url_name == 'stocks' %}active{% endif %}">
+          <i class="fa-solid fa-cube"></i>
+          <span>Stok</span>
         </a>
 
         <!-- Add Button (+) -->
-        <a href="{% url 'inventory:add_placeholder' %}" class="nav-add-btn">
-            <i class="fa-solid fa-plus"></i>
-        </a>
+        <a href="{% url 'inventory:add_placeholder' %}" class="nav-add-btn"><i class="fa-solid fa-plus"></i></a>
 
-        <!-- Xərclər (Expenses) -->
-        <a href="{% url 'expenses:expense_list' %}"
-            class="nav-item {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
-            <i class="fa-solid fa-dollar-sign"></i>
-            <span>Xərclər</span>
+        <!-- Tez Xərc (Quick Expense) -->
+        <a href="{% url 'quick_expense' %}" class="nav-item {% if request.resolver_match.url_name == 'quick_expense' %}active{% endif %}">
+          <i class="fa-solid fa-bolt"></i>
+          <span>Tez Xərc</span>
         </a>
 
         <!-- Hesabat (Reports) -->
-        <a href="{% url 'reports:list' %}"
-            class="nav-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
-            <i class="fa-solid fa-file-lines"></i>
-            <span>Hesabat</span>
+        <a href="{% url 'reports:list' %}" class="nav-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+          <i class="fa-solid fa-file-lines"></i>
+          <span>Hesabatlar</span>
         </a>
-    </nav>
-    {% endif %}
-</body>
 
+        <!-- Menyu (More/Menu) -->
+        <a href="#" id="menuToggle" class="nav-item">
+          <i class="fa-solid fa-bars"></i>
+          <span>Menyu</span>
+        </a>
+      </nav>
+    {% endif %}
+
+    <script>
+      ;(function () {
+        const menuToggle = document.getElementById('menuToggle')
+        const sideDrawer = document.getElementById('sideDrawer')
+        const body = document.body
+      
+        if (menuToggle && sideDrawer) {
+          menuToggle.addEventListener('click', (e) => {
+            e.preventDefault()
+            body.classList.toggle('drawer-open')
+          })
+      
+          // Close drawer when clicking outside (optional but good practice)
+          document.addEventListener('click', (e) => {
+            if (body.classList.contains('drawer-open') && !sideDrawer.contains(e.target) && !menuToggle.contains(e.target)) {
+              body.classList.remove('drawer-open')
+            }
+          })
+        }
+      })()
+    </script>
+  </body>
 </html>

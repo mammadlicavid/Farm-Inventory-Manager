@@ -2,30 +2,30 @@
 {% load static %}
 
 {% block content %}
-<div class="dashboard-container">
-    <header class="main-header" style="padding-bottom: 60px;">
-        <div class="header-content">
-            <div class="header-top">
-                <a href="{% url 'animals:animal_list' %}" class="back-btn-box">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Heyvanı Düzəlt</span>
-                </a>
-            </div>
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'animals:animal_list' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Heyvanı Düzəlt</span>
+            </a>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="main-content" style="margin-top: -40px; position: relative; z-index: 10;">
-        <div class="form-container-white">
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Heyvan Məlumatlarını Yenilə</h3>
+<main class="main-content" style="margin-top: -20px; position: relative; z-index: 10;">
+    <div class="form-container-white">
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Heyvan Məlumatlarını Yenilə</h3>
 
-            <form method="POST" id="animal-form">
-                {% csrf_token %}
+        <form method="POST" id="animal-form">
+            {% csrf_token %}
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                     <select id="category-select" required class="custom-input">
                         <option value="" disabled>Kateqoriya seçin</option>
                         {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if animal.subcategory.category_id == cat.id %}selected{% endif %}>
+                        <option value="{{ cat.id }}" {% if animal.subcategory and animal.subcategory.category_id == cat.id %}selected{% endif %}>
                             {{ cat.name }}</option>
                         {% endfor %}
                     </select>
@@ -43,79 +43,79 @@
                     </select>
                 </div>
 
-                <div class="form-group" id="manual-name-group" {% if animal.subcategory %}style="display: none;" {% endif %}>
+                <div class="form-group" id="manual-name-group" {% if animal.subcategory and animal.subcategory.name != "Digər" %}style="display: none;" {% endif %}>
                     <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
                     <input type="text" name="manual_name" id="manual-name-input"
                         placeholder="Heyvanın növünü daxil edin" class="custom-input"
                         value="{{ animal.manual_name|default:'' }}">
                 </div>
+            </div>
 
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>İdentifikasiya No <span style="color: #dc3545;">*</span></label>
+                    <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                    <input type="number" name="quantity" step="1" placeholder="1"
+                        class="custom-input" value="{{ animal.quantity|default_if_none:1 }}" required>
+                </div>
+                <div class="form-group">
+                    <label>İdentifikasiya No</label>
                     <input type="text" name="identification_no" placeholder="Məsələn: AZ12345" class="custom-input"
-                        required value="{{ animal.identification_no }}">
+                        value="{{ animal.identification_no|default_if_none:'' }}">
                 </div>
+            </div>
 
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group">
-                        <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
-                        <select name="gender" class="custom-input" required>
-                            <option value="erkek" {% if animal.gender == 'erkek' %}selected{% endif %}>Erkək</option>
-                            <option value="disi" {% if animal.gender == 'disi' %}selected{% endif %}>Dişi</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Məbləğ (₼)</label>
-                        <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
-                            value="{{ animal.price|stringformat:'.2f' }}">
-                    </div>
-                </div>
-
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group">
-                        <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
-                        <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input" required
-                            value="{{ animal.weight|stringformat:'.1f' }}">
-                    </div>
-                    <div class="form-group">
-                        <label>Status</label>
-                        <select name="status" class="custom-input">
-                            <option value="aktiv" {% if animal.status == 'aktiv' %}selected{% endif %}>Aktiv</option>
-                            <option value="satilib" {% if animal.status == 'satilib' %}selected{% endif %}>Satılıb
-                            </option>
-                            <option value="olub" {% if animal.status == 'olub' %}selected{% endif %}>Ölüb</option>
-                        </select>
-                    </div>
-                </div>
-
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>Əlavə Məlumat</label>
-                    <textarea name="additional_info" placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
-                        class="custom-input" rows="3">{{ animal.additional_info|default:'' }}</textarea>
+                    <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
+                    <select name="gender" class="custom-input" required>
+                        <option value="erkek" {% if animal.gender == 'erkek' %}selected{% endif %}>Erkək</option>
+                        <option value="disi" {% if animal.gender == 'disi' %}selected{% endif %}>Dişi</option>
+                    </select>
                 </div>
+                <div class="form-group">
+                    <label>Çəki (kq)</label>
+                    <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input"
+                        value="{{ animal.weight|stringformat:'.1f' }}">
+                </div>
+            </div>
 
-                <button type="submit" class="add-expense-btn">
-                    <i class="fa-solid fa-save"></i>
-                    <span>Yadda Saxla</span>
-                </button>
-            </form>
-        </div>
-    </main>
-</div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Məbləğ (₼)</label>
+                    <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
+                        value="{{ animal.price|stringformat:'.2f' }}">
+                </div>
+                <div class="form-group">
+                    <label>Tarix <span style="color: #dc3545;">*</span></label>
+                    <input type="date" name="date" required value="{{ animal.date|date:'Y-m-d' }}"
+                        class="custom-input">
+                </div>
+            </div>
 
+            <div class="form-group">
+                <label>Əlavə Məlumat</label>
+                <textarea name="additional_info" placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
+                    class="custom-input" rows="3">{{ animal.additional_info|default:'' }}</textarea>
+            </div>
+
+            <button type="submit" class="add-expense-btn">
+                <i class="fa-solid fa-save"></i>
+                <span>Yadda Saxla</span>
+            </button>
+        </form>
+    </div>
+</main>
+
+{{ subcategory_data|json_script:"animal-subcats-data" }}
 <script>
-    const subcategoryData = {
-        {% for cat in categories %}
-    "{{ cat.id }}": [
-        {% for sub in cat.subcategories.all %}
-    { "id": "{{ sub.id }}", "name": "{{ sub.name }}" },
-    {% endfor %}
-        ],
-    {% endfor %}
-    };
+    const subcategoryData = JSON.parse(
+        document.getElementById('animal-subcats-data').textContent
+    );
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');
+    const qtyInput = document.querySelector('input[name="quantity"]');
+    const idInput = document.querySelector('input[name="identification_no"]');
 
     categorySelect.addEventListener('change', function () {
         const categoryId = this.value;
@@ -153,8 +153,60 @@
                     subcategorySelect.appendChild(option);
                 });
                 subcategorySelect.disabled = false;
+                handleAnimalSubcategorySelection();
             }
         }
     });
+
+    function handleAnimalSubcategorySelection() {
+        const selected = subcategorySelect.options[subcategorySelect.selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else if (manualGroup) {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
+    subcategorySelect.addEventListener('change', handleAnimalSubcategorySelection);
+
+    function syncIdByQty() {
+        if (!qtyInput || !idInput) return;
+        const qty = parseInt(qtyInput.value || "1", 10);
+        if (Math.abs(qty) !== 1) {
+            idInput.value = "";
+            idInput.disabled = true;
+            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
+        } else {
+            idInput.disabled = false;
+            idInput.placeholder = "Məsələn: AZ12345";
+        }
+    }
+
+    if (qtyInput) {
+        qtyInput.addEventListener('input', syncIdByQty);
+        syncIdByQty();
+    }
+
+    (function initSelection() {
+        const initialCategoryId = "{{ animal.subcategory.category_id|default:'' }}";
+        const initialSubcategoryId = "{{ animal.subcategory_id|default:'' }}";
+
+        if (initialCategoryId) {
+            categorySelect.value = initialCategoryId;
+            categorySelect.dispatchEvent(new Event('change'));
+        }
+        if (initialSubcategoryId) {
+            subcategorySelect.value = initialSubcategoryId;
+        }
+        if (subcategorySelect && subcategorySelect.value) {
+            handleAnimalSubcategorySelection();
+        }
+    })();
 </script>
 {% endblock %}

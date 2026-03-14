@@ -58,12 +58,15 @@ INSTALLED_APPS = [
     "users",
     "dashboard",
     "seeds",
+    "farm_products",
     "tools",
     "animals",
     "expenses",
+    "incomes",
     "reports",
     "sync",
     "user_profile",
+    "sidebar_menu.apps.SidebarMenuConfig"
 ]
 
 

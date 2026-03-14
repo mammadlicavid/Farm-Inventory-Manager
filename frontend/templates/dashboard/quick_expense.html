@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <header class="main-header" style="padding-bottom: 30px;">
+        <div class="header-content">
+            <div class="header-top">
+                <a href="{% url 'dashboard' %}" class="back-btn-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Tez Xərc</span>
+                </a>
+            </div>
+            <form method="get" action="" class="search-form" style="margin-top: 20px;">
+                <div style="position: relative;" class="click-focus">
+                    <i class="fa-solid fa-search"
+                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                    <input type="text" id="template-search" placeholder="Şablon axtar..." autocomplete="off"
+                        style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+                </div>
+            </form>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- One-Tap Expenses Section -->
+        <div class="quick-expense-section">
+            <h2 class="quick-expense-section-title">Bir toxunuşla xərc</h2>
+            <div class="quick-tap-grid">
+                {% for item in quick_items %}
+                <form method="POST" action="{% url 'quick_expense' %}" class="quick-tap-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="quick_add">
+                    <input type="hidden" name="name" value="{{ item.name }}">
+                    <input type="hidden" name="amount" value="{{ item.amount }}">
+                    <input type="hidden" name="custom_amount" value="">
+                    <button type="submit" class="quick-tap-card">
+                        <span class="quick-tap-icon">{{ item.icon }}</span>
+                        <span class="quick-tap-name">{{ item.name }}</span>
+                        <span class="quick-tap-amount">{{ item.amount }}₼</span>
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Custom Amount Section -->
+        <div class="quick-expense-section">
+            <h2 class="quick-expense-section-title">Xüsusi məbləğ</h2>
+            <form method="POST" action="{% url 'quick_expense' %}" class="custom-amount-row">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="custom_amount">
+                <input type="number" name="amount" step="0.01" min="0.01" placeholder="Məbləğ (₼)"
+                    id="custom-amount-input" class="custom-amount-input" required>
+                <button type="submit" class="custom-amount-btn">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Templates Section -->
+        <div class="quick-expense-section">
+            <div class="templates-header">
+                <h2 class="quick-expense-section-title">Şablonlar</h2>
+                <span class="templates-new-badge">
+                    <i class="fa-regular fa-star"></i> Yeni
+                </span>
+            </div>
+
+            <div class="templates-list">
+                {% for tmpl in templates %}
+                <form method="POST" action="{% url 'quick_expense' %}" class="template-item-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="template_add">
+                    <input type="hidden" name="template_id" value="{{ tmpl.pk }}">
+                    <input type="hidden" name="custom_amount" value="">
+                    <button type="submit" class="template-item">
+                        <div class="template-item-left">
+                            <span class="template-item-title">{{ tmpl.display_title }}</span>
+                            <div class="template-item-tags">
+                                {% if tmpl.primary_tags %}
+                                {% for tag in tmpl.primary_tags %}
+                                <span class="template-tag">{{ tag }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="template-tag">Digər</span>
+                                <span class="template-tag">Digər</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="template-item-right">
+                            <span class="template-item-amount">{{ tmpl.amount_display }}₼</span>
+                            <i class="fa-solid fa-check template-item-check"></i>
+                        </div>
+                    </button>
+                </form>
+                {% empty %}
+                <div class="templates-empty">
+                    <p>Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+<style>
+    .quick-expense-section .template-item {
+        padding: 22px 22px;
+    }
+
+    .quick-expense-section .template-item-title {
+        font-size: 19px;
+    }
+
+    .quick-expense-section .template-tag {
+        font-size: 13px;
+        padding: 5px 12px;
+    }
+
+    .quick-expense-section .template-item-amount {
+        font-size: 26px;
+    }
+
+    .quick-expense-section .template-item-check {
+        font-size: 20px;
+    }
+</style>
+
+<script>
+    (function () {
+        const amountInput = document.getElementById('custom-amount-input');
+        if (!amountInput) return;
+
+        function applyCustomAmount(form) {
+            const hidden = form.querySelector('input[name="custom_amount"]');
+            if (!hidden) return;
+            hidden.value = amountInput.value || "";
+        }
+
+        document.querySelectorAll('.quick-tap-form, .template-item-form').forEach(form => {
+            form.addEventListener('submit', () => applyCustomAmount(form));
+        });
+    })();
+
+    (function () {
+        const searchInput = document.getElementById('template-search');
+        const items = Array.from(document.querySelectorAll('.template-item-form'));
+        if (!searchInput || items.length === 0) return;
+
+        function normalize(value) {
+            return (value || "").toLowerCase();
+        }
+
+        function matches(item, query) {
+            if (!query) return true;
+            const title = item.querySelector('.template-item-title')?.textContent || "";
+            const tags = Array.from(item.querySelectorAll('.template-tag')).map(tag => tag.textContent).join(" ");
+            return normalize(title + " " + tags).includes(query);
+        }
+
+        function applyFilter() {
+            const query = normalize(searchInput.value);
+            items.forEach(item => {
+                item.style.display = matches(item, query) ? "" : "none";
+            });
+        }
+
+        searchInput.addEventListener('input', applyFilter);
+    })();
+</script>
+{% endblock %}

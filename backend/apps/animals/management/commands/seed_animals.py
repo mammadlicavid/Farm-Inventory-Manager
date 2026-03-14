@@ -14,6 +14,10 @@ class Command(BaseCommand):
         }
 
         for cat_name, subcats in data.items():
+            if cat_name != "Digər" and "Digər" not in subcats:
+                subcats.append("Digər")
+
+        for cat_name, subcats in data.items():
             category, created = AnimalCategory.objects.get_or_create(name=cat_name)
             if created:
                 self.stdout.write(self.style.SUCCESS(f'Created category: {cat_name}'))

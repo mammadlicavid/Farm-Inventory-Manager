@@ -11,6 +11,11 @@ from common.messages import add_crud_success_message
 from common.icons import get_expense_icon
 from common.formatting import format_currency
 
+def _build_subcategory_data(categories):
+    return {
+        str(cat.id): [{"id": sub.id, "name": sub.name} for sub in cat.subcategories.all()]
+        for cat in categories
+    }
 
 def _get_display_additional_info(expense: Expense) -> str:
     """
@@ -47,21 +52,58 @@ def expense_list(request):
     # Convert to list for secondary processing (attaching display info)
     expenses = list(expenses_qs)
 
+    subcat_lookup = {
+        s.name.lower(): s
+        for s in ExpenseSubCategory.objects.select_related("category").all()
+    }
+
     # Attach display-only additional info and icon class
     for exp in expenses:
         exp.display_additional_info = _get_display_additional_info(exp)
         exp.icon_class = get_expense_icon(exp)
-        exp.amount_display = format_currency(exp.amount, 0)
+        exp.amount_display = format_currency(exp.amount, 2)
+        exp.display_title = exp.title
+        exp.display_type_tag = ""
+        if exp.title:
+            title_stripped = exp.title.strip()
+            if ":" in title_stripped:
+                base, rest = title_stripped.split(":", 1)
+                base = base.strip()
+                rest = rest.strip()
+                if base and rest and base.lower() in {
+                    "heyvan alışı",
+                    "toxum alışı",
+                    "alət alışı",
+                    "texnika alışı",
+                }:
+                    exp.display_title = rest
+                    exp.display_type_tag = base
+        if exp.subcategory and exp.subcategory.category:
+            exp.display_category_name = exp.subcategory.category.name
+        else:
+            match = None
+            if exp.manual_name:
+                match = subcat_lookup.get(exp.manual_name.lower())
+            if not match and exp.title:
+                match = subcat_lookup.get(exp.title.lower())
+            if match and match.category:
+                exp.display_category_name = match.category.name
+            else:
+                exp.display_category_name = "Digər"
     
     # Categories for the form
-    categories = ExpenseCategory.objects.all().prefetch_related('subcategories')
+    categories = (
+        ExpenseCategory.objects.exclude(name="Maliyyə və Digər")
+        .prefetch_related('subcategories')
+    )
     
     context = {
         'expenses': expenses,
         'total_amount': total_amount,
         'weekly_total': weekly_total,
-        'weekly_total_display': format_currency(weekly_total, 0),
+        'weekly_total_display': format_currency(weekly_total, 2),
         'categories': categories,
+        'subcategory_data': _build_subcategory_data(categories),
         'today': timezone.now().date(),
         'yesterday': timezone.now().date() - timedelta(days=1),
     }
@@ -86,15 +128,23 @@ def add_expense(request):
         if not (subcategory or manual_name) or not amount:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
             return redirect('expenses:expense_list')
+
+        try:
+            amount_val = float(amount)
+        except (TypeError, ValueError):
+            amount_val = 0
+        if amount_val <= 0:
+            messages.error(request, 'Məbləğ düzgün deyil.')
+            return redirect('expenses:expense_list')
         
         if not title:
             title = subcategory.name if subcategory else manual_name
-        
+
         Expense.objects.create(
             title=title,
-            amount=amount,
+            amount=amount_val,
             subcategory=subcategory,
-            manual_name=manual_name if not subcategory else None,
+            manual_name=None if subcategory else title,
             additional_info=additional_info,
             created_by=request.user
         )
@@ -122,15 +172,30 @@ def edit_expense(request, pk):
         
         if not (subcategory or manual_name) or not amount:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            categories = ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories')
             return render(request, 'expenses/expense_form.html', {
                 'expense': expense,
-                'categories': ExpenseCategory.objects.all().prefetch_related('subcategories'),
+                'categories': categories,
+                'subcategory_data': _build_subcategory_data(categories),
+            })
+
+        try:
+            amount_val = float(amount)
+        except (TypeError, ValueError):
+            amount_val = 0
+        if amount_val <= 0:
+            messages.error(request, 'Məbləğ düzgün deyil.')
+            categories = ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories')
+            return render(request, 'expenses/expense_form.html', {
+                'expense': expense,
+                'categories': categories,
+                'subcategory_data': _build_subcategory_data(categories),
             })
             
         expense.title = title if title else (subcategory.name if subcategory else manual_name)
-        expense.amount = amount
+        expense.amount = amount_val
         expense.subcategory = subcategory
-        expense.manual_name = manual_name if not subcategory else None
+        expense.manual_name = None if subcategory else (title if title else manual_name)
         expense.additional_info = additional_info
         expense.save()
 
@@ -142,6 +207,8 @@ def edit_expense(request, pk):
                 item.price = expense.amount
             elif hasattr(item, 'amount'):
                 item.amount = expense.amount
+            if hasattr(item, 'additional_info'):
+                item.additional_info = additional_info
             
             # Optionally update title/name if it changed? 
             # Usually inventory name is more specific, so we might keep it.
@@ -153,10 +220,14 @@ def edit_expense(request, pk):
 
     # Initial GET render: compute display_additional_info for textarea
     expense.display_additional_info = _get_display_additional_info(expense)
-    categories = ExpenseCategory.objects.all().prefetch_related('subcategories')
+    categories = (
+        ExpenseCategory.objects.exclude(name="Maliyyə və Digər")
+        .prefetch_related('subcategories')
+    )
     return render(request, 'expenses/expense_form.html', {
         'expense': expense,
         'categories': categories,
+        'subcategory_data': _build_subcategory_data(categories),
     })
 
 @login_required

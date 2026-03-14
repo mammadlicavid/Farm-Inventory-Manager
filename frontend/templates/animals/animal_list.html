@@ -2,178 +2,265 @@
 {% load static %}
 
 {% block content %}
-<div class="dashboard-container">
-    <header class="main-header" style="padding-bottom: 60px;">
-        <div class="header-content">
-            <div class="header-top">
-                <a href="{% url 'dashboard' %}" class="back-btn-box">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Heyvanlar</span>
-                </a>
-            </div>
-
-            <form method="get" action="" class="search-form" style="margin-top: 20px;">
-                <div style="position: relative;">
-                    <i class="fa-solid fa-search"
-                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                    <input type="text" name="q" placeholder="Axtar (ID, Məlumat, Növ)..."
-                        value="{{ request.GET.q|default:'' }}"
-                        style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
-                </div>
-            </form>
+<header class="main-header" style="padding-bottom: 60px;">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'dashboard' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Heyvanlar</span>
+            </a>
         </div>
-    </header>
 
-    <main class="main-content" style="position: relative; z-index: 10;">
-        <div class="crud-desktop-wrapper">
-            <div class="crud-form-column">
-                <div class="form-container-white">
-                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Heyvan Əlavə Et</h3>
-                    <form action="{% url 'animals:animal_create' %}" method="POST" id="animal-form">
-                        {% csrf_token %}
-                        <div class="desktop-form-grid">
+        <form method="get" action="" class="search-form" style="margin-top: 20px;">
+            <div style="position: relative;" class="click-focus">
+                <i class="fa-solid fa-search"
+                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                <input type="text" name="q" placeholder="Axtar (ID, Məlumat, Növ)..."
+                    value="{{ request.GET.q|default:'' }}" autocomplete="off"
+                    style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+            </div>
+        </form>
+    </div>
+</header>
+
+<main class="main-content" style="position: relative; z-index: 10;">
+    <div class="crud-desktop-wrapper">
+        <div class="crud-form-column">
+            <div class="form-container-white">
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Heyvan Əlavə Et</h3>
+                <form action="{% url 'animals:animal_create' %}" method="POST" id="animal-form">
+                    {% csrf_token %}
+                    <div class="desktop-form-grid">
+                        <div class="form-group">
+                            <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select id="category-select" required class="custom-input">
+                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="subcategory-field-group">
+                            <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
+                            <select name="subcategory" id="subcategory-select" class="custom-input" required disabled>
+                                <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="manual-name-group" style="display: none;">
+                            <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
+                            <input type="text" name="manual_name" id="manual-name-input"
+                                placeholder="Heyvanın növünü daxil edin" class="custom-input">
+                        </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
-                                <select id="category-select" required class="custom-input">
-                                    <option value="" disabled selected>Kateqoriya seçin</option>
-                                    {% for cat in categories %}
-                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
-                                    {% endfor %}
+                                <label>Miqdar <span style="color: #dc3545;">*</span></label>
+                                <input type="number" name="quantity" step="1" placeholder="1"
+                                    class="custom-input" value="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>İdentifikasiya No</label>
+                                <input type="text" name="identification_no" placeholder="Məsələn: AZ12345"
+                                    class="custom-input">
+                            </div>
+                        </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                            <div class="form-group">
+                                <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
+                                <select name="gender" class="custom-input" required>
+                                    <option value="erkek">Erkək</option>
+                                    <option value="disi">Dişi</option>
                                 </select>
                             </div>
-
-                            <div class="form-group" id="subcategory-field-group">
-                                <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
-                                <select name="subcategory" id="subcategory-select" class="custom-input" required
-                                    disabled>
-                                    <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group" id="manual-name-group" style="display: none;">
-                                <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
-                                <input type="text" name="manual_name" id="manual-name-input"
-                                    placeholder="Heyvanın növünü daxil edin" class="custom-input">
-                            </div>
-
-                            <div class="form-row"
-                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
-                                <div class="form-group">
-                                    <label>İdentifikasiya No <span style="color: #dc3545;">*</span></label>
-                                    <input type="text" name="identification_no" placeholder="Məsələn: AZ12345"
-                                        class="custom-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Çəki (kq) <span style="color: #dc3545;">*</span></label>
-                                    <input type="number" name="weight" step="0.1" placeholder="0.0"
-                                        class="custom-input" required>
-                                </div>
-                            </div>
-
-                            <div class="form-row"
-                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
-                                <div class="form-group">
-                                    <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
-                                    <select name="gender" class="custom-input" required>
-                                        <option value="erkek">Erkək</option>
-                                        <option value="disi">Dişi</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Məbləğ (₼)</label>
-                                    <input type="number" name="price" step="0.01" placeholder="0.00"
-                                        class="custom-input">
-                                </div>
-                            </div>
-
-                            <div class="form-group form-full-width">
-                                <label>Əlavə Məlumat</label>
-                                <textarea name="additional_info"
-                                    placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s." class="custom-input"
-                                    rows="3"></textarea>
-                            </div>
-
-                            <button type="submit" class="add-expense-btn">
-                                <i class="fa-solid fa-plus"></i>
-                                Heyvan Əlavə Et
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="crud-list-column">
-                <!-- Animals History -->
-                <h3 class="recent-expenses-title">Heyvan Siyahısı</h3>
-                <div class="animals-list data-grid-list">
-                    {% for animal in animals %}
-                    <div class="expense-item-card">
-                        <div class="expense-item-icon">
-                            <i class="{{ animal.icon_class }}"></i>
-                        </div>
-                        <div class="expense-item-info">
-                            <h4>
-                                {% if animal.subcategory %}
-                                {{ animal.subcategory.name }}
-                                {% else %}
-                                {{ animal.manual_name }}
-                                {% endif %}
-                                {% if animal.identification_no %}({{ animal.identification_no }}){% endif %}
-                            </h4>
-                            <span>
-                                {{ animal.gender|title }} •
-                                {% if animal.additional_info %}
-                                {{ animal.additional_info }}
-                                {% else %}
-                                Əlavə məlumat yoxdur
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div style="text-align: right;">
-                            <div class="expense-item-amount" style="color: var(--primary-green);">
-                                {{ animal.price|floatformat:0 }}₼
-                            </div>
-                            <div
-                                style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
-                                <a href="{% url 'animals:animal_update' animal.pk %}"
-                                    style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
-                                    <i class="fa-solid fa-pen-to-square"></i> Düzəliş
-                                </a>
-                                <form action="{% url 'animals:animal_delete' animal.pk %}" method="POST"
-                                    style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                        style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
-                                        <i class="fa-solid fa-trash"></i> Sil
-                                    </button>
-                                </form>
+                            <div class="form-group">
+                                <label>Çəki (kq)</label>
+                                <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input">
                             </div>
                         </div>
+
+                        <div class="form-row"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
+                            <div class="form-group">
+                                <label>Məbləğ (₼)</label>
+                                <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Tarix <span style="color: #dc3545;">*</span></label>
+                                <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
+                                    class="custom-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group form-full-width">
+                            <label>Əlavə Məlumat</label>
+                            <textarea name="additional_info"
+                                placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s." class="custom-input"
+                                rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="add-expense-btn">
+                            <i class="fa-solid fa-plus"></i>
+                            Heyvan Əlavə Et
+                        </button>
                     </div>
-                    {% empty %}
-                    <div class="expense-item-card" style="justify-content: center;">
-                        <span style="color: #888;">Heç bir heyvan tapılmadı</span>
-                    </div>
-                    {% endfor %}
-                </div>
+                </form>
             </div>
         </div>
-    </main>
-</div>
 
+        <div class="crud-list-column">
+            <!-- Animals History -->
+            <h3 class="recent-expenses-title">Heyvan Siyahısı</h3>
+            <div class="animals-list data-grid-list">
+                {% for animal in animals %}
+                <div class="expense-item-card">
+                    <div class="expense-item-icon">
+                        {% if animal.icon_class|slice:":6" == "emoji:" %}
+                        <span class="emoji-icon">{{ animal.icon_class|slice:"6:" }}</span>
+                        {% else %}
+                        <i class="{{ animal.icon_class }}"></i>
+                        {% endif %}
+                    </div>
+                    <div class="expense-item-info">
+                        <h4>
+                            {% if animal.subcategory and animal.subcategory.name != "Digər" %}
+                            {{ animal.subcategory.name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ animal.subcategory.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
+                            {% elif animal.subcategory and animal.subcategory.name == "Digər" %}
+                            {{ animal.manual_name }}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ animal.subcategory.category.name|default:"Kateqoriya yoxdur" }})
+                            </span>
+                            {% else %}
+                            {{ animal.manual_name }}
+                            {% endif %}
+                            {% if animal.identification_no %}({{ animal.identification_no }}){% endif %}
+                        </h4>
+                        <span>
+                            Miqdar: {{ animal.quantity|default_if_none:1 }} ədəd •
+                            {% if animal.date == today %}
+                            Bu gün
+                            {% elif animal.date == yesterday %}
+                            Dünən
+                            {% else %}
+                            {{ animal.date|date:"d.m.Y" }}
+                            {% endif %}
+                            <br>{{ animal.gender|title }}
+                            {% if animal.display_additional_info %}
+                            {% if animal.display_additional_info == "Stok səhifəsindən düzəliş" %}
+                            <br>{{ animal.display_additional_info }}
+                            {% else %}
+                            • {{ animal.display_additional_info }}
+                            {% endif %}
+                            {% else %}
+                            • Əlavə məlumat yoxdur
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="expense-item-amount" style="{% if animal.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
+                            {% if animal.quantity < 0 %}+{% else %}-{% endif %}{{ animal.price }}₼
+                        </div>
+                        <div
+                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                            <a href="{% url 'animals:animal_update' animal.pk %}"
+                                style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
+                                <i class="fa-solid fa-pen-to-square"></i> Düzəliş
+                            </a>
+                            <form action="{% url 'animals:animal_delete' animal.pk %}" method="POST"
+                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
+                                    <i class="fa-solid fa-trash"></i> Sil
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="expense-item-card" style="justify-content: center;">
+                    <span style="color: #888;">Heç bir heyvan tapılmadı</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</main>
+
+{{ subcategory_data|json_script:"animal-subcats-data" }}
 <script>
-    const subcategoryData = {
-        {% for cat in categories %}
-    "{{ cat.id }}": [
-        {% for sub in cat.subcategories.all %}
-    { "id": "{{ sub.id }}", "name": "{{ sub.name }}" },
-    {% endfor %}
-        ],
-    {% endfor %}
-    };
+    const ANIMAL_STATE_KEY = "animal_form_state_session_v1";
+    const ANIMAL_KEEP_KEY = "animal_form_keep_v1";
+
+    function saveAnimalState(categoryId, subcategoryId) {
+        sessionStorage.setItem(ANIMAL_STATE_KEY, JSON.stringify({ categoryId, subcategoryId }));
+    }
+
+    function loadAnimalState() {
+        try {
+            return JSON.parse(sessionStorage.getItem(ANIMAL_STATE_KEY) || "{}");
+        } catch {
+            return {};
+        }
+    }
+
+    function clearAnimalState() {
+        sessionStorage.removeItem(ANIMAL_STATE_KEY);
+        sessionStorage.removeItem(ANIMAL_KEEP_KEY);
+    }
+
+    function resetAnimalOtherFields() {
+        const manualInput = document.getElementById("manual-name-input");
+        if (manualInput) manualInput.value = "";
+        const idNo = document.querySelector('input[name="identification_no"]');
+        if (idNo) idNo.value = "";
+        const qty = document.querySelector('input[name="quantity"]');
+        if (qty) qty.value = "1";
+        const weight = document.querySelector('input[name="weight"]');
+        if (weight) weight.value = "";
+        const price = document.querySelector('input[name="price"]');
+        if (price) price.value = "";
+        const info = document.querySelector('textarea[name="additional_info"]');
+        if (info) info.value = "";
+        const gender = document.querySelector('select[name="gender"]');
+        if (gender) gender.value = "erkek";
+    }
+
+    const subcategoryData = JSON.parse(
+        document.getElementById('animal-subcats-data').textContent
+    );
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');
+    const qtyInput = document.querySelector('input[name="quantity"]');
+    const idInput = document.querySelector('input[name="identification_no"]');
+
+    let pendingAnimalSubId = null;
+
+    function syncIdByQty() {
+        if (!qtyInput || !idInput) return;
+        const qty = parseInt(qtyInput.value || "1", 10);
+        if (Math.abs(qty) !== 1) {
+            idInput.value = "";
+            idInput.disabled = true;
+            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
+        } else {
+            idInput.disabled = false;
+            idInput.placeholder = "Məsələn: AZ12345";
+        }
+    }
+
+    if (qtyInput) {
+        qtyInput.addEventListener('input', syncIdByQty);
+        syncIdByQty();
+    }
 
     categorySelect.addEventListener('change', function () {
         const categoryId = this.value;
@@ -187,6 +274,9 @@
             subcategoryGroup.style.display = 'none';
             subcategorySelect.required = false;
             subcategorySelect.disabled = true;
+            saveAnimalState(categoryId, "");
+            resetAnimalOtherFields();
+            sessionStorage.removeItem(ANIMAL_KEEP_KEY);
 
             manualGroup.style.display = 'block';
             manualInput.required = true;
@@ -211,7 +301,63 @@
                     subcategorySelect.appendChild(option);
                 });
                 subcategorySelect.disabled = false;
+                if (pendingAnimalSubId) {
+                    subcategorySelect.value = pendingAnimalSubId;
+                    pendingAnimalSubId = null;
+                }
+                handleAnimalSubcategorySelection();
             }
+            resetAnimalOtherFields();
+            saveAnimalState(categoryId, subcategorySelect.value || "");
+        }
+    });
+
+    function handleAnimalSubcategorySelection() {
+        const selected = subcategorySelect.options[subcategorySelect.selectedIndex];
+        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const manualGroup = document.getElementById('manual-name-group');
+        const manualInput = document.getElementById('manual-name-input');
+        if (isOther) {
+            manualGroup.style.display = 'block';
+            manualInput.required = true;
+        } else if (manualGroup) {
+            manualGroup.style.display = 'none';
+            manualInput.required = false;
+            manualInput.value = '';
+        }
+    }
+
+    subcategorySelect.addEventListener('change', function () {
+        const categoryId = categorySelect.value;
+        saveAnimalState(categoryId, this.value);
+        handleAnimalSubcategorySelection();
+    });
+
+    const animalForm = document.getElementById('animal-form');
+    if (animalForm) {
+        animalForm.addEventListener('submit', () => {
+            sessionStorage.setItem(ANIMAL_KEEP_KEY, "1");
+            const categoryId = categorySelect.value;
+            const subcategoryId = subcategorySelect.value;
+            saveAnimalState(categoryId, subcategoryId);
+        });
+    }
+
+    (function restoreAnimalState() {
+        const saved = loadAnimalState();
+        if (sessionStorage.getItem(ANIMAL_KEEP_KEY) !== "1" || !saved.categoryId) {
+            clearAnimalState();
+            return;
+        }
+        pendingAnimalSubId = saved.subcategoryId || null;
+        categorySelect.value = saved.categoryId;
+        categorySelect.dispatchEvent(new Event('change'));
+        sessionStorage.removeItem(ANIMAL_KEEP_KEY);
+    })();
+
+    window.addEventListener("pagehide", () => {
+        if (sessionStorage.getItem(ANIMAL_KEEP_KEY) !== "1") {
+            clearAnimalState();
         }
     });
 </script>

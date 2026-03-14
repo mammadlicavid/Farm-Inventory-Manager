@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Profil{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  <div class="page-header">
+    <a href="javascript:history.back()" class="back-btn">
+      <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <h2 class="page-title">Profil</h2>
+  </div>
+
+  <!-- Avatar -->
+  <div class="avatar-card">
+    <div class="avatar-circle">
+      {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+    </div>
+    <div class="avatar-info">
+      <span class="avatar-name">{{ user.get_full_name|default:user.username }}</span>
+      <span class="avatar-username">@{{ user.username }}</span>
+    </div>
+  </div>
+
+  <!-- Profile Info -->
+  <div class="form-card">
+    <form method="POST" action="{% url 'sidebar_menu:profile' %}">
+      {% csrf_token %}
+
+      <p class="section-label">Şəxsi məlumatlar</p>
+
+      <div class="field-row click-focus">
+        <label class="field-label">Ad</label>
+        <input class="field-input" type="text" name="first_name"
+               value="{{ user.first_name }}" placeholder="Adınız">
+      </div>
+
+      <div class="field-row click-focus">
+        <label class="field-label">Soyad</label>
+        <input class="field-input" type="text" name="last_name"
+               value="{{ user.last_name }}" placeholder="Soyadınız">
+      </div>
+
+      <div class="field-row click-focus">
+        <label class="field-label">E-poçt</label>
+        <input class="field-input" type="email" name="email"
+               value="{{ user.email }}" placeholder="E-poçt">
+      </div>
+
+      <p class="section-label" style="margin-top:8px;">Sistem</p>
+
+      <div class="field-row">
+        <label class="field-label">İstifadəçi adı</label>
+        <span class="field-static">{{ user.username }}</span>
+      </div>
+
+      <div class="field-row">
+        <label class="field-label">Qeydiyyat</label>
+        <span class="field-static">{{ user.date_joined|date:'d.m.Y' }}</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="save-btn">
+          <i class="fa-solid fa-floppy-disk"></i> Yadda saxla
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Change Password -->
+  <div class="form-card" style="margin-top:16px;">
+    <form method="POST" action="{% url 'sidebar_menu:change_password' %}">
+      {% csrf_token %}
+
+      <p class="section-label">Şifrəni dəyiş</p>
+
+      <div class="field-row click-focus">
+        <label class="field-label">Cari şifrə</label>
+        <input class="field-input" type="password" name="old_password" placeholder="••••••••">
+      </div>
+
+      <div class="field-row click-focus">
+        <label class="field-label">Yeni şifrə</label>
+        <input class="field-input" type="password" name="new_password1" placeholder="••••••••">
+      </div>
+
+      <div class="field-row click-focus">
+        <label class="field-label">Təsdiq</label>
+        <input class="field-input" type="password" name="new_password2" placeholder="••••••••">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="save-btn save-btn--warn">
+          <i class="fa-solid fa-key"></i> Şifrəni yenilə
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<style>
+  .page-container {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 16px 16px 100px;
+  }
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .back-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex; align-items: center; justify-content: center;
+    color: #374151; text-decoration: none; font-size: 15px;
+    transition: background 0.15s;
+  }
+  .back-btn:hover { background: #e5e7eb; }
+  .page-title {
+    font-size: 20px; font-weight: 700; color: #111827; margin: 0;
+  }
+  /* Avatar */
+  .avatar-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .avatar-circle {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a, #4ade80);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 1px;
+  }
+  .avatar-info {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .avatar-name {
+    font-size: 16px; font-weight: 700; color: #111827;
+  }
+  .avatar-username {
+    font-size: 13px; color: #9ca3af;
+  }
+  /* Form card */
+  .form-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    padding: 8px 0;
+    overflow: hidden;
+  }
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #9ca3af; padding: 12px 20px 4px; margin: 0;
+  }
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    gap: 12px;
+  }
+  .field-row:last-of-type { border-bottom: none; }
+  .field-label {
+    font-size: 14px; font-weight: 600; color: #374151;
+    min-width: 90px; flex-shrink: 0;
+  }
+  .field-input {
+    border: none; outline: none;
+    background: transparent;
+    font-size: 14px; color: #111827;
+    text-align: right; flex: 1;
+    font-family: inherit;
+  }
+  .field-input::placeholder { color: #d1d5db; }
+  .field-input:focus { color: #16a34a; }
+  .field-static {
+    font-size: 14px; color: #9ca3af; text-align: right;
+  }
+  /* Save */
+  .form-actions { padding: 16px 20px 8px; }
+  .save-btn {
+    width: 100%; background: #16a34a; color: #fff;
+    border: none; border-radius: 12px; padding: 13px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .save-btn:hover  { background: #15803d; }
+  .save-btn:active { transform: scale(0.98); }
+  .save-btn--warn  { background: #d97706; }
+  .save-btn--warn:hover { background: #b45309; }
+</style>
+{% endblock %}
