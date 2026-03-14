@@ -65,7 +65,8 @@ INSTALLED_APPS = [
     "incomes",
     "reports",
     "sync",
-    "sidebar_menu.apps.SidebarMenuConfig"
+    "sidebar_menu.apps.SidebarMenuConfig",
+    "notifications",
 ]
 
 
