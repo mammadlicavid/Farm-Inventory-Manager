@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block title %}Xatırlatmalar{% endblock %}
+
+{% block content %}
+<!-- ── Header ── -->
+<div class="notif-header">
+  <div class="notif-header-top">
+    <a href="javascript:history.back()" class="notif-back-btn">
+      <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <div class="notif-header-text">
+      <h2 class="notif-title">Xatırlatmalar</h2>
+      <p class="notif-subtitle">Vaksinasiya, əkin, ödəniş xatırlatmaları</p>
+    </div>
+    <button class="notif-add-btn" id="openAddModal">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ── Body ── -->
+<div class="notif-body">
+
+  <!-- Pending -->
+  <div class="notif-section-header">
+    <i class="fa-solid fa-bell notif-section-icon"></i>
+    <span>Gözləyən ({{ pending_count }})</span>
+  </div>
+
+  {% for notif in pending %}
+  <div class="notif-card">
+    <form method="POST" class="notif-toggle-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="toggle">
+      <input type="hidden" name="notif_id" value="{{ notif.id }}">
+      <button type="submit" class="notif-check-btn">
+        <span class="notif-check-circle"></span>
+      </button>
+    </form>
+
+    <div class="notif-card-info">
+      <span class="notif-card-title">{{ notif.title }}</span>
+      <div class="notif-card-meta">
+        <span class="notif-badge notif-badge--{{ notif.category }}">
+          {% if notif.category == 'vaksinasiya' %}
+            <i class="fa-solid fa-syringe"></i> Vaksinasiya
+          {% elif notif.category == 'odenis' %}
+            <i class="fa-solid fa-dollar-sign"></i> Ödəniş
+          {% elif notif.category == 'ekin' %}
+            <i class="fa-solid fa-seedling"></i> Əkin
+          {% else %}
+            <i class="fa-solid fa-tag"></i> Digər
+          {% endif %}
+        </span>
+        <span class="notif-due">
+          <i class="fa-regular fa-calendar"></i> {{ notif.relative_date }}
+        </span>
+      </div>
+    </div>
+
+    <form method="POST" class="notif-delete-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete">
+      <input type="hidden" name="notif_id" value="{{ notif.id }}">
+      <button type="submit" class="notif-delete-btn">
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </form>
+  </div>
+  {% empty %}
+  <div class="notif-empty">Gözləyən xatırlatma yoxdur.</div>
+  {% endfor %}
+
+  <!-- Completed -->
+  <div class="notif-section-header notif-section-header--done">
+    <i class="fa-solid fa-square-check notif-section-icon notif-section-icon--done"></i>
+    <span>Tamamlanmış ({{ completed_count }})</span>
+  </div>
+
+  {% for notif in completed %}
+  <div class="notif-card notif-card--done">
+    <form method="POST" class="notif-toggle-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="toggle">
+      <input type="hidden" name="notif_id" value="{{ notif.id }}">
+      <button type="submit" class="notif-check-btn">
+        <span class="notif-check-circle notif-check-circle--done">
+          <i class="fa-solid fa-check"></i>
+        </span>
+      </button>
+    </form>
+
+    <div class="notif-card-info">
+      <span class="notif-card-title notif-card-title--done">{{ notif.title }}</span>
+    </div>
+
+    <form method="POST" class="notif-delete-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete">
+      <input type="hidden" name="notif_id" value="{{ notif.id }}">
+      <button type="submit" class="notif-delete-btn">
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </form>
+  </div>
+  {% empty %}
+  <div class="notif-empty">Tamamlanmış xatırlatma yoxdur.</div>
+  {% endfor %}
+
+</div>
+
+<!-- ── Add Modal ── -->
+<div class="notif-modal-mask" id="addModal">
+  <div class="notif-modal">
+    <div class="notif-modal-header">
+      <h3>Yeni xatırlatma</h3>
+      <button class="notif-modal-close" id="closeAddModal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+
+      <div class="notif-form-group">
+        <label class="notif-form-label">Başlıq</label>
+        <input type="text" name="title" class="notif-form-input" placeholder="Məs: Qoyunlara vaksinasiya" required>
+      </div>
+
+      <div class="notif-form-group">
+        <label class="notif-form-label">Kateqoriya</label>
+        <select name="category" class="notif-form-input">
+          {% for val, label in category_choices %}
+            <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="notif-form-group">
+        <label class="notif-form-label">Tarix</label>
+        <input type="date" name="due_date" class="notif-form-input" required>
+      </div>
+
+      <button type="submit" class="notif-form-submit">
+        <i class="fa-solid fa-plus"></i> Əlavə et
+      </button>
+    </form>
+  </div>
+</div>
+
+<style>
+  /* ── Header ── */
+  .notif-header {
+    background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);
+    padding: 28px 20px 32px;
+    border-radius: 0 0 28px 28px;
+    margin-bottom: 18px;
+  }
+  .notif-header-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .notif-back-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-decoration: none; font-size: 15px;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .notif-back-btn:hover { background: rgba(255,255,255,0.35); }
+  .notif-header-text { flex: 1; }
+  .notif-title {
+    color: #fff; font-size: 22px; font-weight: 800;
+    margin: 0 0 2px;
+  }
+  .notif-subtitle {
+    color: rgba(255,255,255,0.85); font-size: 13px; margin: 0;
+  }
+  .notif-add-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: none; color: #fff; font-size: 17px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .notif-add-btn:hover { background: rgba(255,255,255,0.35); }
+
+  /* ── Body ── */
+  .notif-body {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 0 16px 100px;
+  }
+
+  /* ── Section headers ── */
+  .notif-section-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 700; color: #374151;
+    margin: 18px 0 10px;
+  }
+  .notif-section-icon { color: #9ca3af; font-size: 16px; }
+  .notif-section-icon--done { color: #16a34a; }
+
+  /* ── Card ── */
+  .notif-card {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform 0.1s;
+  }
+  .notif-card:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+  .notif-card--done { background: #f0fdf4; }
+
+  /* Check circle */
+  .notif-toggle-form { display: flex; }
+  .notif-check-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .notif-check-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid #d1d5db;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-size: 0;
+  }
+  .notif-check-circle:hover { border-color: #16a34a; }
+  .notif-check-circle--done {
+    background: #16a34a; border-color: #16a34a; color: #fff;
+    font-size: 13px;
+  }
+
+  /* Card info */
+  .notif-card-info { flex: 1; min-width: 0; }
+  .notif-card-title {
+    display: block; font-size: 15px; font-weight: 600; color: #111827;
+    margin-bottom: 4px;
+  }
+  .notif-card-title--done {
+    color: #6b7280; text-decoration: line-through;
+  }
+  .notif-card-meta {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+
+  /* Badges */
+  .notif-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .notif-badge--vaksinasiya { background: #fef2f2; color: #dc2626; }
+  .notif-badge--odenis      { background: #fffbeb; color: #d97706; }
+  .notif-badge--ekin         { background: #ecfdf5; color: #16a34a; }
+  .notif-badge--diger        { background: #f3f4f6; color: #6b7280; }
+
+  .notif-due {
+    font-size: 12px; color: #9ca3af;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+
+  /* Delete */
+  .notif-delete-form { display: flex; }
+  .notif-delete-btn {
+    background: none; border: none; color: #d1d5db;
+    font-size: 16px; cursor: pointer; padding: 6px;
+    transition: color 0.15s;
+  }
+  .notif-delete-btn:hover { color: #ef4444; }
+
+  /* Empty state */
+  .notif-empty {
+    text-align: center; color: #9ca3af; font-size: 14px;
+    padding: 24px 0;
+  }
+
+  /* ── Modal ── */
+  .notif-modal-mask {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: flex-end; justify-content: center;
+    z-index: 1000;
+  }
+  .notif-modal-mask.active { display: flex; }
+  .notif-modal {
+    width: 100%; max-width: 540px;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 32px;
+    animation: notif-slide-up 0.25s ease-out;
+  }
+  @keyframes notif-slide-up {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  .notif-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .notif-modal-header h3 {
+    font-size: 18px; font-weight: 700; color: #111827; margin: 0;
+  }
+  .notif-modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f3f4f6; border: none; font-size: 15px;
+    color: #374151; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .notif-modal-close:hover { background: #e5e7eb; }
+
+  /* Form */
+  .notif-form-group { margin-bottom: 14px; }
+  .notif-form-label {
+    display: block; font-size: 13px; font-weight: 600;
+    color: #374151; margin-bottom: 6px;
+  }
+  .notif-form-input {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid #e5e7eb; border-radius: 12px;
+    font-size: 14px; color: #111827;
+    font-family: inherit;
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  .notif-form-input:focus { border-color: #16a34a; }
+
+  .notif-form-submit {
+    width: 100%; padding: 13px;
+    background: #16a34a; color: #fff; border: none;
+    border-radius: 12px; font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 6px;
+  }
+  .notif-form-submit:hover  { background: #15803d; }
+  .notif-form-submit:active { transform: scale(0.98); }
+</style>
+
+<script>
+;(function () {
+  const openBtn  = document.getElementById('openAddModal');
+  const closeBtn = document.getElementById('closeAddModal');
+  const modal    = document.getElementById('addModal');
+
+  if (openBtn && modal) {
+    openBtn.addEventListener('click', () => modal.classList.add('active'));
+  }
+  if (closeBtn && modal) {
+    closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+  }
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('active');
+    });
+  }
+})();
+</script>
+{% endblock %}

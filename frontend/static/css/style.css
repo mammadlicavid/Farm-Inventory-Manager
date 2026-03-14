@@ -128,6 +128,29 @@ body {
     border-radius: 50%;
 }
 
+.header-right-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-icon-btn {
+    color: var(--white);
+    background-color: transparent;
+    text-decoration: none;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, opacity 0.2s;
+    opacity: 0.9;
+}
+
+.header-icon-btn:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
 .welcome-text {
     font-size: 16px;
     opacity: 0.9;
