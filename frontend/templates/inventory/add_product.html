@@ -2,79 +2,83 @@
 {% load static %}
 
 {% block content %}
-    <!-- Header -->
-    <header class="main-header" style="border-radius: 0 0 30px 30px; padding-bottom: 30px;">
-        <div class="header-content" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px;">
-            <a href="{% url 'dashboard' %}" style="color: white; text-decoration: none; font-size: 18px;">
-                <i class="fa-solid fa-arrow-left"></i>
-            </a>
-            <h1 style="font-size: 20px; font-weight: 700; margin: 0;">Yeni Məhsul Əlavə Et</h1>
-        </div>
-    </header>
+<header class="main-header" style="border-radius: 0 0 30px 30px; padding-bottom: 30px;">
+    <div class="header-content" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px;">
+        <a href="{% url 'dashboard' %}" style="color: white; text-decoration: none; font-size: 18px;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1 style="font-size: 20px; font-weight: 700; margin: 0;">Yeni Məhsul Əlavə Et</h1>
+    </div>
+</header>
 
-    <main class="main-content" style="padding: 20px 20px 100px;">
+<main class="main-content" style="padding: 20px 20px 100px;">
 
-        <!-- Category Dropdown -->
+    <form method="post">
+        {% csrf_token %}
+
         <div class="form-group mb-15">
             <label style="font-size: 14px; color: #333; font-weight: 700; margin-bottom: 8px;">Kateqoriya</label>
-            <select class="custom-input"
+            <select id="category" name="category" class="custom-input"
                 style="background-color: white; border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); width: 100%; color: #666; font-size: 15px;">
                 <option value="" disabled selected>Kateqoriya seçin</option>
                 <option value="toxumlar">Toxumlar</option>
                 <option value="aletler">Alətlər</option>
                 <option value="heyvanlar">Heyvanlar</option>
                 <option value="xercler">Xərclər</option>
+                <option value="teserrufat">Təsərrüfat məhsulları</option>
                 <option value="diger">Digər</option>
             </select>
         </div>
 
-        <!-- Barcode Scan Button -->
-        <button class="add-action-btn barcode-btn mb-15">
+        <button type="button" id="barcode-btn" class="add-action-btn barcode-btn mb-15">
             <i class="fa-solid fa-camera"></i>
             <i class="fa-solid fa-barcode"></i> Barkod Skan Et
         </button>
 
-        <!-- Voice Add Button -->
-        <button class="add-action-btn voice-btn mb-20">
+        <div id="scan-result" style="margin-bottom: 15px; font-size: 14px; color: #333;"></div>
+
+        <button type="button" class="add-action-btn voice-btn mb-20">
             <i class="fa-solid fa-microphone"></i>
             <i class="fa-solid fa-wand-magic-sparkles"></i> Səslə Əlavə Et
         </button>
 
-        <!-- Product Details Form Container -->
         <div class="form-container-white" style="border-radius: 20px; padding: 20px; margin-bottom: 30px;">
 
             <div class="form-group mb-15">
                 <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Adı</label>
-                <input type="text" class="custom-input" placeholder="Məsələn: Buğda toxumu"
-                    style="background-color: #F8F9FA;">
+                <input id="product_name" name="name" type="text" class="custom-input"
+                    placeholder="Məsələn: Buğda toxumu" style="background-color: #F8F9FA;">
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Miqdar</label>
-                    <input type="number" class="custom-input" placeholder="0" style="background-color: #F8F9FA;">
+                    <input id="quantity" name="quantity" type="number" class="custom-input"
+                        placeholder="0" style="background-color: #F8F9FA;">
                 </div>
                 <div class="form-group">
-                    <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Qiymət
-                        (₼)</label>
-                    <input type="number" class="custom-input" placeholder="0.00" style="background-color: #F8F9FA;">
+                    <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Qiymət (₼)</label>
+                    <input id="price" name="price" type="number" step="0.01" class="custom-input"
+                        placeholder="0.00" style="background-color: #F8F9FA;">
                 </div>
             </div>
 
             <div class="form-group mb-15" style="margin-top: 15px;">
                 <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Tarix</label>
-                <input type="date" class="custom-input" value="{{ today|date:'Y-m-d' }}"
-                    style="background-color: #F8F9FA;">
+                <input id="date" name="date" type="date" class="custom-input"
+                    value="{{ today|date:'Y-m-d' }}" style="background-color: #F8F9FA;">
             </div>
 
+            <input type="hidden" id="scan_code" name="scan_code">
         </div>
 
-        <!-- Submit Button -->
-        <button class="submit-green-btn">
+        <button type="submit" class="submit-green-btn">
             <i class="fa-solid fa-check"></i> Təsdiqlə və Saxla
         </button>
+    </form>
 
-    </main>
+</main>
+
 <style>
     .mb-15 {
         margin-bottom: 15px;
@@ -159,4 +163,37 @@
         transform: scale(0.98);
     }
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const barcodeBtn = document.getElementById("barcode-btn");
+    const resultBox = document.getElementById("scan-result");
+
+    barcodeBtn.addEventListener("click", async function () {
+        const fakeScannedCode = "BEEF-001";
+
+        resultBox.textContent = "Kod oxundu: " + fakeScannedCode;
+
+        try {
+            const response = await fetch("{% url 'inventory:scan_lookup' %}?code=" + encodeURIComponent(fakeScannedCode));
+            const data = await response.json();
+
+            if (!data.success) {
+                resultBox.textContent = data.message || "Kod tapılmadı.";
+                return;
+            }
+
+            document.getElementById("scan_code").value = data.item.code;
+            document.getElementById("category").value = data.item.category;
+            document.getElementById("product_name").value = data.item.name;
+            document.getElementById("price").value = data.item.default_price;
+
+            resultBox.textContent = `Tapıldı: ${data.item.name} (${data.item.code})`;
+        } catch (error) {
+            resultBox.textContent = "Xəta baş verdi.";
+            console.error(error);
+        }
+    });
+});
+</script>
 {% endblock %}

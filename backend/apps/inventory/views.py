@@ -6,6 +6,8 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.db.models import Q
 from django.utils import timezone
+from django.http import JsonResponse
+from .models import ScanItem
 
 from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name, get_farm_product_icon_by_name
 from common.messages import add_crud_success_message
@@ -776,3 +778,26 @@ def update_stock_quantity(request):
 @login_required
 def add_product(request):
     return render(request, "inventory/add_product.html", {"today": timezone.now().date()})
+
+@login_required
+def lookup_scan_code(request):
+    code = request.GET.get("code", "").strip()
+
+    if not code:
+        return JsonResponse({"success": False, "message": "Kod göndərilməyib."}, status=400)
+
+    try:
+        item = ScanItem.objects.get(code=code, is_active=True)
+    except ScanItem.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Kod tapılmadı."}, status=404)
+
+    return JsonResponse({
+        "success": True,
+        "item": {
+            "code": item.code,
+            "name": item.name,
+            "category": item.category,
+            "unit": item.unit or "",
+            "default_price": str(item.default_price),
+        }
+    })
