@@ -178,15 +178,118 @@
     }
 </style>
 
-<script>
+<script type="module">
+import {
+    BrowserMultiFormatReader,
+    NotFoundException
+} from "https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm";
+
 document.addEventListener("DOMContentLoaded", function () {
     const barcodeBtn = document.getElementById("barcode-btn");
     const resultBox = document.getElementById("scan-result");
+    const scannerWrapper = document.getElementById("scanner-wrapper");
+    const videoEl = document.getElementById("barcode-video");
+    const stopScanBtn = document.getElementById("stop-scan-btn");
 
-    barcodeBtn.addEventListener("click", function () {
-        resultBox.textContent =
-            "mediaDevices: " + !!navigator.mediaDevices +
-            " | getUserMedia: " + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    let codeReader = null;
+    let controls = null;
+    let scanning = false;
+
+    async function fillProductData(scannedCode) {
+        resultBox.textContent = "Kod oxundu: " + scannedCode;
+
+        try {
+            const response = await fetch(
+                "{% url 'inventory:scan_lookup' %}?code=" + encodeURIComponent(scannedCode)
+            );
+            const data = await response.json();
+
+            if (!data.success) {
+                resultBox.textContent = data.message || "Kod tapılmadı.";
+                return;
+            }
+
+            document.getElementById("scan_code").value = data.item.code;
+            document.getElementById("category").value = data.item.category;
+            document.getElementById("product_name").value = data.item.name;
+            document.getElementById("price").value = data.item.default_price;
+
+            resultBox.textContent = `Tapıldı: ${data.item.name} (${data.item.code})`;
+        } catch (error) {
+            resultBox.textContent = "Lookup zamanı xəta baş verdi.";
+            console.error("Lookup error:", error);
+        }
+    }
+
+    async function startScanner() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            resultBox.textContent = "Bu cihazda kamera dəstəklənmir.";
+            return;
+        }
+
+        if (scanning) {
+            resultBox.textContent = "Skan artıq işləyir.";
+            return;
+        }
+
+        scannerWrapper.style.display = "block";
+        resultBox.textContent = "Kamera açılır...";
+
+        try {
+            codeReader = new BrowserMultiFormatReader();
+            scanning = true;
+
+            controls = await codeReader.decodeFromVideoDevice(
+                undefined,
+                videoEl,
+                async (result, error, control) => {
+                    if (result) {
+                        const scannedCode = result.getText();
+
+                        resultBox.textContent = "Kod tapıldı: " + scannedCode;
+
+                        if (control) {
+                            control.stop();
+                        }
+                        controls = null;
+                        scanning = false;
+
+                        await fillProductData(scannedCode);
+                        return;
+                    }
+
+                    if (error && !(error instanceof NotFoundException)) {
+                        console.error("Scan error:", error);
+                    }
+                }
+            );
+
+            resultBox.textContent = "Barkodu kameraya yaxınlaşdırın.";
+        } catch (error) {
+            scanning = false;
+            scannerWrapper.style.display = "none";
+            resultBox.textContent = "Scanner başlatmaq olmadı.";
+            console.error("ZXing start error:", error);
+        }
+    }
+
+    function stopScanner() {
+        if (controls) {
+            controls.stop();
+            controls = null;
+        }
+        scanning = false;
+        scannerWrapper.style.display = "none";
+        resultBox.textContent = "Skan dayandırıldı.";
+    }
+
+    barcodeBtn.addEventListener("click", startScanner);
+    stopScanBtn.addEventListener("click", stopScanner);
+
+    window.addEventListener("beforeunload", function () {
+        if (controls) {
+            controls.stop();
+        }
     });
 });
 </script>
