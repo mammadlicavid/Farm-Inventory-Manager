@@ -34,15 +34,14 @@
             <i class="fa-solid fa-camera"></i>
             <i class="fa-solid fa-barcode"></i> Barkod Skan Et
         </button>
-        <p id="debug-text">before click</p>
 
         <div id="scan-result" style="margin-bottom: 15px; font-size: 14px; color: #333;"></div>
 
         <div id="scanner-wrapper" style="display: none; margin-bottom: 15px;">
-            <video id="barcode-video"
-                style="width: 100%; border-radius: 16px; background: #000;"
-                muted
-                playsinline></video>
+        <video id="barcode-video"
+            style="width: 100%; min-height: 220px; border-radius: 16px; background: #000;"
+            muted
+            playsinline></video>
 
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button type="button" id="stop-scan-btn" class="add-action-btn barcode-btn" style="padding: 14px;">
@@ -178,12 +177,9 @@
     }
 </style>
 
-<script type="module">
-import {
-    BrowserMultiFormatReader,
-    NotFoundException
-} from "https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm";
+<script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
 
+<script>
 document.addEventListener("DOMContentLoaded", function () {
     const barcodeBtn = document.getElementById("barcode-btn");
     const resultBox = document.getElementById("scan-result");
@@ -221,9 +217,36 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    async function stopScanner(showMessage = true) {
+        scanning = false;
+
+        if (controls) {
+            controls.stop();
+            controls = null;
+        }
+
+        if (videoEl.srcObject) {
+            videoEl.srcObject.getTracks().forEach(track => track.stop());
+            videoEl.srcObject = null;
+        }
+
+        scannerWrapper.style.display = "none";
+
+        if (showMessage) {
+            resultBox.textContent = "Skan dayandırıldı.";
+        }
+    }
+
     async function startScanner() {
+        resultBox.textContent = "Düymə basıldı...";
+
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             resultBox.textContent = "Bu cihazda kamera dəstəklənmir.";
+            return;
+        }
+
+        if (!window.ZXingBrowser) {
+            resultBox.textContent = "ZXingBrowser yüklənmədi.";
             return;
         }
 
@@ -232,33 +255,42 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        scannerWrapper.style.display = "block";
-        resultBox.textContent = "Kamera açılır...";
-
         try {
-            codeReader = new BrowserMultiFormatReader();
+            scannerWrapper.style.display = "block";
+            resultBox.textContent = "Kamera açılır...";
+
+            codeReader = new ZXingBrowser.BrowserMultiFormatReader();
             scanning = true;
 
+            const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+
+            if (!devices.length) {
+                resultBox.textContent = "Kamera tapılmadı.";
+                scanning = false;
+                return;
+            }
+
+            const backCamera = devices.find(device =>
+                /back|rear|environment/i.test(device.label)
+            );
+            const selectedDeviceId = backCamera ? backCamera.deviceId : devices[0].deviceId;
+
             controls = await codeReader.decodeFromVideoDevice(
-                undefined,
+                selectedDeviceId,
                 videoEl,
-                async (result, error, control) => {
+                async (result, error, localControls) => {
                     if (result) {
                         const scannedCode = result.getText();
-
-                        resultBox.textContent = "Kod tapıldı: " + scannedCode;
-
-                        if (control) {
-                            control.stop();
+                        if (localControls) {
+                            localControls.stop();
                         }
                         controls = null;
-                        scanning = false;
-
+                        await stopScanner(false);
                         await fillProductData(scannedCode);
                         return;
                     }
 
-                    if (error && !(error instanceof NotFoundException)) {
+                    if (error && !(error instanceof ZXingBrowser.NotFoundException)) {
                         console.error("Scan error:", error);
                     }
                 }
@@ -273,24 +305,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function stopScanner() {
-        if (controls) {
-            controls.stop();
-            controls = null;
-        }
-        scanning = false;
-        scannerWrapper.style.display = "none";
-        resultBox.textContent = "Skan dayandırıldı.";
-    }
-
     barcodeBtn.addEventListener("click", startScanner);
-    stopScanBtn.addEventListener("click", stopScanner);
+    stopScanBtn.addEventListener("click", function () {
+        stopScanner(true);
+    });
 
     window.addEventListener("beforeunload", function () {
-        if (controls) {
-            controls.stop();
-        }
+        stopScanner(false);
     });
+
+    resultBox.textContent = "Scanner hazırdır.";
 });
 </script>
 {% endblock %}
