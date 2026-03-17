@@ -34,8 +34,22 @@
             <i class="fa-solid fa-camera"></i>
             <i class="fa-solid fa-barcode"></i> Barkod Skan Et
         </button>
+        <p id="debug-text">before click</p>
 
         <div id="scan-result" style="margin-bottom: 15px; font-size: 14px; color: #333;"></div>
+
+        <div id="scanner-wrapper" style="display: none; margin-bottom: 15px;">
+            <video id="barcode-video"
+                style="width: 100%; border-radius: 16px; background: #000;"
+                muted
+                playsinline></video>
+
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="button" id="stop-scan-btn" class="add-action-btn barcode-btn" style="padding: 14px;">
+                    Skanı Dayandır
+                </button>
+            </div>
+        </div>        
 
         <button type="button" class="add-action-btn voice-btn mb-20">
             <i class="fa-solid fa-microphone"></i>
@@ -169,30 +183,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const barcodeBtn = document.getElementById("barcode-btn");
     const resultBox = document.getElementById("scan-result");
 
-    barcodeBtn.addEventListener("click", async function () {
-        const fakeScannedCode = "BEEF-001";
-
-        resultBox.textContent = "Kod oxundu: " + fakeScannedCode;
-
-        try {
-            const response = await fetch("{% url 'inventory:scan_lookup' %}?code=" + encodeURIComponent(fakeScannedCode));
-            const data = await response.json();
-
-            if (!data.success) {
-                resultBox.textContent = data.message || "Kod tapılmadı.";
-                return;
-            }
-
-            document.getElementById("scan_code").value = data.item.code;
-            document.getElementById("category").value = data.item.category;
-            document.getElementById("product_name").value = data.item.name;
-            document.getElementById("price").value = data.item.default_price;
-
-            resultBox.textContent = `Tapıldı: ${data.item.name} (${data.item.code})`;
-        } catch (error) {
-            resultBox.textContent = "Xəta baş verdi.";
-            console.error(error);
-        }
+    barcodeBtn.addEventListener("click", function () {
+        resultBox.textContent =
+            "mediaDevices: " + !!navigator.mediaDevices +
+            " | getUserMedia: " + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     });
 });
 </script>
