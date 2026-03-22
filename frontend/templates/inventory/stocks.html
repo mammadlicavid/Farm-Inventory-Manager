@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="stocks-page">
-    <header class="main-header" style="padding-bottom: 55px;">
+    <header class="main-header">
         <div class="header-content">
             <div class="header-top">
                 <a href="{% url 'dashboard' %}" class="back-btn-box">
@@ -10,9 +10,13 @@
                     <span>Stok</span>
                 </a>
             </div>
+        </div>
+    </header>
 
+    <main class="main-content" style="position: relative; z-index: 10;">
+        <section class="stocks-toolbar">
             <div class="stocks-filter">
-                <div class="filter-field">
+                <div class="filter-field category-field">
                     <label for="main-category-select">Ana Kateqoriya</label>
                     <div class="filter-input click-focus">
                         <select id="main-category-select">
@@ -25,7 +29,7 @@
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
                 </div>
-                <div class="filter-field">
+                <div class="filter-field category-field">
                     <label for="subcategory-select">Alt Kateqoriya</label>
                     <div class="filter-input click-focus">
                         <select id="subcategory-select">
@@ -42,10 +46,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </header>
+        </section>
 
-    <main class="main-content" style="position: relative; z-index: 10;">
         <div class="stocks-grid" id="stocks-grid">
             {% for item in items %}
             <div class="product-card" data-main="{{ item.main }}" data-sub="{{ item.sub_key }}">
@@ -94,14 +96,22 @@
 
 <style>
     .stocks-page {
-        max-width: 1400px;
-        margin: 0 auto;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .stocks-toolbar {
+        margin-bottom: 18px;
+        padding: 16px;
+        background: linear-gradient(180deg, #f7fbf8 0%, #eef6f0 100%);
+        border: 1px solid #dbe8df;
+        border-radius: 18px;
+        box-shadow: 0 8px 18px rgba(17, 24, 39, 0.05);
     }
 
     .stocks-filter {
-        margin-top: 18px;
         display: flex;
-        /* Changed from grid to flex for better wrapping control */
         flex-wrap: wrap;
         gap: 12px;
     }
@@ -113,17 +123,22 @@
         flex-shrink: 1;
     }
 
+    .filter-field.category-field {
+        flex: 1 1 240px;
+        min-width: 240px;
+    }
+
     .filter-field label {
         display: block;
-        font-size: 18px;
+        font-size: 14px;
         font-weight: 700;
-        color: #f9fafb;
+        color: #33523f;
         margin-bottom: 8px;
     }
 
     .filter-input {
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
+        background: #fff;
+        border: 1.5px solid #c9d8ce;
         border-radius: 14px;
         padding: 14px 14px;
         display: flex;
@@ -131,6 +146,13 @@
         justify-content: space-between;
         gap: 8px;
         color: #374151;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .filter-input:focus-within {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 4px rgba(46, 139, 87, 0.12);
     }
 
     .filter-input select,
@@ -138,7 +160,7 @@
         width: 100%;
         background: transparent;
         border: none;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         color: #374151;
         outline: none;
@@ -160,8 +182,8 @@
     }
 
     .filter-input i {
-        color: #6b7280;
-        font-size: 15px;
+        color: #7a8f81;
+        font-size: 14px;
     }
 
     .stocks-grid {
@@ -380,8 +402,16 @@
     }
 
     @media (max-width: 860px) {
+        .stocks-toolbar {
+            padding: 14px;
+        }
+
         .stocks-filter {
-            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .filter-field {
+            min-width: 100%;
         }
 
         .product-card {
@@ -399,7 +429,7 @@
     <div class="modal">
         <div class="modal-title" id="modal-title">Məhsul</div>
         <div class="modal-subtitle" id="modal-subtitle"></div>
-        <form id="product-modal-form" action="{% url 'inventory:stocks_update_quantity' %}" method="POST">
+        <form id="product-modal-form" action="{% url 'inventory:stocks_update_quantity' %}" method="POST" data-sync-entity="stock" data-sync-action="update" data-sync-reset="false" data-sync-keep-key="stocks_filters_keep_v1">
             {% csrf_token %}
             <input type="hidden" name="update_type" id="modal-update-type">
             <input type="hidden" name="update_id" id="modal-update-id">
@@ -521,16 +551,20 @@
         subSelect.disabled = main === "all";
     }
 
+    function normalizeSearch(value) {
+        return String(value || "").trim().toLocaleLowerCase("az");
+    }
+
     function applyFilters() {
         const main = mainSelect.value;
         const sub = subSelect.value;
-        const term = (searchInput.value || "").trim().toLowerCase();
+        const term = normalizeSearch(searchInput.value || "");
         let visible = 0;
         cards.forEach(card => {
             const matchMain = main === "all" || card.dataset.main === main;
             const matchSub = sub === "all" || card.dataset.sub === sub;
-            const title = (card.querySelector(".product-title")?.textContent || "").toLowerCase();
-            const subtitle = (card.querySelector(".product-subtitle")?.textContent || "").toLowerCase();
+            const title = normalizeSearch(card.querySelector(".product-title")?.textContent || "");
+            const subtitle = normalizeSearch(card.querySelector(".product-subtitle")?.textContent || "");
             const matchSearch = !term || title.includes(term) || subtitle.includes(term);
             const show = matchMain && matchSub && matchSearch;
             card.style.display = show ? "" : "none";
@@ -632,6 +666,7 @@
         modalForm.addEventListener("submit", () => {
             sessionStorage.setItem(KEEP_KEY, "1");
             saveFilters();
+            setTimeout(closeModal, 0);
         });
     }
 

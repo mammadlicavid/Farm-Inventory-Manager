@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<header class="main-header" style="padding-bottom: 60px;">
+<header class="main-header">
     <div class="header-content">
         <div class="header-top">
             <a href="{% url 'farm_products:product_list' %}" class="back-btn-box">
@@ -15,8 +15,10 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Məhsul Məlumatlarını Yenilə</h3>
 
-        <form method="POST" id="farm-product-form">
+        <form method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="update" data-sync-reset="false">
             {% csrf_token %}
+            <input type="hidden" name="record_id" value="{{ product.pk }}">
+            <input type="hidden" name="record_version" value="{{ product.updated_at|date:'c' }}">
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>

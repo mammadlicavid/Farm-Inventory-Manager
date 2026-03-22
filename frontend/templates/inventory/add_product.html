@@ -2,12 +2,14 @@
 {% load static %}
 
 {% block content %}
-<header class="main-header" style="border-radius: 0 0 30px 30px; padding-bottom: 30px;">
-    <div class="header-content" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px;">
-        <a href="{% url 'dashboard' %}" style="color: white; text-decoration: none; font-size: 18px;">
-            <i class="fa-solid fa-arrow-left"></i>
-        </a>
-        <h1 style="font-size: 20px; font-weight: 700; margin: 0;">Yeni Məhsul Əlavə Et</h1>
+<header class="main-header">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'dashboard' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Yeni Məhsul Əlavə Et</span>
+            </a>
+        </div>
     </div>
 </header>
 

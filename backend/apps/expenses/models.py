@@ -56,6 +56,7 @@ class Expense(models.Model):
         related_name="expenses_created",
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} - {self.amount}₼"

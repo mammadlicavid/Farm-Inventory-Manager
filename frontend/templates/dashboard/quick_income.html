@@ -5,9 +5,9 @@
     <header class="main-header">
         <div class="header-content">
             <div class="header-top">
-                <a href="{% if request.GET.source == 'expenses' %}{% url 'expenses:expense_list' %}{% else %}{% url 'dashboard' %}{% endif %}" class="back-btn-box">
+                <a href="{% url 'incomes:income_list' %}" class="back-btn-box">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>Tez Xərc</span>
+                    <span>Tez Gəlir</span>
                 </a>
             </div>
         </div>
@@ -22,15 +22,18 @@
                     style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
             </div>
         </form>
-        <!-- One-Tap Expenses Section -->
+
         <div class="quick-expense-section">
-            <h2 class="quick-expense-section-title">Bir toxunuşla xərc</h2>
+            <h2 class="quick-expense-section-title">Bir toxunuşla gəlir</h2>
             <div class="quick-tap-grid">
                 {% for item in quick_items %}
-                <form method="POST" action="" class="quick-tap-form" data-sync-entity="quick_expense" data-sync-action="quick_add">
+                <form method="POST" action="" class="quick-tap-form" data-sync-entity="quick_income" data-sync-action="quick_add">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="quick_add">
                     <input type="hidden" name="name" value="{{ item.name }}">
+                    <input type="hidden" name="category" value="{{ item.category }}">
+                    <input type="hidden" name="quantity" value="{{ item.quantity }}">
+                    <input type="hidden" name="unit" value="{{ item.unit }}">
                     <input type="hidden" name="amount" value="{{ item.amount }}">
                     <input type="hidden" name="custom_amount" value="">
                     <button type="submit" class="quick-tap-card">
@@ -44,10 +47,9 @@
             </div>
         </div>
 
-        <!-- Custom Amount Section -->
         <div class="quick-expense-section">
             <h2 class="quick-expense-section-title">Xüsusi məbləğ</h2>
-            <form method="POST" action="" class="custom-amount-row" data-sync-entity="quick_expense" data-sync-action="custom_amount">
+            <form method="POST" action="" class="custom-amount-row" data-sync-entity="quick_income" data-sync-action="custom_amount">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="custom_amount">
                 <input type="number" name="amount" step="0.01" min="0.01" placeholder="Məbləğ (₼)"
@@ -58,7 +60,6 @@
             </form>
         </div>
 
-        <!-- Templates Section -->
         <div class="quick-expense-section">
             <div class="templates-header">
                 <h2 class="quick-expense-section-title">Şablonlar</h2>
@@ -69,24 +70,19 @@
 
             <div class="templates-list">
                 {% for tmpl in templates %}
-                <form method="POST" action="" class="template-item-form" data-sync-entity="quick_expense" data-sync-action="template_add">
+                <form method="POST" action="" class="template-item-form" data-sync-entity="quick_income" data-sync-action="template_add">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="template_add">
                     <input type="hidden" name="template_id" value="{{ tmpl.pk }}">
                     <input type="hidden" name="custom_amount" value="">
                     <button type="submit" class="template-item">
                         <div class="template-item-left">
-                            <span class="template-item-title">{{ tmpl.display_title }}</span>
-                            <span class="quick-template-meta">{{ tmpl.quantity_display }} {{ tmpl.unit_display }}</span>
+                            <span class="template-item-title">{{ tmpl.item_name }}</span>
+                            <span class="quick-template-meta">{{ tmpl.quantity_display }} {{ tmpl.unit }}</span>
                             <div class="template-item-tags">
-                                {% if tmpl.primary_tags %}
                                 {% for tag in tmpl.primary_tags %}
                                 <span class="template-tag">{{ tag }}</span>
                                 {% endfor %}
-                                {% else %}
-                                <span class="template-tag">Digər</span>
-                                <span class="template-tag">Digər</span>
-                                {% endif %}
                             </div>
                         </div>
                         <div class="template-item-right">
@@ -97,7 +93,7 @@
                 </form>
                 {% empty %}
                 <div class="templates-empty">
-                    <p>Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək.</p>
+                    <p>Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək.</p>
                 </div>
                 {% endfor %}
             </div>

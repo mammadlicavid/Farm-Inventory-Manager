@@ -64,6 +64,7 @@ class Income(models.Model):
         related_name="incomes_created",
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def __str__(self) -> str:
         return f"{self.item_name} - {self.amount}₼"

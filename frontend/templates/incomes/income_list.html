@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<header class="main-header" style="padding-bottom: 60px;">
+<header class="main-header">
     <div class="header-content">
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
@@ -10,26 +10,25 @@
                 <span>Gəlirlər</span>
             </a>
         </div>
-
-        <form method="get" action="" class="search-form" style="margin-top: 20px;">
-            <div style="position: relative;" class="click-focus">
-                <i class="fa-solid fa-search"
-                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
-                    value="{{ request.GET.q|default:'' }}" autocomplete="off"
-                    style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
-            </div>
-        </form>
     </div>
 </header>
 
 <main class="main-content" style="position: relative; z-index: 10;">
+    <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
+        <div style="position: relative;" class="click-focus">
+            <i class="fa-solid fa-search"
+                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+            <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+                value="{{ request.GET.q|default:'' }}" autocomplete="off"
+                style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+        </div>
+    </form>
     <div class="summary-row">
         <div class="summary-card-cream summary-compact">
-            <span class="label">Ümumi gəlir</span>
-            <span class="value">{{ total_amount_display }}₼</span>
+            <span class="label">Bu həftə ümumi gəlir</span>
+            <span class="value">{{ weekly_total_display }}₼</span>
         </div>
-        <a href="#" class="summary-card-quick" onclick="return false;" aria-disabled="true">
+        <a href="{% url 'quick_income' %}" class="summary-card-quick">
             <i class="fa-solid fa-bolt"></i>
             <span>Tez Gəlir</span>
         </a>
@@ -39,7 +38,7 @@
         <div class="crud-form-column">
             <div class="form-container-white">
                 <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Gəlir Əlavə Et</h3>
-                <form action="{% url 'incomes:add_income' %}" method="POST" id="income-form">
+                <form action="{% url 'incomes:add_income' %}" method="POST" id="income-form" data-sync-entity="income" data-sync-action="create" data-sync-keep-key="income_form_keep_v1">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
@@ -177,8 +176,11 @@
                                 </a>
                                 <form action="{% url 'incomes:delete_income' income.pk %}" method="POST"
                                     style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;"
+                                    data-sync-entity="income" data-sync-action="delete" data-sync-reset="false"
                                     onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
                                     {% csrf_token %}
+                                    <input type="hidden" name="record_id" value="{{ income.pk }}">
+                                    <input type="hidden" name="record_version" value="{{ income.updated_at|date:'c' }}">
                                     <button type="submit"
                                         style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
                                         <i class="fa-solid fa-trash"></i> Sil

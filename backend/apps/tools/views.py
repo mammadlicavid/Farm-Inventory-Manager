@@ -10,6 +10,7 @@ from django.db.models import Q
 from .models import Tool, ToolCategory, ToolItem
 from .forms import ToolForm
 from common.messages import add_crud_success_message
+from common.text import normalize_manual_label
 from common.category_order import (
     TOOL_CATEGORY_ORDER,
     TOOL_ITEM_ORDER,
@@ -46,9 +47,104 @@ def _parse_date(value: str | None):
 def _ordered_tool_categories():
     return order_queryset_by_name_list(ToolCategory.objects.all(), TOOL_CATEGORY_ORDER)
 
+
+def _sync_tool_related_records(user, tool):
+    quantity_val = int(tool.quantity)
+    tool_type = ContentType.objects.get_for_model(Tool)
+    linked_income = Income.objects.filter(content_type=tool_type, object_id=tool.id).first()
+
+    if quantity_val < 0:
+        try:
+            amount_val = abs(float(tool.price))
+        except (TypeError, ValueError):
+            amount_val = 0
+        if linked_income:
+            if amount_val > 0:
+                linked_income.category = "Digər"
+                linked_income.item_name = tool.item.name if tool.item else tool.manual_name
+                linked_income.quantity = abs(quantity_val)
+                linked_income.unit = "ədəd"
+                linked_income.amount = amount_val
+                linked_income.additional_info = tool.additional_info
+                linked_income.date = tool.date
+                linked_income.save()
+            else:
+                linked_income.delete()
+        elif amount_val > 0:
+            Income.objects.create(
+                category="Digər",
+                item_name=tool.item.name if tool.item else tool.manual_name,
+                quantity=abs(quantity_val),
+                unit="ədəd",
+                amount=amount_val,
+                additional_info=tool.additional_info,
+                date=tool.date,
+                created_by=user,
+                content_object=tool,
+            )
+    elif linked_income:
+        linked_income.delete()
+
+    linked_expense = Expense.objects.filter(content_type=tool_type, object_id=tool.id).first()
+    try:
+        price_val = float(tool.price or 0)
+    except (TypeError, ValueError):
+        price_val = 0
+
+    if quantity_val > 0 and price_val > 0:
+        expense_sub = ExpenseSubCategory.objects.filter(name='Texnika alışı').first()
+        if linked_expense:
+            linked_expense.amount = tool.price
+            linked_expense.title = f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}"
+            linked_expense.additional_info = tool.additional_info
+            linked_expense.subcategory = expense_sub
+            linked_expense.manual_name = None if expense_sub else "Alət alışı (Digər)"
+            linked_expense.save()
+        else:
+            Expense.objects.create(
+                title=f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}",
+                amount=tool.price,
+                subcategory=expense_sub,
+                manual_name=None if expense_sub else "Alət alışı (Digər)",
+                additional_info=tool.additional_info,
+                created_by=user,
+                content_object=tool
+            )
+    elif linked_expense:
+        linked_expense.delete()
+
+
+def _merge_manual_tool(user, manual_name, quantity_val, price, additional_info, entry_date):
+    existing = (
+        Tool.objects.filter(created_by=user)
+        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name)
+        .order_by("-updated_at", "-created_at")
+        .first()
+    )
+    if not existing:
+        return None
+
+    total_qty = int(existing.quantity) + int(quantity_val)
+    if total_qty == 0:
+        tool_type = ContentType.objects.get_for_model(Tool)
+        Expense.objects.filter(content_type=tool_type, object_id=existing.id).delete()
+        Income.objects.filter(content_type=tool_type, object_id=existing.id).delete()
+        existing.delete()
+        return "deleted"
+
+    existing.item = None
+    existing.manual_name = manual_name
+    existing.quantity = total_qty
+    existing.price = price
+    existing.additional_info = additional_info
+    existing.date = entry_date
+    existing.save()
+    _sync_tool_related_records(user, existing)
+    return existing
+
 @login_required
 def tool_list(request):
-    query = request.GET.get('q')
+    query = (request.GET.get('q') or '').strip()
     alets_qs = Tool.objects.filter(created_by=request.user).select_related('item', 'item__category')
 
     if query:
@@ -95,7 +191,7 @@ def tool_create(request):
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
         price = request.POST.get('price')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
@@ -132,9 +228,18 @@ def tool_create(request):
                     messages.error(request, "Stokda kifayət qədər alət yoxdur.")
                     return redirect('tools:tool_list')
 
+            manual_value = manual_name if (not item or item.name == "Digər") else None
+            merged = _merge_manual_tool(request.user, manual_value, quantity_val, price, additional_info, entry_date) if manual_value else None
+            if merged == "deleted":
+                add_crud_success_message(request, "Tool", "delete")
+                return redirect('tools:tool_list')
+            if merged:
+                add_crud_success_message(request, "Tool", "update")
+                return redirect('tools:tool_list')
+
             tool = Tool.objects.create(
                 item=item,
-                manual_name=manual_name if (not item or item.name == "Digər") else None,
+                manual_name=manual_value,
                 quantity=quantity,
                 price=price,
                 additional_info=additional_info,
@@ -204,7 +309,7 @@ def tool_update(request, pk):
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
         price = request.POST.get('price')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)

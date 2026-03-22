@@ -17,6 +17,7 @@ from common.category_order import (
     order_queryset_by_name_list,
 )
 from common.icons import get_farm_product_icon_for_product
+from common.text import normalize_manual_label
 from expenses.models import Expense, ExpenseCategory, ExpenseSubCategory
 from incomes.models import Income
 
@@ -85,9 +86,110 @@ def _parse_date(value: str | None):
         return timezone.now().date()
 
 
+def _sync_farm_product_related_records(user, product):
+    quantity_val = Decimal(str(product.quantity))
+    product_type = ContentType.objects.get_for_model(FarmProduct)
+    linked_income = Income.objects.filter(content_type=product_type, object_id=product.id).first()
+
+    if quantity_val < 0:
+        try:
+            amount_val = abs(float(product.price))
+        except (TypeError, ValueError):
+            amount_val = 0
+
+        category_name = product.item.category.name if product.item and product.item.category else "Digər"
+        if linked_income:
+            if amount_val > 0:
+                linked_income.category = category_name
+                linked_income.item_name = product.item.name if product.item else product.manual_name
+                linked_income.quantity = abs(quantity_val)
+                linked_income.unit = product.unit
+                linked_income.amount = amount_val
+                linked_income.additional_info = product.additional_info
+                linked_income.date = product.date
+                linked_income.save()
+            else:
+                linked_income.delete()
+        elif amount_val > 0:
+            Income.objects.create(
+                category=category_name,
+                item_name=product.item.name if product.item else product.manual_name,
+                quantity=abs(quantity_val),
+                unit=product.unit,
+                amount=amount_val,
+                additional_info=product.additional_info,
+                date=product.date,
+                created_by=user,
+                content_object=product,
+            )
+    elif linked_income:
+        linked_income.delete()
+
+    linked_expense = Expense.objects.filter(content_type=product_type, object_id=product.id).first()
+    try:
+        price_val = float(product.price or 0)
+    except (TypeError, ValueError):
+        price_val = 0
+
+    if quantity_val > 0 and price_val > 0:
+        item_name = product.item.name if product.item else product.manual_name
+        category_name = product.item.category.name if product.item and product.item.category else None
+        subcat = _resolve_expense_subcategory(category_name)
+        title = f"{item_name} alışı"
+        if linked_expense:
+            linked_expense.amount = product.price
+            linked_expense.title = title
+            linked_expense.additional_info = product.additional_info
+            linked_expense.subcategory = subcat
+            linked_expense.manual_name = None if subcat else title
+            linked_expense.save()
+        else:
+            Expense.objects.create(
+                title=title,
+                amount=product.price,
+                subcategory=subcat,
+                manual_name=None if subcat else title,
+                additional_info=product.additional_info,
+                created_by=user,
+                content_object=product,
+            )
+    elif linked_expense:
+        linked_expense.delete()
+
+
+def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, additional_info, entry_date):
+    existing = (
+        FarmProduct.objects.filter(created_by=user)
+        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name, unit=unit)
+        .order_by("-updated_at", "-created_at")
+        .first()
+    )
+    if not existing:
+        return None
+
+    total_qty = Decimal(str(existing.quantity)) + Decimal(str(quantity_val))
+    if total_qty == 0:
+        product_type = ContentType.objects.get_for_model(FarmProduct)
+        Expense.objects.filter(content_type=product_type, object_id=existing.id).delete()
+        Income.objects.filter(content_type=product_type, object_id=existing.id).delete()
+        existing.delete()
+        return "deleted"
+
+    existing.item = None
+    existing.manual_name = manual_name
+    existing.quantity = total_qty
+    existing.unit = unit
+    existing.price = price
+    existing.additional_info = additional_info
+    existing.date = entry_date
+    existing.save()
+    _sync_farm_product_related_records(user, existing)
+    return existing
+
+
 @login_required
 def farm_product_list(request):
-    query = request.GET.get("q")
+    query = (request.GET.get("q") or "").strip()
     products_qs = FarmProduct.objects.filter(created_by=request.user).select_related(
         "item", "item__category"
     )
@@ -144,7 +246,7 @@ def farm_product_create(request):
         quantity = request.POST.get("quantity")
         unit = request.POST.get("unit")
         price = request.POST.get("price")
-        manual_name = request.POST.get("manual_name")
+        manual_name = normalize_manual_label(request.POST.get("manual_name"))
         additional_info = request.POST.get("additional_info")
         date_raw = request.POST.get("date")
         entry_date = _parse_date(date_raw)
@@ -209,6 +311,22 @@ def farm_product_create(request):
                 if available_base < needed_base:
                     messages.error(request, "Stokda kifayət qədər məhsul yoxdur.")
                     return redirect("farm_products:product_list")
+
+            merged = _merge_manual_farm_product(
+                request.user,
+                effective_manual,
+                quantity_val,
+                effective_unit,
+                price,
+                additional_info,
+                entry_date,
+            ) if effective_manual else None
+            if merged == "deleted":
+                add_crud_success_message(request, "FarmProduct", "delete")
+                return redirect("farm_products:product_list")
+            if merged:
+                add_crud_success_message(request, "FarmProduct", "update")
+                return redirect("farm_products:product_list")
 
             product = FarmProduct.objects.create(
                 item=item,
@@ -285,7 +403,7 @@ def farm_product_update(request, pk):
         quantity = request.POST.get("quantity")
         unit = request.POST.get("unit")
         price = request.POST.get("price")
-        manual_name = request.POST.get("manual_name")
+        manual_name = normalize_manual_label(request.POST.get("manual_name"))
         additional_info = request.POST.get("additional_info")
         date_raw = request.POST.get("date")
         entry_date = _parse_date(date_raw)

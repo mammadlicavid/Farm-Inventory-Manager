@@ -2,21 +2,20 @@
 {% block title %}Xatırlatmalar{% endblock %}
 
 {% block content %}
-<!-- ── Header ── -->
-<div class="notif-header">
-  <div class="notif-header-top">
-    <a href="javascript:history.back()" class="notif-back-btn">
-      <i class="fa-solid fa-arrow-left"></i>
-    </a>
-    <div class="notif-header-text">
-      <h2 class="notif-title">Xatırlatmalar</h2>
-      <p class="notif-subtitle">Vaksinasiya, əkin, ödəniş xatırlatmaları</p>
+<header class="main-header">
+  <div class="header-content">
+    <div class="header-top">
+      <a href="javascript:history.back()" class="back-btn-box">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Xatırlatmalar</span>
+      </a>
+      <button class="notif-add-btn" id="openAddModal" type="button">
+        <i class="fa-solid fa-plus"></i>
+      </button>
     </div>
-    <button class="notif-add-btn" id="openAddModal">
-      <i class="fa-solid fa-plus"></i>
-    </button>
+    <p class="welcome-text">Vaksinasiya, əkin, ödəniş xatırlatmaları</p>
   </div>
-</div>
+</header>
 
 <!-- ── Body ── -->
 <div class="notif-body">
@@ -149,38 +148,8 @@
 </div>
 
 <style>
-  /* ── Header ── */
-  .notif-header {
-    background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);
-    padding: 28px 20px 32px;
-    border-radius: 0 0 28px 28px;
-    margin-bottom: 18px;
-  }
-  .notif-header-top {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-  }
-  .notif-back-btn {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; text-decoration: none; font-size: 15px;
-    flex-shrink: 0;
-    transition: background 0.15s;
-  }
-  .notif-back-btn:hover { background: rgba(255,255,255,0.35); }
-  .notif-header-text { flex: 1; }
-  .notif-title {
-    color: #fff; font-size: 22px; font-weight: 800;
-    margin: 0 0 2px;
-  }
-  .notif-subtitle {
-    color: rgba(255,255,255,0.85); font-size: 13px; margin: 0;
-  }
   .notif-add-btn {
-    width: 36px; height: 36px; border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 20px;
     background: rgba(255,255,255,0.2);
     border: none; color: #fff; font-size: 17px;
     display: flex; align-items: center; justify-content: center;
@@ -191,8 +160,9 @@
 
   /* ── Body ── */
   .notif-body {
-    max-width: 540px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding: 0 16px 100px;
   }
 
@@ -291,7 +261,7 @@
   }
   .notif-modal-mask.active { display: flex; }
   .notif-modal {
-    width: 100%; max-width: 540px;
+    width: 100%; max-width: 100%;
     background: #fff;
     border-radius: 20px 20px 0 0;
     padding: 24px 20px 32px;

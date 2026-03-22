@@ -12,9 +12,6 @@
                 <a href="{% url 'notifications:list' %}" class="header-icon-btn" title="Xatırlatmalar">
                     <i class="fa-solid fa-bell"></i>
                 </a>
-                <a href="{% url 'sidebar_menu:setting' %}" class="header-icon-btn" title="Parametrlər">
-                    <i class="fa-solid fa-gear"></i>
-                </a>
             </div>
         </div>
         <p class="welcome-text">Xoş gəlmisiniz, {{ user_name }}!</p>
@@ -61,7 +58,7 @@
         </a>
 
         <a href="{% url 'incomes:income_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box dark-green-icon">
+            <div class="icon-box income-pink-icon">
                 <i class="fa-solid fa-money-bill-trend-up"></i>
             </div>
             <span>Gəlirlər</span>

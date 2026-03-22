@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="main-header">
+  <div class="header-content">
+    <div class="header-top">
+      <a href="{% url 'dashboard' %}" class="back-btn-box">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Sinxronizasiya</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="main-content" style="position: relative; z-index: 10;">
+  <div class="form-container-white sync-shell">
+    <h3 class="sync-title">Offline-first Sync</h3>
+
+    <div class="sync-stat-row">
+      <div class="summary-card-cream summary-compact sync-stat-card">
+        <span class="label">Bağlantı</span>
+        <span class="value" data-sync-online>Yoxlanır</span>
+      </div>
+
+      <div class="summary-card-cream summary-compact sync-stat-card">
+        <span class="label">Gözləyən qeyd</span>
+        <span class="value"><span data-sync-pending>0</span></span>
+      </div>
+
+      <div class="summary-card-cream summary-compact sync-stat-card">
+        <span class="label">Son uğurlu sync</span>
+        <span class="value" data-sync-last>Heç vaxt</span>
+      </div>
+    </div>
+
+    <div class="sync-stack">
+      <div class="summary-card-cream summary-compact sync-stat-card sync-wide-card">
+        <span class="label">Uzaq dəyişikliklər</span>
+        <span class="value" data-sync-remote>Yoxlanır</span>
+      </div>
+
+      <div class="form-group sync-field">
+        <label>Son xəta</label>
+        <div class="custom-input sync-box" data-sync-error>-</div>
+      </div>
+
+      <button type="button" class="add-expense-btn sync-button" data-sync-now>
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        İndi Sinxron Et
+      </button>
+
+      <div class="form-group sync-field">
+        <label>Gözləyən əməliyyatlar</label>
+        <div class="custom-input sync-box sync-list-box">
+          <div data-sync-pending-list>Gözləyən əməliyyat yoxdur.</div>
+        </div>
+      </div>
+
+      <div class="form-group sync-field">
+        <label>Son nəticələr</label>
+        <div class="custom-input sync-box sync-list-box">
+          <div data-sync-history-list>Hələ sync history yoxdur.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<style>
+  .sync-shell {
+    max-width: 100%;
+    margin: 0;
+    padding: 22px 20px;
+  }
+
+  .sync-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  .sync-stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .sync-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sync-stat-card {
+    padding: 12px 14px;
+    border-radius: 16px;
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .sync-stat-card .label {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .sync-stat-card .value {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .sync-wide-card .value {
+    font-size: 18px;
+  }
+
+  .sync-field {
+    margin-bottom: 0;
+  }
+
+  .sync-field label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .sync-box {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+
+  .sync-list-box {
+    display: block;
+    min-height: 64px;
+  }
+
+  .sync-button {
+    margin-top: 0;
+    padding: 14px 16px;
+    border-radius: 16px;
+    font-size: 15px;
+  }
+
+  @media (max-width: 700px) {
+    .sync-shell {
+      padding: 18px 16px;
+    }
+
+    .sync-stat-row {
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .sync-stat-card {
+      padding: 10px 10px;
+      min-height: 76px;
+    }
+
+    .sync-stat-card .label {
+      font-size: 11px;
+    }
+
+    .sync-stat-card .value,
+    .sync-wide-card .value {
+      font-size: 15px;
+    }
+
+    .sync-title {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+  }
+</style>
+{% endblock %}

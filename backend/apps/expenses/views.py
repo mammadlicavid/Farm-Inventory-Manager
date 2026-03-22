@@ -10,6 +10,7 @@ from .models import Expense, ExpenseCategory, ExpenseSubCategory
 from common.messages import add_crud_success_message
 from common.icons import get_expense_icon
 from common.formatting import format_currency
+from common.text import normalize_manual_label
 
 def _build_subcategory_data(categories):
     return {
@@ -38,9 +39,45 @@ def _get_display_additional_info(expense: Expense) -> str:
         return ""
     return raw
 
+
+def _merge_manual_expense(user, title, amount_val, additional_info):
+    existing = (
+        Expense.objects.filter(created_by=user, subcategory__isnull=True, manual_name__iexact=title)
+        .order_by("-updated_at", "-created_at")
+        .first()
+    )
+    if not existing:
+        return None
+
+    new_amount = float(existing.amount) + float(amount_val)
+    if new_amount <= 0:
+        existing.delete()
+        return "deleted"
+
+    existing.title = title
+    existing.amount = new_amount
+    existing.manual_name = title
+    existing.additional_info = additional_info
+    existing.save()
+    return existing
+
 @login_required
 def expense_list(request):
+    query = (request.GET.get("q") or "").strip()
     expenses_qs = Expense.objects.filter(created_by=request.user).select_related('subcategory', 'subcategory__category')
+
+    if query:
+        expenses_qs = expenses_qs.filter(
+            subcategory__name__icontains=query
+        ) | expenses_qs.filter(
+            subcategory__category__name__icontains=query
+        ) | expenses_qs.filter(
+            additional_info__icontains=query
+        ) | expenses_qs.filter(
+            manual_name__icontains=query
+        ) | expenses_qs.filter(
+            title__icontains=query
+        )
     
     # Perform aggregations on QuerySet before converting to list
     total_amount = expenses_qs.aggregate(Sum('amount'))['amount__sum'] or 0
@@ -114,7 +151,7 @@ def add_expense(request):
     if request.method == 'POST':
         title = request.POST.get('title')
         amount = request.POST.get('amount')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         subcategory_id = request.POST.get('subcategory')
         additional_info = request.POST.get('additional_info')
         
@@ -140,6 +177,15 @@ def add_expense(request):
         if not title:
             title = subcategory.name if subcategory else manual_name
 
+        if not subcategory:
+            merged = _merge_manual_expense(request.user, title, amount_val, additional_info)
+            if merged == "deleted":
+                add_crud_success_message(request, "Expense", "delete")
+                return redirect('expenses:expense_list')
+            if merged:
+                add_crud_success_message(request, "Expense", "update")
+                return redirect('expenses:expense_list')
+
         Expense.objects.create(
             title=title,
             amount=amount_val,
@@ -160,7 +206,7 @@ def edit_expense(request, pk):
         title = request.POST.get('title')
         amount = request.POST.get('amount')
         subcategory_id = request.POST.get('subcategory')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
         
         subcategory = None
