@@ -156,7 +156,10 @@
       <script>
         ;(function () {
           const existingIndicator = document.querySelector('[data-sync-indicator]')
-          if (existingIndicator) return
+          if (existingIndicator) {
+            existingIndicator.textContent = 'Yoxlanır'
+            return
+          }
         
           const headerTop = document.querySelector('.header-top')
           if (!headerTop) return
@@ -165,7 +168,7 @@
           indicator.href = "{% url 'sync:page' %}"
           indicator.className = 'status-badge sync-header-link'
           indicator.setAttribute('data-sync-indicator', '')
-          indicator.textContent = 'Sync hazırdır'
+          indicator.textContent = 'Yoxlanır'
         
           const legacyBadge = headerTop.querySelector('.status-badge')
           if (legacyBadge) {

@@ -58,6 +58,31 @@ def quick_expense(request):
     from common.formatting import format_currency
     from django.contrib import messages as django_messages
 
+    def _compact_number(value):
+        try:
+            return format_currency(value, 2).rstrip("0").rstrip(".")
+        except Exception:
+            return str(value)
+
+    def _expense_template_measure(expense):
+        linked = getattr(expense, "content_object", None)
+        if linked is not None:
+            quantity = getattr(linked, "quantity", None)
+            unit = getattr(linked, "unit", None)
+            if quantity is not None:
+                return _compact_number(quantity), unit or "ədəd"
+
+        raw = (expense.additional_info or "").strip()
+        if raw.startswith("Miqdar:"):
+            payload = raw.replace("Miqdar:", "", 1).strip()
+            parts = payload.split()
+            if len(parts) >= 2:
+                return parts[0], " ".join(parts[1:])
+            if payload:
+                return payload, "ədəd"
+
+        return "1", "ədəd"
+
     # Quick-tap preset items (name, icon, default amount, subcategory slug)
     QUICK_ITEMS = [
         {"name": "Yem", "icon": "🐄", "amount": 50, "quantity": 25, "unit": "kq"},
@@ -160,8 +185,7 @@ def quick_expense(request):
         if exp.title not in seen_titles and len(templates) < 8:
             seen_titles.add(exp.title)
             exp.amount_display = format_currency(exp.amount, 2)
-            exp.quantity_display = "1"
-            exp.unit_display = "qeyd"
+            exp.quantity_display, exp.unit_display = _expense_template_measure(exp)
             exp.display_title = exp.title
             if exp.title:
                 title_stripped = exp.title.strip()

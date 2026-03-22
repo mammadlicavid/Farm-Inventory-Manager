@@ -46,8 +46,22 @@
     return localStorage.getItem(LAST_REMOTE_CURSOR_KEY) || null
   }
 
+  function isNewerTimestamp(nextValue, currentValue) {
+    if (!nextValue) return false
+    if (!currentValue) return true
+
+    const nextTime = new Date(nextValue).getTime()
+    const currentTime = new Date(currentValue).getTime()
+
+    if (Number.isNaN(nextTime) || Number.isNaN(currentTime)) {
+      return nextValue > currentValue
+    }
+
+    return nextTime >= currentTime
+  }
+
   function setLastRemoteCursor(value) {
-    if (value) {
+    if (isNewerTimestamp(value, getLastRemoteCursor())) {
       localStorage.setItem(LAST_REMOTE_CURSOR_KEY, value)
     }
   }
@@ -57,7 +71,7 @@
   }
 
   function setLastNotifiedRemoteCursor(value) {
-    if (value) {
+    if (isNewerTimestamp(value, getLastNotifiedRemoteCursor())) {
       localStorage.setItem(LAST_NOTIFIED_REMOTE_CURSOR_KEY, value)
     }
   }
@@ -252,12 +266,12 @@
       element.dataset.state = detail.online ? 'online' : 'offline'
 
       if (!detail.online) {
-        element.textContent = detail.pendingCount > 0 ? `Offline, ${detail.pendingCount} gözləyir` : 'Offline'
+        element.textContent = detail.pendingCount > 0 ? `Oflayn, ${detail.pendingCount} gözləyir` : 'Oflayn'
         return
       }
 
       if (detail.pendingCount > 0) {
-        element.textContent = `${detail.pendingCount} sync gözləyir`
+        element.textContent = `${detail.pendingCount} sinxronizasiya gözləyir`
         return
       }
 
@@ -266,7 +280,7 @@
         return
       }
 
-      element.textContent = detail.lastSync ? `Sync: ${relativeTimeLabel(detail.lastSync)}` : 'Sync hazırdır'
+      element.textContent = detail.lastSync ? `Sinx: ${relativeTimeLabel(detail.lastSync)}` : 'Sinx hazırdır'
     })
 
     document.querySelectorAll('[data-sync-last]').forEach((element) => {
@@ -278,7 +292,7 @@
     })
 
     document.querySelectorAll('[data-sync-online]').forEach((element) => {
-      element.textContent = detail.online ? 'Online' : 'Offline'
+      element.textContent = detail.online ? 'Onlayn' : 'Oflayn'
       element.dataset.state = detail.online ? 'online' : 'offline'
     })
 
@@ -288,7 +302,7 @@
 
     document.querySelectorAll('[data-sync-remote]').forEach((element) => {
       if (!detail.online) {
-        element.textContent = 'Offline'
+        element.textContent = 'Oflayn'
       } else if (!detail.remoteChanges) {
         element.textContent = 'Yoxlanır'
       } else if (detail.remoteChanges.total_changes > 0) {
@@ -312,7 +326,7 @@
 
     document.querySelectorAll('[data-sync-history-list]').forEach((element) => {
       if (!detail.history.length) {
-        element.innerHTML = 'Hələ sync history yoxdur.'
+        element.innerHTML = 'Hələ sinxronizasiya tarixçəsi yoxdur.'
         return
       }
 
@@ -402,7 +416,22 @@
       return null
     }
 
-    const since = encodeURIComponent(getLastSync() || getLastRemoteCursor() || '')
+    let sinceValue = getLastRemoteCursor() || getLastSync() || ''
+    if (!sinceValue) {
+      await fetchServerStatus()
+      sinceValue = getLastRemoteCursor() || getLastSync() || ''
+      if (!sinceValue) {
+        return {
+          has_changes: false,
+          total_changes: 0,
+          changes: {},
+          latest_cursor: null,
+        }
+      }
+      setLastNotifiedRemoteCursor(sinceValue)
+    }
+
+    const since = encodeURIComponent(sinceValue)
     const deviceId = encodeURIComponent(getDeviceId())
     try {
       const response = await fetch(`${PULL_STATUS_URL}?since=${since}&device_id=${deviceId}`, {
