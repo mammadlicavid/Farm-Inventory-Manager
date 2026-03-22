@@ -4,41 +4,81 @@ This project is a Farm Inventory Manager application, part of the Senior Design 
 
 ## Project Structure
 - **backend/**: Django server and application logic.
-- **frontend/**: HTML templates (`templates`) and CSS/JS files (`static`).
+- **frontend/**: Django templates (`templates`) and shared CSS/JS assets (`static`).
+- **docs/**: project notes and planning documents.
+- **scripts/**: utility scripts for testing and responsive checks.
+
+## Features
+- Dashboard with quick income and quick expense flows
+- Inventory tracking
+- Animals, seeds, farm products, and tools management
+- Expenses and incomes tracking
+- Reports and notifications
+- Sidebar settings/help/profile pages
+- Sync page for offline/online data flow
 
 ## How to Run
 
-1.  Open your terminal and navigate to the `backend` directory:
+1. Open your terminal and navigate to the `backend` directory:
     ```bash
     cd backend
     ```
-2.  Start the development server:
+2. Install dependencies:
     ```bash
-    python3 manage.py runserver
+    pip install -r requirements.txt
     ```
-3.  Open your browser and go to: [http://127.0.0.1:8000/dashboard/]
+3. Configure environment variables in the project root `.env` file.
+   Required database variables:
+    ```env
+    SECRET_KEY=your-secret-key
+    DEBUG=True
+    PGDATABASE=your_database_name
+    PGUSER=your_database_user
+    PGPASSWORD=your_database_password
+    PGHOST=your_database_host
+    PGPORT=5432
+    ```
+4. Apply database migrations:
+    ```bash
+    python manage.py migrate
+    ```
+5. Seed the default data:
+    ```bash
+    python manage.py seed_all
+    ```
+6. Start the development server:
+    ```bash
+    python manage.py runserver
+    ```
+7. Open your browser and go to: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/)
 
 ## Initial Setup & Development
 
-Because the project uses a local `db.sqlite3` database which is excluded from version control (`.gitignore`), **your database will be empty** after cloning or pulling the project from GitHub. 
+The app is configured to use PostgreSQL in normal development/runtime, and SQLite only during automated tests. After cloning or pulling, make sure your PostgreSQL database is available and your `.env` values are set correctly before running migrations.
 
-To ensure the application functions correctly and all form dropdowns (Animals, Seeds, Tools, Expenses) are populated, you must run migrations and seed the database.
-
-1.  Apply database migrations:
-    ```bash
-    python3 manage.py migrate
-    ```
-
-2.  Seed the default categories and items:
-    ```bash
-    python3 manage.py seed_all
-    ```
+`python manage.py seed_all` runs the built-in seed commands for:
+- Animals
+- Expenses
+- Seeds
+- Farm Products
+- Tools
 
 ## Creating a User Account
 
-Since the database is local, you will need to create your own user account to access the dashboard:
+Create an account for dashboard access with either command:
 
 ```bash
-python3 manage.py createsuperuser
+python manage.py createsuperuser
 ```
-Follow the prompts to set your username and password. Then, use these credentials to log in at [http://127.0.0.1:8000/login/].
+
+or:
+
+```bash
+python create_admin.py
+```
+
+The helper script creates or resets a default admin user:
+- username: `admin`
+- password: `admin123`
+
+Login page: [http://127.0.0.1:8000/login/](http://127.0.0.1:8000/login/)
