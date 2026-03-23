@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "sync",
     "sidebar_menu.apps.SidebarMenuConfig",
     "notifications",
+    "suppliers.apps.SuppliersConfig",
 ]
 
 

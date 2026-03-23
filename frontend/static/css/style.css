@@ -2032,3 +2032,246 @@ body.drawer-open #menuToggle {
         min-width: 0;
     }
 }
+
+/* =========================================
+   Suppliers Page Styles
+========================================= */
+
+.suppliers-page {
+    padding-bottom: 30px;
+}
+
+.suppliers-page .page-header {
+    background-color: var(--primary-green);
+    color: var(--white);
+    padding: 30px 20px 40px 20px;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.suppliers-page .back-btn {
+    color: var(--white);
+    font-size: 20px;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+.suppliers-page .header-titles h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.suppliers-page .header-titles p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.suppliers-page .search-section {
+    padding: 0 20px;
+    margin-top: -25px;
+    position: relative;
+    z-index: 10;
+}
+
+.suppliers-page .search-bar {
+    background-color: var(--white);
+    border-radius: 12px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.suppliers-page .search-bar i {
+    color: #999;
+    font-size: 18px;
+}
+
+.suppliers-page .search-bar input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 16px;
+    color: var(--text-dark);
+}
+
+.suppliers-page .search-bar input::placeholder {
+    color: #999;
+}
+
+.suppliers-list {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.supplier-card {
+    background-color: var(--white);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+
+.supplier-icon-wrapper {
+    background-color: #F5F7F5;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.supplier-info {
+    flex-grow: 1;
+}
+
+.supplier-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.supplier-name-row h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.star-icon {
+    color: #F5B726;
+    font-size: 14px;
+}
+
+.supplier-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.supplier-tag {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.supplier-tag.toxum-tag {
+    background-color: #FDF5E6;
+    color: #D48806;
+}
+
+.supplier-tag.gubre-tag {
+    background-color: #F6F4F1;
+    color: #8D6B5D;
+}
+
+.supplier-tag.aletler-tag {
+    background-color: #FFF2E8;
+    color: #D4380D;
+}
+
+.supplier-tag.heyvan-tag {
+    background-color: #FFF0F6;
+    color: #C41D7F;
+}
+
+.supplier-tag.diger-tag {
+    background-color: #E6F7FF;
+    color: #096DD9;
+}
+
+.supplier-location {
+    font-size: 12px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.supplier-rating {
+    margin-bottom: 8px;
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+.supplier-rating .star-filled {
+    color: #F5B726;
+}
+
+.supplier-rating .star-empty {
+    color: #E2E2E2;
+}
+
+.supplier-date {
+    font-size: 12px;
+    color: #888;
+}
+
+.supplier-action {
+    display: flex;
+    align-items: center;
+}
+
+.call-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: #F0FDF4;
+    color: #22C55E;
+    border: 1px solid #DCFCE7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.call-btn:hover {
+    background-color: #22C55E;
+    color: white;
+}
+
+.action-buttons-container {
+    padding: 10px 20px;
+}
+
+.btn-primary-large {
+    background-color: var(--primary-green);
+    color: white;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+    transition: all 0.3s;
+}
+
+.btn-primary-large:hover {
+    background-color: var(--dark-green);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(46, 139, 87, 0.4);
+}
