@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<header class="main-header" style="padding-bottom: 60px;">
+<header class="main-header">
     <div class="header-content">
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
@@ -9,25 +9,24 @@
                 <span>Təsərrüfat Məhsulları</span>
             </a>
         </div>
-
-        <form method="get" action="" class="search-form" style="margin-top: 20px;">
-            <div style="position: relative;" class="click-focus">
-                <i class="fa-solid fa-search"
-                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
-                    value="{{ request.GET.q|default:'' }}" autocomplete="off"
-                    style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
-            </div>
-        </form>
     </div>
 </header>
 
 <main class="main-content" style="position: relative; z-index: 10;">
+    <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
+        <div style="position: relative;" class="click-focus">
+            <i class="fa-solid fa-search"
+                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+            <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+                value="{{ request.GET.q|default:'' }}" autocomplete="off"
+                style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+        </div>
+    </form>
     <div class="crud-desktop-wrapper">
         <div class="crud-form-column">
             <div class="form-container-white">
                 <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Məhsul Əlavə Et</h3>
-                <form action="{% url 'farm_products:product_create' %}" method="POST" id="farm-product-form">
+                <form action="{% url 'farm_products:product_create' %}" method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="create" data-sync-keep-key="farm_product_form_keep_v1">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
@@ -157,8 +156,12 @@
                                 <i class="fa-solid fa-pen-to-square"></i> Düzəliş
                             </a>
                             <form action="{% url 'farm_products:product_delete' product.pk %}" method="POST"
-                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;">
+                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;"
+                                data-sync-entity="farm_product" data-sync-action="delete" data-sync-reset="false"
+                                onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
                                 {% csrf_token %}
+                                <input type="hidden" name="record_id" value="{{ product.pk }}">
+                                <input type="hidden" name="record_version" value="{{ product.updated_at|date:'c' }}">
                                 <button type="submit"
                                     style="background:none; border:none; color: #dc3545; cursor:pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0; height: 24px; line-height: 1;">
                                     <i class="fa-solid fa-trash"></i> Sil

@@ -11,6 +11,7 @@ from django.utils import timezone
 from .models import Seed, SeedCategory, SeedItem
 from .forms import SeedForm
 from common.messages import add_crud_success_message
+from common.text import normalize_manual_label
 from common.category_order import (
     SEED_CATEGORY_ORDER,
     SEED_ITEM_ORDER,
@@ -55,9 +56,117 @@ def _parse_date(value: str | None):
 def _ordered_seed_categories():
     return order_queryset_by_name_list(SeedCategory.objects.all(), SEED_CATEGORY_ORDER)
 
+
+def _sync_seed_related_records(user, seed):
+    quantity_val = Decimal(str(seed.quantity))
+    seed_type = ContentType.objects.get_for_model(Seed)
+    linked_income = Income.objects.filter(content_type=seed_type, object_id=seed.id).first()
+
+    if quantity_val < 0:
+        try:
+            amount_val = abs(float(seed.price))
+        except (TypeError, ValueError):
+            amount_val = 0
+
+        category_name = seed.item.category.name if seed.item and seed.item.category else "Digər"
+        income_category_map = {
+            "Taxıl toxumları": "Taxıl və Paxlalı Toxumları",
+            "Paxlalı toxumları": "Taxıl və Paxlalı Toxumları",
+            "Yem bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+            "Yağlı bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+            "Tərəvəz toxumları": "Tərəvəz və Bostan Toxumları",
+            "Bostan toxumları": "Tərəvəz və Bostan Toxumları",
+            "Meyvə toxumları": "Meyvə Toxumları",
+        }
+        income_category = income_category_map.get(category_name, "Digər")
+        if linked_income:
+            if amount_val > 0:
+                linked_income.category = income_category
+                linked_income.item_name = seed.item.name if seed.item else seed.manual_name
+                linked_income.quantity = abs(quantity_val)
+                linked_income.unit = "kq" if seed.unit == "kg" else seed.unit
+                linked_income.amount = amount_val
+                linked_income.additional_info = seed.additional_info
+                linked_income.date = seed.date
+                linked_income.save()
+            else:
+                linked_income.delete()
+        elif amount_val > 0:
+            Income.objects.create(
+                category=income_category,
+                item_name=seed.item.name if seed.item else seed.manual_name,
+                quantity=abs(quantity_val),
+                unit="kq" if seed.unit == "kg" else seed.unit,
+                amount=amount_val,
+                additional_info=seed.additional_info,
+                date=seed.date,
+                created_by=user,
+                content_object=seed,
+            )
+    elif linked_income:
+        linked_income.delete()
+
+    linked_expense = Expense.objects.filter(content_type=seed_type, object_id=seed.id).first()
+    try:
+        price_val = float(seed.price or 0)
+    except (TypeError, ValueError):
+        price_val = 0
+
+    if quantity_val > 0 and price_val > 0:
+        expense_sub = ExpenseSubCategory.objects.filter(name__icontains='Toxum').first()
+        if linked_expense:
+            linked_expense.amount = seed.price
+            linked_expense.title = f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}"
+            linked_expense.additional_info = seed.additional_info
+            linked_expense.subcategory = expense_sub
+            linked_expense.manual_name = None if expense_sub else "Toxum alışı"
+            linked_expense.save()
+        else:
+            Expense.objects.create(
+                title=f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}",
+                amount=seed.price,
+                subcategory=expense_sub,
+                manual_name=None if expense_sub else "Toxum alışı",
+                additional_info=seed.additional_info,
+                created_by=user,
+                content_object=seed
+            )
+    elif linked_expense:
+        linked_expense.delete()
+
+
+def _merge_manual_seed(user, manual_name, quantity_val, unit, price, additional_info, entry_date):
+    existing = (
+        Seed.objects.filter(created_by=user)
+        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name)
+        .order_by("-updated_at", "-created_at")
+        .first()
+    )
+    if not existing:
+        return None
+
+    total_kg = _seed_to_kg(Decimal(str(existing.quantity)), existing.unit) + _seed_to_kg(quantity_val, unit)
+    if total_kg == 0:
+        seed_type = ContentType.objects.get_for_model(Seed)
+        Expense.objects.filter(content_type=seed_type, object_id=existing.id).delete()
+        Income.objects.filter(content_type=seed_type, object_id=existing.id).delete()
+        existing.delete()
+        return "deleted"
+
+    existing.item = None
+    existing.manual_name = manual_name
+    existing.quantity = total_kg
+    existing.unit = "kg"
+    existing.price = price
+    existing.additional_info = additional_info
+    existing.date = entry_date
+    existing.save()
+    _sync_seed_related_records(user, existing)
+    return existing
+
 @login_required
 def seed_list(request):
-    query = request.GET.get('q')
+    query = (request.GET.get('q') or '').strip()
     seeds_qs = Seed.objects.filter(created_by=request.user).select_related('item', 'item__category')
 
     if query:
@@ -105,7 +214,7 @@ def seed_create(request):
         quantity = request.POST.get('quantity')
         unit = request.POST.get('unit')
         price = request.POST.get('price')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
@@ -143,9 +252,18 @@ def seed_create(request):
                     messages.error(request, "Stokda kifayət qədər toxum yoxdur.")
                     return redirect('seeds:seed_list')
 
+            manual_value = manual_name if (not item or item.name == "Digər") else None
+            merged = _merge_manual_seed(request.user, manual_value, quantity_val, unit, price, additional_info, entry_date) if manual_value else None
+            if merged == "deleted":
+                add_crud_success_message(request, "Seed", "delete")
+                return redirect('seeds:seed_list')
+            if merged:
+                add_crud_success_message(request, "Seed", "update")
+                return redirect('seeds:seed_list')
+
             seed = Seed.objects.create(
                 item=item,
-                manual_name=manual_name if (not item or item.name == "Digər") else None,
+                manual_name=manual_value,
                 quantity=quantity,
                 unit=unit,
                 price=price,
@@ -231,7 +349,7 @@ def seed_update(request, pk):
         quantity = request.POST.get('quantity')
         unit = request.POST.get('unit')
         price = request.POST.get('price')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)

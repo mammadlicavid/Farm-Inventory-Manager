@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from common.formatting import format_currency
 from common.category_order import ensure_diger_last
+from common.text import normalize_manual_label
 from common.icons import (
     get_animal_icon_by_name,
     get_farm_product_icon_by_name,
@@ -20,6 +21,7 @@ from common.icons import (
 from farm_products.models import FarmProduct, FarmProductItem
 from seeds.models import Seed, SeedItem
 from animals.models import Animal, AnimalSubCategory
+from tools.models import Tool
 
 from .models import Income
 
@@ -493,6 +495,62 @@ def _adjust_farm_stock(user, item_name: str, quantity: Decimal, unit: str, note:
     )
 
 
+def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, gender: str | None = None):
+    normalized_name = (item_name or "").strip()
+    if not normalized_name or quantity == 0:
+        return None
+
+    if unit in {"kq", "ton", "qram"} and Seed.objects.filter(created_by=user).filter(
+        Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+        manual_name__iexact=normalized_name,
+    ).exists():
+        return _adjust_seed_stock(user, normalized_name, quantity, unit, note, price)
+
+    if FarmProduct.objects.filter(created_by=user).filter(
+        Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+        manual_name__iexact=normalized_name,
+        unit=unit,
+    ).exists():
+        return _adjust_farm_stock(user, normalized_name, quantity, unit, note, price)
+
+    if unit == "ədəd" and Tool.objects.filter(created_by=user).filter(
+        Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+        manual_name__iexact=normalized_name,
+    ).exists():
+        return Tool.objects.create(
+            item=None,
+            manual_name=normalized_name,
+            quantity=int(quantity),
+            price=price if price is not None else 0,
+            additional_info=note,
+            created_by=user,
+        )
+
+    if unit == "ədəd" and gender and Animal.objects.filter(created_by=user, gender=gender).filter(
+        Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"),
+        manual_name__iexact=normalized_name,
+    ).exists():
+        return Animal.objects.create(
+            subcategory=None,
+            manual_name=normalized_name,
+            gender=gender,
+            quantity=int(quantity),
+            price=price if price is not None else 0,
+            additional_info=note,
+            created_by=user,
+        )
+
+    return FarmProduct.objects.create(
+        item=None,
+        manual_name=normalized_name,
+        quantity=Decimal(str(quantity)),
+        unit=unit,
+        price=price if price is not None else 0,
+        additional_info=note,
+        created_by=user,
+    )
+
+
 def _decrease_animal_stock(user, item_name: str, gender: str, quantity: int, note: str) -> bool:
     if quantity <= 0:
         return True
@@ -577,7 +635,7 @@ def _animal_available_count(user, item_name: str, gender: str) -> int:
 
 @login_required
 def income_list(request):
-    query = request.GET.get("q")
+    query = (request.GET.get("q") or "").strip()
     incomes_qs = Income.objects.filter(created_by=request.user)
 
     if query:
@@ -588,6 +646,8 @@ def income_list(request):
         )
 
     total_amount = incomes_qs.aggregate(total=Sum("amount"))["total"] or 0
+    last_week = timezone.now().date() - timedelta(days=7)
+    weekly_total = incomes_qs.filter(date__gte=last_week).aggregate(total=Sum("amount"))["total"] or 0
 
     incomes = list(incomes_qs)
     for income in incomes:
@@ -600,6 +660,8 @@ def income_list(request):
         "incomes": incomes,
         "total_amount": total_amount,
         "total_amount_display": format_currency(total_amount, 2),
+        "weekly_total": weekly_total,
+        "weekly_total_display": format_currency(weekly_total, 2),
         "categories": categories,
         "category_data": category_data,
         "today": timezone.now().date(),
@@ -615,7 +677,7 @@ def add_income(request):
 
     category = (request.POST.get("category") or "").strip()
     item_name = (request.POST.get("item_name") or "").strip()
-    manual_name = (request.POST.get("manual_name") or "").strip()
+    manual_name = normalize_manual_label(request.POST.get("manual_name"))
     quantity_raw = request.POST.get("quantity")
     unit = (request.POST.get("unit") or "").strip()
     amount = request.POST.get("amount")
@@ -749,6 +811,11 @@ def add_income(request):
             target_animal.delete()
         income.content_object = display_animal
         income.save(update_fields=["content_type", "object_id"])
+    elif category.lower() == "digər" or (request.POST.get("item_name") or "").strip().lower() == "digər":
+        stock_item = _adjust_other_stock(request.user, item_name, -abs(quantity), unit, note, amount_val, gender or None)
+        if stock_item:
+            income.content_object = stock_item
+            income.save(update_fields=["content_type", "object_id"])
 
     messages.success(request, "Gəlir əlavə edildi.")
     return redirect("incomes:income_list")
@@ -768,7 +835,7 @@ def edit_income(request, pk: int):
 
         category = (request.POST.get("category") or "").strip()
         item_name = (request.POST.get("item_name") or "").strip()
-        manual_name = (request.POST.get("manual_name") or "").strip()
+        manual_name = normalize_manual_label(request.POST.get("manual_name"))
         quantity_raw = request.POST.get("quantity")
         unit = (request.POST.get("unit") or "").strip()
         amount = request.POST.get("amount")

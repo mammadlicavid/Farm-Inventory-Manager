@@ -33,6 +33,9 @@
                 <a href="{% url 'sidebar_menu:help' %}"><i class="fa-solid fa-question-circle"></i> Kömək</a>
               </li>
               <li>
+                <a href="{% url 'sync:page' %}"><i class="fa-solid fa-cloud-arrow-up"></i> Sinxronizasiya</a>
+              </li>
+              <li>
                 <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Çıxış</a>
               </li>
             </ul>
@@ -52,6 +55,16 @@
     {% endif %}
 
     <style>
+      .sync-header-link {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .sync-header-link[data-state='offline'] {
+        background-color: rgba(255, 237, 213, 0.22);
+        border-color: rgba(255, 237, 213, 0.45);
+      }
+
       #toast-container {
         position: fixed;
         bottom: 20px;
@@ -139,6 +152,40 @@
       })()
     </script>
 
+    {% if user.is_authenticated %}
+      <script>
+        ;(function () {
+          const existingIndicator = document.querySelector('[data-sync-indicator]')
+          if (existingIndicator) {
+            existingIndicator.textContent = 'Yoxlanır'
+            return
+          }
+        
+          const headerTop = document.querySelector('.header-top')
+          if (!headerTop) return
+        
+          const indicator = document.createElement('a')
+          indicator.href = "{% url 'sync:page' %}"
+          indicator.className = 'status-badge sync-header-link'
+          indicator.setAttribute('data-sync-indicator', '')
+          indicator.textContent = 'Yoxlanır'
+        
+          const legacyBadge = headerTop.querySelector('.status-badge')
+          if (legacyBadge) {
+            legacyBadge.replaceWith(indicator)
+            return
+          }
+        
+          const rightActions = headerTop.querySelector('.header-right-actions')
+          if (rightActions) {
+            rightActions.prepend(indicator)
+          } else {
+            headerTop.appendChild(indicator)
+          }
+        })()
+      </script>
+    {% endif %}
+
     <script>
       ;(function () {
         document.addEventListener('click', (event) => {
@@ -173,15 +220,9 @@
         <a href="{% url 'inventory:add_placeholder' %}" class="nav-add-btn"><i class="fa-solid fa-plus"></i></a>
 
         <!-- Tez Xərc (Quick Expense) -->
-        <a href="{% url 'quick_expense' %}" class="nav-item {% if request.resolver_match.url_name == 'quick_expense' %}active{% endif %}">
+        <a href="{% url 'quick_expense' %}?source=footer" class="nav-item {% if request.resolver_match.url_name == 'quick_expense' %}active{% endif %}">
           <i class="fa-solid fa-bolt"></i>
           <span>Tez Xərc</span>
-        </a>
-
-        <!-- Hesabat (Reports) -->
-        <a href="{% url 'reports:list' %}" class="nav-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
-          <i class="fa-solid fa-file-lines"></i>
-          <span>Hesabatlar</span>
         </a>
 
         <!-- Menyu (More/Menu) -->
@@ -213,5 +254,9 @@
         }
       })()
     </script>
+
+    {% if user.is_authenticated %}
+      <script src="{% static 'js/offline_sync.js' %}"></script>
+    {% endif %}
   </body>
 </html>

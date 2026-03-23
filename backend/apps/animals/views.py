@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 import re
 from datetime import date, timedelta
 from django.utils import timezone
@@ -9,6 +10,7 @@ from django.utils import timezone
 from .models import Animal, AnimalCategory, AnimalSubCategory
 from .forms import AnimalForm
 from common.messages import add_crud_success_message
+from common.text import normalize_manual_label
 from common.category_order import (
     ANIMAL_CATEGORY_ORDER,
     ANIMAL_SUBCATEGORY_ORDER,
@@ -48,9 +50,69 @@ def _clean_additional_info(value: str | None) -> str | None:
 def _ordered_animal_categories():
     return order_queryset_by_name_list(AnimalCategory.objects.all(), ANIMAL_CATEGORY_ORDER)
 
+
+def _sync_animal_related_records(user, animal):
+    animal_type = ContentType.objects.get_for_model(Animal)
+    linked_expense = Expense.objects.filter(content_type=animal_type, object_id=animal.id).first()
+    try:
+        price_val = float(animal.price or 0)
+    except (TypeError, ValueError):
+        price_val = 0
+
+    if animal.quantity > 0 and price_val > 0:
+        expense_sub = ExpenseSubCategory.objects.filter(name='Heyvan alışı').first()
+        if linked_expense:
+            linked_expense.amount = animal.price
+            linked_expense.title = f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}"
+            linked_expense.additional_info = animal.additional_info
+            linked_expense.subcategory = expense_sub
+            linked_expense.manual_name = None if expense_sub else "Heyvan alışı (Digər)"
+            linked_expense.save()
+        else:
+            Expense.objects.create(
+                title=f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}",
+                amount=animal.price,
+                subcategory=expense_sub,
+                manual_name=None if expense_sub else "Heyvan alışı (Digər)",
+                additional_info=animal.additional_info,
+                created_by=user,
+                content_object=animal
+            )
+    elif linked_expense:
+        linked_expense.delete()
+
+
+def _merge_manual_animal(user, manual_name, gender, quantity, weight, price, additional_info, entry_date):
+    existing = (
+        Animal.objects.filter(created_by=user, gender=gender, identification_no__isnull=True)
+        .filter((Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər")), manual_name__iexact=manual_name)
+        .order_by("-updated_at", "-created_at")
+        .first()
+    )
+    if not existing:
+        return None
+
+    total_qty = int(existing.quantity) + int(quantity)
+    if total_qty == 0:
+        animal_type = ContentType.objects.get_for_model(Animal)
+        Expense.objects.filter(content_type=animal_type, object_id=existing.id).delete()
+        existing.delete()
+        return "deleted"
+
+    existing.subcategory = None
+    existing.manual_name = manual_name
+    existing.quantity = total_qty
+    existing.weight = weight
+    existing.price = price
+    existing.additional_info = additional_info
+    existing.date = entry_date
+    existing.save()
+    _sync_animal_related_records(user, existing)
+    return existing
+
 @login_required
 def animal_list(request):
-    query = request.GET.get('q')
+    query = (request.GET.get('q') or '').strip()
     animals_qs = (
         Animal.objects.filter(created_by=request.user)
         .exclude(quantity=0)
@@ -91,7 +153,7 @@ def animal_create(request):
         gender = request.POST.get('gender')
         weight = request.POST.get('weight')
         price = request.POST.get('price')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
         
@@ -132,6 +194,25 @@ def animal_create(request):
                     return redirect('animals:animal_list')
             
             manual_value = manual_name if (not subcategory or subcategory.name == "Digər") else None
+            merged = None
+            if manual_value and not identification_no:
+                merged = _merge_manual_animal(
+                    request.user,
+                    manual_value,
+                    gender,
+                    quantity,
+                    weight,
+                    price,
+                    additional_info,
+                    entry_date,
+                )
+            if merged == "deleted":
+                add_crud_success_message(request, "Animal", "delete")
+                return redirect('animals:animal_list')
+            if merged:
+                add_crud_success_message(request, "Animal", "update")
+                return redirect('animals:animal_list')
+
             animal = Animal.objects.create(
                 subcategory=subcategory,
                 manual_name=manual_value,
@@ -187,7 +268,7 @@ def animal_update(request, pk):
         gender = request.POST.get('gender')
         weight = request.POST.get('weight')
         price = request.POST.get('price')
-        manual_name = request.POST.get('manual_name')
+        manual_name = normalize_manual_label(request.POST.get('manual_name'))
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
         

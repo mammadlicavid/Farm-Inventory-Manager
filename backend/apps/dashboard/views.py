@@ -37,9 +37,10 @@ def dashboard(request):
         or 0
     )
     weekly_net = weekly_income - weekly_expenses
+    display_name = (request.user.first_name or "").strip() or request.user.get_username()
 
     context = {
-        "user_name" : request.user.get_username(),
+        "user_name" : display_name,
         "stats" : {
             "new_addition": new_stocks,
             "weekly_net": weekly_net,
@@ -57,12 +58,37 @@ def quick_expense(request):
     from common.formatting import format_currency
     from django.contrib import messages as django_messages
 
+    def _compact_number(value):
+        try:
+            return format_currency(value, 2).rstrip("0").rstrip(".")
+        except Exception:
+            return str(value)
+
+    def _expense_template_measure(expense):
+        linked = getattr(expense, "content_object", None)
+        if linked is not None:
+            quantity = getattr(linked, "quantity", None)
+            unit = getattr(linked, "unit", None)
+            if quantity is not None:
+                return _compact_number(quantity), unit or "ədəd"
+
+        raw = (expense.additional_info or "").strip()
+        if raw.startswith("Miqdar:"):
+            payload = raw.replace("Miqdar:", "", 1).strip()
+            parts = payload.split()
+            if len(parts) >= 2:
+                return parts[0], " ".join(parts[1:])
+            if payload:
+                return payload, "ədəd"
+
+        return "1", "ədəd"
+
     # Quick-tap preset items (name, icon, default amount, subcategory slug)
     QUICK_ITEMS = [
-        {"name": "Yem", "icon": "🐄", "amount": 50},
-        {"name": "Yanacaq", "icon": "⛽", "amount": 80},
-        {"name": "Gübrə", "icon": "🪴", "amount": 120},
-        {"name": "Baytar", "icon": "💉", "amount": 100},
+        {"name": "Yem", "icon": "🐄", "amount": 50, "quantity": 25, "unit": "kq"},
+        {"name": "Yanacaq", "icon": "⛽", "amount": 80, "quantity": 20, "unit": "litr"},
+        {"name": "Gübrə", "icon": "🪴", "amount": 120, "quantity": 10, "unit": "kq"},
+        {"name": "Baytar", "icon": "💉", "amount": 1, "unit": "xidmət", "quantity": 1},
     ]
 
     if request.method == "POST":
@@ -159,6 +185,7 @@ def quick_expense(request):
         if exp.title not in seen_titles and len(templates) < 8:
             seen_titles.add(exp.title)
             exp.amount_display = format_currency(exp.amount, 2)
+            exp.quantity_display, exp.unit_display = _expense_template_measure(exp)
             exp.display_title = exp.title
             if exp.title:
                 title_stripped = exp.title.strip()
@@ -231,3 +258,220 @@ def quick_expense(request):
         "templates": templates,
     }
     return render(request, "dashboard/quick_expense.html", context)
+
+
+@login_required
+def quick_income(request):
+    from incomes.models import Income, UNIT_EDAD, UNIT_KQ, UNIT_LITR
+    from incomes.views import (
+        _adjust_farm_stock,
+        _adjust_seed_stock,
+        _allowed_units_for_farm,
+        _category_type,
+        _farm_base_unit,
+        _farm_stock_base,
+        _farm_to_base,
+        _farm_unit_lookup,
+        _get_animal_by_id,
+        _seed_stock_kg,
+        _seed_to_kg,
+    )
+    from animals.models import Animal, AnimalSubCategory
+    from common.formatting import format_currency
+    from django.contrib import messages as django_messages
+
+    QUICK_ITEMS = [
+        {"name": "İnək südü", "icon": "🥛", "amount": 35, "category": "Süd və Süd Məhsulları", "quantity": 10, "unit": UNIT_LITR},
+        {"name": "Toyuq yumurtası", "icon": "🥚", "amount": 18, "category": "Yumurta", "quantity": 30, "unit": UNIT_EDAD},
+        {"name": "Bal", "icon": "🍯", "amount": 45, "category": "Bal və Arıçılıq", "quantity": 3, "unit": UNIT_KQ},
+        {"name": "Kartof", "icon": "🥔", "amount": 28, "category": "Tərəvəz", "quantity": 8, "unit": UNIT_KQ},
+    ]
+
+    def create_income_entry(*, category, item_name, quantity, unit, amount, gender="", identification_no="", additional_info=None):
+        ctype = _category_type(category)
+        unit_lookup = _farm_unit_lookup()
+
+        if ctype == "animal":
+            allowed_units = ["ədəd"]
+        elif ctype == "seed":
+            allowed_units = ["kq", "ton", "qram"]
+        elif ctype == "farm":
+            allowed_units = _allowed_units_for_farm(item_name, unit_lookup)
+        else:
+            allowed_units = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"]
+
+        if unit not in allowed_units:
+            raise ValueError("Ölçü vahidi bu kateqoriya üçün uyğun deyil.")
+
+        if ctype == "seed":
+            available_kg = _seed_stock_kg(request.user, item_name)
+            needed_kg = _seed_to_kg(quantity, unit)
+            if available_kg < needed_kg:
+                raise ValueError("Stokda kifayət qədər toxum yoxdur.")
+        elif ctype == "farm":
+            base_unit = _farm_base_unit(unit)
+            available_base = _farm_stock_base(request.user, item_name, base_unit)
+            needed_base = _farm_to_base(quantity, unit, base_unit)
+            if available_base < needed_base:
+                raise ValueError("Stokda kifayət qədər məhsul yoxdur.")
+
+        income = Income.objects.create(
+            category=category,
+            item_name=item_name,
+            quantity=quantity,
+            unit=unit,
+            amount=amount,
+            gender=gender if ctype == "animal" else None,
+            additional_info=additional_info,
+            created_by=request.user,
+        )
+
+        note = "Gəlir satışı"
+        if ctype == "seed":
+            stock_item = _adjust_seed_stock(request.user, item_name, -abs(quantity), unit, note, amount)
+            if stock_item:
+                income.content_object = stock_item
+                income.save(update_fields=["content_type", "object_id"])
+        elif ctype == "farm":
+            stock_item = _adjust_farm_stock(request.user, item_name, -abs(quantity), unit, note, amount)
+            if stock_item:
+                income.content_object = stock_item
+                income.save(update_fields=["content_type", "object_id"])
+        elif ctype == "animal":
+            qty_int = int(quantity)
+            target_animal = _get_animal_by_id(request.user, identification_no)
+            if identification_no:
+                if not target_animal:
+                    income.delete()
+                    raise ValueError("Bu identifikasiya nömrəsinə uyğun heyvan tapılmadı.")
+                if target_animal.subcategory:
+                    if target_animal.subcategory.name != item_name:
+                        income.delete()
+                        raise ValueError("Seçilmiş heyvan ID-si bu kateqoriyaya uyğun deyil.")
+                else:
+                    if (target_animal.manual_name or "").strip() != item_name:
+                        income.delete()
+                        raise ValueError("Seçilmiş heyvan ID-si bu kateqoriyaya uyğun deyil.")
+                subcat = target_animal.subcategory
+            else:
+                subcat = AnimalSubCategory.objects.filter(name=item_name).first()
+
+            income_tag = f"income:{income.id}"
+            display_animal = Animal.objects.create(
+                subcategory=subcat,
+                manual_name=None if subcat else item_name,
+                gender=gender,
+                quantity=-abs(qty_int),
+                price=amount,
+                additional_info=f"Gəlir satışı | {income_tag}",
+                created_by=request.user,
+            )
+            if identification_no and target_animal:
+                target_animal.delete()
+            income.content_object = display_animal
+            income.save(update_fields=["content_type", "object_id"])
+
+        return income
+
+    if request.method == "POST":
+        action = request.POST.get("action", "")
+
+        if action == "quick_add":
+            name = request.POST.get("name", "")
+            category = request.POST.get("category", "Digər")
+            unit = request.POST.get("unit", UNIT_EDAD)
+            quantity = request.POST.get("quantity", "1")
+            amount = request.POST.get("amount", "0")
+            custom_amount = request.POST.get("custom_amount", "")
+            try:
+                quantity_val = float(quantity)
+            except (ValueError, TypeError):
+                quantity_val = 1
+            try:
+                amount_val = float(amount)
+            except (ValueError, TypeError):
+                amount_val = 0
+            if custom_amount:
+                try:
+                    amount_val = float(custom_amount)
+                except (ValueError, TypeError):
+                    pass
+
+            if amount_val > 0:
+                try:
+                    create_income_entry(
+                        category=category,
+                        item_name=name,
+                        quantity=quantity_val,
+                        unit=unit,
+                        amount=amount_val,
+                    )
+                    django_messages.success(request, f"{name} — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                except ValueError as exc:
+                    django_messages.error(request, str(exc))
+
+        elif action == "custom_amount":
+            amount = request.POST.get("amount", "0")
+            try:
+                amount_val = float(amount)
+            except (ValueError, TypeError):
+                amount_val = 0
+
+            if amount_val > 0:
+                Income.objects.create(
+                    category="Digər",
+                    item_name="Xüsusi gəlir",
+                    quantity=1,
+                    unit=UNIT_EDAD,
+                    amount=amount_val,
+                    created_by=request.user,
+                )
+                django_messages.success(request, f"Xüsusi gəlir — {format_currency(amount_val, 0)}₼ əlavə edildi")
+
+        elif action == "template_add":
+            template_id = request.POST.get("template_id")
+            custom_amount = request.POST.get("custom_amount", "")
+            if template_id:
+                try:
+                    original = Income.objects.get(pk=template_id, created_by=request.user)
+                    amount_val = original.amount
+                    if custom_amount:
+                        try:
+                            amount_val = float(custom_amount)
+                        except (ValueError, TypeError):
+                            amount_val = original.amount
+                    try:
+                        create_income_entry(
+                            category=original.category,
+                            item_name=original.item_name,
+                            quantity=original.quantity,
+                            unit=original.unit,
+                            amount=amount_val,
+                            gender=original.gender or "",
+                            additional_info=original.additional_info,
+                        )
+                        django_messages.success(request, f"{original.item_name} — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                    except ValueError as exc:
+                        django_messages.error(request, str(exc))
+                except Income.DoesNotExist:
+                    pass
+
+        return redirect("quick_income")
+
+    recent_incomes = Income.objects.filter(created_by=request.user).order_by("-created_at")[:20]
+    seen_items = set()
+    templates = []
+    for income in recent_incomes:
+        unique_key = (income.item_name, income.category)
+        if unique_key not in seen_items and len(templates) < 8:
+            seen_items.add(unique_key)
+            income.amount_display = format_currency(income.amount, 2)
+            income.quantity_display = format_currency(income.quantity, 2).rstrip("0").rstrip(".")
+            income.primary_tags = [income.category or "Digər", income.unit or "ədəd"]
+            templates.append(income)
+
+    context = {
+        "quick_items": QUICK_ITEMS,
+        "templates": templates,
+    }
+    return render(request, "dashboard/quick_income.html", context)

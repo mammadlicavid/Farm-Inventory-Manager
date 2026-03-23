@@ -2,14 +2,18 @@
 {% block title %}Parametrlər{% endblock %}
 
 {% block content %}
-<div class="page-container">
-
-  <div class="page-header">
-    <a href="javascript:history.back()" class="back-btn">
-      <i class="fa-solid fa-arrow-left"></i>
-    </a>
-    <h2 class="page-title">Parametrlər</h2>
+<header class="main-header">
+  <div class="header-content">
+    <div class="header-top">
+      <a href="javascript:history.back()" class="back-btn-box">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Parametrlər</span>
+      </a>
+    </div>
   </div>
+</header>
+
+<div class="page-container">
 
   <div class="form-card">
     <form method="POST" action="{% url 'sidebar_menu:setting' %}">
@@ -129,32 +133,10 @@
 
 <style>
   .page-container {
-    max-width: 540px;
-    margin: 0 auto;
-    padding: 16px 16px 100px;
-  }
-  .page-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .back-btn {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: #f3f4f6;
-    display: flex; align-items: center; justify-content: center;
-    color: #374151;
-    text-decoration: none;
-    font-size: 15px;
-    transition: background 0.15s;
-  }
-  .back-btn:hover { background: #e5e7eb; }
-  .page-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #111827;
+    width: 100%;
+    max-width: 100%;
     margin: 0;
+    padding: 16px 16px 100px;
   }
   .form-card {
     background: #fff;
