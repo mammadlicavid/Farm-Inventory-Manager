@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="suppliers-page">
+    <header class="page-header green-header">
+        <a href="{% url 'suppliers_list' %}" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="header-titles">
+            <h1>Təchizatçı Əlavə Et</h1>
+            <p>Sistemə yeni təchizatçı əlavə edin</p>
+        </div>
+    </header>
+
+    <div class="form-container-white" style="margin: 20px;">
+        <form method="post" action="{% url 'supplier_add' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Təchizatçı Adı</label>
+                <input type="text" name="name" class="custom-input click-focus" required placeholder="Məsələn: Əhməd Toxumçuluq">
+            </div>
+
+            <div class="form-group">
+                <label>Kateqoriya</label>
+                <div class="click-focus">
+                    <select name="category" class="custom-input" required>
+                        <option value="Digər">Digər</option>
+                        <option value="Toxum">Toxum</option>
+                        <option value="Gübrə">Gübrə</option>
+                        <option value="Alətlər">Alətlər</option>
+                        <option value="Heyvan">Heyvan</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Ünvan</label>
+                <input type="text" name="location" class="custom-input click-focus" required placeholder="Məsələn: Gəncə">
+            </div>
+
+            <div class="form-group">
+                <label>Reytinq</label>
+                <div class="click-focus">
+                    <select name="rating" class="custom-input">
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                        <option value="3">⭐⭐⭐ (3/5)</option>
+                        <option value="2">⭐⭐ (2/5)</option>
+                        <option value="1">⭐ (1/5)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Telefon Nömrəsi</label>
+                <input type="text" name="phone" class="custom-input click-focus" required placeholder="Məsələn: +994 50 123 45 67">
+            </div>
+
+            <div class="form-group">
+                <label>Son Sifariş Tarixi (istəyə bağlı)</label>
+                <input type="date" name="last_order_date" class="custom-input click-focus">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="is_favorite" id="is_favorite" style="width: 20px; height: 20px; accent-color: var(--primary-green);">
+                <label for="is_favorite" style="margin: 0; font-weight: 500; cursor: pointer;">Seçilmiş Təchizatçı kimi qeyd et</label>
+            </div>
+
+            <button type="submit" class="add-expense-btn" style="margin-top: 30px;">
+                <i class="fa-solid fa-check"></i> Yadda Saxla
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

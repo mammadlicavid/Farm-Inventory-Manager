@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="suppliers-page">
+    <!-- Header Section -->
+    <header class="page-header green-header">
+        <a href="{% url 'dashboard' %}" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="header-titles">
+            <h1>Təchizatçılar 🤝</h1>
+            <p>Əlaqə saxladığınız satıcılar</p>
+        </div>
+    </header>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <form method="get" action="{% url 'suppliers_list' %}">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" placeholder="Təchizatçı axtar..." value="{{ search_query }}">
+            </div>
+        </form>
+    </div>
+
+    <!-- Suppliers List -->
+    <div class="suppliers-list">
+        {% for supplier in suppliers %}
+        <div class="supplier-card">
+            <div class="supplier-icon-wrapper">
+                {% if supplier.category == 'Toxum' %}
+                    <span class="supplier-icon toxum-icon">🌾</span>
+                {% elif supplier.category == 'Gübrə' %}
+                    <span class="supplier-icon gubre-icon">🧪</span>
+                {% elif supplier.category == 'Alətlər' %}
+                    <span class="supplier-icon alet-icon">🧰</span>
+                {% elif supplier.category == 'Heyvan' %}
+                    <span class="supplier-icon heyvan-icon">🐄</span>
+                {% else %}
+                    <span class="supplier-icon diger-icon">🏪</span>
+                {% endif %}
+            </div>
+            
+            <div class="supplier-info">
+                <div class="supplier-name-row">
+                    <h3>{{ supplier.name }}</h3>
+                    {% if supplier.is_favorite %}
+                        <span class="star-icon">⭐</span>
+                    {% endif %}
+                </div>
+                
+                <div class="supplier-meta-row">
+                    <span class="supplier-tag {{ supplier.category|lower|default:'diger' }}-tag">{{ supplier.category }}</span>
+                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> {{ supplier.location }}</span>
+                </div>
+                
+                <div class="supplier-rating">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= supplier.rating %}
+                            <i class="fa-solid fa-star star-filled"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star star-empty"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="supplier-date">
+                    Son sifariş: {{ supplier.last_order_date|date:"Y-m-d" }}
+                </div>
+            </div>
+            
+            <div class="supplier-action">
+                <a href="tel:{{ supplier.phone }}" class="call-btn"><i class="fa-solid fa-phone"></i></a>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Dummy Data if no DB entries yet, to match the UI precisely -->
+        <div class="supplier-card">
+            <div class="supplier-icon-wrapper"><span class="supplier-icon toxum-icon">🌾</span></div>
+            <div class="supplier-info">
+                <div class="supplier-name-row">
+                    <h3>Əhməd Toxumçuluq</h3>
+                    <span class="star-icon">⭐</span>
+                </div>
+                <div class="supplier-meta-row">
+                    <span class="supplier-tag toxum-tag">Toxum</span>
+                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Gəncə</span>
+                </div>
+                <div class="supplier-rating">
+                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i>
+                </div>
+                <div class="supplier-date">Son sifariş: 2024-12-01</div>
+            </div>
+            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
+        </div>
+        
+        <div class="supplier-card">
+            <div class="supplier-icon-wrapper"><span class="supplier-icon gubre-icon">🧪</span></div>
+            <div class="supplier-info">
+                <div class="supplier-name-row">
+                    <h3>Bayram Aqro</h3>
+                    <span class="star-icon">⭐</span>
+                </div>
+                <div class="supplier-meta-row">
+                    <span class="supplier-tag gubre-tag">Gübrə</span>
+                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Bərdə</span>
+                </div>
+                <div class="supplier-rating">
+                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-regular fa-star star-empty"></i>
+                </div>
+                <div class="supplier-date">Son sifariş: 2024-11-15</div>
+            </div>
+            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
+        </div>
+
+        <div class="supplier-card">
+            <div class="supplier-icon-wrapper"><span class="supplier-icon alet-icon">🧰</span></div>
+            <div class="supplier-info">
+                <div class="supplier-name-row">
+                    <h3>Vüsal Alət Mağazası</h3>
+                </div>
+                <div class="supplier-meta-row">
+                    <span class="supplier-tag aletler-tag">Alətlər</span>
+                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Mingəçevir</span>
+                </div>
+                <div class="supplier-rating">
+                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-regular fa-star star-empty"></i>
+                </div>
+                <div class="supplier-date">Son sifariş: 2024-10-20</div>
+            </div>
+            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
+        </div>
+
+        <div class="supplier-card">
+            <div class="supplier-icon-wrapper"><span class="supplier-icon heyvan-icon">🐄</span></div>
+            <div class="supplier-info">
+                <div class="supplier-name-row">
+                    <h3>Rəhim Heyvan Bazarı</h3>
+                </div>
+                <div class="supplier-meta-row">
+                    <span class="supplier-tag heyvan-tag">Heyvan</span>
+                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Şəmkir</span>
+                </div>
+                <div class="supplier-rating">
+                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-regular fa-star star-empty"></i><i class="fa-regular fa-star star-empty"></i>
+                </div>
+                <div class="supplier-date">Son sifariş: 2024-09-05</div>
+            </div>
+            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Bottom Add Button -->
+    <div class="action-buttons-container">
+        <a href="{% url 'supplier_add' %}" class="btn-primary-large">
+            <i class="fa-solid fa-plus"></i> Təchizatçı Əlavə Et
+        </a>
+    </div>
+</div>
+{% endblock %}
