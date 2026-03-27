@@ -3,6 +3,6 @@ from .models import Supplier
 
 @admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'location', 'rating', 'is_favorite', 'last_order_date')
-    list_filter = ('category', 'is_favorite')
+    list_display = ('name', 'category', 'location', 'rating', 'last_order_date')
+    list_filter = ('category',)
     search_fields = ('name', 'location', 'phone')

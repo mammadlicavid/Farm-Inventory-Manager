@@ -187,6 +187,7 @@ def get_tool_items(request):
 
 @login_required
 def tool_create(request):
+    redirect_to = request.POST.get('next') or 'tools:tool_list'
     if request.method == 'POST':
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
@@ -199,7 +200,7 @@ def tool_create(request):
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            return redirect('tools:tool_list')
+            return redirect(redirect_to)
 
         # Handle empty price
         price = price if price and price.strip() else 0
@@ -208,7 +209,7 @@ def tool_create(request):
             quantity_val = int(quantity)
         except (TypeError, ValueError):
             messages.error(request, "Miqdar düzgün deyil.")
-            return redirect('tools:tool_list')
+            return redirect(redirect_to)
         
         try:
             item = None
@@ -216,7 +217,7 @@ def tool_create(request):
                 item = ToolItem.objects.get(id=item_id)
                 if item.name == "Digər" and not manual_name:
                     messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
-                    return redirect('tools:tool_list')
+                    return redirect(redirect_to)
             
             if quantity_val < 0:
                 available = _tool_stock_total(
@@ -226,16 +227,16 @@ def tool_create(request):
                 )
                 if available < abs(quantity_val):
                     messages.error(request, "Stokda kifayət qədər alət yoxdur.")
-                    return redirect('tools:tool_list')
+                    return redirect(redirect_to)
 
             manual_value = manual_name if (not item or item.name == "Digər") else None
             merged = _merge_manual_tool(request.user, manual_value, quantity_val, price, additional_info, entry_date) if manual_value else None
             if merged == "deleted":
                 add_crud_success_message(request, "Tool", "delete")
-                return redirect('tools:tool_list')
+                return redirect(redirect_to)
             if merged:
                 add_crud_success_message(request, "Tool", "update")
-                return redirect('tools:tool_list')
+                return redirect(redirect_to)
 
             tool = Tool.objects.create(
                 item=item,
@@ -255,7 +256,7 @@ def tool_create(request):
                 if amount_val <= 0:
                     messages.error(request, "Gəlir üçün məbləğ daxil edin.")
                     tool.delete()
-                    return redirect('tools:tool_list')
+                    return redirect(redirect_to)
 
                 Income.objects.create(
                     category="Digər",
@@ -298,9 +299,9 @@ def tool_create(request):
         else:
             add_crud_success_message(request, "Tool", "create")
 
-        return redirect('tools:tool_list')
+        return redirect(redirect_to)
     
-    return redirect('tools:tool_list')
+    return redirect(redirect_to)
 
 @login_required
 def tool_update(request, pk):

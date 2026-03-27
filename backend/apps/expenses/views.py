@@ -148,6 +148,7 @@ def expense_list(request):
 
 @login_required
 def add_expense(request):
+    redirect_to = request.POST.get('next') or 'expenses:expense_list'
     if request.method == 'POST':
         title = request.POST.get('title')
         amount = request.POST.get('amount')
@@ -164,7 +165,7 @@ def add_expense(request):
         
         if not (subcategory or manual_name) or not amount:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            return redirect('expenses:expense_list')
+            return redirect(redirect_to)
 
         try:
             amount_val = float(amount)
@@ -172,7 +173,7 @@ def add_expense(request):
             amount_val = 0
         if amount_val <= 0:
             messages.error(request, 'Məbləğ düzgün deyil.')
-            return redirect('expenses:expense_list')
+            return redirect(redirect_to)
         
         if not title:
             title = subcategory.name if subcategory else manual_name
@@ -181,10 +182,10 @@ def add_expense(request):
             merged = _merge_manual_expense(request.user, title, amount_val, additional_info)
             if merged == "deleted":
                 add_crud_success_message(request, "Expense", "delete")
-                return redirect('expenses:expense_list')
+                return redirect(redirect_to)
             if merged:
                 add_crud_success_message(request, "Expense", "update")
-                return redirect('expenses:expense_list')
+                return redirect(redirect_to)
 
         Expense.objects.create(
             title=title,
@@ -195,9 +196,9 @@ def add_expense(request):
             created_by=request.user
         )
         add_crud_success_message(request, "Expense", "create")
-        return redirect('expenses:expense_list')
+        return redirect(redirect_to)
     
-    return redirect('expenses:expense_list')
+    return redirect(redirect_to)
 
 @login_required
 def edit_expense(request, pk):

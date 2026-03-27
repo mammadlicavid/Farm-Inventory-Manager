@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block content %}
 <header class="main-header">
@@ -7,316 +6,954 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Yeni Məhsul Əlavə Et</span>
+                <span>Əlavə Et</span>
             </a>
         </div>
     </div>
 </header>
 
-<main class="main-content" style="padding: 20px 20px 100px;">
+<main class="main-content add-page">
+    <section class="scan-panel">
+        <div class="scan-actions-row">
+            <button type="button" id="barcode-btn" class="scan-action scan-action-primary">
+                <i class="fa-solid fa-camera"></i>
+                <span>Barkod Skan Et</span>
+            </button>
+            <button type="button" id="manual-code-toggle-btn" class="scan-action scan-action-link">
+                <i class="fa-solid fa-keyboard"></i>
+                <span>Kodu Əllə Yaz</span>
+            </button>
+        </div>
+        <div class="scan-secondary-row">
+            <a href="{% url 'inventory:barcode_builder' %}" class="scan-action scan-action-link">
+                <i class="fa-solid fa-barcode"></i>
+                <span>Barkod Yarat</span>
+            </a>
+            <button type="button" class="scan-action scan-action-voice">
+                <i class="fa-solid fa-microphone"></i>
+                <span>Səs ilə Əlavə Et</span>
+            </button>
+        </div>
+        <p id="scan-result" class="scan-result">Form yalnız barkod scan olunandan sonra görünəcək.</p>
+        <div id="scanner-wrapper" class="scanner-wrapper" hidden>
+            <video id="barcode-video" class="scanner-video" muted playsinline></video>
+            <button type="button" id="stop-scan-btn" class="scan-stop-btn">Skanı Dayandır</button>
+        </div>
+        <div id="manual-code-wrapper" class="manual-code-wrapper" hidden>
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label for="manual-code-input">Kod / ID</label>
+                <input id="manual-code-input" type="text" class="custom-input" placeholder="Barkod kodunu yazın">
+            </div>
+            <button type="button" id="manual-code-submit-btn" class="scan-stop-btn">Kodu Yoxla</button>
+        </div>
+    </section>
 
-    <form method="post">
-        {% csrf_token %}
-
-        <div class="form-group mb-15">
-            <label style="font-size: 14px; color: #333; font-weight: 700; margin-bottom: 8px;">Kateqoriya</label>
-            <select id="category" name="category" class="custom-input"
-                style="background-color: white; border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); width: 100%; color: #666; font-size: 15px;">
-                <option value="" disabled selected>Kateqoriya seçin</option>
-                <option value="toxumlar">Toxumlar</option>
-                <option value="aletler">Alətlər</option>
-                <option value="heyvanlar">Heyvanlar</option>
-                <option value="xercler">Xərclər</option>
-                <option value="teserrufat">Təsərrüfat məhsulları</option>
-                <option value="diger">Digər</option>
-            </select>
+    <section id="dynamic-form-shell" class="dynamic-form-shell" hidden>
+        <div class="section-head">
+            <h3 id="active-form-title">Form</h3>
+            <p id="active-form-subtitle">Scan olunan barkoda uyğun form açıldı.</p>
         </div>
 
-        <button type="button" id="barcode-btn" class="add-action-btn barcode-btn mb-15">
-            <i class="fa-solid fa-camera"></i>
-            <i class="fa-solid fa-barcode"></i> Barkod Skan Et
-        </button>
-
-        <div id="scan-result" style="margin-bottom: 15px; font-size: 14px; color: #333;"></div>
-
-        <div id="scanner-wrapper" style="display: none; margin-bottom: 15px;">
-        <video id="barcode-video"
-            style="width: 100%; min-height: 220px; border-radius: 16px; background: #000;"
-            muted
-            playsinline></video>
-
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button type="button" id="stop-scan-btn" class="add-action-btn barcode-btn" style="padding: 14px;">
-                    Skanı Dayandır
-                </button>
-            </div>
-        </div>        
-
-        <button type="button" class="add-action-btn voice-btn mb-20">
-            <i class="fa-solid fa-microphone"></i>
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Səslə Əlavə Et
-        </button>
-
-        <div class="form-container-white" style="border-radius: 20px; padding: 20px; margin-bottom: 30px;">
-
-            <div class="form-group mb-15">
-                <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Adı</label>
-                <input id="product_name" name="name" type="text" class="custom-input"
-                    placeholder="Məsələn: Buğda toxumu" style="background-color: #F8F9FA;">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Miqdar</label>
-                    <input id="quantity" name="quantity" type="number" class="custom-input"
-                        placeholder="0" style="background-color: #F8F9FA;">
+        <div class="form-card" data-form-panel="expense" hidden>
+            <form method="post" action="{% url 'expenses:add_expense' %}" id="expense-form" data-sync-entity="expense" data-sync-action="create">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'inventory:add_placeholder' %}">
+                <div class="input-group">
+                    <label>Ana Kateqoriya</label>
+                    <select id="expense-category" class="custom-input" required>
+                        <option value="">Kateqoriya seçin</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Qiymət (₼)</label>
-                    <input id="price" name="price" type="number" step="0.01" class="custom-input"
-                        placeholder="0.00" style="background-color: #F8F9FA;">
+                <div class="input-group">
+                    <label>Alt Kateqoriya</label>
+                    <select id="expense-subcategory" name="subcategory" class="custom-input" required>
+                        <option value="">Alt kateqoriya seçin</option>
+                    </select>
                 </div>
-            </div>
-
-            <div class="form-group mb-15" style="margin-top: 15px;">
-                <label style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;">Tarix</label>
-                <input id="date" name="date" type="date" class="custom-input"
-                    value="{{ today|date:'Y-m-d' }}" style="background-color: #F8F9FA;">
-            </div>
-
-            <input type="hidden" id="scan_code" name="scan_code">
+                <div class="input-group" id="expense-manual-wrap" hidden>
+                    <label>Xərc adı (Digər)</label>
+                    <input id="expense-manual-name" name="manual_name" type="text" class="custom-input" placeholder="Xərcin adını daxil edin">
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Məbləğ</label>
+                        <input id="expense-amount" name="amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Tarix</label>
+                        <input id="expense-date" name="date" type="date" value="{{ today|date:'Y-m-d' }}" class="custom-input" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Əlavə məlumat</label>
+                    <textarea id="expense-additional-info" name="additional_info" class="custom-input" rows="3" placeholder="Məsələn: Əlavə qeydlər..."></textarea>
+                </div>
+                <button type="submit" class="submit-green-btn">Xərci Saxla</button>
+            </form>
         </div>
 
-        <button type="submit" class="submit-green-btn">
-            <i class="fa-solid fa-check"></i> Təsdiqlə və Saxla
-        </button>
-    </form>
+        <div class="form-card" data-form-panel="income" hidden>
+            <form method="post" action="{% url 'incomes:add_income' %}" id="income-form" data-sync-entity="income" data-sync-action="create">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'inventory:add_placeholder' %}">
+                <div class="input-group">
+                    <label>Ana Kateqoriya</label>
+                    <select id="income-category" name="category" class="custom-input" required>
+                        <option value="">Kateqoriya seçin</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Məhsul</label>
+                    <select id="income-item" name="item_name" class="custom-input" required>
+                        <option value="">Məhsul seçin</option>
+                    </select>
+                </div>
+                <div class="input-group" id="income-manual-wrap" hidden>
+                    <label>Məhsul adı (Digər)</label>
+                    <input id="income-manual-name" name="manual_name" type="text" class="custom-input" placeholder="Məhsulun adını daxil edin">
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Miqdar</label>
+                        <input id="income-quantity" name="quantity" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Ölçü vahidi</label>
+                        <select id="income-unit" name="unit" class="custom-input" required></select>
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="input-group" id="income-gender-wrap" hidden>
+                        <label>Cinsiyyət</label>
+                        <select id="income-gender" name="gender" class="custom-input">
+                            <option value="">Seçin</option>
+                            <option value="erkek">Erkək</option>
+                            <option value="disi">Dişi</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="income-animal-id-wrap" hidden>
+                        <label>İdentifikasiya No</label>
+                        <input id="income-animal-id" name="identification_no" type="text" class="custom-input" placeholder="Məsələn: AZ12345">
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Məbləğ</label>
+                        <input id="income-amount" name="amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Tarix</label>
+                        <input id="income-date" name="date" type="date" value="{{ today|date:'Y-m-d' }}" class="custom-input" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Əlavə məlumat</label>
+                    <textarea id="income-additional-info" name="additional_info" class="custom-input" rows="3" placeholder="Məsələn: satış yeri, qeyd və s."></textarea>
+                </div>
+                <button type="submit" class="submit-green-btn">Gəliri Saxla</button>
+            </form>
+        </div>
 
+        <div class="form-card" data-form-panel="animal" hidden>
+            <form method="post" action="{% url 'animals:animal_create' %}" id="animal-form" data-sync-entity="animal" data-sync-action="create">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'inventory:add_placeholder' %}">
+                <div class="input-group">
+                    <label>Ana Kateqoriya</label>
+                    <select id="animal-category" class="custom-input" required>
+                        <option value="">Kateqoriya seçin</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Alt Kateqoriya</label>
+                    <select id="animal-subcategory" name="subcategory" class="custom-input" required>
+                        <option value="">Alt kateqoriya seçin</option>
+                    </select>
+                </div>
+                <div class="input-group" id="animal-manual-wrap" hidden>
+                    <label>Heyvan növü (Digər)</label>
+                    <input id="animal-manual-name" name="manual_name" type="text" class="custom-input" placeholder="Heyvanın növünü daxil edin">
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Miqdar</label>
+                        <input id="animal-quantity" name="quantity" type="number" value="1" class="custom-input" placeholder="1" required>
+                    </div>
+                    <div class="input-group">
+                        <label>İdentifikasiya No</label>
+                        <input id="animal-id" name="identification_no" type="text" class="custom-input" placeholder="Məsələn: AZ12345">
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Cinsiyyət</label>
+                        <select id="animal-gender" name="gender" class="custom-input" required>
+                            <option value="erkek">Erkək</option>
+                            <option value="disi">Dişi</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Çəki</label>
+                        <input id="animal-weight" name="weight" type="number" step="0.1" class="custom-input" placeholder="0.0">
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Məbləğ</label>
+                        <input id="animal-price" name="price" type="number" step="0.01" class="custom-input" placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label>Tarix</label>
+                        <input id="animal-date" name="date" type="date" value="{{ today|date:'Y-m-d' }}" class="custom-input" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Əlavə məlumat</label>
+                    <textarea id="animal-additional-info" name="additional_info" class="custom-input" rows="3" placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."></textarea>
+                </div>
+                <button type="submit" class="submit-green-btn">Heyvanı Saxla</button>
+            </form>
+        </div>
+
+        <div class="form-card" data-form-panel="seed" hidden>
+            <form method="post" action="{% url 'seeds:seed_create' %}" id="seed-form" data-sync-entity="seed" data-sync-action="create">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'inventory:add_placeholder' %}">
+                <div class="input-group">
+                    <label>Ana Kateqoriya</label>
+                    <select id="seed-category" class="custom-input" required>
+                        <option value="">Kateqoriya seçin</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Toxum növü</label>
+                    <select id="seed-item" name="item" class="custom-input" required>
+                        <option value="">Toxum seçin</option>
+                    </select>
+                </div>
+                <div class="input-group" id="seed-manual-wrap" hidden>
+                    <label>Toxum adı (Digər)</label>
+                    <input id="seed-manual-name" name="manual_name" type="text" class="custom-input" placeholder="Toxumun adını daxil edin">
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Miqdar</label>
+                        <input id="seed-quantity" name="quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Ölçü vahidi</label>
+                        <select id="seed-unit" name="unit" class="custom-input" required>
+                            <option value="kg">kg</option>
+                            <option value="ton">ton</option>
+                            <option value="qram">qram</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Məbləğ</label>
+                        <input id="seed-price" name="price" type="number" step="0.01" class="custom-input" placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label>Tarix</label>
+                        <input id="seed-date" name="date" type="date" value="{{ today|date:'Y-m-d' }}" class="custom-input" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Əlavə məlumat</label>
+                    <textarea id="seed-additional-info" name="additional_info" class="custom-input" rows="3" placeholder="Məsələn: Toxumun vəziyyəti və s."></textarea>
+                </div>
+                <button type="submit" class="submit-green-btn">Toxumu Saxla</button>
+            </form>
+        </div>
+
+        <div class="form-card" data-form-panel="tool" hidden>
+            <form method="post" action="{% url 'tools:tool_create' %}" id="tool-form" data-sync-entity="tool" data-sync-action="create">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'inventory:add_placeholder' %}">
+                <div class="input-group">
+                    <label>Ana Kateqoriya</label>
+                    <select id="tool-category" class="custom-input" required>
+                        <option value="">Kateqoriya seçin</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Alət növü</label>
+                    <select id="tool-item" name="item" class="custom-input" required>
+                        <option value="">Alət seçin</option>
+                    </select>
+                </div>
+                <div class="input-group" id="tool-manual-wrap" hidden>
+                    <label>Alət adı (Digər)</label>
+                    <input id="tool-manual-name" name="manual_name" type="text" class="custom-input" placeholder="Alət adını daxil edin">
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Miqdar</label>
+                        <input id="tool-quantity" name="quantity" type="number" class="custom-input" placeholder="0" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Məbləğ</label>
+                        <input id="tool-price" name="price" type="number" step="0.01" class="custom-input" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Tarix</label>
+                    <input id="tool-date" name="date" type="date" value="{{ today|date:'Y-m-d' }}" class="custom-input" required>
+                </div>
+                <div class="input-group">
+                    <label>Əlavə məlumat</label>
+                    <textarea id="tool-additional-info" name="additional_info" class="custom-input" rows="3" placeholder="Məsələn: Alətin vəziyyəti və s."></textarea>
+                </div>
+                <button type="submit" class="submit-green-btn">Aləti Saxla</button>
+            </form>
+        </div>
+
+        <div class="form-card" data-form-panel="farm" hidden>
+            <form method="post" action="{% url 'farm_products:product_create' %}" id="farm-form" data-sync-entity="farm_product" data-sync-action="create">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'inventory:add_placeholder' %}">
+                <div class="input-group">
+                    <label>Ana Kateqoriya</label>
+                    <select id="farm-category" class="custom-input" required>
+                        <option value="">Kateqoriya seçin</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Məhsul növü</label>
+                    <select id="farm-item" name="item" class="custom-input" required>
+                        <option value="">Məhsul seçin</option>
+                    </select>
+                </div>
+                <div class="input-group" id="farm-manual-wrap" hidden>
+                    <label>Məhsul adı (Digər)</label>
+                    <input id="farm-manual-name" name="manual_name" type="text" class="custom-input" placeholder="Məhsulun adını daxil edin">
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Miqdar</label>
+                        <input id="farm-quantity" name="quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Ölçü vahidi</label>
+                        <select id="farm-unit" name="unit" class="custom-input" required>
+                            <option value="kq">kq</option>
+                            <option value="ton">ton</option>
+                            <option value="qram">qram</option>
+                            <option value="litr">litr</option>
+                            <option value="ml">millilitr</option>
+                            <option value="ədəd">ədəd</option>
+                            <option value="dəstə">dəstə</option>
+                            <option value="bağlama">bağlama</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="input-group">
+                        <label>Məbləğ</label>
+                        <input id="farm-price" name="price" type="number" step="0.01" class="custom-input" placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label>Tarix</label>
+                        <input id="farm-date" name="date" type="date" value="{{ today|date:'Y-m-d' }}" class="custom-input" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Əlavə məlumat</label>
+                    <textarea id="farm-additional-info" name="additional_info" class="custom-input" rows="3" placeholder="Məsələn: Məhsulun vəziyyəti və s."></textarea>
+                </div>
+                <button type="submit" class="submit-green-btn">Məhsulu Saxla</button>
+            </form>
+        </div>
+    </section>
 </main>
 
+{{ expense_categories|json_script:"inventory-expense-data" }}
+{{ animal_categories|json_script:"inventory-animal-data" }}
+{{ seed_categories|json_script:"inventory-seed-data" }}
+{{ tool_categories|json_script:"inventory-tool-data" }}
+{{ farm_categories|json_script:"inventory-farm-data" }}
+{{ income_categories|json_script:"inventory-income-categories" }}
+{{ income_category_data|json_script:"inventory-income-data" }}
+
 <style>
-    .mb-15 {
-        margin-bottom: 15px;
-    }
-
-    .mb-20 {
-        margin-bottom: 20px;
-    }
-
-    .add-action-btn {
-        width: 100%;
-        padding: 20px;
-        border-radius: 12px;
-        border: none;
-        font-size: 16px;
-        font-weight: 700;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        transition: transform 0.1s;
-    }
-
-    .add-action-btn:active {
-        transform: scale(0.98);
-    }
-
-    .barcode-btn {
-        background-color: #F8F9FA;
-        border: 1px dashed #D1D5DB;
-        color: #333;
-    }
-
-    .barcode-btn i:first-child {
-        color: #666;
-        font-size: 14px;
-        margin-right: -2px;
-    }
-
-    .barcode-btn i:nth-child(2) {
-        color: #4F46E5;
-        font-size: 16px;
-        margin-right: 5px;
-    }
-
-    .voice-btn {
-        background-color: #EEDCC6;
-        color: #333;
-    }
-
-    .voice-btn i:first-child {
-        color: #666;
-        font-size: 14px;
-        margin-right: -2px;
-    }
-
-    .voice-btn i:nth-child(2) {
-        color: #9B6A6C;
-        font-size: 16px;
-        margin-right: 5px;
-    }
-
-    .submit-green-btn {
-        width: 100%;
-        background-color: #388E3C;
-        color: white;
-        padding: 18px;
-        border-radius: 16px;
-        border: none;
-        font-size: 18px;
-        font-weight: 700;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(56, 142, 60, 0.3);
-    }
-
-    .submit-green-btn:active {
-        transform: scale(0.98);
+    .add-page { padding: 20px 20px 110px; display: grid; gap: 18px; }
+    .scan-panel, .dynamic-form-shell { background: #fff; border-radius: 22px; padding: 18px; box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06); }
+    .scan-action, .scan-stop-btn, .submit-green-btn { width: 100%; border: none; border-radius: 16px; padding: 16px 18px; font-size: 16px; font-weight: 700; cursor: pointer; }
+    .scan-action { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; text-decoration: none; transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background-color 0.16s ease; }
+    .scan-action:hover, .scan-stop-btn:hover, .submit-green-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12); filter: brightness(0.99); }
+    .scan-action:active, .scan-stop-btn:active, .submit-green-btn:active { transform: scale(0.985); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14); }
+    .scan-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .scan-secondary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .scan-action-primary { background: #e8f3ea; color: #1f5f2f; }
+    .scan-action-link { background: #f8fafc; color: #0f172a; border: 1px solid #000; }
+    .scan-action-voice { background: #6d28d9; color: #fff; box-shadow: 0 8px 20px rgba(109, 40, 217, 0.22); }
+    .scan-action.is-active.scan-action-primary { background: #cfe8d4; color: #184d26; box-shadow: 0 10px 24px rgba(31, 95, 47, 0.16); }
+    .scan-action.is-active.scan-action-link { background: #e8eef5; color: #0b1220; border-color: #c3d1df; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10); }
+    .scan-result { margin: 6px 0 0; color: #4b5563; font-size: 14px; }
+    .scan-result.is-error { color: #b42318; font-weight: 700; }
+    .scanner-wrapper { margin-top: 2px; }
+    .scanner-video { width: 100%; min-height: 220px; border-radius: 18px; background: #000; }
+    .scan-stop-btn { margin-top: 12px; background: #f3f4f6; color: #111827; transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease; }
+    .manual-code-wrapper { margin-top: 4px; }
+    .section-head h3 { margin: 0 0 4px; font-size: 18px; }
+    .section-head p { margin: 0; color: #6b7280; font-size: 14px; }
+    .form-card { margin-top: 14px; border-top: 1px solid #eef2f7; padding-top: 14px; }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 8px; }
+    .required-star { color: #dc3545; margin-left: 4px; }
+    .custom-input { width: 100%; border: none; border-radius: 14px; background: #f8fafc; padding: 14px 15px; font-size: 15px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .submit-green-btn { background: #2f7d32; color: #fff; box-shadow: 0 8px 20px rgba(47, 125, 50, 0.22); }
+    @media (max-width: 640px) {
+        .two-col { grid-template-columns: 1fr; }
+        .scan-actions-row { grid-template-columns: 1fr; }
+        .scan-secondary-row { grid-template-columns: 1fr; }
     }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const barcodeBtn = document.getElementById("barcode-btn");
-    const resultBox = document.getElementById("scan-result");
-    const scannerWrapper = document.getElementById("scanner-wrapper");
-    const videoEl = document.getElementById("barcode-video");
-    const stopScanBtn = document.getElementById("stop-scan-btn");
+    const expenseData = JSON.parse(document.getElementById("inventory-expense-data").textContent);
+    const animalData = JSON.parse(document.getElementById("inventory-animal-data").textContent);
+    const seedData = JSON.parse(document.getElementById("inventory-seed-data").textContent);
+    const toolData = JSON.parse(document.getElementById("inventory-tool-data").textContent);
+    const farmData = JSON.parse(document.getElementById("inventory-farm-data").textContent);
+    const incomeCategories = JSON.parse(document.getElementById("inventory-income-categories").textContent);
+    const incomeData = JSON.parse(document.getElementById("inventory-income-data").textContent);
 
+    const scannerWrapper = document.getElementById("scanner-wrapper");
+    const barcodeBtn = document.getElementById("barcode-btn");
+    const stopScanBtn = document.getElementById("stop-scan-btn");
+    const manualCodeToggleBtn = document.getElementById("manual-code-toggle-btn");
+    const manualCodeWrapper = document.getElementById("manual-code-wrapper");
+    const manualCodeInput = document.getElementById("manual-code-input");
+    const manualCodeSubmitBtn = document.getElementById("manual-code-submit-btn");
+    const resultBox = document.getElementById("scan-result");
+    const videoEl = document.getElementById("barcode-video");
+    const formShell = document.getElementById("dynamic-form-shell");
+    const activeFormTitle = document.getElementById("active-form-title");
+    const activeFormSubtitle = document.getElementById("active-form-subtitle");
+
+    const allUnits = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
     let codeReader = null;
     let controls = null;
     let scanning = false;
 
-    async function fillProductData(scannedCode) {
-        resultBox.textContent = "Kod oxundu: " + scannedCode;
+    const panelTitles = { expense: "Xərc formu", income: "Gəlir formu", animal: "Heyvan formu", seed: "Toxum formu", tool: "Alət formu", farm: "Təsərrüfat formu" };
 
-        try {
-            const response = await fetch(
-                "{% url 'inventory:scan_lookup' %}?code=" + encodeURIComponent(scannedCode)
-            );
-            const data = await response.json();
-
-            if (!data.success) {
-                resultBox.textContent = data.message || "Kod tapılmadı.";
-                return;
+    function fillOptions(select, rows, placeholder, mapFn) {
+        select.innerHTML = "";
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = placeholder;
+        select.appendChild(first);
+        rows.forEach((row) => {
+            const option = document.createElement("option");
+            const mapped = mapFn(row);
+            option.value = mapped.value;
+            option.textContent = mapped.label;
+            if (mapped.dataset) {
+                Object.entries(mapped.dataset).forEach(([key, val]) => { option.dataset[key] = val; });
             }
+            select.appendChild(option);
+        });
+    }
 
-            document.getElementById("scan_code").value = data.item.code;
-            document.getElementById("category").value = data.item.category;
-            document.getElementById("product_name").value = data.item.name;
-            document.getElementById("price").value = data.item.default_price;
+    function setActionState(activeKey) {
+        barcodeBtn.classList.toggle("is-active", activeKey === "scan");
+        manualCodeToggleBtn.classList.toggle("is-active", activeKey === "manual");
+    }
 
-            resultBox.textContent = `Tapıldı: ${data.item.name} (${data.item.code})`;
-        } catch (error) {
-            resultBox.textContent = "Lookup zamanı xəta baş verdi.";
-            console.error("Lookup error:", error);
+    function syncAnimalIdentificationState() {
+        const quantityInput = document.getElementById("animal-quantity");
+        const idInput = document.getElementById("animal-id");
+        const parsedQuantity = parseInt(quantityInput.value || "1", 10);
+        if (Math.abs(parsedQuantity) !== 1) {
+            idInput.value = "";
+            idInput.disabled = true;
+            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
+            return;
         }
+        idInput.disabled = false;
+        idInput.placeholder = "Məsələn: AZ12345";
+    }
+
+    function setResultMessage(message, isError = false) {
+        resultBox.textContent = message;
+        resultBox.classList.toggle("is-error", Boolean(isError));
+    }
+
+    function syncRequiredStar(control) {
+        const group = control ? control.closest(".input-group") : null;
+        const label = group ? group.querySelector("label") : null;
+        if (!label) return;
+        const existing = label.querySelector(".required-star");
+        if (control.required) {
+            if (!existing) {
+                const star = document.createElement("span");
+                star.className = "required-star";
+                star.textContent = "*";
+                label.appendChild(star);
+            }
+            return;
+        }
+        if (existing) existing.remove();
+    }
+
+    function setControlRequired(control, isRequired) {
+        if (!control) return;
+        control.required = Boolean(isRequired);
+        syncRequiredStar(control);
+    }
+
+    function syncAllRequiredStars() {
+        document.querySelectorAll(".input-group input, .input-group select, .input-group textarea").forEach(syncRequiredStar);
+    }
+
+    function showPanel(formType, subtitle) {
+        formShell.hidden = false;
+        document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = panel.dataset.formPanel !== formType; });
+        activeFormTitle.textContent = panelTitles[formType] || "Form";
+        activeFormSubtitle.textContent = subtitle || "Scan nəticəsinə uyğun form açıldı.";
+        window.scrollTo({ top: formShell.offsetTop - 20, behavior: "smooth" });
+    }
+
+    function updateExpenseSubcategories(selectedSubcategoryId) {
+        const categorySelect = document.getElementById("expense-category");
+        const subcategorySelect = document.getElementById("expense-subcategory");
+        const manualWrap = document.getElementById("expense-manual-wrap");
+        const manualInput = document.getElementById("expense-manual-name");
+        const selectedCategory = expenseData.find((row) => String(row.id) === categorySelect.value);
+        const isOther = selectedCategory && selectedCategory.name.includes("Digər");
+        if (!selectedCategory) {
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        if (isOther) {
+            manualWrap.hidden = false;
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            subcategorySelect.value = "";
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, true);
+            return;
+        }
+        manualWrap.hidden = true;
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
+        setControlRequired(subcategorySelect, true);
+        setControlRequired(manualInput, false);
+    }
+
+    function updateAnimalSubcategories(selectedSubcategoryId) {
+        const categorySelect = document.getElementById("animal-category");
+        const subcategorySelect = document.getElementById("animal-subcategory");
+        const manualWrap = document.getElementById("animal-manual-wrap");
+        const manualInput = document.getElementById("animal-manual-name");
+        const selectedCategory = animalData.find((row) => String(row.id) === categorySelect.value);
+        const isOther = selectedCategory && selectedCategory.name.includes("Digər");
+        if (!selectedCategory) {
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        if (isOther) {
+            manualWrap.hidden = false;
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            subcategorySelect.value = "";
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, true);
+            return;
+        }
+        manualWrap.hidden = true;
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
+        setControlRequired(subcategorySelect, true);
+        setControlRequired(manualInput, false);
+    }
+
+    function updateSeedItems(selectedItemId) {
+        const categorySelect = document.getElementById("seed-category");
+        const itemSelect = document.getElementById("seed-item");
+        const manualWrap = document.getElementById("seed-manual-wrap");
+        const manualInput = document.getElementById("seed-manual-name");
+        const selectedCategory = seedData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(itemSelect, [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        fillOptions(itemSelect, selectedCategory.items || [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedItemId) itemSelect.value = String(selectedItemId);
+        const selectedText = itemSelect.options[itemSelect.selectedIndex]?.text || "";
+        const isOther = selectedCategory.name.includes("Digər") || selectedText === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+    }
+
+    function updateToolItems(selectedItemId) {
+        const categorySelect = document.getElementById("tool-category");
+        const itemSelect = document.getElementById("tool-item");
+        const manualWrap = document.getElementById("tool-manual-wrap");
+        const manualInput = document.getElementById("tool-manual-name");
+        const selectedCategory = toolData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(itemSelect, [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        fillOptions(itemSelect, selectedCategory.items || [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedItemId) itemSelect.value = String(selectedItemId);
+        const selectedText = itemSelect.options[itemSelect.selectedIndex]?.text || "";
+        const isOther = selectedCategory.name.includes("Digər") || selectedText === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+    }
+
+    function updateFarmItems(selectedItemId) {
+        const categorySelect = document.getElementById("farm-category");
+        const itemSelect = document.getElementById("farm-item");
+        const unitSelect = document.getElementById("farm-unit");
+        const manualWrap = document.getElementById("farm-manual-wrap");
+        const manualInput = document.getElementById("farm-manual-name");
+        const selectedCategory = farmData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(itemSelect, [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        fillOptions(itemSelect, selectedCategory.items || [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name, dataset: { unit: row.unit || "" } }));
+        if (selectedItemId) itemSelect.value = String(selectedItemId);
+        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+        const isOther = selectedCategory.name.includes("Digər") || selectedOption?.text === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+        if (selectedOption?.dataset.unit) unitSelect.value = selectedOption.dataset.unit;
+    }
+
+    function setIncomeUnits(units, preferred) {
+        const unitSelect = document.getElementById("income-unit");
+        fillOptions(unitSelect, units, "Vahid seçin", (value) => ({ value, label: value }));
+        unitSelect.value = preferred && units.includes(preferred) ? preferred : (units[0] || "");
+    }
+
+    function updateIncomeItems(selectedItemName) {
+        const categorySelect = document.getElementById("income-category");
+        const itemSelect = document.getElementById("income-item");
+        const manualWrap = document.getElementById("income-manual-wrap");
+        const manualInput = document.getElementById("income-manual-name");
+        const genderWrap = document.getElementById("income-gender-wrap");
+        const animalIdWrap = document.getElementById("income-animal-id-wrap");
+        const genderSelect = document.getElementById("income-gender");
+        const selectedCategory = categorySelect.value;
+        const row = incomeData[selectedCategory];
+        const type = row ? row.type : "other";
+        genderWrap.hidden = type !== "animal";
+        animalIdWrap.hidden = type !== "animal";
+        if (!row) {
+            fillOptions(itemSelect, [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            setControlRequired(genderSelect, false);
+            setIncomeUnits(allUnits, "kq");
+            return;
+        }
+        fillOptions(itemSelect, row.items || [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name, dataset: { unit: entry.unit || "" } }));
+        if (selectedItemName) itemSelect.value = selectedItemName;
+        const selectedText = itemSelect.options[itemSelect.selectedIndex]?.text || "";
+        const isOther = selectedCategory === "Digər" || selectedText === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+        setControlRequired(genderSelect, type === "animal");
+        let units = allUnits.slice();
+        const itemUnit = itemSelect.options[itemSelect.selectedIndex]?.dataset.unit || "";
+        if (type === "animal") units = ["ədəd"];
+        else if (type === "seed") units = ["kq", "ton", "qram"];
+        else if (itemUnit === "kq") units = ["kq", "ton", "qram"];
+        else if (itemUnit === "litr") units = ["litr", "ml"];
+        else if (itemUnit) units = [itemUnit];
+        setIncomeUnits(units, units[0]);
+    }
+
+    function initFormOptions() {
+        fillOptions(document.getElementById("expense-category"), expenseData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("animal-category"), animalData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("seed-category"), seedData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("tool-category"), toolData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("farm-category"), farmData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("income-category"), incomeCategories, "Kateqoriya seçin", (row) => ({ value: row, label: row }));
+        setIncomeUnits(allUnits, "kq");
+    }
+
+    function applyExpenseRecord(item) {
+        showPanel("expense", `${item.label} üçün xərc formu açıldı.`);
+        if (item.metadata?.category_id) {
+            document.getElementById("expense-category").value = String(item.metadata.category_id);
+            updateExpenseSubcategories(item.metadata.subcategory_id);
+        }
+        if (item.metadata?.subcategory_id) document.getElementById("expense-subcategory").value = String(item.metadata.subcategory_id);
+        if (item.target_type === "manual" || item.metadata?.manual_name) {
+            document.getElementById("expense-manual-wrap").hidden = false;
+            document.getElementById("expense-manual-name").value = item.metadata?.manual_name || item.label || "";
+        }
+        document.getElementById("expense-amount").value = item.metadata?.amount || "";
+        document.getElementById("expense-date").value = item.metadata?.date || "{{ today|date:'Y-m-d' }}";
+        document.getElementById("expense-additional-info").value = item.metadata?.additional_info || "";
+    }
+
+    function applyAnimalRecord(item) {
+        showPanel("animal", `${item.label} üçün heyvan formu açıldı.`);
+        if (item.metadata?.category_id) {
+            document.getElementById("animal-category").value = String(item.metadata.category_id);
+            updateAnimalSubcategories(item.metadata.subcategory_id);
+        }
+        if (item.metadata?.subcategory_id) document.getElementById("animal-subcategory").value = String(item.metadata.subcategory_id);
+        if (item.target_type === "manual" || item.metadata?.manual_name) {
+            document.getElementById("animal-manual-wrap").hidden = false;
+            document.getElementById("animal-manual-name").value = item.metadata?.manual_name || item.label || "";
+        }
+        document.getElementById("animal-quantity").value = item.metadata?.quantity || "1";
+        document.getElementById("animal-id").value = item.metadata?.identification_no || "";
+        syncAnimalIdentificationState();
+        document.getElementById("animal-gender").value = item.metadata?.gender || "erkek";
+        document.getElementById("animal-weight").value = item.metadata?.weight || "";
+        document.getElementById("animal-price").value = item.metadata?.price || "";
+        document.getElementById("animal-date").value = item.metadata?.date || "{{ today|date:'Y-m-d' }}";
+        document.getElementById("animal-additional-info").value = item.metadata?.additional_info || "";
+    }
+
+    function applySeedRecord(item) {
+        showPanel("seed", `${item.label} üçün toxum formu açıldı.`);
+        if (item.metadata?.category_id) {
+            document.getElementById("seed-category").value = String(item.metadata.category_id);
+            updateSeedItems(item.metadata.item_id);
+        }
+        if (item.metadata?.item_id) document.getElementById("seed-item").value = String(item.metadata.item_id);
+        if (item.target_type === "manual" || item.metadata?.manual_name) {
+            document.getElementById("seed-manual-wrap").hidden = false;
+            document.getElementById("seed-manual-name").value = item.metadata?.manual_name || item.label || "";
+        }
+        document.getElementById("seed-quantity").value = item.metadata?.quantity || "";
+        document.getElementById("seed-unit").value = item.metadata?.unit || "kg";
+        document.getElementById("seed-price").value = item.metadata?.price || "";
+        document.getElementById("seed-date").value = item.metadata?.date || "{{ today|date:'Y-m-d' }}";
+        document.getElementById("seed-additional-info").value = item.metadata?.additional_info || "";
+    }
+
+    function applyToolRecord(item) {
+        showPanel("tool", `${item.label} üçün alət formu açıldı.`);
+        if (item.metadata?.category_id) {
+            document.getElementById("tool-category").value = String(item.metadata.category_id);
+            updateToolItems(item.metadata.item_id);
+        }
+        if (item.metadata?.item_id) document.getElementById("tool-item").value = String(item.metadata.item_id);
+        if (item.target_type === "manual" || item.metadata?.manual_name) {
+            document.getElementById("tool-manual-wrap").hidden = false;
+            document.getElementById("tool-manual-name").value = item.metadata?.manual_name || item.label || "";
+        }
+        document.getElementById("tool-quantity").value = item.metadata?.quantity || "";
+        document.getElementById("tool-price").value = item.metadata?.price || "";
+        document.getElementById("tool-date").value = item.metadata?.date || "{{ today|date:'Y-m-d' }}";
+        document.getElementById("tool-additional-info").value = item.metadata?.additional_info || "";
+    }
+
+    function applyFarmRecord(item) {
+        showPanel("farm", `${item.label} üçün təsərrüfat formu açıldı.`);
+        if (item.metadata?.category_id) {
+            document.getElementById("farm-category").value = String(item.metadata.category_id);
+            updateFarmItems(item.metadata.item_id);
+        }
+        if (item.metadata?.item_id) document.getElementById("farm-item").value = String(item.metadata.item_id);
+        if (item.metadata?.unit) document.getElementById("farm-unit").value = item.metadata.unit;
+        if (item.target_type === "manual" || item.metadata?.manual_name) {
+            document.getElementById("farm-manual-wrap").hidden = false;
+            document.getElementById("farm-manual-name").value = item.metadata?.manual_name || item.label || "";
+        }
+        document.getElementById("farm-quantity").value = item.metadata?.quantity || "";
+        document.getElementById("farm-price").value = item.metadata?.price || "";
+        document.getElementById("farm-date").value = item.metadata?.date || "{{ today|date:'Y-m-d' }}";
+        document.getElementById("farm-additional-info").value = item.metadata?.additional_info || "";
+    }
+
+    function applyIncomeRecord(item) {
+        showPanel("income", `${item.label} üçün gəlir formu açıldı.`);
+        const categoryName = item.metadata?.category_name || "";
+        if (categoryName) {
+            document.getElementById("income-category").value = categoryName;
+            updateIncomeItems(item.metadata?.item_name || item.label);
+        }
+        if (item.metadata?.item_name) document.getElementById("income-item").value = item.metadata.item_name;
+        if (item.metadata?.unit) document.getElementById("income-unit").value = item.metadata.unit;
+        if (item.target_type === "manual" || item.metadata?.manual_name) {
+            document.getElementById("income-manual-wrap").hidden = false;
+            document.getElementById("income-manual-name").value = item.metadata?.manual_name || item.label || "";
+        }
+        document.getElementById("income-quantity").value = item.metadata?.quantity || "";
+        document.getElementById("income-gender").value = item.metadata?.gender || "";
+        document.getElementById("income-animal-id").value = item.metadata?.identification_no || "";
+        document.getElementById("income-amount").value = item.metadata?.amount || "";
+        document.getElementById("income-date").value = item.metadata?.date || "{{ today|date:'Y-m-d' }}";
+        document.getElementById("income-additional-info").value = item.metadata?.additional_info || "";
+    }
+
+    function applyScanItem(item) {
+        const manualItem = { label: item.label, metadata: { manual_name: item.name, unit: item.unit || "", category: item.category }, target_type: "manual", form_type: item.form_type };
+        if (item.default_price) {
+            if (item.form_type === "expense") document.getElementById("expense-amount").value = item.default_price;
+            else if (item.form_type === "animal") document.getElementById("animal-price").value = item.default_price;
+            else if (item.form_type === "seed") document.getElementById("seed-price").value = item.default_price;
+            else if (item.form_type === "tool") document.getElementById("tool-price").value = item.default_price;
+            else if (item.form_type === "farm") document.getElementById("farm-price").value = item.default_price;
+            else if (item.form_type === "income") document.getElementById("income-amount").value = item.default_price;
+        }
+        if (item.form_type === "expense") applyExpenseRecord(manualItem);
+        if (item.form_type === "animal") applyAnimalRecord(manualItem);
+        if (item.form_type === "seed") applySeedRecord(manualItem);
+        if (item.form_type === "tool") applyToolRecord(manualItem);
+        if (item.form_type === "farm") applyFarmRecord(manualItem);
+        if (item.form_type === "income") applyIncomeRecord({ label: item.label, metadata: { category_name: "Digər", manual_name: item.name, unit: item.unit || "ədəd" }, target_type: "manual", form_type: "income" });
+    }
+
+    async function fillProductData(scannedCode) {
+        setResultMessage("Kod oxundu: " + scannedCode);
+        const response = await fetch("{% url 'inventory:scan_lookup' %}?code=" + encodeURIComponent(scannedCode));
+        const data = await response.json();
+        if (!data.success) {
+            const warningMessage = data.message || "Kod tapılmadı.";
+            setResultMessage(warningMessage, true);
+            window.alert(warningMessage);
+            return;
+        }
+        const item = data.item;
+        if (data.source === "scan_item") applyScanItem(item);
+        else if (item.form_type === "expense") applyExpenseRecord(item);
+        else if (item.form_type === "animal") applyAnimalRecord(item);
+        else if (item.form_type === "seed") applySeedRecord(item);
+        else if (item.form_type === "tool") applyToolRecord(item);
+        else if (item.form_type === "farm") applyFarmRecord(item);
+        else if (item.form_type === "income") applyIncomeRecord(item);
+        setResultMessage(`Tapıldı: ${item.label} (${item.code})`);
+    }
+
+    async function submitManualCode() {
+        const code = manualCodeInput.value.trim();
+        if (!code) {
+            setResultMessage("Kodu yazın.", true);
+            window.alert("Kodu yazın.");
+            return;
+        }
+        await fillProductData(code);
     }
 
     async function stopScanner(showMessage = true) {
         scanning = false;
-
-        if (controls) {
-            controls.stop();
-            controls = null;
-        }
-
+        if (controls) { controls.stop(); controls = null; }
         if (videoEl.srcObject) {
-            videoEl.srcObject.getTracks().forEach(track => track.stop());
+            videoEl.srcObject.getTracks().forEach((track) => track.stop());
             videoEl.srcObject = null;
         }
-
-        scannerWrapper.style.display = "none";
-
-        if (showMessage) {
-            resultBox.textContent = "Skan dayandırıldı.";
-        }
+        scannerWrapper.hidden = true;
+        setActionState(manualCodeWrapper.hidden ? null : "manual");
+        if (showMessage) setResultMessage("Skan dayandırıldı.");
     }
 
     async function startScanner() {
-        resultBox.textContent = "Düymə basıldı...";
-
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            resultBox.textContent = "Bu cihazda kamera dəstəklənmir.";
-            return;
-        }
-
-        if (!window.ZXingBrowser) {
-            resultBox.textContent = "ZXingBrowser yüklənmədi.";
-            return;
-        }
-
-        if (scanning) {
-            resultBox.textContent = "Skan artıq işləyir.";
-            return;
-        }
-
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setResultMessage("Bu cihazda kamera dəstəklənmir.", true); return; }
+        if (!window.ZXingBrowser) { setResultMessage("Scanner kitabxanası yüklənmədi.", true); return; }
+        if (scanning) { setResultMessage("Skan artıq işləyir."); return; }
         try {
-            scannerWrapper.style.display = "block";
-            resultBox.textContent = "Kamera açılır...";
-
+            manualCodeWrapper.hidden = true;
+            scannerWrapper.hidden = false;
+            setActionState("scan");
+            setResultMessage("Kamera açılır...");
             codeReader = new ZXingBrowser.BrowserMultiFormatReader();
             scanning = true;
-
             const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
-
-            if (!devices.length) {
-                resultBox.textContent = "Kamera tapılmadı.";
-                scanning = false;
-                return;
-            }
-
-            const backCamera = devices.find(device =>
-                /back|rear|environment/i.test(device.label)
-            );
+            if (!devices.length) { setResultMessage("Kamera tapılmadı.", true); scanning = false; return; }
+            const backCamera = devices.find((device) => /back|rear|environment/i.test(device.label));
             const selectedDeviceId = backCamera ? backCamera.deviceId : devices[0].deviceId;
-
-            controls = await codeReader.decodeFromVideoDevice(
-                selectedDeviceId,
-                videoEl,
-                async (result, error, localControls) => {
-                    if (result) {
-                        const scannedCode = result.getText();
-                        if (localControls) {
-                            localControls.stop();
-                        }
-                        controls = null;
-                        await stopScanner(false);
-                        await fillProductData(scannedCode);
-                        return;
-                    }
-
-                    if (error && !(error instanceof ZXingBrowser.NotFoundException)) {
-                        console.error("Scan error:", error);
-                    }
+            controls = await codeReader.decodeFromVideoDevice(selectedDeviceId, videoEl, async (result, error, localControls) => {
+                if (result) {
+                    if (localControls) localControls.stop();
+                    controls = null;
+                    await stopScanner(false);
+                    await fillProductData(result.getText());
+                    return;
                 }
-            );
-
-            resultBox.textContent = "Barkodu kameraya yaxınlaşdırın.";
+                if (error && !(error instanceof ZXingBrowser.NotFoundException)) console.error("Scan error:", error);
+            });
+            setResultMessage("Barkodu kameraya yaxınlaşdırın.");
         } catch (error) {
+            scannerWrapper.hidden = true;
             scanning = false;
-            scannerWrapper.style.display = "none";
-            resultBox.textContent = "Scanner başlatmaq olmadı.";
-            console.error("ZXing start error:", error);
+            setResultMessage("Scanner başlatmaq olmadı.", true);
+            console.error(error);
         }
     }
 
+    document.getElementById("expense-category").addEventListener("change", () => updateExpenseSubcategories());
+    document.getElementById("animal-category").addEventListener("change", () => updateAnimalSubcategories());
+    document.getElementById("seed-category").addEventListener("change", () => updateSeedItems());
+    document.getElementById("seed-item").addEventListener("change", () => updateSeedItems(document.getElementById("seed-item").value));
+    document.getElementById("tool-category").addEventListener("change", () => updateToolItems());
+    document.getElementById("tool-item").addEventListener("change", () => updateToolItems(document.getElementById("tool-item").value));
+    document.getElementById("farm-category").addEventListener("change", () => updateFarmItems());
+    document.getElementById("farm-item").addEventListener("change", () => updateFarmItems(document.getElementById("farm-item").value));
+    document.getElementById("income-category").addEventListener("change", () => updateIncomeItems());
+    document.getElementById("income-item").addEventListener("change", () => updateIncomeItems(document.getElementById("income-item").value));
+
+    document.getElementById("animal-quantity").addEventListener("input", syncAnimalIdentificationState);
+
     barcodeBtn.addEventListener("click", startScanner);
-    stopScanBtn.addEventListener("click", function () {
-        stopScanner(true);
-    });
-
-    window.addEventListener("beforeunload", function () {
+    stopScanBtn.addEventListener("click", () => stopScanner(true));
+    manualCodeToggleBtn.addEventListener("click", function () {
         stopScanner(false);
+        manualCodeWrapper.hidden = !manualCodeWrapper.hidden;
+        setActionState(manualCodeWrapper.hidden ? null : "manual");
+        if (!manualCodeWrapper.hidden) {
+            setResultMessage("Kodu və ya ID-ni əl ilə yazın.");
+            manualCodeInput.focus();
+        } else if (!formShell.hidden) {
+            setResultMessage("Form açıqdır.");
+        } else {
+            setResultMessage("Form yalnız barkod scan olunandan sonra görünəcək.");
+        }
     });
+    manualCodeSubmitBtn.addEventListener("click", submitManualCode);
+    manualCodeInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            submitManualCode();
+        }
+    });
+    window.addEventListener("beforeunload", () => stopScanner(false));
 
-    resultBox.textContent = "Scanner hazırdır.";
+    initFormOptions();
+    syncAllRequiredStars();
+    updateExpenseSubcategories();
+    updateAnimalSubcategories();
+    updateSeedItems();
+    updateToolItems();
+    updateFarmItems();
+    updateIncomeItems();
+    syncAnimalIdentificationState();
 });
 </script>
 {% endblock %}

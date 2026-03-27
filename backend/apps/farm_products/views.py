@@ -241,6 +241,7 @@ def get_farm_product_items(request):
 
 @login_required
 def farm_product_create(request):
+    redirect_to = request.POST.get("next") or "farm_products:product_list"
     if request.method == "POST":
         item_id = request.POST.get("item")
         quantity = request.POST.get("quantity")
@@ -253,14 +254,14 @@ def farm_product_create(request):
 
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, "Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
-            return redirect("farm_products:product_list")
+            return redirect(redirect_to)
 
         price = price if price and price.strip() else 0
         try:
             quantity_val = Decimal(str(quantity))
         except (InvalidOperation, TypeError, ValueError):
             messages.error(request, "Miqdar düzgün deyil.")
-            return redirect("farm_products:product_list")
+            return redirect(redirect_to)
 
         def allowed_units_for_item(item_obj):
             forage_items = {"yonca", "koronilla", "seradella"}
@@ -284,13 +285,13 @@ def farm_product_create(request):
             if item and item.name == "Digər":
                 if not manual_name:
                     messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
-                    return redirect("farm_products:product_list")
+                    return redirect(redirect_to)
                 effective_manual = manual_name
             if item:
                 allowed_units = allowed_units_for_item(item)
                 if unit not in allowed_units:
                     messages.error(request, "Ölçü vahidi bu kateqoriya üçün uyğun deyil.")
-                    return redirect("farm_products:product_list")
+                    return redirect(redirect_to)
                 if item.unit and item.unit not in {"kq", "litr"}:
                     effective_unit = item.unit
                 if item.unit and item.unit in {"kq", "litr"}:
@@ -310,7 +311,7 @@ def farm_product_create(request):
                 needed_base = _farm_to_base(abs(quantity_val), effective_unit, base_unit)
                 if available_base < needed_base:
                     messages.error(request, "Stokda kifayət qədər məhsul yoxdur.")
-                    return redirect("farm_products:product_list")
+                    return redirect(redirect_to)
 
             merged = _merge_manual_farm_product(
                 request.user,
@@ -323,10 +324,10 @@ def farm_product_create(request):
             ) if effective_manual else None
             if merged == "deleted":
                 add_crud_success_message(request, "FarmProduct", "delete")
-                return redirect("farm_products:product_list")
+                return redirect(redirect_to)
             if merged:
                 add_crud_success_message(request, "FarmProduct", "update")
-                return redirect("farm_products:product_list")
+                return redirect(redirect_to)
 
             product = FarmProduct.objects.create(
                 item=item,
@@ -347,7 +348,7 @@ def farm_product_create(request):
                 if amount_val <= 0:
                     messages.error(request, "Gəlir üçün məbləğ daxil edin.")
                     product.delete()
-                    return redirect("farm_products:product_list")
+                    return redirect(redirect_to)
 
                 category_name = item.category.name if item and item.category else "Digər"
                 Income.objects.create(
@@ -390,9 +391,9 @@ def farm_product_create(request):
         else:
             add_crud_success_message(request, "FarmProduct", "create")
 
-        return redirect("farm_products:product_list")
+        return redirect(redirect_to)
 
-    return redirect("farm_products:product_list")
+    return redirect(redirect_to)
 
 
 @login_required

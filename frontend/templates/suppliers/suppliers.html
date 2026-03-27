@@ -2,37 +2,65 @@
 {% load static %}
 
 {% block content %}
-<div class="suppliers-page">
-    <!-- Header Section -->
-    <header class="page-header green-header">
-        <a href="{% url 'dashboard' %}" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
-        <div class="header-titles">
-            <h1>Təchizatçılar 🤝</h1>
-            <p>Əlaqə saxladığınız satıcılar</p>
+<header class="main-header">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'dashboard' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Təchizatçılar</span>
+            </a>
         </div>
-    </header>
+    </div>
+</header>
 
-    <!-- Search Section -->
+<main class="main-content suppliers-page" style="position: relative; z-index: 10;">
+    <div class="action-buttons-container" style="padding-top: 0; margin-bottom: 14px;">
+        <a href="{% url 'supplier_add' %}" class="btn-primary-large">
+            <i class="fa-solid fa-plus"></i> Təchizatçı Əlavə Et
+        </a>
+    </div>
+
     <div class="search-section">
-        <form method="get" action="{% url 'suppliers_list' %}">
-            <div class="search-bar">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" name="q" placeholder="Təchizatçı axtar..." value="{{ search_query }}">
+        <form method="get" action="{% url 'suppliers_list' %}" id="supplier-filter-form">
+            <div class="supplier-filter-row">
+                <div class="supplier-category-filter click-focus">
+                    <i class="fa-solid fa-filter"></i>
+                    <select name="category" id="supplier-category-filter">
+                        <option value="">Bütün kateqoriyalar</option>
+                        {% for category in supplier_categories %}
+                        <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="supplier-search-input" type="text" name="q" placeholder="Təchizatçı axtar..." value="{{ search_query }}" autocomplete="off">
+                </div>
             </div>
         </form>
     </div>
 
     <!-- Suppliers List -->
-    <div class="suppliers-list">
+    <div class="suppliers-list" id="suppliers-list">
         {% for supplier in suppliers %}
-        <div class="supplier-card">
+        <div class="supplier-card" data-search="{{ supplier.name|lower }} {{ supplier.display_category|lower }} {{ supplier.location|lower }} {{ supplier.formatted_phone|lower }} {{ supplier.additional_info|default:''|lower }}" data-category="{{ supplier.category }}">
             <div class="supplier-icon-wrapper">
                 {% if supplier.category == 'Toxum' %}
                     <span class="supplier-icon toxum-icon">🌾</span>
                 {% elif supplier.category == 'Gübrə' %}
                     <span class="supplier-icon gubre-icon">🧪</span>
+                {% elif supplier.category == 'Pestisid' %}
+                    <span class="supplier-icon pestisid-icon">🧴</span>
+                {% elif supplier.category == 'Baytarlıq' %}
+                    <span class="supplier-icon baytarliq-icon">💉</span>
+                {% elif supplier.category == 'Yem' %}
+                    <span class="supplier-icon yem-icon">🌿</span>
                 {% elif supplier.category == 'Alətlər' %}
                     <span class="supplier-icon alet-icon">🧰</span>
+                {% elif supplier.category == 'Kənd Texnikası' %}
+                    <span class="supplier-icon texnika-icon">🚜</span>
+                {% elif supplier.category == 'Suvarma' %}
+                    <span class="supplier-icon suvarma-icon">💧</span>
                 {% elif supplier.category == 'Heyvan' %}
                     <span class="supplier-icon heyvan-icon">🐄</span>
                 {% else %}
@@ -43,14 +71,13 @@
             <div class="supplier-info">
                 <div class="supplier-name-row">
                     <h3>{{ supplier.name }}</h3>
-                    {% if supplier.is_favorite %}
-                        <span class="star-icon">⭐</span>
-                    {% endif %}
                 </div>
                 
                 <div class="supplier-meta-row">
-                    <span class="supplier-tag {{ supplier.category|lower|default:'diger' }}-tag">{{ supplier.category }}</span>
+                    <span class="supplier-tag {{ supplier.category_css_class }}-tag">{{ supplier.display_category }}</span>
+                    {% if supplier.location %}
                     <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> {{ supplier.location }}</span>
+                    {% endif %}
                 </div>
                 
                 <div class="supplier-rating">
@@ -63,98 +90,154 @@
                     {% endfor %}
                 </div>
                 
+                {% if supplier.last_order_date %}
                 <div class="supplier-date">
                     Son sifariş: {{ supplier.last_order_date|date:"Y-m-d" }}
                 </div>
+                {% endif %}
+                {% if supplier.phone %}
+                <div class="supplier-phone">
+                    <i class="fa-solid fa-phone-volume"></i>
+                    <span>{{ supplier.formatted_phone }}</span>
+                </div>
+                {% endif %}
+                {% if supplier.additional_info %}
+                <div class="supplier-note">
+                    {{ supplier.additional_info }}
+                </div>
+                {% endif %}
             </div>
             
             <div class="supplier-action">
+                <a href="{% url 'supplier_edit' supplier.pk %}" class="call-btn supplier-edit-btn"><i class="fa-solid fa-pen"></i></a>
+                <form method="post" action="{% url 'supplier_delete' supplier.pk %}" data-sync-entity="supplier" data-sync-action="delete" data-sync-reset="false" style="display: inline-flex; margin: 0;" onsubmit="return confirm('Bu təchizatçı silinsin?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="record_id" value="{{ supplier.pk }}">
+                    <input type="hidden" name="record_version" value="{{ supplier.updated_at|date:'c' }}">
+                    <button type="submit" class="call-btn supplier-delete-btn"><i class="fa-solid fa-trash"></i></button>
+                </form>
                 <a href="tel:{{ supplier.phone }}" class="call-btn"><i class="fa-solid fa-phone"></i></a>
             </div>
         </div>
         {% empty %}
-        <!-- Dummy Data if no DB entries yet, to match the UI precisely -->
-        <div class="supplier-card">
-            <div class="supplier-icon-wrapper"><span class="supplier-icon toxum-icon">🌾</span></div>
+        <div class="supplier-card supplier-empty-card" id="suppliers-empty-server">
+            <div class="supplier-icon-wrapper">
+                <span class="supplier-icon diger-icon">🔎</span>
+            </div>
             <div class="supplier-info">
                 <div class="supplier-name-row">
-                    <h3>Əhməd Toxumçuluq</h3>
-                    <span class="star-icon">⭐</span>
+                    <h3>
+                        {% if search_query or selected_category %}
+                        Nəticə tapılmadı
+                        {% else %}
+                        Hələ təchizatçı yoxdur
+                        {% endif %}
+                    </h3>
                 </div>
                 <div class="supplier-meta-row">
-                    <span class="supplier-tag toxum-tag">Toxum</span>
-                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Gəncə</span>
+                    <span class="supplier-location supplier-empty-text">
+                        {% if search_query or selected_category %}
+                        Axtarışa uyğun təchizatçı tapılmadı.
+                        {% else %}
+                        İlk təchizatçınızı əlavə edin.
+                        {% endif %}
+                    </span>
                 </div>
-                <div class="supplier-rating">
-                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i>
-                </div>
-                <div class="supplier-date">Son sifariş: 2024-12-01</div>
+                {% if search_query or selected_category %}
+                <div class="supplier-date">Başqa açar söz ilə yenidən yoxlayın.</div>
+                {% else %}
+                <div class="supplier-date">Aşağıdakı düymə ilə yeni təchizatçı yarada bilərsiniz.</div>
+                {% endif %}
             </div>
-            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
-        </div>
-        
-        <div class="supplier-card">
-            <div class="supplier-icon-wrapper"><span class="supplier-icon gubre-icon">🧪</span></div>
-            <div class="supplier-info">
-                <div class="supplier-name-row">
-                    <h3>Bayram Aqro</h3>
-                    <span class="star-icon">⭐</span>
-                </div>
-                <div class="supplier-meta-row">
-                    <span class="supplier-tag gubre-tag">Gübrə</span>
-                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Bərdə</span>
-                </div>
-                <div class="supplier-rating">
-                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-regular fa-star star-empty"></i>
-                </div>
-                <div class="supplier-date">Son sifariş: 2024-11-15</div>
+            <div class="supplier-action">
+                {% if search_query or selected_category %}
+                <a href="{% url 'suppliers_list' %}" class="call-btn supplier-reset-btn"><i class="fa-solid fa-rotate-left"></i></a>
+                {% else %}
+                <a href="{% url 'supplier_add' %}" class="call-btn supplier-reset-btn"><i class="fa-solid fa-plus"></i></a>
+                {% endif %}
             </div>
-            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
-        </div>
-
-        <div class="supplier-card">
-            <div class="supplier-icon-wrapper"><span class="supplier-icon alet-icon">🧰</span></div>
-            <div class="supplier-info">
-                <div class="supplier-name-row">
-                    <h3>Vüsal Alət Mağazası</h3>
-                </div>
-                <div class="supplier-meta-row">
-                    <span class="supplier-tag aletler-tag">Alətlər</span>
-                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Mingəçevir</span>
-                </div>
-                <div class="supplier-rating">
-                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-regular fa-star star-empty"></i>
-                </div>
-                <div class="supplier-date">Son sifariş: 2024-10-20</div>
-            </div>
-            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
-        </div>
-
-        <div class="supplier-card">
-            <div class="supplier-icon-wrapper"><span class="supplier-icon heyvan-icon">🐄</span></div>
-            <div class="supplier-info">
-                <div class="supplier-name-row">
-                    <h3>Rəhim Heyvan Bazarı</h3>
-                </div>
-                <div class="supplier-meta-row">
-                    <span class="supplier-tag heyvan-tag">Heyvan</span>
-                    <span class="supplier-location"><i class="fa-solid fa-location-dot"></i> Şəmkir</span>
-                </div>
-                <div class="supplier-rating">
-                    <i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-solid fa-star star-filled"></i><i class="fa-regular fa-star star-empty"></i><i class="fa-regular fa-star star-empty"></i>
-                </div>
-                <div class="supplier-date">Son sifariş: 2024-09-05</div>
-            </div>
-            <div class="supplier-action"><a href="tel:" class="call-btn"><i class="fa-solid fa-phone"></i></a></div>
         </div>
         {% endfor %}
     </div>
-
-    <!-- Bottom Add Button -->
-    <div class="action-buttons-container">
-        <a href="{% url 'supplier_add' %}" class="btn-primary-large">
-            <i class="fa-solid fa-plus"></i> Təchizatçı Əlavə Et
-        </a>
+    <div class="supplier-card supplier-empty-card" id="suppliers-empty-client" style="display: none;">
+        <div class="supplier-icon-wrapper">
+            <span class="supplier-icon diger-icon">🔎</span>
+        </div>
+        <div class="supplier-info">
+            <div class="supplier-name-row">
+                <h3>Nəticə tapılmadı</h3>
+            </div>
+            <div class="supplier-meta-row">
+                <span class="supplier-location supplier-empty-text">Axtarışa uyğun təchizatçı tapılmadı.</span>
+            </div>
+            <div class="supplier-date">Başqa açar söz və ya kateqoriya ilə yenidən yoxlayın.</div>
+        </div>
+        <div class="supplier-action">
+            <button type="button" class="call-btn supplier-reset-btn" id="supplier-filter-reset">
+                <i class="fa-solid fa-rotate-left"></i>
+            </button>
+        </div>
     </div>
-</div>
+
+</main>
+
+<script>
+    (function () {
+        const form = document.getElementById('supplier-filter-form');
+        const searchInput = document.getElementById('supplier-search-input');
+        const categorySelect = document.getElementById('supplier-category-filter');
+        const cards = Array.from(document.querySelectorAll('#suppliers-list .supplier-card:not(.supplier-empty-card)'));
+        const serverEmpty = document.getElementById('suppliers-empty-server');
+        const clientEmpty = document.getElementById('suppliers-empty-client');
+        const resetButton = document.getElementById('supplier-filter-reset');
+
+        if (!form || !searchInput || !categorySelect || cards.length === 0) return;
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+        });
+
+        const normalize = (value) =>
+            (value || '')
+                .toLocaleLowerCase('az')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+        function applyFilter() {
+            const query = normalize(searchInput.value);
+            const category = categorySelect.value;
+            let visibleCount = 0;
+
+            cards.forEach((card) => {
+                const searchText = normalize(card.dataset.search);
+                const matchesSearch = !query || searchText.includes(query);
+                const matchesCategory = !category || card.dataset.category === category;
+                const visible = matchesSearch && matchesCategory;
+                card.style.display = visible ? '' : 'none';
+                if (visible) visibleCount += 1;
+            });
+
+            if (serverEmpty) {
+                serverEmpty.style.display = visibleCount === 0 ? 'none' : '';
+            }
+            if (clientEmpty) {
+                clientEmpty.style.display = visibleCount === 0 ? '' : 'none';
+            }
+        }
+
+        searchInput.addEventListener('input', applyFilter);
+        categorySelect.addEventListener('change', applyFilter);
+
+        if (resetButton) {
+            resetButton.addEventListener('click', function () {
+                searchInput.value = '';
+                categorySelect.value = '';
+                applyFilter();
+                searchInput.focus();
+            });
+        }
+
+        applyFilter();
+    })();
+</script>
 {% endblock %}

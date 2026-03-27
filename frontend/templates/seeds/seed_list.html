@@ -116,12 +116,12 @@
                             {% if seed.item and seed.item.name != "Digər" %}
                             {{ seed.item.name }}
                             <span style="font-size: 15px; font-weight: 400; color: #666;">
-                                ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
+                                ({{ seed.display_category_name|default:"Kateqoriya yoxdur" }})
                             </span>
                             {% elif seed.item and seed.item.name == "Digər" %}
                             {{ seed.manual_name }}
                             <span style="font-size: 15px; font-weight: 400; color: #666;">
-                                ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
+                                ({{ seed.display_category_name|default:"Kateqoriya yoxdur" }})
                             </span>
                             {% else %}
                             {{ seed.manual_name }}

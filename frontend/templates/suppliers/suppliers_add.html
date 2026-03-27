@@ -2,74 +2,107 @@
 {% load static %}
 
 {% block content %}
-<div class="suppliers-page">
-    <header class="page-header green-header">
-        <a href="{% url 'suppliers_list' %}" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
-        <div class="header-titles">
-            <h1>Təchizatçı Əlavə Et</h1>
-            <p>Sistemə yeni təchizatçı əlavə edin</p>
+<header class="main-header">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'suppliers_list' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>{% if is_edit %}Təchizatçını Redaktə Et{% else %}Təchizatçı Əlavə Et{% endif %}</span>
+            </a>
         </div>
-    </header>
+    </div>
+</header>
 
-    <div class="form-container-white" style="margin: 20px;">
-        <form method="post" action="{% url 'supplier_add' %}">
+<main class="main-content suppliers-page" style="position: relative; z-index: 10;">
+    <div class="form-container-white">
+        <form method="post" action="{% if is_edit %}{% url 'supplier_edit' supplier.pk %}{% else %}{% url 'supplier_add' %}{% endif %}">
             {% csrf_token %}
             
-            <div class="form-group">
-                <label>Təchizatçı Adı</label>
-                <input type="text" name="name" class="custom-input click-focus" required placeholder="Məsələn: Əhməd Toxumçuluq">
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Təchizatçı Adı <span style="color: #dc3545;">*</span></label>
+                    <input type="text" name="name" class="custom-input click-focus" required placeholder="Məsələn: Əhməd Toxumçuluq" value="{{ supplier.name|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <div class="click-focus">
+                        <select name="category" id="supplier-category-select" class="custom-input" required>
+                            <option value="" disabled {% if not supplier.category %}selected{% endif %}>Kateqoriya seçin</option>
+                            {% for category in supplier_categories %}
+                            <option value="{{ category }}" {% if supplier.category == category %}selected{% endif %}>{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Kateqoriya</label>
-                <div class="click-focus">
-                    <select name="category" class="custom-input" required>
-                        <option value="Digər">Digər</option>
-                        <option value="Toxum">Toxum</option>
-                        <option value="Gübrə">Gübrə</option>
-                        <option value="Alətlər">Alətlər</option>
-                        <option value="Heyvan">Heyvan</option>
-                    </select>
+            <div class="form-group" id="supplier-manual-category-group" {% if supplier.category != 'Digər' %}style="display: none;"{% endif %}>
+                <label>Kateqoriya Adı (Digər)</label>
+                <input type="text" name="manual_category" id="supplier-manual-category-input" class="custom-input click-focus" placeholder="Kateqoriya adını daxil edin" value="{{ supplier.manual_category|default:'' }}">
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Ünvan</label>
+                    <input type="text" name="location" class="custom-input click-focus" placeholder="Məsələn: Gəncə" value="{{ supplier.location|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Reytinq <span style="color: #dc3545;">*</span></label>
+                    <div class="click-focus">
+                        <select name="rating" class="custom-input" required>
+                            <option value="5" {% if supplier.rating|default:5 == 5 %}selected{% endif %}>⭐⭐⭐⭐⭐ (5/5)</option>
+                            <option value="4" {% if supplier.rating == 4 %}selected{% endif %}>⭐⭐⭐⭐ (4/5)</option>
+                            <option value="3" {% if supplier.rating == 3 %}selected{% endif %}>⭐⭐⭐ (3/5)</option>
+                            <option value="2" {% if supplier.rating == 2 %}selected{% endif %}>⭐⭐ (2/5)</option>
+                            <option value="1" {% if supplier.rating == 1 %}selected{% endif %}>⭐ (1/5)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Telefon Nömrəsi</label>
+                    <input type="text" name="phone" class="custom-input click-focus" placeholder="Məsələn: +994 50 123 45 67" value="{% if supplier %}{{ supplier.formatted_phone }}{% endif %}">
+                </div>
+
+                <div class="form-group">
+                    <label>Son Sifariş Tarixi</label>
+                    <input type="date" name="last_order_date" class="custom-input click-focus" value="{{ supplier.last_order_date|date:'Y-m-d' }}">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Ünvan</label>
-                <input type="text" name="location" class="custom-input click-focus" required placeholder="Məsələn: Gəncə">
-            </div>
-
-            <div class="form-group">
-                <label>Reytinq</label>
-                <div class="click-focus">
-                    <select name="rating" class="custom-input">
-                        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
-                        <option value="4">⭐⭐⭐⭐ (4/5)</option>
-                        <option value="3">⭐⭐⭐ (3/5)</option>
-                        <option value="2">⭐⭐ (2/5)</option>
-                        <option value="1">⭐ (1/5)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Telefon Nömrəsi</label>
-                <input type="text" name="phone" class="custom-input click-focus" required placeholder="Məsələn: +994 50 123 45 67">
-            </div>
-
-            <div class="form-group">
-                <label>Son Sifariş Tarixi (istəyə bağlı)</label>
-                <input type="date" name="last_order_date" class="custom-input click-focus">
-            </div>
-
-            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" name="is_favorite" id="is_favorite" style="width: 20px; height: 20px; accent-color: var(--primary-green);">
-                <label for="is_favorite" style="margin: 0; font-weight: 500; cursor: pointer;">Seçilmiş Təchizatçı kimi qeyd et</label>
+                <label>Əlavə Məlumat</label>
+                <textarea name="additional_info" class="custom-input click-focus" rows="4" placeholder="Məsələn: Sifarişdən əvvəl zəng edin, çatdırılma edir, qiymətləri münasibdir">{{ supplier.additional_info|default:'' }}</textarea>
             </div>
 
             <button type="submit" class="add-expense-btn" style="margin-top: 30px;">
-                <i class="fa-solid fa-check"></i> Yadda Saxla
+                <i class="fa-solid fa-check"></i> {% if is_edit %}Yenilə{% else %}Yadda Saxla{% endif %}
             </button>
         </form>
     </div>
-</div>
+</main>
+<script>
+    (function () {
+        const categorySelect = document.getElementById('supplier-category-select');
+        const manualGroup = document.getElementById('supplier-manual-category-group');
+        const manualInput = document.getElementById('supplier-manual-category-input');
+        if (!categorySelect || !manualGroup || !manualInput) return;
+
+        function syncManualCategory() {
+            const isOther = categorySelect.value === 'Digər';
+            manualGroup.style.display = isOther ? 'block' : 'none';
+            manualInput.required = isOther;
+            if (!isOther) {
+                manualInput.value = '';
+            }
+        }
+
+        categorySelect.addEventListener('change', syncManualCategory);
+        syncManualCategory();
+    })();
+</script>
 {% endblock %}

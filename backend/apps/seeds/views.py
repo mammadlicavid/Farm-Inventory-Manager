@@ -21,6 +21,30 @@ from common.icons import get_seed_icon_for_seed
 from expenses.models import Expense, ExpenseSubCategory
 from incomes.models import Income
 
+SEED_ITEM_TO_CATEGORY = {
+    item.strip().lower(): category_name
+    for category_name, items in SEED_ITEM_ORDER.items()
+    for item in items
+    if item.strip().lower() != "digər"
+}
+
+INCOME_SEED_CATEGORY_MAP = {
+    "Taxıl toxumları": "Taxıl və Paxlalı Toxumları",
+    "Paxlalı toxumları": "Taxıl və Paxlalı Toxumları",
+    "Yem bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+    "Yağlı bitki toxumları": "Yem və Yağlı Bitki Toxumları",
+    "Tərəvəz toxumları": "Tərəvəz və Bostan Toxumları",
+    "Bostan toxumları": "Tərəvəz və Bostan Toxumları",
+    "Meyvə toxumları": "Meyvə Toxumları",
+}
+
+LEGACY_SEED_CATEGORY_ALIASES = {
+    "Taxıl və Paxlalı Toxumları": ["Taxıl toxumları", "Paxlalı toxumları"],
+    "Yem və Yağlı Bitki Toxumları": ["Yem bitki toxumları", "Yağlı bitki toxumları"],
+    "Tərəvəz və Bostan Toxumları": ["Tərəvəz toxumları", "Bostan toxumları"],
+    "Meyvə Toxumları": ["Meyvə toxumları"],
+}
+
 
 def _seed_to_kg(value: Decimal, unit: str) -> Decimal:
     if unit == "ton":
@@ -53,8 +77,69 @@ def _parse_date(value: str | None):
         return timezone.now().date()
 
 
+def _seed_category_name_for_item(item) -> str:
+    if not item:
+        return "Digər"
+    try:
+        category = item.category
+    except SeedCategory.DoesNotExist:
+        return "Digər"
+    return category.name if category else "Digər"
+
+
 def _ordered_seed_categories():
+    _normalize_seed_catalog()
     return order_queryset_by_name_list(SeedCategory.objects.all(), SEED_CATEGORY_ORDER)
+
+
+def _normalize_seed_catalog():
+    legacy_categories = list(
+        SeedCategory.objects.filter(name__in=LEGACY_SEED_CATEGORY_ALIASES.keys()).prefetch_related("items")
+    )
+    if not legacy_categories:
+        return
+
+    canonical_categories = {
+        category.name: category
+        for category in SeedCategory.objects.filter(name__in=SEED_CATEGORY_ORDER)
+    }
+
+    def get_category(name: str):
+        category = canonical_categories.get(name)
+        if category is None:
+            category = SeedCategory.objects.create(name=name)
+            canonical_categories[name] = category
+        return category
+
+    for legacy_category in legacy_categories:
+        target_names = LEGACY_SEED_CATEGORY_ALIASES.get(legacy_category.name, [])
+        for item in list(legacy_category.items.all()):
+            item_name = (item.name or "").strip()
+            lower_name = item_name.lower()
+
+            if lower_name == "digər":
+                for target_name in target_names:
+                    target_category = get_category(target_name)
+                    SeedItem.objects.get_or_create(category=target_category, name="Digər")
+                item.delete()
+                continue
+
+            target_name = SEED_ITEM_TO_CATEGORY.get(lower_name)
+            if not target_name:
+                target_name = target_names[0] if target_names else legacy_category.name
+
+            target_category = get_category(target_name)
+            existing_item = SeedItem.objects.filter(category=target_category, name=item_name).exclude(pk=item.pk).first()
+            if existing_item:
+                item.delete()
+                continue
+            if item.category_id != target_category.id:
+                item.category = target_category
+                item.save(update_fields=["category"])
+
+        legacy_category.refresh_from_db()
+        if not legacy_category.items.exists():
+            legacy_category.delete()
 
 
 def _sync_seed_related_records(user, seed):
@@ -68,17 +153,8 @@ def _sync_seed_related_records(user, seed):
         except (TypeError, ValueError):
             amount_val = 0
 
-        category_name = seed.item.category.name if seed.item and seed.item.category else "Digər"
-        income_category_map = {
-            "Taxıl toxumları": "Taxıl və Paxlalı Toxumları",
-            "Paxlalı toxumları": "Taxıl və Paxlalı Toxumları",
-            "Yem bitki toxumları": "Yem və Yağlı Bitki Toxumları",
-            "Yağlı bitki toxumları": "Yem və Yağlı Bitki Toxumları",
-            "Tərəvəz toxumları": "Tərəvəz və Bostan Toxumları",
-            "Bostan toxumları": "Tərəvəz və Bostan Toxumları",
-            "Meyvə toxumları": "Meyvə Toxumları",
-        }
-        income_category = income_category_map.get(category_name, "Digər")
+        category_name = _seed_category_name_for_item(seed.item)
+        income_category = INCOME_SEED_CATEGORY_MAP.get(category_name, "Digər")
         if linked_income:
             if amount_val > 0:
                 linked_income.category = income_category
@@ -178,6 +254,7 @@ def seed_list(request):
     seeds = list(seeds_qs)
     for seed in seeds:
         seed.icon_class = get_seed_icon_for_seed(seed)
+        seed.display_category_name = _seed_category_name_for_item(seed.item)
         try:
             seed.price_display = abs(Decimal(seed.price))
         except Exception:
@@ -196,6 +273,7 @@ def seed_list(request):
 
 @login_required
 def get_seed_items(request):
+    _normalize_seed_catalog()
     category_id = request.GET.get('category_id')
     category = SeedCategory.objects.filter(id=category_id).first()
     items_qs = SeedItem.objects.filter(category_id=category_id)
@@ -209,6 +287,7 @@ def get_seed_items(request):
 
 @login_required
 def seed_create(request):
+    redirect_to = request.POST.get('next') or 'seeds:seed_list'
     if request.method == 'POST':
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
@@ -222,7 +301,7 @@ def seed_create(request):
         # Backend Validation
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            return redirect('seeds:seed_list')
+            return redirect(redirect_to)
 
         # Handle empty numeric fields
         price = price if price and price.strip() else 0
@@ -231,7 +310,7 @@ def seed_create(request):
             quantity_val = Decimal(str(quantity))
         except (InvalidOperation, TypeError, ValueError):
             messages.error(request, "Miqdar düzgün deyil.")
-            return redirect('seeds:seed_list')
+            return redirect(redirect_to)
         
         try:
             item = None
@@ -239,7 +318,7 @@ def seed_create(request):
                 item = SeedItem.objects.get(id=item_id)
                 if item.name == "Digər" and not manual_name:
                     messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
-                    return redirect('seeds:seed_list')
+                    return redirect(redirect_to)
             
             if quantity_val < 0:
                 available_kg = _seed_stock_kg(
@@ -250,16 +329,16 @@ def seed_create(request):
                 needed_kg = _seed_to_kg(abs(quantity_val), unit)
                 if available_kg < needed_kg:
                     messages.error(request, "Stokda kifayət qədər toxum yoxdur.")
-                    return redirect('seeds:seed_list')
+                    return redirect(redirect_to)
 
             manual_value = manual_name if (not item or item.name == "Digər") else None
             merged = _merge_manual_seed(request.user, manual_value, quantity_val, unit, price, additional_info, entry_date) if manual_value else None
             if merged == "deleted":
                 add_crud_success_message(request, "Seed", "delete")
-                return redirect('seeds:seed_list')
+                return redirect(redirect_to)
             if merged:
                 add_crud_success_message(request, "Seed", "update")
-                return redirect('seeds:seed_list')
+                return redirect(redirect_to)
 
             seed = Seed.objects.create(
                 item=item,
@@ -280,19 +359,10 @@ def seed_create(request):
                 if amount_val <= 0:
                     messages.error(request, "Gəlir üçün məbləğ daxil edin.")
                     seed.delete()
-                    return redirect('seeds:seed_list')
+                    return redirect(redirect_to)
 
-                category_name = item.category.name if item and item.category else "Digər"
-                income_category_map = {
-                    "Taxıl toxumları": "Taxıl və Paxlalı Toxumları",
-                    "Paxlalı toxumları": "Taxıl və Paxlalı Toxumları",
-                    "Yem bitki toxumları": "Yem və Yağlı Bitki Toxumları",
-                    "Yağlı bitki toxumları": "Yem və Yağlı Bitki Toxumları",
-                    "Tərəvəz toxumları": "Tərəvəz və Bostan Toxumları",
-                    "Bostan toxumları": "Tərəvəz və Bostan Toxumları",
-                    "Meyvə toxumları": "Meyvə Toxumları",
-                }
-                income_category = income_category_map.get(category_name, "Digər")
+                category_name = _seed_category_name_for_item(item)
+                income_category = INCOME_SEED_CATEGORY_MAP.get(category_name, "Digər")
                 Income.objects.create(
                     category=income_category,
                     item_name=item.name if item else manual_name,
@@ -337,9 +407,9 @@ def seed_create(request):
         else:
             add_crud_success_message(request, "Seed", "create")
 
-        return redirect('seeds:seed_list')
-    
-    return redirect('seeds:seed_list')
+        return redirect(redirect_to)
+        
+    return redirect(redirect_to)
 
 @login_required
 def seed_update(request, pk):
@@ -426,17 +496,8 @@ def seed_update(request, pk):
             except (TypeError, ValueError):
                 amount_val = 0
 
-            category_name = seed.item.category.name if seed.item and seed.item.category else "Digər"
-            income_category_map = {
-                "Taxıl toxumları": "Taxıl və Paxlalı Toxumları",
-                "Paxlalı toxumları": "Taxıl və Paxlalı Toxumları",
-                "Yem bitki toxumları": "Yem və Yağlı Bitki Toxumları",
-                "Yağlı bitki toxumları": "Yem və Yağlı Bitki Toxumları",
-                "Tərəvəz toxumları": "Tərəvəz və Bostan Toxumları",
-                "Bostan toxumları": "Tərəvəz və Bostan Toxumları",
-                "Meyvə toxumları": "Meyvə Toxumları",
-            }
-            income_category = income_category_map.get(category_name, "Digər")
+            category_name = _seed_category_name_for_item(seed.item)
+            income_category = INCOME_SEED_CATEGORY_MAP.get(category_name, "Digər")
             if linked_income:
                 if amount_val > 0:
                     linked_income.category = income_category

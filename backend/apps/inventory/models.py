@@ -21,3 +21,43 @@ class ScanItem(models.Model):
 
     def __str__(self):
         return f"{self.code} - {self.name}"
+
+
+class UserBarcode(models.Model):
+    FORM_TYPE_CHOICES = [
+        ("expense", "Xərc"),
+        ("income", "Gəlir"),
+        ("animal", "Heyvan"),
+        ("seed", "Toxum"),
+        ("tool", "Alət"),
+        ("farm", "Təsərrüfat məhsulu"),
+    ]
+
+    TARGET_TYPE_CHOICES = [
+        ("form", "Form"),
+        ("subcategory", "Alt kateqoriya"),
+        ("item", "Məhsul"),
+        ("manual", "Manual info"),
+    ]
+
+    code = models.CharField(max_length=32, unique=True)
+    form_type = models.CharField(max_length=20, choices=FORM_TYPE_CHOICES)
+    target_type = models.CharField(max_length=20, choices=TARGET_TYPE_CHOICES)
+    label = models.CharField(max_length=200)
+    signature = models.CharField(max_length=64)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Qlobal Barkod"
+        verbose_name_plural = "Qlobal Barkodlar"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["signature"],
+                name="inventory_unique_barcode_signature",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.code} - {self.label}"

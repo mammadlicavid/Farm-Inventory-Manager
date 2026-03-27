@@ -145,6 +145,7 @@ def animal_list(request):
 
 @login_required
 def animal_create(request):
+    redirect_to = request.POST.get('next') or 'animals:animal_list'
     if request.method == 'POST':
         subcategory_id = request.POST.get('subcategory')
         identification_no = request.POST.get('identification_no')
@@ -160,16 +161,16 @@ def animal_create(request):
         # Backend Validation
         if not (subcategory_id or manual_name) or not gender:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            return redirect('animals:animal_list')
+            return redirect(redirect_to)
 
         try:
             quantity = int(quantity_raw or "1")
         except (TypeError, ValueError):
             messages.error(request, "Miqdar düzgün deyil.")
-            return redirect('animals:animal_list')
+            return redirect(redirect_to)
         if quantity == 0:
             messages.error(request, "Miqdar 0 ola bilməz.")
-            return redirect('animals:animal_list')
+            return redirect(redirect_to)
 
         # Handle empty numeric fields
         weight = weight if weight and weight.strip() else None
@@ -184,14 +185,14 @@ def animal_create(request):
                 subcategory = AnimalSubCategory.objects.get(id=subcategory_id)
                 if subcategory.name == "Digər" and not manual_name:
                     messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
-                    return redirect('animals:animal_list')
+                    return redirect(redirect_to)
 
             if abs(quantity) != 1:
                 identification_no = None
             elif identification_no:
                 if Animal.objects.filter(identification_no=identification_no).exists():
                     messages.error(request, "Bu identifikasiya nömrəsi artıq mövcuddur.")
-                    return redirect('animals:animal_list')
+                    return redirect(redirect_to)
             
             manual_value = manual_name if (not subcategory or subcategory.name == "Digər") else None
             merged = None
@@ -208,10 +209,10 @@ def animal_create(request):
                 )
             if merged == "deleted":
                 add_crud_success_message(request, "Animal", "delete")
-                return redirect('animals:animal_list')
+                return redirect(redirect_to)
             if merged:
                 add_crud_success_message(request, "Animal", "update")
-                return redirect('animals:animal_list')
+                return redirect(redirect_to)
 
             animal = Animal.objects.create(
                 subcategory=subcategory,
@@ -253,9 +254,9 @@ def animal_create(request):
             messages.error(request, "Seçilmiş alt kateqoriya tapılmadı.")
         else:
             add_crud_success_message(request, "Animal", "create")
-        return redirect('animals:animal_list')
+        return redirect(redirect_to)
     
-    return redirect('animals:animal_list')
+    return redirect(redirect_to)
 
 @login_required
 def animal_update(request, pk):

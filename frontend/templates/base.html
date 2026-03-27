@@ -68,10 +68,11 @@
       #toast-container {
         position: fixed;
         bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
+        left: 0;
+        right: 0;
         display: flex;
         flex-direction: column;
+        align-items: center;
         gap: 10px;
         z-index: 9999;
         pointer-events: none;
@@ -112,12 +113,12 @@
       
       @keyframes toast-slide-in {
         from {
-          transform: translate(-50%, 16px);
+          transform: translateY(16px);
           opacity: 0;
         }
       
         to {
-          transform: translate(-50%, 0);
+          transform: translateY(0);
           opacity: 1;
         }
       }
@@ -198,6 +199,21 @@
             field.click()
           }
         })
+      })()
+    </script>
+
+    <script>
+      ;(function () {
+        document.addEventListener(
+          'wheel',
+          (event) => {
+            const field = event.target
+            if (!(field instanceof HTMLInputElement)) return
+            if (field.type !== 'number') return
+            event.preventDefault()
+          },
+          { passive: false }
+        )
       })()
     </script>
 

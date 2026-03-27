@@ -215,6 +215,7 @@
       animal: 'Heyvan',
       expense: 'Xərc',
       income: 'Gəlir',
+      supplier: 'Təchizatçı',
       farm_product: 'Məhsul',
       quick_expense: 'Tez xərc',
       quick_income: 'Tez gəlir',
@@ -533,7 +534,11 @@
         showToast('Məlumat buluda göndərildi.', 'info')
       }
 
-      if (options.reloadOnOperationId && syncedIds.includes(options.reloadOnOperationId)) {
+      if (
+        options.reloadOnOperationId &&
+        syncedIds.includes(options.reloadOnOperationId) &&
+        !options.skipReloadOnSuccess
+      ) {
         window.location.reload()
       }
 
@@ -571,6 +576,21 @@
     try {
       await addOperation(operation)
 
+      if (form.dataset.syncRedirectAfterQueue) {
+        if (form.dataset.syncKeepKey) {
+          sessionStorage.removeItem(form.dataset.syncKeepKey)
+        }
+        if (form.dataset.syncReset !== 'false') {
+          resetOfflineForm(form)
+        }
+        emitStatus()
+        if (navigator.onLine) {
+          syncPendingOperations({ silentSuccess: true })
+        }
+        window.location.assign(form.dataset.syncRedirectAfterQueue)
+        return
+      }
+
       if (form.dataset.syncKeepKey) {
         sessionStorage.removeItem(form.dataset.syncKeepKey)
       }
@@ -587,11 +607,16 @@
 
       const result = await syncPendingOperations({
         reloadOnOperationId: operationId,
+        skipReloadOnSuccess: Boolean(form.dataset.syncSuccessRedirect),
         silentSuccess: true,
       })
 
       if (result.syncedIds.includes(operationId)) {
         showToast(successMessageForOperation(operation), 'success')
+        if (form.dataset.syncSuccessRedirect) {
+          window.location.assign(form.dataset.syncSuccessRedirect)
+          return
+        }
         return
       }
 
