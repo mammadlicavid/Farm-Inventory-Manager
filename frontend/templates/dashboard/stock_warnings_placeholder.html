@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="main-header">
+    <div class="header-content">
+        <div class="header-top">
+            <h1>Ferma İdarəsi</h1>
+            <div class="header-right-actions">
+                <a href="{% url 'dashboard' %}" class="header-icon-btn" title="Geriyə qayıt">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+            </div>
+        </div>
+        <p class="welcome-text">Ehtiyat Xəbərdarlığı (Tezliklə)</p>
+    </div>
+    <div class="header-curve"></div>
+</header>
+
+<main class="main-content">
+    <div class="auth-card" style="text-align: center; padding: 40px;">
+        <i class="fa-solid fa-person-digging" style="font-size: 48px; color: #64748b; margin-bottom: 20px;"></i>
+        <h2>Bu səhifə hələ hazırlanır...</h2>
+        <p style="color: #64748b; margin-top: 10px;">Ehtiyat xəbərdarlığı səhifəsi tezliklə istifadəyə veriləcək.</p>
+        <a href="{% url 'dashboard' %}" class="btn-primary" style="margin-top: 20px; display: inline-block;">Ana Səhifəyə Qayıt</a>
+    </div>
+</main>
+{% endblock %}
