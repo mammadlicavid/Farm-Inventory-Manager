@@ -1061,6 +1061,14 @@ select.custom-input {
     cursor: pointer;
 }
 
+select,
+select.custom-input,
+select.custom-input *,
+.custom-input[type="date"],
+.inventory-filter-control[type="date"] {
+    cursor: pointer !important;
+}
+
 /* Search bars: always text cursor on hover */
 .search-form input[type="text"],
 .search-form input[type="search"] {

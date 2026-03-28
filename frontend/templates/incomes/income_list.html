@@ -14,15 +14,6 @@
 </header>
 
 <main class="main-content" style="position: relative; z-index: 10;">
-    <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
-        <div style="position: relative;" class="click-focus">
-            <i class="fa-solid fa-search"
-                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-            <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
-                value="{{ request.GET.q|default:'' }}" autocomplete="off"
-                style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
-        </div>
-    </form>
     <div class="summary-row">
         <div class="summary-card-cream summary-compact">
             <span class="label">Bu həftə ümumi gəlir</span>
@@ -134,10 +125,38 @@
         </div>
 
         <div class="crud-list-column">
+            <form method="get" action="" class="inventory-filter-shell" id="income-filter-form">
+                <div class="inventory-filter-grid">
+                    <select id="income-filter-category" class="custom-input inventory-filter-control">
+                        <option value="">Bütün kateqoriyalar</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="income-filter-item" class="custom-input inventory-filter-control">
+                        <option value="">Bütün məhsullar</option>
+                    </select>
+                    <div class="inventory-filter-date-range">
+                        <input type="date" name="date_from" class="custom-input inventory-filter-control">
+                        <span class="inventory-filter-date-arrow" aria-hidden="true">
+                            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                        </span>
+                        <input type="date" name="date_to" class="custom-input inventory-filter-control">
+                    </div>
+                </div>
+                <div class="inventory-filter-actions">
+                    <input type="search" name="q" placeholder="Axtarış..." autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
+                    <button type="button" class="inventory-filter-reset" id="income-filter-reset">Sıfırla</button>
+                </div>
+            </form>
             <h3 class="recent-expenses-title">Son Gəlirlər</h3>
-            <div class="expenses-list data-grid-list">
+            <div class="expenses-list data-grid-list" id="income-list">
                 {% for income in incomes %}
-                <div class="expense-item-card">
+                <div class="expense-item-card"
+                    data-category="{{ income.category }}"
+                    data-item="{{ income.item_name }}"
+                    data-date="{{ income.date|date:'Y-m-d' }}"
+                    data-search="{{ income.item_name|default:''|lower }} {{ income.category|default:''|lower }} {{ income.additional_info|default:''|lower }}">
                     <div class="expense-item-icon">
                         {% if income.icon_class|slice:":6" == "emoji:" %}
                         <span class="emoji-icon">{{ income.icon_class|slice:"6:" }}</span>
@@ -191,16 +210,133 @@
                     </div>
                 </div>
                 {% empty %}
-                <div style="text-align: center; padding: 40px; color: #999;">
+                <div style="text-align: center; padding: 40px; color: #999;" id="income-list-empty">
                     <p>Hələ heç bir gəlir qeydə alınmayıb</p>
                 </div>
                 {% endfor %}
             </div>
+            {% if incomes %}
+            <div style="text-align: center; padding: 40px; color: #999; display: none;" id="income-filter-empty">
+                <p>Filterə uyğun gəlir tapılmadı</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </main>
 
 {{ category_data|json_script:"income-categories-data" }}
+<style>
+    .inventory-filter-shell {
+        display: grid;
+        gap: 14px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-radius: 24px;
+        padding: 16px;
+        margin-bottom: 18px;
+        box-shadow: 0 14px 30px rgba(36, 64, 45, 0.08);
+        backdrop-filter: blur(10px);
+    }
+
+    .inventory-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .inventory-filter-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .inventory-filter-date-range {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+    }
+
+    .inventory-filter-date-arrow {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #24915e;
+        background: rgba(36, 145, 94, 0.12);
+        border: 1px solid rgba(36, 145, 94, 0.14);
+    }
+
+    .inventory-filter-control {
+        min-width: 0;
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    .inventory-filter-search {
+        width: 100%;
+    }
+
+    .inventory-filter-reset {
+        border: none;
+        border-radius: 16px;
+        padding: 13px 22px;
+        font-weight: 700;
+        color: #fff;
+        cursor: pointer;
+        background: linear-gradient(135deg, #2f965a 0%, #3ca86a 100%);
+        box-shadow: 0 10px 18px rgba(47, 150, 90, 0.24);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease, background 0.18s ease;
+    }
+
+    .inventory-filter-reset:hover {
+        transform: translateY(-1px);
+        filter: saturate(1.05) brightness(1.02);
+        box-shadow: 0 14px 24px rgba(47, 150, 90, 0.3);
+    }
+
+    .inventory-filter-reset:active {
+        transform: translateY(0);
+        background: linear-gradient(135deg, #206f41 0%, #2a8250 100%);
+        box-shadow: 0 8px 14px rgba(32, 111, 65, 0.24);
+    }
+
+    @media (max-width: 1600px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 2;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .inventory-filter-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 2;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        }
+
+        .inventory-filter-date-arrow {
+            width: 44px;
+            border-radius: 14px;
+        }
+
+        .inventory-filter-reset {
+            width: 100%;
+        }
+    }
+</style>
 <script>
     const incomeData = JSON.parse(
         document.getElementById('income-categories-data').textContent
@@ -217,6 +353,19 @@
     const animalIdGroup = document.getElementById('animal-id-group');
     const animalIdInput = document.getElementById('animal-id-input');
     const qtyInput = document.querySelector('input[name="quantity"]');
+    const incomeFilterForm = document.getElementById('income-filter-form');
+    const incomeFilterCategory = document.getElementById('income-filter-category');
+    const incomeFilterItem = document.getElementById('income-filter-item');
+    const incomeFilterSearch = incomeFilterForm?.querySelector('input[name="q"]');
+    const incomeFilterReset = document.getElementById('income-filter-reset');
+    const incomeCards = Array.from(document.querySelectorAll('#income-list .expense-item-card'));
+    const incomeListController = window.createProgressiveListController({ items: incomeCards, batchSize: 100 });
+    const incomeListEmpty = document.getElementById('income-list-empty');
+    const incomeFilterEmpty = document.getElementById('income-filter-empty');
+    const incomeCrudWrapper = document.querySelector('.crud-desktop-wrapper');
+    const incomeListColumn = document.querySelector('.crud-list-column');
+    const incomeFilterPlaceholder = document.createComment('income-filter-placeholder');
+    let incomeFilterTimer = null;
 
     const allUnits = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
     const seedUnits = ["kq", "ton", "qram"];
@@ -224,6 +373,9 @@
     const forageItems = new Set(["yonca", "koronilla", "seradella"]);
     const INCOME_STATE_KEY = "income_form_state_session_v1";
     const INCOME_KEEP_KEY = "income_form_keep_v1";
+
+    incomeFilterForm?.parentNode?.insertBefore(incomeFilterPlaceholder, incomeFilterForm);
+    incomeFilterForm?.addEventListener('submit', (event) => event.preventDefault());
 
     function saveIncomeState(category, itemName) {
         sessionStorage.setItem(INCOME_STATE_KEY, JSON.stringify({ category, itemName }));
@@ -348,6 +500,50 @@
         setUnits(data.type === "seed" ? seedUnits : (data.type === "animal" ? animalUnits : allUnits));
     }
 
+    function populateIncomeFilterItems(category, selectedItem = "") {
+        if (!incomeFilterItem) return;
+        incomeFilterItem.innerHTML = '<option value="">Bütün məhsullar</option>';
+        const data = incomeData[category];
+        if (!data) return;
+        data.items.forEach((item) => {
+            const option = document.createElement('option');
+            option.value = item.name;
+            option.textContent = item.name;
+            if (item.name === selectedItem) option.selected = true;
+            incomeFilterItem.appendChild(option);
+        });
+    }
+
+    function normalizeIncomeFilterText(value) {
+        return String(value || '').trim().toLocaleLowerCase('az');
+    }
+
+    function applyIncomeFilters() {
+        const category = incomeFilterCategory?.value || '';
+        const item = incomeFilterItem?.value || '';
+        const dateFrom = incomeFilterForm?.querySelector('input[name="date_from"]')?.value || '';
+        const dateTo = incomeFilterForm?.querySelector('input[name="date_to"]')?.value || '';
+        const term = normalizeIncomeFilterText(incomeFilterSearch?.value || '');
+        let visibleCount = 0;
+
+        incomeCards.forEach((card) => {
+            const matchCategory = !category || (card.dataset.category || '') === category;
+            const matchItem = !item || (card.dataset.item || '') === item;
+            const cardDate = card.dataset.date || '';
+            const matchDateFrom = !dateFrom || (cardDate && cardDate >= dateFrom);
+            const matchDateTo = !dateTo || (cardDate && cardDate <= dateTo);
+            const matchSearch = !term || normalizeIncomeFilterText(card.dataset.search).includes(term);
+            const show = matchCategory && matchItem && matchDateFrom && matchDateTo && matchSearch;
+            card.dataset.filterMatch = show ? '1' : '0';
+            if (show) visibleCount += 1;
+        });
+
+        incomeListController.refresh(true);
+
+        if (incomeListEmpty) incomeListEmpty.style.display = 'none';
+        if (incomeFilterEmpty) incomeFilterEmpty.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
     function handleItemChange() {
         const category = categorySelect.value;
         const data = incomeData[category];
@@ -391,6 +587,43 @@
         syncAnimalIdVisibility();
     });
 
+    incomeFilterCategory?.addEventListener('change', function () {
+        populateIncomeFilterItems(this.value);
+        applyIncomeFilters();
+    });
+
+    incomeFilterForm?.querySelectorAll('select[id="income-filter-item"], input[name="date_from"], input[name="date_to"]').forEach((control) => {
+        control.addEventListener('change', applyIncomeFilters);
+    });
+
+    incomeFilterSearch?.addEventListener('input', () => {
+        clearTimeout(incomeFilterTimer);
+        incomeFilterTimer = setTimeout(applyIncomeFilters, 300);
+    });
+
+    incomeFilterReset?.addEventListener('click', () => {
+        if (incomeFilterCategory) incomeFilterCategory.value = '';
+        if (incomeFilterItem) {
+            incomeFilterItem.innerHTML = '<option value="">Bütün məhsullar</option>';
+            incomeFilterItem.value = '';
+        }
+        const dateFromInput = incomeFilterForm?.querySelector('input[name="date_from"]');
+        const dateToInput = incomeFilterForm?.querySelector('input[name="date_to"]');
+        if (dateFromInput) dateFromInput.value = '';
+        if (dateToInput) dateToInput.value = '';
+        if (incomeFilterSearch) incomeFilterSearch.value = '';
+        applyIncomeFilters();
+    });
+
+    function repositionIncomeFilter() {
+        if (!incomeFilterForm || !incomeListColumn || !incomeFilterPlaceholder) return;
+        if (window.innerWidth < 1024) {
+            incomeCrudWrapper?.insertBefore(incomeFilterForm, incomeListColumn);
+        } else if (incomeFilterPlaceholder.parentNode) {
+            incomeFilterPlaceholder.parentNode.insertBefore(incomeFilterForm, incomeFilterPlaceholder.nextSibling);
+        }
+    }
+
     const savedState = loadIncomeState();
     if (savedState.category) {
         categorySelect.value = savedState.category;
@@ -423,5 +656,8 @@
 
     window.addEventListener('pagehide', maybeClearState);
     window.addEventListener('beforeunload', maybeClearState);
+    window.addEventListener('resize', repositionIncomeFilter);
+    repositionIncomeFilter();
+    applyIncomeFilters();
 </script>
 {% endblock %}

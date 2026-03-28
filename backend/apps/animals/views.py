@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.db.models import Q
 import re
 from datetime import date, timedelta
@@ -19,6 +20,10 @@ from common.category_order import (
 )
 from common.icons import get_animal_icon_for_animal
 from expenses.models import Expense, ExpenseSubCategory
+
+ANIMAL_FORM_CATALOG_CACHE_KEY = "animals:form-catalog:v1"
+ANIMAL_FORM_CATALOG_TTL = 300
+
 
 def _build_subcategory_data(categories):
     payload = {}
@@ -38,6 +43,15 @@ def _parse_date(value: str | None):
         return timezone.now().date()
 
 
+def _parse_filter_date(value: str | None):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return None
+
+
 def _clean_additional_info(value: str | None) -> str | None:
     if not value:
         return None
@@ -49,6 +63,19 @@ def _clean_additional_info(value: str | None) -> str | None:
 
 def _ordered_animal_categories():
     return order_queryset_by_name_list(AnimalCategory.objects.all(), ANIMAL_CATEGORY_ORDER)
+
+
+def _animal_form_catalog():
+    cached = cache.get(ANIMAL_FORM_CATALOG_CACHE_KEY)
+    if cached is not None:
+        return cached
+    categories = list(_ordered_animal_categories().prefetch_related('subcategories'))
+    payload = {
+        "categories": categories,
+        "subcategory_data": _build_subcategory_data(categories),
+    }
+    cache.set(ANIMAL_FORM_CATALOG_CACHE_KEY, payload, ANIMAL_FORM_CATALOG_TTL)
+    return payload
 
 
 def _sync_animal_related_records(user, animal):
@@ -113,31 +140,90 @@ def _merge_manual_animal(user, manual_name, gender, quantity, weight, price, add
 @login_required
 def animal_list(request):
     query = (request.GET.get('q') or '').strip()
+    category_id = (request.GET.get('category') or '').strip()
+    subcategory_id = (request.GET.get('subcategory') or '').strip()
+    date_from_raw = (request.GET.get('date_from') or '').strip()
+    date_to_raw = (request.GET.get('date_to') or '').strip()
+    movement = (request.GET.get('movement') or '').strip()
     animals_qs = (
         Animal.objects.filter(created_by=request.user)
         .exclude(quantity=0)
         .exclude(additional_info__icontains="Gəlir stoku | income:")
         .select_related('subcategory', 'subcategory__category')
+        .only(
+            'id',
+            'quantity',
+            'weight',
+            'date',
+            'gender',
+            'identification_no',
+            'manual_name',
+            'additional_info',
+            'price',
+            'updated_at',
+            'subcategory__id',
+            'subcategory__name',
+            'subcategory__category__id',
+            'subcategory__category__name',
+        )
     )
 
     if query:
-        animals_qs = animals_qs.filter(identification_no__icontains=query) | \
-                     animals_qs.filter(additional_info__icontains=query) | \
-                     animals_qs.filter(subcategory__name__icontains=query) | \
-                     animals_qs.filter(manual_name__icontains=query)
+        animals_qs = animals_qs.filter(
+            Q(identification_no__icontains=query)
+            | Q(additional_info__icontains=query)
+            | Q(subcategory__name__icontains=query)
+            | Q(manual_name__icontains=query)
+        )
+
+    selected_category = AnimalCategory.objects.filter(pk=category_id).first() if category_id else None
+    if selected_category:
+        if (selected_category.name or "").strip().lower() == "digər":
+            animals_qs = animals_qs.filter(Q(subcategory__category=selected_category) | Q(subcategory__isnull=True))
+        else:
+            animals_qs = animals_qs.filter(subcategory__category=selected_category)
+
+    filtered_subcategories = []
+    if selected_category:
+        filtered_subcategories = sort_objects_by_name_list(
+            AnimalSubCategory.objects.filter(category=selected_category),
+            ANIMAL_SUBCATEGORY_ORDER.get(selected_category.name, []),
+        )
+
+    if subcategory_id:
+        animals_qs = animals_qs.filter(subcategory_id=subcategory_id)
+
+    date_from = _parse_filter_date(date_from_raw)
+    if date_from:
+        animals_qs = animals_qs.filter(date__gte=date_from)
+
+    date_to = _parse_filter_date(date_to_raw)
+    if date_to:
+        animals_qs = animals_qs.filter(date__lte=date_to)
+
+    if movement == "increase":
+        animals_qs = animals_qs.filter(quantity__gt=0)
+    elif movement == "decrease":
+        animals_qs = animals_qs.filter(quantity__lt=0)
 
     animals = list(animals_qs)
     for animal in animals:
         animal.icon_class = get_animal_icon_for_animal(animal)
         animal.display_additional_info = _clean_additional_info(animal.additional_info)
 
-    categories = _ordered_animal_categories().prefetch_related('subcategories')
+    form_catalog = _animal_form_catalog()
     
     today = timezone.now().date()
     context = {
         'animals': animals,
-        'categories': categories,
-        'subcategory_data': _build_subcategory_data(categories),
+        'categories': form_catalog["categories"],
+        'subcategory_data': form_catalog["subcategory_data"],
+        'filter_subcategories': filtered_subcategories,
+        'selected_category': category_id,
+        'selected_subcategory': subcategory_id,
+        'selected_date_from': date_from_raw,
+        'selected_date_to': date_to_raw,
+        'selected_movement': movement,
         'today': today,
         'yesterday': today - timedelta(days=1),
     }

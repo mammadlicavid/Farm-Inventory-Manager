@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from datetime import date, timedelta
 from django.utils import timezone
 from django.db.models import Q
@@ -19,6 +20,9 @@ from common.category_order import (
 from common.icons import get_tool_icon_for_tool
 from expenses.models import Expense, ExpenseSubCategory
 from incomes.models import Income
+
+TOOL_FORM_CATALOG_CACHE_KEY = "tools:form-catalog:v1"
+TOOL_FORM_CATALOG_TTL = 300
 
 
 def _tool_stock_total(user, item, manual_name: str | None) -> int:
@@ -44,8 +48,45 @@ def _parse_date(value: str | None):
         return timezone.now().date()
 
 
+def _parse_filter_date(value: str | None):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return None
+
+
 def _ordered_tool_categories():
     return order_queryset_by_name_list(ToolCategory.objects.all(), TOOL_CATEGORY_ORDER)
+
+
+def _tool_form_catalog():
+    cached = cache.get(TOOL_FORM_CATALOG_CACHE_KEY)
+    if cached is not None:
+        return cached
+    categories = list(_ordered_tool_categories())
+    item_map = {}
+    for category in categories:
+        items = list(
+            order_queryset_by_name_list(
+                ToolItem.objects.filter(category=category),
+                TOOL_ITEM_ORDER.get(category.name, []),
+            )
+        )
+        item_map[str(category.id)] = [{"id": item.id, "name": item.name} for item in items]
+    payload = {"categories": categories, "item_map": item_map}
+    cache.set(TOOL_FORM_CATALOG_CACHE_KEY, payload, TOOL_FORM_CATALOG_TTL)
+    return payload
+
+
+def _tool_form_context(tool):
+    catalog = _tool_form_catalog()
+    return {
+        "alet": tool,
+        "categories": catalog["categories"],
+        "category_item_map": catalog["item_map"],
+    }
 
 
 def _sync_tool_related_records(user, tool):
@@ -145,13 +186,64 @@ def _merge_manual_tool(user, manual_name, quantity_val, price, additional_info, 
 @login_required
 def tool_list(request):
     query = (request.GET.get('q') or '').strip()
-    alets_qs = Tool.objects.filter(created_by=request.user).select_related('item', 'item__category')
+    category_id = (request.GET.get('category') or '').strip()
+    item_id = (request.GET.get('item') or '').strip()
+    date_from_raw = (request.GET.get('date_from') or '').strip()
+    date_to_raw = (request.GET.get('date_to') or '').strip()
+    movement = (request.GET.get('movement') or '').strip()
+    alets_qs = Tool.objects.filter(created_by=request.user).select_related('item', 'item__category').only(
+        'id',
+        'quantity',
+        'price',
+        'date',
+        'manual_name',
+        'additional_info',
+        'updated_at',
+        'item__id',
+        'item__name',
+        'item__category__id',
+        'item__category__name',
+    )
 
     if query:
-        alets_qs = alets_qs.filter(item__name__icontains=query) | \
-                   alets_qs.filter(item__category__name__icontains=query) | \
-                   alets_qs.filter(additional_info__icontains=query) | \
-                   alets_qs.filter(manual_name__icontains=query)
+        alets_qs = alets_qs.filter(
+            Q(item__name__icontains=query)
+            | Q(item__category__name__icontains=query)
+            | Q(additional_info__icontains=query)
+            | Q(manual_name__icontains=query)
+        )
+
+    selected_category = ToolCategory.objects.filter(pk=category_id).first() if category_id else None
+    if selected_category:
+        if (selected_category.name or "").strip().lower() == "digər":
+            alets_qs = alets_qs.filter(Q(item__category=selected_category) | Q(item__isnull=True))
+        else:
+            alets_qs = alets_qs.filter(item__category=selected_category)
+
+    filtered_items = []
+    if selected_category:
+        filtered_items = list(
+            order_queryset_by_name_list(
+                ToolItem.objects.filter(category=selected_category),
+                TOOL_ITEM_ORDER.get(selected_category.name, []),
+            )
+        )
+
+    if item_id:
+        alets_qs = alets_qs.filter(item_id=item_id)
+
+    date_from = _parse_filter_date(date_from_raw)
+    if date_from:
+        alets_qs = alets_qs.filter(date__gte=date_from)
+
+    date_to = _parse_filter_date(date_to_raw)
+    if date_to:
+        alets_qs = alets_qs.filter(date__lte=date_to)
+
+    if movement == "increase":
+        alets_qs = alets_qs.filter(quantity__gt=0)
+    elif movement == "decrease":
+        alets_qs = alets_qs.filter(quantity__lt=0)
 
     alets = list(alets_qs)
     for alet in alets:
@@ -161,12 +253,19 @@ def tool_list(request):
         except Exception:
             alet.price_display = alet.price
 
-    categories = _ordered_tool_categories()
+    form_catalog = _tool_form_catalog()
     
     today = timezone.now().date()
     context = {
         'alets': alets,
-        'categories': categories,
+        'categories': form_catalog["categories"],
+        'category_item_map': form_catalog["item_map"],
+        'filter_items': filtered_items,
+        'selected_category': category_id,
+        'selected_item': item_id,
+        'selected_date_from': date_from_raw,
+        'selected_date_to': date_to_raw,
+        'selected_movement': movement,
         'today': today,
         'yesterday': today - timedelta(days=1),
     }
@@ -318,19 +417,13 @@ def tool_update(request, pk):
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            return render(request, 'tools/tool_form.html', {
-                'alet': tool,
-                'categories': _ordered_tool_categories(),
-            })
+            return render(request, 'tools/tool_form.html', _tool_form_context(tool))
 
         try:
             quantity_val = int(quantity)
         except (TypeError, ValueError):
             messages.error(request, "Miqdar düzgün deyil.")
-            return render(request, 'tools/tool_form.html', {
-                'alet': tool,
-                'categories': _ordered_tool_categories(),
-            })
+            return render(request, 'tools/tool_form.html', _tool_form_context(tool))
 
         prev_quantity = int(tool.quantity)
         prev_item = tool.item
@@ -344,10 +437,7 @@ def tool_update(request, pk):
             item = ToolItem.objects.get(id=item_id)
             if item.name == "Digər" and not manual_name:
                 messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
-                return render(request, 'tools/tool_form.html', {
-                    'alet': tool,
-                    'categories': _ordered_tool_categories(),
-                })
+                return render(request, 'tools/tool_form.html', _tool_form_context(tool))
             tool.manual_name = manual_name if item.name == "Digər" else None
         else:
             tool.manual_name = manual_name
@@ -370,10 +460,7 @@ def tool_update(request, pk):
                 available += prev_quantity
             if available < abs(quantity_val):
                 messages.error(request, "Stokda kifayət qədər alət yoxdur.")
-                return render(request, 'tools/tool_form.html', {
-                    'alet': tool,
-                    'categories': _ordered_tool_categories(),
-                })
+                return render(request, 'tools/tool_form.html', _tool_form_context(tool))
             
         tool.save()
 
@@ -451,11 +538,7 @@ def tool_update(request, pk):
         add_crud_success_message(request, "Tool", "update")
         return redirect('tools:tool_list')
     
-    categories = _ordered_tool_categories()
-    return render(request, 'tools/tool_form.html', {
-        'alet': tool,
-        'categories': categories,
-    })
+    return render(request, 'tools/tool_form.html', _tool_form_context(tool))
 
 @login_required
 def tool_delete(request, pk):

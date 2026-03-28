@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -250,6 +251,8 @@ SEED_CATEGORIES: List[Tuple[str, List[str]]] = [
 OTHER_CATEGORY = ("Digər", ["Digər"])
 
 FORAGE_ITEMS = {"yonca", "koronilla", "seradella"}
+INCOME_CATEGORY_PAYLOAD_CACHE_KEY = "incomes:category-payload:v1"
+INCOME_CATEGORY_PAYLOAD_TTL = 300
 
 
 def _sorted_items(items: List[str]) -> List[str]:
@@ -269,7 +272,7 @@ def _category_type_map() -> Dict[str, str]:
 
 def _farm_unit_lookup() -> Dict[str, str | None]:
     lookup: Dict[str, str | None] = {}
-    for item in FarmProductItem.objects.select_related("category").all():
+    for item in FarmProductItem.objects.only("name", "unit").all():
         key = (item.name or "").strip().lower()
         if key and key not in lookup:
             lookup[key] = item.unit
@@ -297,6 +300,10 @@ def _allowed_units_for_farm(item_name: str, unit_lookup: Dict[str, str | None]) 
 
 
 def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
+    cached = cache.get(INCOME_CATEGORY_PAYLOAD_CACHE_KEY)
+    if cached is not None:
+        return cached
+
     categories: List[str] = []
     payload: Dict[str, dict] = {}
 
@@ -326,7 +333,9 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
         add_category(name, items)
     add_category(OTHER_CATEGORY[0], OTHER_CATEGORY[1])
 
-    return categories, payload
+    result = (categories, payload)
+    cache.set(INCOME_CATEGORY_PAYLOAD_CACHE_KEY, result, INCOME_CATEGORY_PAYLOAD_TTL)
+    return result
 
 
 def _get_income_icon(category: str, item_name: str) -> str:
@@ -636,7 +645,18 @@ def _animal_available_count(user, item_name: str, gender: str) -> int:
 @login_required
 def income_list(request):
     query = (request.GET.get("q") or "").strip()
-    incomes_qs = Income.objects.filter(created_by=request.user)
+    incomes_qs = Income.objects.filter(created_by=request.user).only(
+        "id",
+        "category",
+        "item_name",
+        "quantity",
+        "unit",
+        "amount",
+        "gender",
+        "date",
+        "additional_info",
+        "updated_at",
+    )
 
     if query:
         incomes_qs = incomes_qs.filter(

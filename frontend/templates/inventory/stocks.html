@@ -38,6 +38,19 @@
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
                 </div>
+                <div class="filter-field category-field">
+                    <label for="stocks-sort">Sıralama</label>
+                    <div class="filter-input click-focus">
+                        <select id="stocks-sort">
+                            <option value="default">Standart düzülüş</option>
+                            <option value="title_asc">Ada görə A-Z</option>
+                            <option value="title_desc">Ada görə Z-A</option>
+                            <option value="qty_desc">Saya görə çox olan</option>
+                            <option value="qty_asc">Saya görə az olan</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                </div>
                 <div class="filter-field">
                     <label for="stocks-search">Axtarış</label>
                     <div class="filter-input click-focus search-field">
@@ -45,12 +58,16 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </div>
                 </div>
+                <div class="filter-field stocks-reset-field">
+                    <label>&nbsp;</label>
+                    <button type="button" id="stocks-reset" class="stocks-reset-btn">Sıfırla</button>
+                </div>
             </div>
         </section>
 
         <div class="stocks-grid" id="stocks-grid">
             {% for item in items %}
-            <div class="product-card" data-main="{{ item.main }}" data-sub="{{ item.sub_key }}">
+            <div class="product-card" data-main="{{ item.main }}" data-sub="{{ item.sub_key }}" data-title="{{ item.title|lower }}" data-subtitle="{{ item.subtitle|lower }}" data-quantity="{{ item.quantity }}" data-default-order="{{ forloop.counter0 }}">
                 <div class="product-icon">
                     {% if item.icon|slice:":6" == "emoji:" %}
                     <span class="emoji-icon">{{ item.icon|slice:"6:" }}</span>
@@ -184,6 +201,37 @@
     .filter-input i {
         color: #7a8f81;
         font-size: 14px;
+    }
+
+    .stocks-reset-field {
+        flex: 0 0 160px;
+        min-width: 160px;
+    }
+
+    .stocks-reset-btn {
+        width: 100%;
+        border: none;
+        border-radius: 14px;
+        padding: 14px 16px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        cursor: pointer;
+        background: linear-gradient(135deg, #2f965a 0%, #3ca86a 100%);
+        box-shadow: 0 10px 18px rgba(47, 150, 90, 0.24);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease, background 0.18s ease;
+    }
+
+    .stocks-reset-btn:hover {
+        transform: translateY(-1px);
+        filter: saturate(1.05) brightness(1.02);
+        box-shadow: 0 14px 24px rgba(47, 150, 90, 0.3);
+    }
+
+    .stocks-reset-btn:active {
+        transform: translateY(0);
+        background: linear-gradient(135deg, #206f41 0%, #2a8250 100%);
+        box-shadow: 0 8px 14px rgba(32, 111, 65, 0.24);
     }
 
     .stocks-grid {
@@ -414,6 +462,17 @@
             min-width: 100%;
         }
 
+        .stocks-reset-field {
+            min-width: 100%;
+            flex-basis: 100%;
+        }
+
+        .stocks-filter .filter-field:nth-child(3),
+        .stocks-filter .filter-field:nth-child(4) {
+            min-width: 0;
+            flex: 1 1 calc(50% - 5px);
+        }
+
         .product-card {
             grid-template-columns: auto 1fr;
         }
@@ -493,7 +552,10 @@
 
     const mainSelect = document.getElementById("main-category-select");
     const subSelect = document.getElementById("subcategory-select");
+    const sortSelect = document.getElementById("stocks-sort");
     const searchInput = document.getElementById("stocks-search");
+    const resetButton = document.getElementById("stocks-reset");
+    const grid = document.getElementById("stocks-grid");
     const cards = Array.from(document.querySelectorAll(".product-card"));
     const emptyState = document.getElementById("stocks-empty");
     const modalBackdrop = document.getElementById("product-modal");
@@ -517,6 +579,7 @@
         const payload = {
             main: mainSelect.value,
             sub: subSelect.value,
+            sort: sortSelect.value,
             search: searchInput.value || "",
         };
         sessionStorage.setItem(FILTER_KEY, JSON.stringify(payload));
@@ -534,6 +597,7 @@
         mainSelect.value = "all";
         buildSubOptions();
         subSelect.value = "all";
+        sortSelect.value = "default";
         searchInput.value = "";
         applyFilters();
     }
@@ -555,7 +619,49 @@
         return String(value || "").trim().toLocaleLowerCase("az");
     }
 
+    function parseQuantity(card) {
+        const value = Number.parseFloat(card.dataset.quantity || "0");
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    function sortCards() {
+        const mode = sortSelect.value;
+        const sortedCards = [...cards].sort((left, right) => {
+            const leftTitle = normalizeSearch(left.dataset.title || "");
+            const rightTitle = normalizeSearch(right.dataset.title || "");
+            const leftSubtitle = normalizeSearch(left.dataset.subtitle || "");
+            const rightSubtitle = normalizeSearch(right.dataset.subtitle || "");
+            const leftQty = parseQuantity(left);
+            const rightQty = parseQuantity(right);
+            const leftDefaultOrder = Number.parseInt(left.dataset.defaultOrder || "0", 10);
+            const rightDefaultOrder = Number.parseInt(right.dataset.defaultOrder || "0", 10);
+
+            if (mode === "default") {
+                return leftDefaultOrder - rightDefaultOrder;
+            }
+
+            if (mode === "title_desc") {
+                return rightTitle.localeCompare(leftTitle, "az");
+            }
+            if (mode === "qty_desc") {
+                return (rightQty - leftQty)
+                    || leftSubtitle.localeCompare(rightSubtitle, "az")
+                    || leftTitle.localeCompare(rightTitle, "az");
+            }
+            if (mode === "qty_asc") {
+                return (leftQty - rightQty)
+                    || leftSubtitle.localeCompare(rightSubtitle, "az")
+                    || leftTitle.localeCompare(rightTitle, "az");
+            }
+            return leftTitle.localeCompare(rightTitle, "az")
+                || leftSubtitle.localeCompare(rightSubtitle, "az");
+        });
+
+        sortedCards.forEach(card => grid.appendChild(card));
+    }
+
     function applyFilters() {
+        sortCards();
         const main = mainSelect.value;
         const sub = subSelect.value;
         const term = normalizeSearch(searchInput.value || "");
@@ -584,8 +690,16 @@
         applyFilters();
         saveFilters();
     });
+    sortSelect.addEventListener("change", () => {
+        applyFilters();
+        saveFilters();
+    });
     searchInput.addEventListener("input", () => {
         applyFilters();
+        saveFilters();
+    });
+    resetButton.addEventListener("click", () => {
+        resetFilters();
         saveFilters();
     });
 
@@ -597,6 +711,9 @@
     buildSubOptions();
     if (keep && saved.sub) {
         subSelect.value = saved.sub;
+    }
+    if (keep && saved.sort) {
+        sortSelect.value = saved.sort;
     }
     if (keep && typeof saved.search === "string") {
         searchInput.value = saved.search;

@@ -19,6 +19,10 @@ class DeviceSyncState(models.Model):
         ordering = ["-updated_at"]
         verbose_name = "Device Sync State"
         verbose_name_plural = "Device Sync States"
+        indexes = [
+            models.Index(fields=["user", "device_id"]),
+            models.Index(fields=["user", "updated_at"]),
+        ]
 
     def __str__(self):
         return f"{self.user} / {self.device_id}"
@@ -59,6 +63,11 @@ class SyncOperation(models.Model):
         ordering = ["-received_at"]
         verbose_name = "Sync Operation"
         verbose_name_plural = "Sync Operations"
+        indexes = [
+            models.Index(fields=["user", "device_id", "operation_id"]),
+            models.Index(fields=["user", "status", "received_at"]),
+            models.Index(fields=["user", "processed_at"]),
+        ]
 
     def __str__(self):
         return f"{self.entity_type}:{self.action}:{self.operation_id}"

@@ -68,3 +68,11 @@ class Animal(models.Model):
         verbose_name = "Heyvan"
         verbose_name_plural = "Heyvanlar"
         ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=["created_by", "subcategory"]),
+            models.Index(fields=["created_by", "manual_name"]),
+            models.Index(fields=["created_by", "gender"]),
+            models.Index(fields=["created_by", "date"]),
+            models.Index(fields=["created_by", "updated_at"]),
+            models.Index(fields=["identification_no"]),
+        ]
