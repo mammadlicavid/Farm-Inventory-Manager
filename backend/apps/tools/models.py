@@ -51,3 +51,9 @@ class Tool(models.Model):
         verbose_name = "Alət"
         verbose_name_plural = "Alətlər"
         ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=["created_by", "item"]),
+            models.Index(fields=["created_by", "manual_name"]),
+            models.Index(fields=["created_by", "date"]),
+            models.Index(fields=["created_by", "updated_at"]),
+        ]

@@ -320,7 +320,9 @@ def get_expense_icon(expense) -> str:
     1. If linked to Seed / Tool / Animal, reuse that entity's icon.
     2. Otherwise fall back to expense subcategory name mapping.
     """
-    obj = getattr(expense, "content_object", None)
+    obj = getattr(expense, "prefetched_content_object", None)
+    if obj is None:
+        obj = getattr(expense, "content_object", None)
     if obj is not None:
         app_label = getattr(getattr(obj, "_meta", None), "app_label", "")
         model_name = getattr(getattr(obj, "_meta", None), "model_name", "")
@@ -331,6 +333,8 @@ def get_expense_icon(expense) -> str:
             return get_tool_icon_for_tool(obj)
         if app_label == "seeds" and model_name == "seed":
             return get_seed_icon_for_seed(obj)
+        if app_label == "farm_products" and model_name == "farmproduct":
+            return get_farm_product_icon_for_product(obj)
 
     name = getattr(getattr(expense, "subcategory", None), "name", None)
     if not name:

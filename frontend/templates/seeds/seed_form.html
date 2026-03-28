@@ -15,7 +15,7 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Toxum Məlumatlarını Yenilə</h3>
 
-        <form method="POST" id="seed-form" data-sync-entity="seed" data-sync-action="update" data-sync-reset="false">
+        <form method="POST" id="seed-form" data-sync-entity="seed" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'seeds:seed_list' %}">
             {% csrf_token %}
             <input type="hidden" name="record_id" value="{{ seed.pk }}">
             <input type="hidden" name="record_version" value="{{ seed.updated_at|date:'c' }}">
@@ -93,8 +93,29 @@
         </form>
     </div>
 </main>
-
+{{ category_item_map|json_script:"seed-form-category-item-map" }}
 <script>
+    const seedFormCategoryItemMap = JSON.parse(document.getElementById("seed-form-category-item-map")?.textContent || "{}");
+    const seedFormManualGroup = document.getElementById('manual-name-group');
+    const seedFormManualInput = document.getElementById('manual-name-input');
+
+    function populateSeedFormItems(categoryId, selectedItemId = "") {
+        const itemSelect = document.getElementById('item-select');
+        if (!itemSelect) return;
+        const items = seedFormCategoryItemMap[String(categoryId)] || [];
+        itemSelect.innerHTML = '<option value="" disabled selected>Toxum seçin</option>';
+        items.forEach((item) => {
+            const option = document.createElement('option');
+            option.value = String(item.id);
+            option.textContent = item.name;
+            if (String(item.id) === String(selectedItemId)) {
+                option.selected = true;
+            }
+            itemSelect.appendChild(option);
+        });
+        itemSelect.disabled = false;
+    }
+
     document.getElementById('category-select').addEventListener('change', function () {
         const categoryId = this.value;
         const categoryText = this.options[this.selectedIndex].text;
@@ -108,37 +129,18 @@
             itemSelect.required = false;
             itemSelect.disabled = true;
 
-            manualGroup.style.display = 'block';
-            manualInput.required = true;
+            seedFormManualGroup.style.display = 'block';
+            seedFormManualInput.required = true;
         } else {
-            manualGroup.style.display = 'none';
-            manualInput.required = false;
-            manualInput.value = '';
+            seedFormManualGroup.style.display = 'none';
+            seedFormManualInput.required = false;
+            seedFormManualInput.value = '';
 
             itemGroup.style.display = 'block';
             itemSelect.style.display = 'block';
             itemSelect.required = true;
-
-            itemSelect.disabled = true;
-            itemSelect.innerHTML = '<option value="" disabled selected>Yüklənir...</option>';
-
-            fetch(`{% url 'seeds:get_seed_items' %}?category_id=${categoryId}`)
-                .then(response => response.json())
-                .then(data => {
-                    itemSelect.innerHTML = '<option value="" disabled selected>Toxum seçin</option>';
-                    data.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = item.name;
-                        itemSelect.appendChild(option);
-                    });
-                    itemSelect.disabled = false;
-                    handleSeedItemSelection();
-                })
-                .catch(error => {
-                    console.error('Error fetching seed items:', error);
-                    itemSelect.innerHTML = '<option value="" disabled selected>Xəta baş verdi</option>';
-                });
+            populateSeedFormItems(categoryId);
+            handleSeedItemSelection();
         }
     });
 
@@ -146,12 +148,12 @@
         const selected = document.getElementById('item-select').options[document.getElementById('item-select').selectedIndex];
         const isOther = (selected?.textContent || "").trim() === "Digər";
         if (isOther) {
-            manualGroup.style.display = 'block';
-            manualInput.required = true;
+            seedFormManualGroup.style.display = 'block';
+            seedFormManualInput.required = true;
         } else {
-            manualGroup.style.display = 'none';
-            manualInput.required = false;
-            manualInput.value = '';
+            seedFormManualGroup.style.display = 'none';
+            seedFormManualInput.required = false;
+            seedFormManualInput.value = '';
         }
     }
 

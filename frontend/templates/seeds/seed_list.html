@@ -13,13 +13,37 @@
 </header>
 
 <main class="main-content" style="position: relative; z-index: 10;">
-    <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
-        <div style="position: relative;" class="click-focus">
-            <i class="fa-solid fa-search"
-                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+    <form method="get" action="" class="inventory-filter-shell" id="seed-filter-form">
+        <div class="inventory-filter-grid">
+            <select name="category" id="seed-filter-category" class="custom-input inventory-filter-control">
+                <option value="">Bütün kateqoriyalar</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="item" id="seed-filter-item" class="custom-input inventory-filter-control">
+                <option value="">Bütün toxum növləri</option>
+                {% for item in filter_items %}
+                <option value="{{ item.id }}" {% if selected_item == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="movement" class="custom-input inventory-filter-control">
+                <option value="">Artım və azalma</option>
+                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>Artım</option>
+                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>Azalma</option>
+            </select>
+            <div class="inventory-filter-date-range">
+                <input type="date" name="date_from" value="{{ selected_date_from }}" class="custom-input inventory-filter-control">
+                <span class="inventory-filter-date-arrow" aria-hidden="true">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                </span>
+                <input type="date" name="date_to" value="{{ selected_date_to }}" class="custom-input inventory-filter-control">
+            </div>
+        </div>
+        <div class="inventory-filter-actions">
             <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
-                value="{{ request.GET.q|default:'' }}" autocomplete="off"
-                style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+                value="{{ request.GET.q|default:'' }}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
+            <button type="button" class="inventory-filter-reset" id="seed-filter-reset">Sıfırla</button>
         </div>
     </form>
     <div class="crud-desktop-wrapper">
@@ -101,9 +125,14 @@
         <div class="crud-list-column">
             <!-- Seeds History -->
             <h3 class="recent-expenses-title">Toxum Siyahısı</h3>
-            <div class="seeds-list data-grid-list">
+            <div class="seeds-list data-grid-list" id="seed-list">
                 {% for seed in seeds %}
-                <div class="expense-item-card">
+                <div class="expense-item-card"
+                    data-category="{% if seed.item and seed.item.category %}{{ seed.item.category.id }}{% endif %}"
+                    data-item="{% if seed.item %}{{ seed.item.id }}{% endif %}"
+                    data-date="{{ seed.date|date:'Y-m-d' }}"
+                    data-movement="{% if seed.quantity < 0 %}decrease{% else %}increase{% endif %}"
+                    data-search="{% if seed.item and seed.item.name != 'Digər' %}{{ seed.item.name|lower }}{% else %}{{ seed.manual_name|default:''|lower }}{% endif %} {{ seed.display_category_name|default:''|lower }} {{ seed.additional_info|default:''|lower }}">
                     <div class="expense-item-icon">
                         {% if seed.icon_class|slice:":6" == "emoji:" %}
                         <span class="emoji-icon">{{ seed.icon_class|slice:"6:" }}</span>
@@ -116,12 +145,12 @@
                             {% if seed.item and seed.item.name != "Digər" %}
                             {{ seed.item.name }}
                             <span style="font-size: 15px; font-weight: 400; color: #666;">
-                                ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
+                                ({{ seed.display_category_name|default:"Kateqoriya yoxdur" }})
                             </span>
                             {% elif seed.item and seed.item.name == "Digər" %}
                             {{ seed.manual_name }}
                             <span style="font-size: 15px; font-weight: 400; color: #666;">
-                                ({{ seed.item.category.name|default:"Kateqoriya yoxdur" }})
+                                ({{ seed.display_category_name|default:"Kateqoriya yoxdur" }})
                             </span>
                             {% else %}
                             {{ seed.manual_name }}
@@ -169,7 +198,7 @@
                     </div>
                 </div>
                 {% empty %}
-                <div style="text-align: center; padding: 40px; color: #999;">
+                <div style="text-align: center; padding: 40px; color: #999;" id="seed-list-empty">
                     <p>Hələ heç bir toxum qeydə alınmayıb</p>
                 </div>
                 {% endfor %}
@@ -179,6 +208,132 @@
 </main>
 
 <style>
+    .inventory-filter-shell {
+        margin-bottom: 18px;
+        padding: 16px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(244,250,246,0.96) 100%);
+        border: 1px solid rgba(46, 139, 87, 0.14);
+        box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
+        display: grid;
+        gap: 12px;
+    }
+
+    .inventory-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .inventory-filter-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 12px;
+    }
+
+    .inventory-filter-date-range {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+    }
+
+    .inventory-filter-date-arrow {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: rgba(46, 139, 87, 0.1);
+        color: var(--primary-green);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        box-shadow: inset 0 0 0 1px rgba(46, 139, 87, 0.08);
+    }
+
+    .inventory-filter-control {
+        min-height: 52px;
+        border: 1px solid rgba(46, 139, 87, 0.12);
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    }
+
+    .inventory-filter-search {
+        width: 100%;
+    }
+
+    .inventory-filter-button {
+        margin: 0;
+        width: auto;
+        min-width: 120px;
+        padding-inline: 20px;
+        align-self: stretch;
+    }
+
+    .inventory-filter-reset {
+        min-height: 52px;
+        padding: 0 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(46, 139, 87, 0.22);
+        background: linear-gradient(180deg, #39a363 0%, #2e8b57 100%);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(46, 139, 87, 0.18);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .inventory-filter-reset:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(46, 139, 87, 0.26);
+        background: linear-gradient(180deg, #43b26d 0%, #349a61 100%);
+    }
+
+    .inventory-filter-reset:active {
+        transform: translateY(0);
+        background: linear-gradient(180deg, #246c44 0%, #1f5d3a 100%);
+        box-shadow: 0 8px 16px rgba(31, 93, 58, 0.24);
+    }
+
+    @media (max-width: 1100px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 3;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .inventory-filter-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 2;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        }
+
+        .inventory-filter-date-arrow {
+            width: 44px;
+            border-radius: 14px;
+        }
+
+        .inventory-filter-button,
+        .inventory-filter-reset {
+            width: 100%;
+        }
+    }
+
     .icon-btn {
         width: 35px;
         height: 35px;
@@ -195,7 +350,125 @@
         background-color: #f0f0f0;
     }
 </style>
+{{ category_item_map|json_script:"seed-category-item-map" }}
 <script>
+    const seedCategoryItemMap = JSON.parse(document.getElementById("seed-category-item-map")?.textContent || "{}");
+    const seedFilterForm = document.getElementById("seed-filter-form");
+    const seedFilterCategory = document.getElementById("seed-filter-category");
+    const seedFilterItem = document.getElementById("seed-filter-item");
+    const selectedSeedFilterItem = "{{ selected_item|default:''|escapejs }}";
+    const seedFilterSearch = seedFilterForm?.querySelector('input[name="q"]');
+    const seedFilterReset = document.getElementById("seed-filter-reset");
+    const seedCards = Array.from(document.querySelectorAll("#seed-list .expense-item-card"));
+    const seedListController = window.createProgressiveListController({ items: seedCards, batchSize: 100 });
+    const seedListEmpty = document.getElementById("seed-list-empty");
+    const seedCrudWrapper = document.querySelector(".crud-desktop-wrapper");
+    const seedFormColumn = document.querySelector(".crud-form-column");
+    const seedListColumn = document.querySelector(".crud-list-column");
+    const seedFilterPlaceholder = document.createComment("seed-filter-placeholder");
+    let seedFilterTimer = null;
+
+    seedFilterForm?.parentNode?.insertBefore(seedFilterPlaceholder, seedFilterForm);
+
+    seedFilterForm?.addEventListener("submit", (event) => event.preventDefault());
+
+    function normalizeSeedText(value) {
+        return String(value || "").trim().toLocaleLowerCase("az");
+    }
+
+    function applySeedFilters() {
+        const category = seedFilterCategory?.value || "";
+        const item = seedFilterItem?.value || "";
+        const movement = seedFilterForm?.querySelector('select[name="movement"]')?.value || "";
+        const dateFrom = seedFilterForm?.querySelector('input[name="date_from"]')?.value || "";
+        const dateTo = seedFilterForm?.querySelector('input[name="date_to"]')?.value || "";
+        const term = normalizeSeedText(seedFilterSearch?.value || "");
+        let visibleCount = 0;
+
+        seedCards.forEach((card) => {
+            const matchCategory = !category || (card.dataset.category || "") === category;
+            const matchItem = !item || (card.dataset.item || "") === item;
+            const matchMovement = !movement || (card.dataset.movement || "") === movement;
+            const cardDate = card.dataset.date || "";
+            const matchDateFrom = !dateFrom || (cardDate && cardDate >= dateFrom);
+            const matchDateTo = !dateTo || (cardDate && cardDate <= dateTo);
+            const matchSearch = !term || normalizeSeedText(card.dataset.search).includes(term);
+            const show = matchCategory && matchItem && matchMovement && matchDateFrom && matchDateTo && matchSearch;
+            card.dataset.filterMatch = show ? "1" : "0";
+            if (show) visibleCount += 1;
+        });
+
+        seedListController.refresh(true);
+
+        if (seedListEmpty) {
+            seedListEmpty.style.display = visibleCount === 0 ? "block" : "none";
+        }
+    }
+
+    function updateSeedFilterItems(categoryId, selectedItemId = "") {
+        if (!seedFilterItem) return;
+        seedFilterItem.innerHTML = '<option value="">Bütün toxum növləri</option>';
+        if (!categoryId) return;
+        const items = seedCategoryItemMap[String(categoryId)] || [];
+        items.forEach((item) => {
+            const option = document.createElement("option");
+            option.value = String(item.id);
+            option.textContent = item.name;
+            if (String(item.id) === String(selectedItemId)) {
+                option.selected = true;
+            }
+            seedFilterItem.appendChild(option);
+        });
+    }
+
+    if (seedFilterCategory) {
+        seedFilterCategory.addEventListener("change", () => {
+            updateSeedFilterItems(seedFilterCategory.value);
+            applySeedFilters();
+        });
+        if (seedFilterCategory.value) {
+            updateSeedFilterItems(seedFilterCategory.value, selectedSeedFilterItem);
+        }
+    }
+
+    seedFilterForm?.querySelectorAll('select[name="item"], select[name="movement"], input[name="date_from"], input[name="date_to"]').forEach((control) => {
+        control.addEventListener("change", applySeedFilters);
+    });
+
+    seedFilterSearch?.addEventListener("input", () => {
+        clearTimeout(seedFilterTimer);
+        seedFilterTimer = setTimeout(applySeedFilters, 300);
+    });
+
+    seedFilterReset?.addEventListener("click", () => {
+        if (seedFilterCategory) seedFilterCategory.value = "";
+        if (seedFilterItem) {
+            seedFilterItem.innerHTML = '<option value="">Bütün toxum növləri</option>';
+            seedFilterItem.value = "";
+        }
+        const movementInput = seedFilterForm?.querySelector('select[name="movement"]');
+        const dateFromInput = seedFilterForm?.querySelector('input[name="date_from"]');
+        const dateToInput = seedFilterForm?.querySelector('input[name="date_to"]');
+        if (movementInput) movementInput.value = "";
+        if (dateFromInput) dateFromInput.value = "";
+        if (dateToInput) dateToInput.value = "";
+        if (seedFilterSearch) seedFilterSearch.value = "";
+        applySeedFilters();
+    });
+
+    function repositionSeedFilter() {
+        if (!seedFilterForm || !seedListColumn || !seedFilterPlaceholder) return;
+        if (window.innerWidth < 1024) {
+            seedCrudWrapper?.insertBefore(seedFilterForm, seedListColumn);
+        } else if (seedFilterPlaceholder.parentNode) {
+            seedFilterPlaceholder.parentNode.insertBefore(seedFilterForm, seedFilterPlaceholder.nextSibling);
+        }
+    }
+
+    window.addEventListener("resize", repositionSeedFilter);
+    repositionSeedFilter();
+    applySeedFilters();
+
     const SEED_STATE_KEY = "seed_form_state_session_v1";
     const SEED_KEEP_KEY = "seed_form_keep_v1";
 
@@ -232,6 +505,23 @@
 
     let pendingSeedItemId = null;
 
+    function populateSeedItems(categoryId, selectedItemId = "") {
+        const itemSelect = document.getElementById('item-select');
+        if (!itemSelect) return;
+        const items = seedCategoryItemMap[String(categoryId)] || [];
+        itemSelect.innerHTML = '<option value="" disabled selected>Toxum seçin</option>';
+        items.forEach((item) => {
+            const option = document.createElement('option');
+            option.value = String(item.id);
+            option.textContent = item.name;
+            if (String(item.id) === String(selectedItemId)) {
+                option.selected = true;
+            }
+            itemSelect.appendChild(option);
+        });
+        itemSelect.disabled = false;
+    }
+
     document.getElementById('category-select').addEventListener('change', function () {
         const categoryId = this.value;
         const categoryText = this.options[this.selectedIndex].text;
@@ -258,33 +548,11 @@
             itemGroup.style.display = 'block';
             itemSelect.style.display = 'block';
             itemSelect.required = true;
-
-            itemSelect.disabled = true;
-            itemSelect.innerHTML = '<option value="" disabled selected>Yüklənir...</option>';
-
-            fetch(`{% url 'seeds:get_seed_items' %}?category_id=${categoryId}`)
-                .then(response => response.json())
-                .then(data => {
-                    itemSelect.innerHTML = '<option value="" disabled selected>Toxum seçin</option>';
-                    data.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = item.name;
-                        itemSelect.appendChild(option);
-                    });
-                    itemSelect.disabled = false;
-                    if (pendingSeedItemId) {
-                        itemSelect.value = pendingSeedItemId;
-                        pendingSeedItemId = null;
-                    }
-                    resetSeedOtherFields();
-                    saveSeedState(categoryId, itemSelect.value || "");
-                    handleSeedItemSelection();
-                })
-                .catch(error => {
-                    console.error('Error fetching seed items:', error);
-                    itemSelect.innerHTML = '<option value="" disabled selected>Xəta baş verdi</option>';
-                });
+            populateSeedItems(categoryId, pendingSeedItemId);
+            pendingSeedItemId = null;
+            resetSeedOtherFields();
+            saveSeedState(categoryId, itemSelect.value || "");
+            handleSeedItemSelection();
         }
     });
 

@@ -1,4 +1,5 @@
 import json
+import traceback
 from datetime import date, datetime, timezone as dt_timezone
 from decimal import Decimal, InvalidOperation
 
@@ -12,10 +13,11 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from animals.models import Animal, AnimalSubCategory
-from expenses.models import Expense, ExpenseSubCategory
+from expenses.models import Expense, ExpenseCategory, ExpenseSubCategory
 from farm_products.models import FarmProduct, FarmProductItem
 from incomes.models import Income
 from seeds.models import Seed, SeedItem
+from suppliers.models import Supplier
 from tools.models import Tool, ToolItem
 from common.text import normalize_manual_label
 
@@ -29,6 +31,7 @@ SYNC_MODELS = {
     "expense": Expense,
     "income": Income,
     "farm_product": FarmProduct,
+    "supplier": Supplier,
 }
 
 
@@ -591,6 +594,34 @@ def _create_expense(user, data):
     )
     _set_expense_date(expense, entry_date)
     return expense
+
+
+def _create_supplier(user, data):
+    name = (_blank_to_none(data.get("name")) or "").strip()
+    category = (_blank_to_none(data.get("category")) or "").strip()
+    manual_category = (_blank_to_none(data.get("manual_category")) or "").strip()
+    location = (_blank_to_none(data.get("location")) or "").strip()
+    phone = Supplier.normalize_phone((_blank_to_none(data.get("phone")) or "").strip())
+    additional_info = (_blank_to_none(data.get("additional_info")) or "").strip()
+
+    if not name:
+        raise ValueError("Ad tələb olunur.")
+    if not category:
+        raise ValueError("Kateqoriya tələb olunur.")
+    if category == "Digər" and not manual_category:
+        raise ValueError("Digər üçün kateqoriya adı tələb olunur.")
+
+    return Supplier.objects.create(
+        name=name,
+        category=category,
+        manual_category=manual_category,
+        location=location,
+        rating=_parse_int(data.get("rating"), "Reytinq", default=5),
+        phone=phone,
+        additional_info=additional_info,
+        last_order_date=_parse_date(data.get("last_order_date")) if _blank_to_none(data.get("last_order_date")) else None,
+        created_by=user,
+    )
 
 
 def _get_record_id(data):
@@ -1637,6 +1668,48 @@ def _delete_expense(user, data):
     return deleted_id
 
 
+def _update_supplier(user, data):
+    supplier = Supplier.objects.filter(pk=_get_record_id(data), created_by=user).first()
+    if not supplier:
+        raise ValueError("Təchizatçı tapılmadı.")
+    _assert_record_version(supplier, data)
+
+    name = (_blank_to_none(data.get("name")) or "").strip()
+    category = (_blank_to_none(data.get("category")) or "").strip()
+    manual_category = (_blank_to_none(data.get("manual_category")) or "").strip()
+    location = (_blank_to_none(data.get("location")) or "").strip()
+    phone = Supplier.normalize_phone((_blank_to_none(data.get("phone")) or "").strip())
+    additional_info = (_blank_to_none(data.get("additional_info")) or "").strip()
+
+    if not name:
+        raise ValueError("Ad tələb olunur.")
+    if not category:
+        raise ValueError("Kateqoriya tələb olunur.")
+    if category == "Digər" and not manual_category:
+        raise ValueError("Digər üçün kateqoriya adı tələb olunur.")
+
+    supplier.name = name
+    supplier.category = category
+    supplier.manual_category = manual_category
+    supplier.location = location
+    supplier.rating = _parse_int(data.get("rating"), "Reytinq", default=5)
+    supplier.phone = phone
+    supplier.additional_info = additional_info
+    supplier.last_order_date = _parse_date(data.get("last_order_date")) if _blank_to_none(data.get("last_order_date")) else None
+    supplier.save()
+    return supplier
+
+
+def _delete_supplier(user, data):
+    supplier = Supplier.objects.filter(pk=_get_record_id(data), created_by=user).first()
+    if not supplier:
+        raise ValueError("Təchizatçı tapılmadı.")
+    _assert_record_version(supplier, data)
+    deleted_id = supplier.id
+    supplier.delete()
+    return deleted_id
+
+
 def _delete_income_animals(user, income_id: int) -> None:
     tag = f"income:{income_id}"
     Animal.objects.filter(created_by=user, additional_info__icontains=tag).delete()
@@ -1970,6 +2043,9 @@ PROCESSORS = {
     ("expense", "create"): _create_expense,
     ("expense", "update"): _update_expense,
     ("expense", "delete"): _delete_expense,
+    ("supplier", "create"): _create_supplier,
+    ("supplier", "update"): _update_supplier,
+    ("supplier", "delete"): _delete_supplier,
     ("income", "create"): _create_income,
     ("income", "update"): _update_income,
     ("income", "delete"): _delete_income,
@@ -2150,6 +2226,18 @@ def sync_push(request):
                 created_object = processor(request.user, data)
         except ValueError as exc:
             message = str(exc)
+            sync_operation.status = SyncOperation.STATUS_FAILED
+            sync_operation.error_message = message
+            sync_operation.processed_at = timezone.now()
+            sync_operation.save(update_fields=["status", "error_message", "processed_at"])
+            results.append({"id": operation_id, "status": "failed", "error": message})
+            if not first_error:
+                first_error = message
+            continue
+        except Exception as exc:
+            message = f"Gözlənilməz sync xətası: {exc}"
+            print("SYNC PUSH ERROR", operation_id, entity, action)
+            traceback.print_exc()
             sync_operation.status = SyncOperation.STATUS_FAILED
             sync_operation.error_message = message
             sync_operation.processed_at = timezone.now()

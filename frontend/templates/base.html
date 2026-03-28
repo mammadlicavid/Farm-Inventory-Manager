@@ -11,6 +11,94 @@
 
   <body>
     <div class="dashboard-container">
+      <script>
+        ;(function () {
+          window.createProgressiveListController = function ({ items, batchSize = 100, sentinelClassName = 'progressive-list-sentinel' }) {
+            const listItems = Array.isArray(items) ? items.filter(Boolean) : []
+            if (!listItems.length) {
+              return {
+                refresh() {},
+                loadMore() {},
+              }
+            }
+
+            const container = listItems[0].parentElement
+            if (!container || container.dataset.progressiveReady === '1') {
+              return {
+                refresh() {
+                  const matchedItems = listItems.filter((item) => item.dataset.filterMatch !== '0')
+                  matchedItems.forEach((item) => {
+                    item.style.display = ''
+                  })
+                  listItems
+                    .filter((item) => item.dataset.filterMatch === '0')
+                    .forEach((item) => {
+                      item.style.display = 'none'
+                    })
+                },
+                loadMore() {},
+              }
+            }
+
+            container.dataset.progressiveReady = '1'
+
+            let revealedCount = batchSize
+            const sentinel = document.createElement('div')
+            sentinel.className = sentinelClassName
+            sentinel.style.width = '100%'
+            sentinel.style.height = '1px'
+            sentinel.style.pointerEvents = 'none'
+            container.insertAdjacentElement('afterend', sentinel)
+
+            function matchedItems() {
+              return listItems.filter((item) => item.dataset.filterMatch !== '0')
+            }
+
+            function render() {
+              const active = matchedItems()
+              listItems.forEach((item) => {
+                item.style.display = 'none'
+              })
+              active.forEach((item, index) => {
+                item.style.display = index < revealedCount ? '' : 'none'
+              })
+              sentinel.style.display = active.length > revealedCount ? 'block' : 'none'
+            }
+
+            function refresh(reset = true) {
+              if (reset) {
+                revealedCount = batchSize
+              }
+              render()
+            }
+
+            function loadMore() {
+              const active = matchedItems()
+              if (revealedCount >= active.length) return
+              revealedCount += batchSize
+              render()
+            }
+
+            if ('IntersectionObserver' in window) {
+              const observer = new IntersectionObserver(
+                (entries) => {
+                  entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                      loadMore()
+                    }
+                  })
+                },
+                { rootMargin: '320px 0px' }
+              )
+              observer.observe(sentinel)
+            } else {
+              window.addEventListener('scroll', loadMore, { passive: true })
+            }
+
+            return { refresh, loadMore }
+          }
+        })()
+      </script>
       {% block content %}
 
       {% endblock %}
@@ -68,10 +156,11 @@
       #toast-container {
         position: fixed;
         bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
+        left: 0;
+        right: 0;
         display: flex;
         flex-direction: column;
+        align-items: center;
         gap: 10px;
         z-index: 9999;
         pointer-events: none;
@@ -112,12 +201,12 @@
       
       @keyframes toast-slide-in {
         from {
-          transform: translate(-50%, 16px);
+          transform: translateY(16px);
           opacity: 0;
         }
       
         to {
-          transform: translate(-50%, 0);
+          transform: translateY(0);
           opacity: 1;
         }
       }
@@ -126,28 +215,62 @@
     <script>
       ;(function () {
         const container = document.getElementById('toast-container')
-        if (!container) return
-      
-        const TOAST_LIFETIME = 2000 // 2 seconds
-        const toasts = Array.from(container.children)
-      
-        toasts.forEach((toast, index) => {
+        const PENDING_TOAST_KEY = 'farm_pending_toast'
+
+        function ensureContainer() {
+          const existing = document.getElementById('toast-container')
+          if (existing) return existing
+          const next = document.createElement('div')
+          next.id = 'toast-container'
+          document.body.appendChild(next)
+          return next
+        }
+
+        function mountToast(message, type = 'info') {
+          const target = ensureContainer()
+          const toast = document.createElement('div')
+          toast.className = `toast-message toast-${type}`
+          toast.innerHTML = `<span class="toast-text">${message}</span>`
+          target.appendChild(toast)
+          return toast
+        }
+
+        function scheduleToastRemoval(toast, index = 0) {
           const delay = index * 150
           setTimeout(() => {
             toast.style.opacity = '1'
           }, delay)
-      
+
           setTimeout(() => {
             toast.style.transition = 'opacity 0.25s ease-out, transform 0.25s ease-out'
             toast.style.opacity = '0'
             toast.style.transform = 'translateY(8px)'
             setTimeout(() => {
               toast.remove()
-              if (!container.hasChildNodes()) {
-                container.remove()
+              const target = document.getElementById('toast-container')
+              if (target && !target.hasChildNodes()) {
+                target.remove()
               }
             }, 300)
           }, TOAST_LIFETIME + delay)
+        }
+
+        const TOAST_LIFETIME = 2000 // 2 seconds
+        let toasts = container ? Array.from(container.children) : []
+
+        try {
+          const pendingToast = JSON.parse(sessionStorage.getItem(PENDING_TOAST_KEY) || 'null')
+          if (pendingToast?.message) {
+            const toast = mountToast(pendingToast.message, pendingToast.type || 'info')
+            toasts.push(toast)
+            sessionStorage.removeItem(PENDING_TOAST_KEY)
+          }
+        } catch {
+          sessionStorage.removeItem(PENDING_TOAST_KEY)
+        }
+      
+        toasts.forEach((toast, index) => {
+          scheduleToastRemoval(toast, index)
         })
       })()
     </script>
@@ -194,10 +317,22 @@
           const field = wrapper.querySelector('input, select, textarea')
           if (!field || field.disabled) return
           field.focus()
-          if (field.tagName === 'SELECT') {
-            field.click()
-          }
         })
+      })()
+    </script>
+
+    <script>
+      ;(function () {
+        document.addEventListener(
+          'wheel',
+          (event) => {
+            const field = event.target
+            if (!(field instanceof HTMLInputElement)) return
+            if (field.type !== 'number') return
+            event.preventDefault()
+          },
+          { passive: false }
+        )
       })()
     </script>
 

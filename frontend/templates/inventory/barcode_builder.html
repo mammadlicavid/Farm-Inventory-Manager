@@ -1,0 +1,671 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="main-header">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'inventory:add_placeholder' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Barkod Yarat</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="main-content add-page">
+    <section class="scan-panel">
+        <div class="section-head">
+            <h3>Barkod generatoru</h3>
+            <p>Kateqoriya seçin, formu doldurun, sonra `Barkodu Göstər` düyməsinə basın.</p>
+        </div>
+        <div class="input-group" style="margin-top: 14px;">
+            <label>Form növü</label>
+            <select id="builder-form-type" class="custom-input" required>
+                <option value="">Seçin</option>
+                {% for form_type in form_types %}
+                <option value="{{ form_type.key }}">{{ form_type.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </section>
+
+    <section id="builder-form-shell" class="dynamic-form-shell" hidden>
+        <div class="section-head">
+            <h3 id="builder-active-form-title">Form</h3>
+            <p>Bu formdakı bütün məlumat birlikdə barkoda daxil ediləcək.</p>
+        </div>
+
+        <div class="form-card" data-form-panel="expense" hidden>
+            <div class="two-col">
+                <div class="input-group"><label>Ana Kateqoriya</label><select id="expense-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>Alt Kateqoriya</label><select id="expense-subcategory" class="custom-input" required><option value="">Alt kateqoriya seçin</option></select></div>
+            </div>
+            <div class="input-group" id="expense-manual-wrap" hidden><label>Xərc adı (Digər)</label><input id="expense-manual-name" type="text" class="custom-input" placeholder="Xərcin adını daxil edin"></div>
+            <div class="input-group"><label>Məbləğ</label><input id="expense-amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="expense">Barkodu Göstər</button>
+        </div>
+
+        <div class="form-card" data-form-panel="income" hidden>
+            <div class="two-col">
+                <div class="input-group"><label>Ana Kateqoriya</label><select id="income-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>Məhsul</label><select id="income-item" class="custom-input" required><option value="">Məhsul seçin</option></select></div>
+            </div>
+            <div class="input-group" id="income-manual-wrap" hidden><label>Məhsul adı (Digər)</label><input id="income-manual-name" type="text" class="custom-input" placeholder="Məhsulun adını daxil edin"></div>
+            <div class="two-col">
+                <div class="input-group"><label>Miqdar</label><input id="income-quantity" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
+                <div class="input-group"><label>Ölçü vahidi</label><select id="income-unit" class="custom-input" required></select></div>
+            </div>
+            <div class="two-col">
+                <div class="input-group" id="income-gender-wrap" hidden><label>Cinsiyyət</label><select id="income-gender" class="custom-input"><option value="">Seçin</option><option value="erkek">Erkək</option><option value="disi">Dişi</option></select></div>
+                <div class="input-group" id="income-animal-id-wrap" hidden><label>İdentifikasiya No</label><input id="income-animal-id" type="text" class="custom-input" placeholder="Məsələn: AZ12345"></div>
+            </div>
+            <div class="input-group"><label>Məbləğ</label><input id="income-amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="income">Barkodu Göstər</button>
+        </div>
+
+        <div class="form-card" data-form-panel="animal" hidden>
+            <div class="two-col">
+                <div class="input-group"><label>Ana Kateqoriya</label><select id="animal-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>Alt Kateqoriya</label><select id="animal-subcategory" class="custom-input" required><option value="">Alt kateqoriya seçin</option></select></div>
+            </div>
+            <div class="input-group" id="animal-manual-wrap" hidden><label>Heyvan növü (Digər)</label><input id="animal-manual-name" type="text" class="custom-input" placeholder="Heyvanın növünü daxil edin"></div>
+            <div class="two-col">
+                <div class="input-group"><label>Miqdar</label><input id="animal-quantity" type="number" value="1" class="custom-input" placeholder="1" required></div>
+                <div class="input-group"><label>İdentifikasiya No</label><input id="animal-id" type="text" class="custom-input" placeholder="Məsələn: AZ12345"></div>
+            </div>
+            <div class="two-col">
+                <div class="input-group"><label>Cinsiyyət</label><select id="animal-gender" class="custom-input" required><option value="erkek">Erkək</option><option value="disi">Dişi</option></select></div>
+                <div class="input-group"><label>Çəki</label><input id="animal-weight" type="number" step="0.1" class="custom-input" placeholder="0.0"></div>
+            </div>
+            <div class="input-group"><label>Məbləğ</label><input id="animal-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="animal">Barkodu Göstər</button>
+        </div>
+
+        <div class="form-card" data-form-panel="seed" hidden>
+            <div class="two-col">
+                <div class="input-group"><label>Ana Kateqoriya</label><select id="seed-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>Toxum növü</label><select id="seed-item" class="custom-input" required><option value="">Toxum seçin</option></select></div>
+            </div>
+            <div class="input-group" id="seed-manual-wrap" hidden><label>Toxum adı (Digər)</label><input id="seed-manual-name" type="text" class="custom-input" placeholder="Toxumun adını daxil edin"></div>
+            <div class="two-col">
+                <div class="input-group"><label>Miqdar</label><input id="seed-quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required></div>
+                <div class="input-group"><label>Ölçü vahidi</label><select id="seed-unit" class="custom-input" required><option value="kg">kg</option><option value="ton">ton</option><option value="qram">qram</option></select></div>
+            </div>
+            <div class="input-group"><label>Məbləğ</label><input id="seed-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="seed">Barkodu Göstər</button>
+        </div>
+
+        <div class="form-card" data-form-panel="tool" hidden>
+            <div class="two-col">
+                <div class="input-group"><label>Ana Kateqoriya</label><select id="tool-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>Alət növü</label><select id="tool-item" class="custom-input" required><option value="">Alət seçin</option></select></div>
+            </div>
+            <div class="input-group" id="tool-manual-wrap" hidden><label>Alət adı (Digər)</label><input id="tool-manual-name" type="text" class="custom-input" placeholder="Alət adını daxil edin"></div>
+            <div class="two-col">
+                <div class="input-group"><label>Miqdar</label><input id="tool-quantity" type="number" class="custom-input" placeholder="0" required></div>
+                <div class="input-group"><label>Məbləğ</label><input id="tool-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+            </div>
+            <button type="button" class="submit-green-btn" data-show-barcode="tool">Barkodu Göstər</button>
+        </div>
+
+        <div class="form-card" data-form-panel="farm" hidden>
+            <div class="two-col">
+                <div class="input-group"><label>Ana Kateqoriya</label><select id="farm-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>Məhsul növü</label><select id="farm-item" class="custom-input" required><option value="">Məhsul seçin</option></select></div>
+            </div>
+            <div class="input-group" id="farm-manual-wrap" hidden><label>Məhsul adı (Digər)</label><input id="farm-manual-name" type="text" class="custom-input" placeholder="Məhsulun adını daxil edin"></div>
+            <div class="two-col">
+                <div class="input-group"><label>Miqdar</label><input id="farm-quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required></div>
+                <div class="input-group"><label>Ölçü vahidi</label><select id="farm-unit" class="custom-input" required><option value="kq">kq</option><option value="ton">ton</option><option value="qram">qram</option><option value="litr">litr</option><option value="ml">millilitr</option><option value="ədəd">ədəd</option><option value="dəstə">dəstə</option><option value="bağlama">bağlama</option></select></div>
+            </div>
+            <div class="input-group"><label>Məbləğ</label><input id="farm-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="farm">Barkodu Göstər</button>
+        </div>
+    </section>
+
+    <section id="barcode-preview" class="barcode-preview" hidden>
+        <div class="section-head">
+            <h3 id="barcode-preview-title">Barkod</h3>
+            <p id="barcode-preview-text"></p>
+        </div>
+        <div class="barcode-canvas-wrap"><svg id="barcode-svg"></svg></div>
+        <div class="barcode-code-row">
+            <div class="barcode-code" id="barcode-code-text"></div>
+            <button type="button" id="barcode-copy-btn" class="barcode-copy-btn">Kopyala</button>
+        </div>
+        <button type="button" id="barcode-download-btn" class="submit-green-btn">Download JPG</button>
+    </section>
+</main>
+
+{{ expense_categories|json_script:"inventory-expense-data" }}
+{{ animal_categories|json_script:"inventory-animal-data" }}
+{{ seed_categories|json_script:"inventory-seed-data" }}
+{{ tool_categories|json_script:"inventory-tool-data" }}
+{{ farm_categories|json_script:"inventory-farm-data" }}
+{{ income_categories|json_script:"inventory-income-categories" }}
+{{ income_category_data|json_script:"inventory-income-data" }}
+
+<style>
+    .add-page { padding: 20px 20px 110px; display: grid; gap: 18px; }
+    .scan-panel, .dynamic-form-shell, .barcode-preview { background: #fff; border-radius: 22px; padding: 18px; box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06); }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 8px; }
+    .required-star { color: #dc3545; margin-left: 4px; }
+    .custom-input { width: 100%; border: none; border-radius: 14px; background: #f8fafc; padding: 14px 15px; font-size: 15px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .submit-green-btn { width: 100%; border: none; border-radius: 16px; padding: 16px 18px; font-size: 16px; font-weight: 700; background: #2f7d32; color: #fff; cursor: pointer; box-shadow: 0 8px 20px rgba(47, 125, 50, 0.22); }
+    .section-head h3 { margin: 0 0 4px; font-size: 18px; }
+    .section-head p { margin: 0; color: #6b7280; font-size: 14px; }
+    .form-card { margin-top: 14px; border-top: 1px solid #eef2f7; padding-top: 14px; }
+    .barcode-preview { text-align: center; }
+    .barcode-canvas-wrap { margin: 14px 0 10px; overflow-x: auto; padding: 10px; background: #fff; border-radius: 18px; border: 1px solid #e5e7eb; }
+    .barcode-code-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .barcode-code { font-size: 14px; color: #334155; word-break: break-all; }
+    .barcode-copy-btn { border: 1px solid #dbe4ee; border-radius: 12px; background: #f8fafc; color: #0f172a; padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease; }
+    .barcode-copy-btn:hover, .submit-green-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12); }
+    .barcode-copy-btn:active, .submit-green-btn:active { transform: scale(0.985); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14); }
+    @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const expenseData = JSON.parse(document.getElementById("inventory-expense-data").textContent);
+    const animalData = JSON.parse(document.getElementById("inventory-animal-data").textContent);
+    const seedData = JSON.parse(document.getElementById("inventory-seed-data").textContent);
+    const toolData = JSON.parse(document.getElementById("inventory-tool-data").textContent);
+    const farmData = JSON.parse(document.getElementById("inventory-farm-data").textContent);
+    const incomeCategories = JSON.parse(document.getElementById("inventory-income-categories").textContent);
+    const incomeData = JSON.parse(document.getElementById("inventory-income-data").textContent);
+
+    const formTypeSelect = document.getElementById("builder-form-type");
+    const formShell = document.getElementById("builder-form-shell");
+    const activeTitle = document.getElementById("builder-active-form-title");
+    const previewSection = document.getElementById("barcode-preview");
+    const previewTitle = document.getElementById("barcode-preview-title");
+    const previewText = document.getElementById("barcode-preview-text");
+    const barcodeSvg = document.getElementById("barcode-svg");
+    const barcodeCodeText = document.getElementById("barcode-code-text");
+    const copyBtn = document.getElementById("barcode-copy-btn");
+    const downloadBtn = document.getElementById("barcode-download-btn");
+    const allUnits = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
+    let barcodeDownloadName = "barcode";
+
+    const panelTitles = { expense: "Xərc formu", income: "Gəlir formu", animal: "Heyvan formu", seed: "Toxum formu", tool: "Alət formu", farm: "Təsərrüfat formu" };
+
+    function getCsrfToken() {
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? match[1] : "";
+    }
+
+    function slugify(value) {
+        return (value || "barcode").toString().trim().toLowerCase().replace(/[^a-z0-9əöğıçşü\s-]/gi, "").replace(/\s+/g, "-");
+    }
+
+    function fillOptions(select, rows, placeholder, mapFn) {
+        select.innerHTML = "";
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = placeholder;
+        select.appendChild(first);
+        rows.forEach((row) => {
+            const option = document.createElement("option");
+            const mapped = mapFn(row);
+            option.value = mapped.value;
+            option.textContent = mapped.label;
+            if (mapped.dataset) Object.entries(mapped.dataset).forEach(([key, val]) => { option.dataset[key] = val; });
+            select.appendChild(option);
+        });
+    }
+
+    function syncRequiredStar(control) {
+        const group = control ? control.closest(".input-group") : null;
+        const label = group ? group.querySelector("label") : null;
+        if (!label) return;
+        const existing = label.querySelector(".required-star");
+        if (control.required) {
+            if (!existing) {
+                const star = document.createElement("span");
+                star.className = "required-star";
+                star.textContent = "*";
+                label.appendChild(star);
+            }
+            return;
+        }
+        if (existing) existing.remove();
+    }
+
+    function setControlRequired(control, isRequired) {
+        if (!control) return;
+        control.required = Boolean(isRequired);
+        syncRequiredStar(control);
+    }
+
+    function syncAllRequiredStars() {
+        document.querySelectorAll(".input-group input, .input-group select, .input-group textarea").forEach(syncRequiredStar);
+    }
+
+    function syncAnimalIdentificationState() {
+        const quantityInput = document.getElementById("animal-quantity");
+        const idInput = document.getElementById("animal-id");
+        const parsedQuantity = parseInt(quantityInput.value || "1", 10);
+        if (Math.abs(parsedQuantity) !== 1) {
+            idInput.value = "";
+            idInput.disabled = true;
+            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
+            return;
+        }
+        idInput.disabled = false;
+        idInput.placeholder = "Məsələn: AZ12345";
+    }
+
+    function setIncomeUnits(units, preferred) {
+        const unitSelect = document.getElementById("income-unit");
+        fillOptions(unitSelect, units, "Vahid seçin", (value) => ({ value, label: value }));
+        unitSelect.value = preferred && units.includes(preferred) ? preferred : (units[0] || "");
+    }
+
+    function updateExpenseSubcategories(selectedSubcategoryId) {
+        const categorySelect = document.getElementById("expense-category");
+        const subcategorySelect = document.getElementById("expense-subcategory");
+        const manualWrap = document.getElementById("expense-manual-wrap");
+        const manualInput = document.getElementById("expense-manual-name");
+        const selectedCategory = expenseData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        if (selectedCategory.name.includes("Digər")) {
+            manualWrap.hidden = false;
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            subcategorySelect.value = "";
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, true);
+            return;
+        }
+        manualWrap.hidden = true;
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
+        setControlRequired(subcategorySelect, true);
+        setControlRequired(manualInput, false);
+    }
+
+    function updateAnimalSubcategories(selectedSubcategoryId) {
+        const categorySelect = document.getElementById("animal-category");
+        const subcategorySelect = document.getElementById("animal-subcategory");
+        const manualWrap = document.getElementById("animal-manual-wrap");
+        const manualInput = document.getElementById("animal-manual-name");
+        const selectedCategory = animalData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        if (selectedCategory.name.includes("Digər")) {
+            manualWrap.hidden = false;
+            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            subcategorySelect.value = "";
+            setControlRequired(subcategorySelect, false);
+            setControlRequired(manualInput, true);
+            return;
+        }
+        manualWrap.hidden = true;
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
+        setControlRequired(subcategorySelect, true);
+        setControlRequired(manualInput, false);
+    }
+
+    function updateSeedItems(selectedItemId) {
+        const categorySelect = document.getElementById("seed-category");
+        const itemSelect = document.getElementById("seed-item");
+        const manualWrap = document.getElementById("seed-manual-wrap");
+        const manualInput = document.getElementById("seed-manual-name");
+        const selectedCategory = seedData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(itemSelect, [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        fillOptions(itemSelect, selectedCategory.items || [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedItemId) itemSelect.value = String(selectedItemId);
+        const isOther = selectedCategory.name.includes("Digər") || itemSelect.options[itemSelect.selectedIndex]?.text === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+    }
+
+    function updateToolItems(selectedItemId) {
+        const categorySelect = document.getElementById("tool-category");
+        const itemSelect = document.getElementById("tool-item");
+        const manualWrap = document.getElementById("tool-manual-wrap");
+        const manualInput = document.getElementById("tool-manual-name");
+        const selectedCategory = toolData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(itemSelect, [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        fillOptions(itemSelect, selectedCategory.items || [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+        if (selectedItemId) itemSelect.value = String(selectedItemId);
+        const isOther = selectedCategory.name.includes("Digər") || itemSelect.options[itemSelect.selectedIndex]?.text === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+    }
+
+    function updateFarmItems(selectedItemId) {
+        const categorySelect = document.getElementById("farm-category");
+        const itemSelect = document.getElementById("farm-item");
+        const unitSelect = document.getElementById("farm-unit");
+        const manualWrap = document.getElementById("farm-manual-wrap");
+        const manualInput = document.getElementById("farm-manual-name");
+        const selectedCategory = farmData.find((row) => String(row.id) === categorySelect.value);
+        if (!selectedCategory) {
+            fillOptions(itemSelect, [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            return;
+        }
+        fillOptions(itemSelect, selectedCategory.items || [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name, dataset: { unit: row.unit || "" } }));
+        if (selectedItemId) itemSelect.value = String(selectedItemId);
+        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+        const isOther = selectedCategory.name.includes("Digər") || selectedOption?.text === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+        if (selectedOption?.dataset.unit) unitSelect.value = selectedOption.dataset.unit;
+    }
+
+    function updateIncomeItems(selectedItemName) {
+        const categorySelect = document.getElementById("income-category");
+        const itemSelect = document.getElementById("income-item");
+        const manualWrap = document.getElementById("income-manual-wrap");
+        const manualInput = document.getElementById("income-manual-name");
+        const genderWrap = document.getElementById("income-gender-wrap");
+        const animalIdWrap = document.getElementById("income-animal-id-wrap");
+        const genderSelect = document.getElementById("income-gender");
+        const selectedCategory = categorySelect.value;
+        const row = incomeData[selectedCategory];
+        const type = row ? row.type : "other";
+        genderWrap.hidden = type !== "animal";
+        animalIdWrap.hidden = type !== "animal";
+        if (!row) {
+            fillOptions(itemSelect, [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name }));
+            manualWrap.hidden = true;
+            setControlRequired(itemSelect, false);
+            setControlRequired(manualInput, false);
+            setControlRequired(genderSelect, false);
+            setIncomeUnits(allUnits, "kq");
+            return;
+        }
+        fillOptions(itemSelect, row.items || [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name, dataset: { unit: entry.unit || "" } }));
+        if (selectedItemName) itemSelect.value = selectedItemName;
+        const isOther = selectedCategory === "Digər" || itemSelect.options[itemSelect.selectedIndex]?.text === "Digər";
+        manualWrap.hidden = !isOther;
+        setControlRequired(itemSelect, !isOther);
+        setControlRequired(manualInput, isOther);
+        setControlRequired(genderSelect, type === "animal");
+        let units = allUnits.slice();
+        const itemUnit = itemSelect.options[itemSelect.selectedIndex]?.dataset.unit || "";
+        if (type === "animal") units = ["ədəd"];
+        else if (type === "seed") units = ["kq", "ton", "qram"];
+        else if (itemUnit === "kq") units = ["kq", "ton", "qram"];
+        else if (itemUnit === "litr") units = ["litr", "ml"];
+        else if (itemUnit) units = [itemUnit];
+        setIncomeUnits(units, units[0]);
+    }
+
+    function initFormOptions() {
+        fillOptions(document.getElementById("expense-category"), expenseData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("animal-category"), animalData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("seed-category"), seedData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("tool-category"), toolData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("farm-category"), farmData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("income-category"), incomeCategories, "Kateqoriya seçin", (row) => ({ value: row, label: row }));
+        setIncomeUnits(allUnits, "kq");
+    }
+
+    function showPanel(formType) {
+        formShell.hidden = !formType;
+        document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = panel.dataset.formPanel !== formType; });
+        activeTitle.textContent = panelTitles[formType] || "Form";
+        previewSection.hidden = true;
+    }
+
+    function validateBuilderForm(formType) {
+        const panel = document.querySelector(`[data-form-panel="${formType}"]`);
+        if (!panel) return false;
+        const controls = panel.querySelectorAll("input, select, textarea");
+        for (const control of controls) {
+            if (control.required && !control.disabled && !control.closest("[hidden]")) {
+                if (!control.reportValidity()) return false;
+            }
+        }
+        return true;
+    }
+
+    function currentPayload(formType) {
+        if (formType === "expense") {
+            const categorySelect = document.getElementById("expense-category");
+            const subcategorySelect = document.getElementById("expense-subcategory");
+            const manualName = document.getElementById("expense-manual-name").value.trim();
+            const label = manualName || subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "";
+            return {
+                form_type: "expense",
+                target_type: manualName ? "manual" : "subcategory",
+                label,
+                metadata: {
+                    category_id: categorySelect.value,
+                    category_name: categorySelect.options[categorySelect.selectedIndex]?.text || "",
+                    subcategory_id: subcategorySelect.value,
+                    subcategory_name: subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "",
+                    manual_name: manualName,
+                    amount: document.getElementById("expense-amount").value
+                }
+            };
+        }
+        if (formType === "income") {
+            const categorySelect = document.getElementById("income-category");
+            const itemSelect = document.getElementById("income-item");
+            const manualName = document.getElementById("income-manual-name").value.trim();
+            const label = manualName || itemSelect.options[itemSelect.selectedIndex]?.text || "";
+            return {
+                form_type: "income",
+                target_type: manualName ? "manual" : "item",
+                label,
+                metadata: {
+                    category_name: categorySelect.value,
+                    item_name: itemSelect.value,
+                    manual_name: manualName,
+                    quantity: document.getElementById("income-quantity").value,
+                    unit: document.getElementById("income-unit").value,
+                    gender: document.getElementById("income-gender").value,
+                    identification_no: document.getElementById("income-animal-id").value.trim(),
+                    amount: document.getElementById("income-amount").value
+                }
+            };
+        }
+        if (formType === "animal") {
+            const categorySelect = document.getElementById("animal-category");
+            const subcategorySelect = document.getElementById("animal-subcategory");
+            const manualName = document.getElementById("animal-manual-name").value.trim();
+            const label = manualName || subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "";
+            return {
+                form_type: "animal",
+                target_type: manualName ? "manual" : "subcategory",
+                label,
+                metadata: {
+                    category_id: categorySelect.value,
+                    category_name: categorySelect.options[categorySelect.selectedIndex]?.text || "",
+                    subcategory_id: subcategorySelect.value,
+                    subcategory_name: subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "",
+                    manual_name: manualName,
+                    quantity: document.getElementById("animal-quantity").value,
+                    identification_no: document.getElementById("animal-id").value.trim(),
+                    gender: document.getElementById("animal-gender").value,
+                    weight: document.getElementById("animal-weight").value,
+                    price: document.getElementById("animal-price").value
+                }
+            };
+        }
+        if (formType === "seed") {
+            const categorySelect = document.getElementById("seed-category");
+            const itemSelect = document.getElementById("seed-item");
+            const manualName = document.getElementById("seed-manual-name").value.trim();
+            const label = manualName || itemSelect.options[itemSelect.selectedIndex]?.text || "";
+            return {
+                form_type: "seed",
+                target_type: manualName ? "manual" : "item",
+                label,
+                metadata: {
+                    category_id: categorySelect.value,
+                    category_name: categorySelect.options[categorySelect.selectedIndex]?.text || "",
+                    item_id: itemSelect.value,
+                    item_name: itemSelect.options[itemSelect.selectedIndex]?.text || "",
+                    manual_name: manualName,
+                    quantity: document.getElementById("seed-quantity").value,
+                    unit: document.getElementById("seed-unit").value,
+                    price: document.getElementById("seed-price").value
+                }
+            };
+        }
+        if (formType === "tool") {
+            const categorySelect = document.getElementById("tool-category");
+            const itemSelect = document.getElementById("tool-item");
+            const manualName = document.getElementById("tool-manual-name").value.trim();
+            const label = manualName || itemSelect.options[itemSelect.selectedIndex]?.text || "";
+            return {
+                form_type: "tool",
+                target_type: manualName ? "manual" : "item",
+                label,
+                metadata: {
+                    category_id: categorySelect.value,
+                    category_name: categorySelect.options[categorySelect.selectedIndex]?.text || "",
+                    item_id: itemSelect.value,
+                    item_name: itemSelect.options[itemSelect.selectedIndex]?.text || "",
+                    manual_name: manualName,
+                    quantity: document.getElementById("tool-quantity").value,
+                    price: document.getElementById("tool-price").value
+                }
+            };
+        }
+        const categorySelect = document.getElementById("farm-category");
+        const itemSelect = document.getElementById("farm-item");
+        const manualName = document.getElementById("farm-manual-name").value.trim();
+        const label = manualName || itemSelect.options[itemSelect.selectedIndex]?.text || "";
+        return {
+            form_type: "farm",
+            target_type: manualName ? "manual" : "item",
+            label,
+            metadata: {
+                category_id: categorySelect.value,
+                category_name: categorySelect.options[categorySelect.selectedIndex]?.text || "",
+                item_id: itemSelect.value,
+                item_name: itemSelect.options[itemSelect.selectedIndex]?.text || "",
+                manual_name: manualName,
+                quantity: document.getElementById("farm-quantity").value,
+                unit: document.getElementById("farm-unit").value,
+                price: document.getElementById("farm-price").value
+            }
+        };
+    }
+
+    async function showBarcode(formType) {
+        if (!validateBuilderForm(formType)) return;
+        const payload = currentPayload(formType);
+        if (!payload.label) return;
+        const response = await fetch("{% url 'inventory:barcode' %}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!data.success) return;
+        previewSection.hidden = false;
+        previewTitle.textContent = data.barcode.label;
+        previewText.textContent = `${panelTitles[data.barcode.form_type] || data.barcode.form_type} üçün barkod`;
+        barcodeCodeText.textContent = data.barcode.code;
+        barcodeDownloadName = `${slugify(data.barcode.label)}-${data.barcode.code}`;
+        JsBarcode("#barcode-svg", data.barcode.code, { format: "CODE128", displayValue: true, fontSize: 16, margin: 12, height: 68 });
+        window.scrollTo({ top: previewSection.offsetTop - 20, behavior: "smooth" });
+    }
+
+    formTypeSelect.addEventListener("change", function () { showPanel(this.value); });
+    document.getElementById("expense-category").addEventListener("change", () => updateExpenseSubcategories());
+    document.getElementById("animal-category").addEventListener("change", () => updateAnimalSubcategories());
+    document.getElementById("animal-quantity").addEventListener("input", syncAnimalIdentificationState);
+    document.getElementById("seed-category").addEventListener("change", () => updateSeedItems());
+    document.getElementById("seed-item").addEventListener("change", () => updateSeedItems(document.getElementById("seed-item").value));
+    document.getElementById("tool-category").addEventListener("change", () => updateToolItems());
+    document.getElementById("tool-item").addEventListener("change", () => updateToolItems(document.getElementById("tool-item").value));
+    document.getElementById("farm-category").addEventListener("change", () => updateFarmItems());
+    document.getElementById("farm-item").addEventListener("change", () => updateFarmItems(document.getElementById("farm-item").value));
+    document.getElementById("income-category").addEventListener("change", () => updateIncomeItems());
+    document.getElementById("income-item").addEventListener("change", () => updateIncomeItems(document.getElementById("income-item").value));
+
+    document.querySelectorAll("[data-show-barcode]").forEach((btn) => {
+        btn.addEventListener("click", async () => { await showBarcode(btn.dataset.showBarcode); });
+    });
+
+    downloadBtn.addEventListener("click", function () {
+        const svgMarkup = new XMLSerializer().serializeToString(barcodeSvg);
+        const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+        const svgUrl = URL.createObjectURL(svgBlob);
+        const image = new Image();
+        image.onload = function () {
+            const canvas = document.createElement("canvas");
+            const width = image.width || 900;
+            const height = image.height || 260;
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext("2d");
+            context.fillStyle = "#ffffff";
+            context.fillRect(0, 0, width, height);
+            context.drawImage(image, 0, 0, width, height);
+            URL.revokeObjectURL(svgUrl);
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/jpeg", 0.96);
+            link.download = `${barcodeDownloadName}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+        image.src = svgUrl;
+    });
+
+    copyBtn.addEventListener("click", async function () {
+        const code = barcodeCodeText.textContent.trim();
+        if (!code) return;
+        try {
+            await navigator.clipboard.writeText(code);
+            copyBtn.textContent = "Kopyalandı";
+            window.setTimeout(() => { copyBtn.textContent = "Kopyala"; }, 1400);
+        } catch (error) {
+            copyBtn.textContent = "Olmadı";
+            window.setTimeout(() => { copyBtn.textContent = "Kopyala"; }, 1400);
+        }
+    });
+
+    initFormOptions();
+    syncAllRequiredStars();
+    updateExpenseSubcategories();
+    updateAnimalSubcategories();
+    updateSeedItems();
+    updateToolItems();
+    updateFarmItems();
+    updateIncomeItems();
+    syncAnimalIdentificationState();
+});
+</script>
+{% endblock %}

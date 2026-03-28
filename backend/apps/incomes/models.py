@@ -73,3 +73,10 @@ class Income(models.Model):
         verbose_name = "Gəlir"
         verbose_name_plural = "Gəlirlər"
         ordering = ["-date", "-created_at"]
+        indexes = [
+            models.Index(fields=["created_by", "category"]),
+            models.Index(fields=["created_by", "item_name"]),
+            models.Index(fields=["created_by", "date"]),
+            models.Index(fields=["created_by", "updated_at"]),
+            models.Index(fields=["content_type", "object_id"]),
+        ]

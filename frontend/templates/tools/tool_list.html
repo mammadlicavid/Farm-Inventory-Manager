@@ -13,13 +13,37 @@
 </header>
 
 <main class="main-content" style="position: relative; z-index: 10;">
-    <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
-        <div style="position: relative;" class="click-focus">
-            <i class="fa-solid fa-search"
-                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+    <form method="get" action="" class="inventory-filter-shell" id="tool-filter-form">
+        <div class="inventory-filter-grid">
+            <select name="category" id="tool-filter-category" class="custom-input inventory-filter-control">
+                <option value="">Bütün kateqoriyalar</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="item" id="tool-filter-item" class="custom-input inventory-filter-control">
+                <option value="">Bütün alət növləri</option>
+                {% for item in filter_items %}
+                <option value="{{ item.id }}" {% if selected_item == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="movement" class="custom-input inventory-filter-control">
+                <option value="">Artım və azalma</option>
+                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>Artım</option>
+                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>Azalma</option>
+            </select>
+            <div class="inventory-filter-date-range">
+                <input type="date" name="date_from" value="{{ selected_date_from }}" class="custom-input inventory-filter-control">
+                <span class="inventory-filter-date-arrow" aria-hidden="true">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                </span>
+                <input type="date" name="date_to" value="{{ selected_date_to }}" class="custom-input inventory-filter-control">
+            </div>
+        </div>
+        <div class="inventory-filter-actions">
             <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
-                value="{{ request.GET.q|default:'' }}" autocomplete="off"
-                style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+                value="{{ request.GET.q|default:'' }}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
+            <button type="button" class="inventory-filter-reset" id="tool-filter-reset">Sıfırla</button>
         </div>
     </form>
     <div class="crud-desktop-wrapper">
@@ -89,9 +113,14 @@
         <div class="crud-list-column">
             <!-- Tools List -->
             <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
-            <div class="alets-list data-grid-list">
+            <div class="alets-list data-grid-list" id="tool-list">
                 {% for alet in alets %}
-                <div class="expense-item-card">
+                <div class="expense-item-card"
+                    data-category="{% if alet.item and alet.item.category %}{{ alet.item.category.id }}{% endif %}"
+                    data-item="{% if alet.item %}{{ alet.item.id }}{% endif %}"
+                    data-date="{{ alet.date|date:'Y-m-d' }}"
+                    data-movement="{% if alet.quantity < 0 %}decrease{% else %}increase{% endif %}"
+                    data-search="{% if alet.item and alet.item.name != 'Digər' %}{{ alet.item.name|lower }}{% else %}{{ alet.manual_name|default:''|lower }}{% endif %} {{ alet.item.category.name|default:''|lower }} {{ alet.additional_info|default:''|lower }}">
                     <div class="expense-item-icon">
                         {% if alet.icon_class|slice:":6" == "emoji:" %}
                         <span class="emoji-icon">{{ alet.icon_class|slice:"6:" }}</span>
@@ -157,7 +186,7 @@
                     </div>
                 </div>
                 {% empty %}
-                <div class="expense-item-card" style="justify-content: center;">
+                <div class="expense-item-card" style="justify-content: center;" id="tool-list-empty">
                     <span style="color: #888;">Heç bir alət tapılmadı</span>
                 </div>
                 {% endfor %}
@@ -166,7 +195,247 @@
     </div>
 </main>
 
+<style>
+    .inventory-filter-shell {
+        margin-bottom: 18px;
+        padding: 16px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(244,250,246,0.96) 100%);
+        border: 1px solid rgba(46, 139, 87, 0.14);
+        box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
+        display: grid;
+        gap: 12px;
+    }
+
+    .inventory-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .inventory-filter-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 12px;
+    }
+
+    .inventory-filter-date-range {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+    }
+
+    .inventory-filter-date-arrow {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: rgba(46, 139, 87, 0.1);
+        color: var(--primary-green);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        box-shadow: inset 0 0 0 1px rgba(46, 139, 87, 0.08);
+    }
+
+    .inventory-filter-control {
+        min-height: 52px;
+        border: 1px solid rgba(46, 139, 87, 0.12);
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    }
+
+    .inventory-filter-button {
+        margin: 0;
+        width: auto;
+        min-width: 120px;
+        padding-inline: 20px;
+        align-self: stretch;
+    }
+
+    .inventory-filter-reset {
+        min-height: 52px;
+        padding: 0 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(46, 139, 87, 0.22);
+        background: linear-gradient(180deg, #39a363 0%, #2e8b57 100%);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(46, 139, 87, 0.18);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .inventory-filter-reset:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(46, 139, 87, 0.26);
+        background: linear-gradient(180deg, #43b26d 0%, #349a61 100%);
+    }
+
+    .inventory-filter-reset:active {
+        transform: translateY(0);
+        background: linear-gradient(180deg, #246c44 0%, #1f5d3a 100%);
+        box-shadow: 0 8px 16px rgba(31, 93, 58, 0.24);
+    }
+
+    @media (max-width: 1100px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 3;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .inventory-filter-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 2;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        }
+
+        .inventory-filter-date-arrow {
+            width: 44px;
+            border-radius: 14px;
+        }
+
+        .inventory-filter-button,
+        .inventory-filter-reset {
+            width: 100%;
+        }
+    }
+</style>
+{{ category_item_map|json_script:"tool-category-item-map" }}
 <script>
+    const toolCategoryItemMap = JSON.parse(document.getElementById("tool-category-item-map")?.textContent || "{}");
+    const toolFilterForm = document.getElementById("tool-filter-form");
+    const toolFilterCategory = document.getElementById("tool-filter-category");
+    const toolFilterItem = document.getElementById("tool-filter-item");
+    const selectedToolFilterItem = "{{ selected_item|default:''|escapejs }}";
+    const toolFilterSearch = toolFilterForm?.querySelector('input[name="q"]');
+    const toolFilterReset = document.getElementById("tool-filter-reset");
+    const toolCards = Array.from(document.querySelectorAll("#tool-list .expense-item-card"));
+    const toolListController = window.createProgressiveListController({ items: toolCards, batchSize: 100 });
+    const toolListEmpty = document.getElementById("tool-list-empty");
+    const toolCrudWrapper = document.querySelector(".crud-desktop-wrapper");
+    const toolListColumn = document.querySelector(".crud-list-column");
+    const toolFilterPlaceholder = document.createComment("tool-filter-placeholder");
+    let toolFilterTimer = null;
+
+    toolFilterForm?.parentNode?.insertBefore(toolFilterPlaceholder, toolFilterForm);
+
+    toolFilterForm?.addEventListener("submit", (event) => event.preventDefault());
+
+    function normalizeToolText(value) {
+        return String(value || "").trim().toLocaleLowerCase("az");
+    }
+
+    function applyToolFilters() {
+        const category = toolFilterCategory?.value || "";
+        const item = toolFilterItem?.value || "";
+        const movement = toolFilterForm?.querySelector('select[name="movement"]')?.value || "";
+        const dateFrom = toolFilterForm?.querySelector('input[name="date_from"]')?.value || "";
+        const dateTo = toolFilterForm?.querySelector('input[name="date_to"]')?.value || "";
+        const term = normalizeToolText(toolFilterSearch?.value || "");
+        let visibleCount = 0;
+
+        toolCards.forEach((card) => {
+            const matchCategory = !category || (card.dataset.category || "") === category;
+            const matchItem = !item || (card.dataset.item || "") === item;
+            const matchMovement = !movement || (card.dataset.movement || "") === movement;
+            const cardDate = card.dataset.date || "";
+            const matchDateFrom = !dateFrom || (cardDate && cardDate >= dateFrom);
+            const matchDateTo = !dateTo || (cardDate && cardDate <= dateTo);
+            const matchSearch = !term || normalizeToolText(card.dataset.search).includes(term);
+            const show = matchCategory && matchItem && matchMovement && matchDateFrom && matchDateTo && matchSearch;
+            card.dataset.filterMatch = show ? "1" : "0";
+            if (show) visibleCount += 1;
+        });
+
+        toolListController.refresh(true);
+
+        if (toolListEmpty) {
+            toolListEmpty.style.display = visibleCount === 0 ? "flex" : "none";
+        }
+    }
+
+    function updateToolFilterItems(categoryId, selectedItemId = "") {
+        if (!toolFilterItem) return;
+        toolFilterItem.innerHTML = '<option value="">Bütün alət növləri</option>';
+        if (!categoryId) return;
+        const items = toolCategoryItemMap[String(categoryId)] || [];
+        items.forEach((item) => {
+            const option = document.createElement("option");
+            option.value = String(item.id);
+            option.textContent = item.name;
+            if (String(item.id) === String(selectedItemId)) {
+                option.selected = true;
+            }
+            toolFilterItem.appendChild(option);
+        });
+    }
+
+    if (toolFilterCategory) {
+        toolFilterCategory.addEventListener("change", () => {
+            updateToolFilterItems(toolFilterCategory.value);
+            applyToolFilters();
+        });
+        if (toolFilterCategory.value) {
+            updateToolFilterItems(toolFilterCategory.value, selectedToolFilterItem);
+        }
+    }
+
+    toolFilterForm?.querySelectorAll('select[name="item"], select[name="movement"], input[name="date_from"], input[name="date_to"]').forEach((control) => {
+        control.addEventListener("change", applyToolFilters);
+    });
+
+    toolFilterSearch?.addEventListener("input", () => {
+        clearTimeout(toolFilterTimer);
+        toolFilterTimer = setTimeout(applyToolFilters, 300);
+    });
+
+    toolFilterReset?.addEventListener("click", () => {
+        if (toolFilterCategory) toolFilterCategory.value = "";
+        if (toolFilterItem) {
+            toolFilterItem.innerHTML = '<option value="">Bütün alət növləri</option>';
+            toolFilterItem.value = "";
+        }
+        const movementInput = toolFilterForm?.querySelector('select[name="movement"]');
+        const dateFromInput = toolFilterForm?.querySelector('input[name="date_from"]');
+        const dateToInput = toolFilterForm?.querySelector('input[name="date_to"]');
+        if (movementInput) movementInput.value = "";
+        if (dateFromInput) dateFromInput.value = "";
+        if (dateToInput) dateToInput.value = "";
+        if (toolFilterSearch) toolFilterSearch.value = "";
+        applyToolFilters();
+    });
+
+    function repositionToolFilter() {
+        if (!toolFilterForm || !toolListColumn || !toolFilterPlaceholder) return;
+        if (window.innerWidth < 1024) {
+            toolCrudWrapper?.insertBefore(toolFilterForm, toolListColumn);
+        } else if (toolFilterPlaceholder.parentNode) {
+            toolFilterPlaceholder.parentNode.insertBefore(toolFilterForm, toolFilterPlaceholder.nextSibling);
+        }
+    }
+
+    window.addEventListener("resize", repositionToolFilter);
+    repositionToolFilter();
+    applyToolFilters();
+
     const TOOL_STATE_KEY = "tool_form_state_session_v1";
     const TOOL_KEEP_KEY = "tool_form_keep_v1";
 
@@ -200,6 +469,19 @@
 
     let pendingToolItemId = null;
 
+    function populateToolItems(categoryId, selectedItemId = "") {
+        const itemSelect = document.getElementById('id_item');
+        if (!itemSelect) return;
+        const items = toolCategoryItemMap[String(categoryId)] || [];
+        let html = '<option value="">Seçin...</option>';
+        items.forEach((item) => {
+            const selectedAttr = String(item.id) === String(selectedItemId) ? ' selected' : '';
+            html += `<option value="${item.id}"${selectedAttr}>${item.name}</option>`;
+        });
+        itemSelect.innerHTML = html;
+        itemSelect.disabled = false;
+    }
+
     document.getElementById('id_category').addEventListener('change', function () {
         const categoryId = this.value;
         const categoryText = this.options[this.selectedIndex].text;
@@ -231,24 +513,11 @@
                 itemSelect.innerHTML = '<option value="">Əvvəlcə kateqoriya seçin...</option>';
                 return;
             }
-
-            fetch(`{% url 'tools:get_tool_items' %}?category_id=${categoryId}`)
-                .then(response => response.json())
-                .then(data => {
-                    itemSelect.disabled = false;
-                    let html = '<option value="">Seçin...</option>';
-                    data.forEach(item => {
-                        html += `<option value="${item.id}">${item.name}</option>`;
-                    });
-                    itemSelect.innerHTML = html;
-                    if (pendingToolItemId) {
-                        itemSelect.value = pendingToolItemId;
-                        pendingToolItemId = null;
-                    }
-                    resetToolOtherFields();
-                    saveToolState(categoryId, itemSelect.value || "");
-                    handleToolItemSelection();
-                });
+            populateToolItems(categoryId, pendingToolItemId);
+            pendingToolItemId = null;
+            resetToolOtherFields();
+            saveToolState(categoryId, itemSelect.value || "");
+            handleToolItemSelection();
         }
     });
 

@@ -12,6 +12,7 @@
   const PULL_STATUS_URL = '/sync/pull-status/'
   const RETRY_INTERVAL_MS = 30000
   const HISTORY_LIMIT = 20
+  const PENDING_TOAST_KEY = 'farm_pending_toast'
 
   let dbPromise = null
   let syncInProgress = false
@@ -215,6 +216,7 @@
       animal: 'Heyvan',
       expense: 'Xərc',
       income: 'Gəlir',
+      supplier: 'Təchizatçı',
       farm_product: 'Məhsul',
       quick_expense: 'Tez xərc',
       quick_income: 'Tez gəlir',
@@ -229,18 +231,6 @@
       template_add: 'əlavə',
     }
     return `${entityMap[item.entity] || item.entity} ${actionMap[item.action] || item.action}`
-  }
-
-  function successMessageForOperation(operation) {
-    const action = operation.action || 'create'
-
-    if (action === 'delete') {
-      return 'Qeyd silindi.'
-    }
-    if (action === 'update') {
-      return 'Dəyişiklik yadda saxlanıldı.'
-    }
-    return 'Məlumat uğurla əlavə olundu.'
   }
 
   async function emitStatus(extra = {}) {
@@ -359,11 +349,31 @@
     }, 2200)
   }
 
+  function queueToast(message, type = 'info') {
+    try {
+      sessionStorage.setItem(PENDING_TOAST_KEY, JSON.stringify({ message, type }))
+    } catch (error) {}
+  }
+
+  function successMessageForAction(action) {
+    if (action === 'update') return 'Uğurla yeniləndi.'
+    if (action === 'delete') return 'Uğurla silindi.'
+    return 'Uğurla əlavə edildi.'
+  }
+
   function createToastContainer() {
     const container = document.createElement('div')
     container.id = 'toast-container'
     document.body.appendChild(container)
     return container
+  }
+
+  function scheduleBackgroundTask(callback, timeout = 150) {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => callback(), { timeout })
+      return
+    }
+    window.setTimeout(callback, timeout)
   }
 
   function serializeForm(form) {
@@ -461,6 +471,28 @@
     }
   }
 
+  async function refreshSyncState(options = {}) {
+    if (!navigator.onLine) {
+      return emitStatus()
+    }
+
+    if (!options.skipPendingSync) {
+      const operations = await getPendingOperations()
+      if (operations.length) {
+        return syncPendingOperations(options)
+      }
+    }
+
+    const remoteChanges = await fetchPullStatus()
+    return emitStatus({ remoteChanges })
+  }
+
+  function triggerBackgroundSync(options = {}) {
+    scheduleBackgroundTask(() => {
+      refreshSyncState(options)
+    })
+  }
+
   async function syncPendingOperations(options = {}) {
     if (syncInProgress || !navigator.onLine) {
       return { syncedIds: [], failedIds: [] }
@@ -469,7 +501,6 @@
     const operations = await getPendingOperations()
     if (!operations.length) {
       const remoteChanges = await fetchPullStatus()
-      await fetchServerStatus()
       await emitStatus({ remoteChanges })
       return { syncedIds: [], failedIds: [] }
     }
@@ -524,17 +555,30 @@
         setLastSync(payload.last_sync)
       }
 
-      const remoteChanges = await fetchPullStatus()
-      await emitStatus({ lastError: firstError, remoteChanges })
+      const shouldReload =
+        options.reloadOnOperationId &&
+        syncedIds.includes(options.reloadOnOperationId) &&
+        !options.skipReloadOnSuccess
+
+      if (shouldReload) {
+        if (options.successMessage) {
+          queueToast(options.successMessage, 'success')
+        }
+        window.location.reload()
+        return { syncedIds, failedIds }
+      }
+
+      if (options.skipRemoteStatusRefresh) {
+        await emitStatus({ lastError: firstError })
+      } else {
+        const remoteChanges = await fetchPullStatus()
+        await emitStatus({ lastError: firstError, remoteChanges })
+      }
 
       if (failedIds.length) {
         showToast(firstError || 'Bəzi qeydlər sync olmadı.', 'warning')
       } else if (syncedIds.length && !options.silentSuccess) {
         showToast('Məlumat buluda göndərildi.', 'info')
-      }
-
-      if (options.reloadOnOperationId && syncedIds.includes(options.reloadOnOperationId)) {
-        window.location.reload()
       }
 
       return { syncedIds, failedIds }
@@ -571,6 +615,21 @@
     try {
       await addOperation(operation)
 
+      if (form.dataset.syncRedirectAfterQueue) {
+        if (form.dataset.syncKeepKey) {
+          sessionStorage.removeItem(form.dataset.syncKeepKey)
+        }
+        if (form.dataset.syncReset !== 'false') {
+          resetOfflineForm(form)
+        }
+        emitStatus()
+        if (navigator.onLine) {
+          syncPendingOperations({ silentSuccess: true })
+        }
+        window.location.assign(form.dataset.syncRedirectAfterQueue)
+        return
+      }
+
       if (form.dataset.syncKeepKey) {
         sessionStorage.removeItem(form.dataset.syncKeepKey)
       }
@@ -585,22 +644,31 @@
         return
       }
 
-      const result = await syncPendingOperations({
+      await emitStatus()
+
+      syncPendingOperations({
         reloadOnOperationId: operationId,
+        skipReloadOnSuccess: Boolean(form.dataset.syncSuccessRedirect),
         silentSuccess: true,
+        skipRemoteStatusRefresh: true,
+        successMessage: successMessageForAction(operation.action),
+      }).then((result) => {
+        if (result.failedIds.includes(operationId)) {
+          showToast('Məlumat yoxlamadan keçmədi.', 'error')
+          return
+        }
+        if (result.syncedIds.includes(operationId) && form.dataset.syncSuccessRedirect) {
+          queueToast(successMessageForAction(operation.action), 'success')
+          window.location.assign(form.dataset.syncSuccessRedirect)
+          return
+        }
+        if (result.syncedIds.includes(operationId)) {
+          showToast(successMessageForAction(operation.action), 'success')
+        }
+      }).catch(() => {
+        showToast('Şəbəkə problemi var. Məlumat lokal saxlanıldı.', 'warning')
       })
-
-      if (result.syncedIds.includes(operationId)) {
-        showToast(successMessageForOperation(operation), 'success')
-        return
-      }
-
-      if (result.failedIds.includes(operationId)) {
-        showToast('Məlumat yoxlamadan keçmədi.', 'error')
-        return
-      }
-
-      showToast('Şəbəkə problemi var. Məlumat lokal saxlanıldı.', 'warning')
+      return
     } catch (error) {
       showToast('Offline queue yazılmadı.', 'error')
     } finally {
@@ -627,21 +695,20 @@
     document.addEventListener('submit', handleSyncFormSubmit)
     window.addEventListener('online', () => {
       emitStatus()
-      syncPendingOperations()
+      triggerBackgroundSync({ silentSuccess: true })
     })
     window.addEventListener('offline', () => emitStatus())
     setInterval(() => {
       if (navigator.onLine) {
-        syncPendingOperations({ silentSuccess: true })
+        triggerBackgroundSync({ silentSuccess: true })
       } else {
         emitStatus()
       }
     }, RETRY_INTERVAL_MS)
 
-    const remoteChanges = navigator.onLine ? await fetchPullStatus() : null
-    await emitStatus({ remoteChanges })
+    await emitStatus()
     if (navigator.onLine) {
-      await syncPendingOperations({ silentSuccess: true })
+      triggerBackgroundSync({ silentSuccess: true })
     }
   }
 

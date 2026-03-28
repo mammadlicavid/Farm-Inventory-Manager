@@ -94,3 +94,10 @@ class FarmProduct(models.Model):
         verbose_name = "Təsərrüfat Məhsulu"
         verbose_name_plural = "Təsərrüfat Məhsulları"
         ordering = ["-date", "-created_at"]
+        indexes = [
+            models.Index(fields=["created_by", "item"]),
+            models.Index(fields=["created_by", "manual_name"]),
+            models.Index(fields=["created_by", "unit"]),
+            models.Index(fields=["created_by", "date"]),
+            models.Index(fields=["created_by", "updated_at"]),
+        ]

@@ -1,21 +1,33 @@
+import hashlib
+import json
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
-from django.db.models import Q
-from django.utils import timezone
+from django.core.cache import cache
 from django.http import JsonResponse
-from .models import ScanItem
+from django.http import HttpResponse
+from django.db.models import Case, DecimalField, F, IntegerField, Q, Sum, Value, When
+from django.views.decorators.http import require_POST
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from expenses.models import ExpenseCategory
+from incomes.views import _build_category_payload
+
+from .models import ScanItem, UserBarcode
 
 from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name, get_farm_product_icon_by_name
 from common.messages import add_crud_success_message
 from common.category_order import (
     ANIMAL_CATEGORY_ORDER,
+    ANIMAL_SUBCATEGORY_ORDER,
     FARM_PRODUCT_CATEGORY_ORDER,
+    FARM_PRODUCT_ITEM_ORDER,
     SEED_CATEGORY_ORDER,
+    SEED_ITEM_ORDER,
     TOOL_CATEGORY_ORDER,
+    TOOL_ITEM_ORDER,
     order_queryset_by_name_list,
 )
 from animals.models import Animal, AnimalCategory, AnimalSubCategory
@@ -23,9 +35,211 @@ from farm_products.models import FarmProduct, FarmProductCategory, FarmProductIt
 from seeds.models import Seed, SeedCategory, SeedItem
 from tools.models import Tool, ToolCategory, ToolItem
 
+ADD_PAGE_CATALOG_CACHE_KEY = "inventory:add-page-catalog:v1"
+ADD_PAGE_CATALOG_CACHE_TTL = 300
+STOCKS_PAGE_CACHE_TTL = 20
+
 
 def _is_forage_item(name: str) -> bool:
     return (name or "").strip().lower() in {"yonca", "koronilla", "seradella"}
+
+
+def _normalized_text(value):
+    return " ".join(str(value or "").split()).strip()
+
+
+def _normalized_metadata(value):
+    if isinstance(value, dict):
+        return {
+            str(key): _normalized_metadata(val)
+            for key, val in sorted(value.items(), key=lambda item: str(item[0]))
+            if str(key) not in {"date", "additional_info"}
+            if _normalized_metadata(val) not in ("", None, [], {})
+        }
+    if isinstance(value, list):
+        return [_normalized_metadata(item) for item in value if _normalized_metadata(item) not in ("", None, [], {})]
+    if isinstance(value, str):
+        return _normalized_text(value)
+    return value
+
+
+def _barcode_signature_payload(form_type, target_type, label, metadata):
+    return {
+        "form_type": form_type,
+        "target_type": target_type,
+        "label": _normalized_text(label).lower(),
+        "metadata": _normalized_metadata(metadata or {}),
+    }
+
+
+def _build_user_barcode(form_type, target_type, label, metadata):
+    normalized = _barcode_signature_payload(form_type, target_type, label, metadata)
+    raw_signature = json.dumps(normalized, sort_keys=True, ensure_ascii=False)
+    digest = hashlib.sha256(raw_signature.encode("utf-8")).hexdigest()
+    barcode = UserBarcode.objects.filter(signature=digest).first()
+    if barcode:
+        return barcode
+
+    normalized_label = _normalized_text(label)
+    normalized_metadata = _normalized_metadata(metadata or {})
+
+    code = None
+    for index in range(0, len(digest) - 15, 3):
+        chunk = digest[index:index + 15]
+        numeric_code = str(int(chunk, 16) % 10**12).zfill(12)
+        existing = UserBarcode.objects.filter(code=numeric_code).first()
+        if existing and existing.signature != digest:
+            continue
+        code = numeric_code
+        break
+
+    if code is None:
+        raise ValueError("Unikal 12 rəqəmli barkod yaratmaq olmadı.")
+
+    barcode = UserBarcode.objects.create(
+        code=code,
+        form_type=form_type,
+        target_type=target_type,
+        label=normalized_label,
+        metadata=normalized_metadata,
+        signature=digest,
+    )
+    return barcode
+
+
+def _unique_rows(rows, key_name="name"):
+    seen = set()
+    result = []
+    for row in rows:
+        key = _normalized_text(row.get(key_name)).lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        result.append(row)
+    return result
+
+
+def _build_add_page_catalog():
+    cached = cache.get(ADD_PAGE_CATALOG_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    expense_categories = []
+    for category in ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related("subcategories"):
+        expense_categories.append(
+            {
+                "id": category.id,
+                "name": category.name,
+                "subcategories": _unique_rows([
+                    {"id": sub.id, "name": sub.name}
+                    for sub in category.subcategories.all()
+                ]),
+            }
+        )
+    expense_categories = _unique_rows(expense_categories)
+
+    animal_categories = []
+    for category in order_queryset_by_name_list(AnimalCategory.objects.all(), ANIMAL_CATEGORY_ORDER).prefetch_related("subcategories"):
+        ordered_subcategories = order_queryset_by_name_list(
+            category.subcategories.all(),
+            ANIMAL_SUBCATEGORY_ORDER.get(category.name, []),
+        )
+        animal_categories.append(
+            {
+                "id": category.id,
+                "name": category.name,
+                "subcategories": _unique_rows([
+                    {"id": sub.id, "name": sub.name}
+                    for sub in ordered_subcategories
+                ]),
+            }
+        )
+    animal_categories = _unique_rows(animal_categories)
+
+    seed_categories = []
+    for category in order_queryset_by_name_list(SeedCategory.objects.all(), SEED_CATEGORY_ORDER).prefetch_related("items"):
+        ordered_items = order_queryset_by_name_list(
+            category.items.all(),
+            SEED_ITEM_ORDER.get(category.name, []),
+        )
+        seed_categories.append(
+            {
+                "id": category.id,
+                "name": category.name,
+                "items": _unique_rows([
+                    {"id": item.id, "name": item.name}
+                    for item in ordered_items
+                ]),
+            }
+        )
+    seed_categories = _unique_rows(seed_categories)
+
+    tool_categories = []
+    for category in order_queryset_by_name_list(ToolCategory.objects.all(), TOOL_CATEGORY_ORDER).prefetch_related("items"):
+        ordered_items = order_queryset_by_name_list(
+            category.items.all(),
+            TOOL_ITEM_ORDER.get(category.name, []),
+        )
+        tool_categories.append(
+            {
+                "id": category.id,
+                "name": category.name,
+                "items": _unique_rows([
+                    {"id": item.id, "name": item.name}
+                    for item in ordered_items
+                ]),
+            }
+        )
+    tool_categories = _unique_rows(tool_categories)
+
+    farm_categories = []
+    for category in order_queryset_by_name_list(FarmProductCategory.objects.all(), FARM_PRODUCT_CATEGORY_ORDER).prefetch_related("items"):
+        ordered_items = order_queryset_by_name_list(
+            category.items.all(),
+            FARM_PRODUCT_ITEM_ORDER.get(category.name, []),
+        )
+        farm_categories.append(
+            {
+                "id": category.id,
+                "name": category.name,
+                "items": _unique_rows([
+                    {"id": item.id, "name": item.name, "unit": item.unit or ""}
+                    for item in ordered_items
+                ]),
+            }
+        )
+    farm_categories = _unique_rows(farm_categories)
+
+    income_categories, income_category_data = _build_category_payload()
+    income_categories = _unique_rows([{"name": name} for name in income_categories])
+    income_categories = [row["name"] for row in income_categories]
+    form_types = [
+        {"key": "seed", "label": "Toxum"},
+        {"key": "animal", "label": "Heyvan"},
+        {"key": "tool", "label": "Alət"},
+        {"key": "farm", "label": "Təsərrüfat Məhsulları"},
+        {"key": "expense", "label": "Xərclər"},
+        {"key": "income", "label": "Gəlirlər"},
+    ]
+    payload = {
+        "form_types": form_types,
+        "expense_categories": expense_categories,
+        "animal_categories": animal_categories,
+        "seed_categories": seed_categories,
+        "tool_categories": tool_categories,
+        "farm_categories": farm_categories,
+        "income_categories": income_categories,
+        "income_category_data": income_category_data,
+    }
+    cache.set(ADD_PAGE_CATALOG_CACHE_KEY, payload, ADD_PAGE_CATALOG_CACHE_TTL)
+    return payload
+
+
+def _build_add_page_context():
+    return {
+        "today": timezone.now().date(),
+        **_build_add_page_catalog(),
+    }
 
 def home(request):
     return HttpResponse("Home page")
@@ -51,6 +265,10 @@ def dashboard(request):
 @login_required
 def stocks_placeholder(request):
     user = request.user
+    cache_key = f"inventory:stocks-page:v3:user:{user.id}"
+    cached_context = cache.get(cache_key)
+    if cached_context is not None:
+        return render(request, "inventory/stocks.html", cached_context)
 
     seed_categories = list(order_queryset_by_name_list(SeedCategory.objects.all(), SEED_CATEGORY_ORDER))
     tool_categories = list(order_queryset_by_name_list(ToolCategory.objects.all(), TOOL_CATEGORY_ORDER))
@@ -60,41 +278,35 @@ def stocks_placeholder(request):
     )
     farm_diger_category_id = next((cat.id for cat in farm_product_categories if cat.name == "Digər"), None)
 
-    def to_kg(quantity: Decimal, unit: str) -> Decimal:
-        if unit == "kg":
-            return quantity
-        if unit == "ton":
-            return quantity * Decimal("1000")
-        if unit == "qram":
-            return quantity / Decimal("1000")
-        return quantity
-
     items = []
 
     # Seeds (only item-based, not manual "Digər")
-    seed_totals = {}
-    seed_qs = (
-        Seed.objects.filter(created_by=user, item__isnull=False)
-        .select_related("item", "item__category")
-    )
-    for seed in seed_qs:
-        if not seed.item:
-            continue
-        if (seed.item.name or "").strip().lower() == "digər":
-            continue
-        key = seed.item_id
-        payload = seed_totals.setdefault(
-            key,
-            {
-                "name": seed.item.name,
-                "category_id": seed.item.category_id,
-                "category_name": seed.item.category.name if seed.item.category else "",
-                "total_kg": Decimal("0"),
-            },
+    seed_total_expr = Sum(
+        Case(
+            When(unit="kg", then=F("quantity")),
+            When(unit="ton", then=F("quantity") * Value(Decimal("1000"))),
+            When(unit="qram", then=F("quantity") / Value(Decimal("1000"))),
+            default=F("quantity"),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
         )
-        payload["total_kg"] += to_kg(Decimal(seed.quantity), seed.unit)
-
-    seed_items = SeedItem.objects.select_related("category").exclude(name__iexact="Digər")
+    )
+    seed_totals = {
+        row["item_id"]: {
+            "name": row["item__name"],
+            "category_id": row["item__category_id"],
+            "category_name": row["item__category__name"] or "",
+            "total_kg": row["total_kg"] or Decimal("0"),
+        }
+        for row in (
+            Seed.objects.filter(created_by=user, item__isnull=False)
+            .exclude(item__name__iexact="Digər")
+            .values("item_id", "item__name", "item__category_id", "item__category__name")
+            .annotate(total_kg=seed_total_expr)
+        )
+    }
+    seed_items = SeedItem.objects.select_related("category").only(
+        "id", "name", "category_id", "category__name"
+    ).exclude(name__iexact="Digər")
     for item in seed_items:
         if item.id not in seed_totals:
             seed_totals[item.id] = {
@@ -123,29 +335,24 @@ def stocks_placeholder(request):
         )
 
     # Tools (only item-based, not manual "Digər")
-    tool_totals = {}
-    tool_qs = (
-        Tool.objects.filter(created_by=user, item__isnull=False)
-        .select_related("item", "item__category")
-    )
-    for tool in tool_qs:
-        if not tool.item:
-            continue
-        if (tool.item.name or "").strip().lower() == "digər":
-            continue
-        key = tool.item_id
-        payload = tool_totals.setdefault(
-            key,
-            {
-                "name": tool.item.name,
-                "category_id": tool.item.category_id,
-                "category_name": tool.item.category.name if tool.item.category else "",
-                "total_qty": 0,
-            },
+    tool_totals = {
+        row["item_id"]: {
+            "name": row["item__name"],
+            "category_id": row["item__category_id"],
+            "category_name": row["item__category__name"] or "",
+            "total_qty": row["total_qty"] or 0,
+        }
+        for row in (
+            Tool.objects.filter(created_by=user, item__isnull=False)
+            .exclude(item__name__iexact="Digər")
+            .values("item_id", "item__name", "item__category_id", "item__category__name")
+            .annotate(total_qty=Sum("quantity"))
         )
-        payload["total_qty"] += int(tool.quantity)
+    }
 
-    tool_items = ToolItem.objects.select_related("category").exclude(name__iexact="Digər")
+    tool_items = ToolItem.objects.select_related("category").only(
+        "id", "name", "category_id", "category__name"
+    ).exclude(name__iexact="Digər")
     for item in tool_items:
         if item.id not in tool_totals:
             tool_totals[item.id] = {
@@ -174,37 +381,43 @@ def stocks_placeholder(request):
         )
 
     # Animals (sum quantity by subcategory)
-    animal_totals = {}
-    animal_qs = (
-        Animal.objects.filter(created_by=user, subcategory__isnull=False)
-        .exclude(quantity=0)
-        .select_related("subcategory", "subcategory__category")
-    )
-    for animal in animal_qs:
-        if not animal.subcategory:
-            continue
-        if (animal.subcategory.name or "").strip().lower() == "digər":
-            continue
-        key = animal.subcategory_id
-        payload = animal_totals.setdefault(
-            key,
-            {
-                "name": animal.subcategory.name,
-                "category_id": animal.subcategory.category_id,
-                "category_name": animal.subcategory.category.name if animal.subcategory.category else "",
-                "total_qty": 0,
-                "male_qty": 0,
-                "female_qty": 0,
-            },
+    animal_totals = {
+        row["subcategory_id"]: {
+            "name": row["subcategory__name"],
+            "category_id": row["subcategory__category_id"],
+            "category_name": row["subcategory__category__name"] or "",
+            "total_qty": row["total_qty"] or 0,
+            "male_qty": row["male_qty"] or 0,
+            "female_qty": row["female_qty"] or 0,
+        }
+        for row in (
+            Animal.objects.filter(created_by=user, subcategory__isnull=False)
+            .exclude(quantity=0)
+            .exclude(subcategory__name__iexact="Digər")
+            .values("subcategory_id", "subcategory__name", "subcategory__category_id", "subcategory__category__name")
+            .annotate(
+                total_qty=Sum("quantity"),
+                male_qty=Sum(
+                    Case(
+                        When(gender="erkek", then=F("quantity")),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
+                female_qty=Sum(
+                    Case(
+                        When(gender="disi", then=F("quantity")),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
         )
-        qty_val = int(getattr(animal, "quantity", 1) or 1)
-        payload["total_qty"] += qty_val
-        if animal.gender == "erkek":
-            payload["male_qty"] += qty_val
-        elif animal.gender == "disi":
-            payload["female_qty"] += qty_val
+    }
 
-    animal_subs = AnimalSubCategory.objects.select_related("category").exclude(name__iexact="Digər")
+    animal_subs = AnimalSubCategory.objects.select_related("category").only(
+        "id", "name", "category_id", "category__name"
+    ).exclude(name__iexact="Digər")
     for sub in animal_subs:
         if sub.id not in animal_totals:
             animal_totals[sub.id] = {
@@ -238,24 +451,21 @@ def stocks_placeholder(request):
 
     # Digər (manual entries)
     # Seeds manual
-    seed_other_totals = {}
-    seed_other_qs = (
-        Seed.objects.filter(created_by=user)
-        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
-        .exclude(manual_name__isnull=True)
-        .exclude(manual_name="")
-        .exclude(manual_name__iexact="Digər")
-    )
-    for seed in seed_other_qs:
-        key = seed.manual_name.strip()
-        payload = seed_other_totals.setdefault(
-            key,
-            {
-                "name": seed.manual_name.strip(),
-                "total_kg": Decimal("0"),
-            },
+    seed_other_totals = {
+        (row["manual_name"] or "").strip(): {
+            "name": (row["manual_name"] or "").strip(),
+            "total_kg": row["total_kg"] or Decimal("0"),
+        }
+        for row in (
+            Seed.objects.filter(created_by=user)
+            .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
+            .exclude(manual_name__isnull=True)
+            .exclude(manual_name="")
+            .exclude(manual_name__iexact="Digər")
+            .values("manual_name")
+            .annotate(total_kg=seed_total_expr)
         )
-        payload["total_kg"] += to_kg(Decimal(seed.quantity), seed.unit)
+    }
 
     for name, payload in seed_other_totals.items():
         qty_display = f"{payload['total_kg']:.2f}"
@@ -276,24 +486,21 @@ def stocks_placeholder(request):
         )
 
     # Tools manual
-    tool_other_totals = {}
-    tool_other_qs = (
-        Tool.objects.filter(created_by=user)
-        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
-        .exclude(manual_name__isnull=True)
-        .exclude(manual_name="")
-        .exclude(manual_name__iexact="Digər")
-    )
-    for tool in tool_other_qs:
-        key = tool.manual_name.strip()
-        payload = tool_other_totals.setdefault(
-            key,
-            {
-                "name": tool.manual_name.strip(),
-                "total_qty": 0,
-            },
+    tool_other_totals = {
+        (row["manual_name"] or "").strip(): {
+            "name": (row["manual_name"] or "").strip(),
+            "total_qty": row["total_qty"] or 0,
+        }
+        for row in (
+            Tool.objects.filter(created_by=user)
+            .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
+            .exclude(manual_name__isnull=True)
+            .exclude(manual_name="")
+            .exclude(manual_name__iexact="Digər")
+            .values("manual_name")
+            .annotate(total_qty=Sum("quantity"))
         )
-        payload["total_qty"] += int(tool.quantity)
+    }
 
     for name, payload in tool_other_totals.items():
         qty_display = str(payload["total_qty"])
@@ -314,32 +521,40 @@ def stocks_placeholder(request):
         )
 
     # Animals manual
-    animal_other_totals = {}
-    animal_other_qs = (
-        Animal.objects.filter(created_by=user)
-        .exclude(quantity=0)
-        .filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
-        .exclude(manual_name__isnull=True)
-        .exclude(manual_name="")
-        .exclude(manual_name__iexact="Digər")
-    )
-    for animal in animal_other_qs:
-        key = animal.manual_name.strip()
-        payload = animal_other_totals.setdefault(
-            key,
-            {
-                "name": animal.manual_name.strip(),
-                "total_qty": 0,
-                "male_qty": 0,
-                "female_qty": 0,
-            },
+    animal_other_totals = {
+        (row["manual_name"] or "").strip(): {
+            "name": (row["manual_name"] or "").strip(),
+            "total_qty": row["total_qty"] or 0,
+            "male_qty": row["male_qty"] or 0,
+            "female_qty": row["female_qty"] or 0,
+        }
+        for row in (
+            Animal.objects.filter(created_by=user)
+            .exclude(quantity=0)
+            .filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
+            .exclude(manual_name__isnull=True)
+            .exclude(manual_name="")
+            .exclude(manual_name__iexact="Digər")
+            .values("manual_name")
+            .annotate(
+                total_qty=Sum("quantity"),
+                male_qty=Sum(
+                    Case(
+                        When(gender="erkek", then=F("quantity")),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
+                female_qty=Sum(
+                    Case(
+                        When(gender="disi", then=F("quantity")),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
         )
-        qty_val = int(getattr(animal, "quantity", 1) or 1)
-        payload["total_qty"] += qty_val
-        if animal.gender == "erkek":
-            payload["male_qty"] += qty_val
-        elif animal.gender == "disi":
-            payload["female_qty"] += qty_val
+    }
 
     for name, payload in animal_other_totals.items():
         qty_display = str(payload["total_qty"])
@@ -368,6 +583,16 @@ def stocks_placeholder(request):
     farm_qs = (
         FarmProduct.objects.filter(created_by=user, item__isnull=False)
         .select_related("item", "item__category")
+        .only(
+            "id",
+            "quantity",
+            "unit",
+            "item_id",
+            "item__name",
+            "item__unit",
+            "item__category_id",
+            "item__category__name",
+        )
     )
     for product in farm_qs:
         if not product.item:
@@ -398,7 +623,9 @@ def stocks_placeholder(request):
         )
         payload["total_qty"] += _convert_farm_qty(Decimal(product.quantity), product.unit, payload["base_unit"])
 
-    farm_items = FarmProductItem.objects.select_related("category").exclude(name__iexact="Digər")
+    farm_items = FarmProductItem.objects.select_related("category").only(
+        "id", "name", "unit", "category_id", "category__name"
+    ).exclude(name__iexact="Digər")
     for item in farm_items:
         key = (item.id, "base")
         if key not in farm_totals:
@@ -487,6 +714,7 @@ def stocks_placeholder(request):
             ),
         ),
     }
+    cache.set(cache_key, context, STOCKS_PAGE_CACHE_TTL)
     return render(request, "inventory/stocks.html", context)
 
 
@@ -498,6 +726,7 @@ def update_stock_quantity(request):
     update_type = request.POST.get("update_type")
     update_id = request.POST.get("update_id")
     target_raw = request.POST.get("target_quantity")
+    cache.delete(f"inventory:stocks-page:v3:user:{request.user.id}")
 
     if not update_type or not update_id or target_raw is None:
         messages.error(request, "Məlumatlar natamamdır.")
@@ -777,7 +1006,12 @@ def update_stock_quantity(request):
 
 @login_required
 def add_product(request):
-    return render(request, "inventory/add_product.html", {"today": timezone.now().date()})
+    return render(request, "inventory/add_product.html", _build_add_page_context())
+
+
+@login_required
+def barcode_builder(request):
+    return render(request, "inventory/barcode_builder.html", _build_add_page_context())
 
 @login_required
 def lookup_scan_code(request):
@@ -786,18 +1020,86 @@ def lookup_scan_code(request):
     if not code:
         return JsonResponse({"success": False, "message": "Kod göndərilməyib."}, status=400)
 
+    barcode = UserBarcode.objects.filter(code=code).first()
+    if barcode:
+        return JsonResponse(
+            {
+                "success": True,
+                "source": "user_barcode",
+                "item": {
+                    "code": barcode.code,
+                    "label": barcode.label,
+                    "form_type": barcode.form_type,
+                    "target_type": barcode.target_type,
+                    "metadata": barcode.metadata,
+                },
+            }
+        )
+
     try:
         item = ScanItem.objects.get(code=code, is_active=True)
     except ScanItem.DoesNotExist:
         return JsonResponse({"success": False, "message": "Kod tapılmadı."}, status=404)
 
+    category_to_form_type = {
+        "toxumlar": "seed",
+        "aletler": "tool",
+        "heyvanlar": "animal",
+        "teserrufat": "farm",
+        "xercler": "expense",
+        "diger": "income",
+    }
     return JsonResponse({
         "success": True,
+        "source": "scan_item",
         "item": {
             "code": item.code,
+            "label": item.name,
             "name": item.name,
             "category": item.category,
+            "form_type": category_to_form_type.get(item.category, "income"),
+            "target_type": "manual",
             "unit": item.unit or "",
             "default_price": str(item.default_price),
+            "metadata": {
+                "manual_name": item.name,
+                "category": item.category,
+                "unit": item.unit or "",
+            },
         }
     })
+
+
+@login_required
+@require_POST
+def get_or_create_barcode(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"success": False, "message": "Sorğu formatı yanlışdır."}, status=400)
+
+    form_type = _normalized_text(payload.get("form_type"))
+    target_type = _normalized_text(payload.get("target_type"))
+    label = _normalized_text(payload.get("label"))
+    metadata = payload.get("metadata") or {}
+
+    if form_type not in dict(UserBarcode.FORM_TYPE_CHOICES):
+        return JsonResponse({"success": False, "message": "Form tipi yanlışdır."}, status=400)
+    if target_type not in dict(UserBarcode.TARGET_TYPE_CHOICES):
+        return JsonResponse({"success": False, "message": "Barkod tipi yanlışdır."}, status=400)
+    if not label:
+        return JsonResponse({"success": False, "message": "Barkod üçün info seçin."}, status=400)
+
+    barcode = _build_user_barcode(form_type, target_type, label, metadata)
+    return JsonResponse(
+        {
+            "success": True,
+            "barcode": {
+                "code": barcode.code,
+                "label": barcode.label,
+                "form_type": barcode.form_type,
+                "target_type": barcode.target_type,
+                "metadata": barcode.metadata,
+            },
+        }
+    )

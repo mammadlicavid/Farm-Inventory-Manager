@@ -1,22 +1,40 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
+from django.core.cache import cache
+from django.db.models import Q, Sum
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib import messages
 from django.http import JsonResponse
+from django.contrib.contenttypes.models import ContentType
 
 from .models import Expense, ExpenseCategory, ExpenseSubCategory
 from common.messages import add_crud_success_message
 from common.icons import get_expense_icon
 from common.formatting import format_currency
 from common.text import normalize_manual_label
+from animals.models import Animal
+from farm_products.models import FarmProduct
+from seeds.models import Seed
+from tools.models import Tool
+
+EXPENSE_FORM_CATALOG_CACHE_KEY = "expenses:form-catalog:v1"
+EXPENSE_FORM_CATALOG_TTL = 300
+
 
 def _build_subcategory_data(categories):
     return {
         str(cat.id): [{"id": sub.id, "name": sub.name} for sub in cat.subcategories.all()]
         for cat in categories
     }
+
+
+def _build_subcategory_category_lookup(categories):
+    lookup = {}
+    for category in categories:
+        for subcategory in category.subcategories.all():
+            lookup[subcategory.name.lower()] = category.name
+    return lookup
 
 def _get_display_additional_info(expense: Expense) -> str:
     """
@@ -28,7 +46,9 @@ def _get_display_additional_info(expense: Expense) -> str:
     - Otherwise, use the Expense.additional_info unless it is an old
       auto-generated string starting with "Miqdar:" or "İdentifikasiya No:".
     """
-    linked = getattr(expense, "content_object", None)
+    linked = getattr(expense, "prefetched_content_object", None)
+    if linked is None:
+        linked = getattr(expense, "content_object", None)
     if linked is not None and hasattr(linked, "additional_info"):
         note = getattr(linked, "additional_info") or ""
         return note.strip()
@@ -38,6 +58,73 @@ def _get_display_additional_info(expense: Expense) -> str:
     if stripped.startswith("Miqdar:") or stripped.startswith("Çəki:") or stripped.startswith("İdentifikasiya No:"):
         return ""
     return raw
+
+
+def _attach_prefetched_expense_objects(expenses):
+    if not expenses:
+        return
+
+    content_type_to_ids = {}
+    for expense in expenses:
+        if expense.content_type_id and expense.object_id:
+            content_type_to_ids.setdefault(expense.content_type_id, set()).add(expense.object_id)
+
+    if not content_type_to_ids:
+        return
+
+    content_types = {
+        content_type.id: content_type
+        for content_type in ContentType.objects.filter(id__in=content_type_to_ids.keys())
+    }
+    model_map = {
+        ("animals", "animal"): Animal.objects.select_related("subcategory").only(
+            "id", "additional_info", "subcategory__name"
+        ),
+        ("tools", "tool"): Tool.objects.select_related("item", "item__category").only(
+            "id", "additional_info", "manual_name", "item__name", "item__category__name"
+        ),
+        ("seeds", "seed"): Seed.objects.select_related("item", "item__category").only(
+            "id", "additional_info", "manual_name", "item__name", "item__category__name"
+        ),
+        ("farm_products", "farmproduct"): FarmProduct.objects.select_related("item", "item__category").only(
+            "id", "additional_info", "manual_name", "item__name", "item__category__name"
+        ),
+    }
+    loaded_objects = {}
+
+    for content_type_id, object_ids in content_type_to_ids.items():
+        content_type = content_types.get(content_type_id)
+        if not content_type:
+            continue
+        key = (content_type.app_label, content_type.model)
+        queryset = model_map.get(key)
+        if queryset is None:
+            continue
+        loaded_objects[content_type_id] = {
+            obj.pk: obj for obj in queryset.filter(pk__in=object_ids)
+        }
+
+    for expense in expenses:
+        expense.prefetched_content_object = (
+            loaded_objects.get(expense.content_type_id, {}).get(expense.object_id)
+        )
+
+
+def _expense_form_catalog():
+    cached = cache.get(EXPENSE_FORM_CATALOG_CACHE_KEY)
+    if cached is not None:
+        return cached
+    categories = list(
+        ExpenseCategory.objects.exclude(name="Maliyyə və Digər")
+        .prefetch_related('subcategories')
+    )
+    payload = {
+        "categories": categories,
+        "subcategory_data": _build_subcategory_data(categories),
+        "subcategory_category_lookup": _build_subcategory_category_lookup(categories),
+    }
+    cache.set(EXPENSE_FORM_CATALOG_CACHE_KEY, payload, EXPENSE_FORM_CATALOG_TTL)
+    return payload
 
 
 def _merge_manual_expense(user, title, amount_val, additional_info):
@@ -64,19 +151,31 @@ def _merge_manual_expense(user, title, amount_val, additional_info):
 @login_required
 def expense_list(request):
     query = (request.GET.get("q") or "").strip()
-    expenses_qs = Expense.objects.filter(created_by=request.user).select_related('subcategory', 'subcategory__category')
+    expenses_qs = Expense.objects.filter(created_by=request.user).select_related(
+        'subcategory', 'subcategory__category'
+    ).only(
+        'id',
+        'title',
+        'amount',
+        'manual_name',
+        'additional_info',
+        'date',
+        'updated_at',
+        'content_type_id',
+        'object_id',
+        'subcategory__id',
+        'subcategory__name',
+        'subcategory__category__id',
+        'subcategory__category__name',
+    )
 
     if query:
         expenses_qs = expenses_qs.filter(
-            subcategory__name__icontains=query
-        ) | expenses_qs.filter(
-            subcategory__category__name__icontains=query
-        ) | expenses_qs.filter(
-            additional_info__icontains=query
-        ) | expenses_qs.filter(
-            manual_name__icontains=query
-        ) | expenses_qs.filter(
-            title__icontains=query
+            Q(subcategory__name__icontains=query)
+            | Q(subcategory__category__name__icontains=query)
+            | Q(additional_info__icontains=query)
+            | Q(manual_name__icontains=query)
+            | Q(title__icontains=query)
         )
     
     # Perform aggregations on QuerySet before converting to list
@@ -88,11 +187,9 @@ def expense_list(request):
     
     # Convert to list for secondary processing (attaching display info)
     expenses = list(expenses_qs)
-
-    subcat_lookup = {
-        s.name.lower(): s
-        for s in ExpenseSubCategory.objects.select_related("category").all()
-    }
+    _attach_prefetched_expense_objects(expenses)
+    form_catalog = _expense_form_catalog()
+    subcat_lookup = form_catalog["subcategory_category_lookup"]
 
     # Attach display-only additional info and icon class
     for exp in expenses:
@@ -118,29 +215,23 @@ def expense_list(request):
         if exp.subcategory and exp.subcategory.category:
             exp.display_category_name = exp.subcategory.category.name
         else:
-            match = None
+            match_category_name = None
             if exp.manual_name:
-                match = subcat_lookup.get(exp.manual_name.lower())
-            if not match and exp.title:
-                match = subcat_lookup.get(exp.title.lower())
-            if match and match.category:
-                exp.display_category_name = match.category.name
+                match_category_name = subcat_lookup.get(exp.manual_name.lower())
+            if not match_category_name and exp.title:
+                match_category_name = subcat_lookup.get(exp.title.lower())
+            if match_category_name:
+                exp.display_category_name = match_category_name
             else:
                 exp.display_category_name = "Digər"
-    
-    # Categories for the form
-    categories = (
-        ExpenseCategory.objects.exclude(name="Maliyyə və Digər")
-        .prefetch_related('subcategories')
-    )
     
     context = {
         'expenses': expenses,
         'total_amount': total_amount,
         'weekly_total': weekly_total,
         'weekly_total_display': format_currency(weekly_total, 2),
-        'categories': categories,
-        'subcategory_data': _build_subcategory_data(categories),
+        'categories': form_catalog["categories"],
+        'subcategory_data': form_catalog["subcategory_data"],
         'today': timezone.now().date(),
         'yesterday': timezone.now().date() - timedelta(days=1),
     }
@@ -148,6 +239,7 @@ def expense_list(request):
 
 @login_required
 def add_expense(request):
+    redirect_to = request.POST.get('next') or 'expenses:expense_list'
     if request.method == 'POST':
         title = request.POST.get('title')
         amount = request.POST.get('amount')
@@ -164,7 +256,7 @@ def add_expense(request):
         
         if not (subcategory or manual_name) or not amount:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            return redirect('expenses:expense_list')
+            return redirect(redirect_to)
 
         try:
             amount_val = float(amount)
@@ -172,7 +264,7 @@ def add_expense(request):
             amount_val = 0
         if amount_val <= 0:
             messages.error(request, 'Məbləğ düzgün deyil.')
-            return redirect('expenses:expense_list')
+            return redirect(redirect_to)
         
         if not title:
             title = subcategory.name if subcategory else manual_name
@@ -181,10 +273,10 @@ def add_expense(request):
             merged = _merge_manual_expense(request.user, title, amount_val, additional_info)
             if merged == "deleted":
                 add_crud_success_message(request, "Expense", "delete")
-                return redirect('expenses:expense_list')
+                return redirect(redirect_to)
             if merged:
                 add_crud_success_message(request, "Expense", "update")
-                return redirect('expenses:expense_list')
+                return redirect(redirect_to)
 
         Expense.objects.create(
             title=title,
@@ -195,9 +287,9 @@ def add_expense(request):
             created_by=request.user
         )
         add_crud_success_message(request, "Expense", "create")
-        return redirect('expenses:expense_list')
+        return redirect(redirect_to)
     
-    return redirect('expenses:expense_list')
+    return redirect(redirect_to)
 
 @login_required
 def edit_expense(request, pk):
@@ -218,11 +310,11 @@ def edit_expense(request, pk):
         
         if not (subcategory or manual_name) or not amount:
             messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
-            categories = ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories')
+            form_catalog = _expense_form_catalog()
             return render(request, 'expenses/expense_form.html', {
                 'expense': expense,
-                'categories': categories,
-                'subcategory_data': _build_subcategory_data(categories),
+                'categories': form_catalog["categories"],
+                'subcategory_data': form_catalog["subcategory_data"],
             })
 
         try:
@@ -231,11 +323,11 @@ def edit_expense(request, pk):
             amount_val = 0
         if amount_val <= 0:
             messages.error(request, 'Məbləğ düzgün deyil.')
-            categories = ExpenseCategory.objects.exclude(name="Maliyyə və Digər").prefetch_related('subcategories')
+            form_catalog = _expense_form_catalog()
             return render(request, 'expenses/expense_form.html', {
                 'expense': expense,
-                'categories': categories,
-                'subcategory_data': _build_subcategory_data(categories),
+                'categories': form_catalog["categories"],
+                'subcategory_data': form_catalog["subcategory_data"],
             })
             
         expense.title = title if title else (subcategory.name if subcategory else manual_name)
@@ -266,14 +358,11 @@ def edit_expense(request, pk):
 
     # Initial GET render: compute display_additional_info for textarea
     expense.display_additional_info = _get_display_additional_info(expense)
-    categories = (
-        ExpenseCategory.objects.exclude(name="Maliyyə və Digər")
-        .prefetch_related('subcategories')
-    )
+    form_catalog = _expense_form_catalog()
     return render(request, 'expenses/expense_form.html', {
         'expense': expense,
-        'categories': categories,
-        'subcategory_data': _build_subcategory_data(categories),
+        'categories': form_catalog["categories"],
+        'subcategory_data': form_catalog["subcategory_data"],
     })
 
 @login_required

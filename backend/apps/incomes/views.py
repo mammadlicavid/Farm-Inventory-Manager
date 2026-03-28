@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -250,6 +251,8 @@ SEED_CATEGORIES: List[Tuple[str, List[str]]] = [
 OTHER_CATEGORY = ("Digər", ["Digər"])
 
 FORAGE_ITEMS = {"yonca", "koronilla", "seradella"}
+INCOME_CATEGORY_PAYLOAD_CACHE_KEY = "incomes:category-payload:v1"
+INCOME_CATEGORY_PAYLOAD_TTL = 300
 
 
 def _sorted_items(items: List[str]) -> List[str]:
@@ -269,7 +272,7 @@ def _category_type_map() -> Dict[str, str]:
 
 def _farm_unit_lookup() -> Dict[str, str | None]:
     lookup: Dict[str, str | None] = {}
-    for item in FarmProductItem.objects.select_related("category").all():
+    for item in FarmProductItem.objects.only("name", "unit").all():
         key = (item.name or "").strip().lower()
         if key and key not in lookup:
             lookup[key] = item.unit
@@ -297,6 +300,10 @@ def _allowed_units_for_farm(item_name: str, unit_lookup: Dict[str, str | None]) 
 
 
 def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
+    cached = cache.get(INCOME_CATEGORY_PAYLOAD_CACHE_KEY)
+    if cached is not None:
+        return cached
+
     categories: List[str] = []
     payload: Dict[str, dict] = {}
 
@@ -326,7 +333,9 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
         add_category(name, items)
     add_category(OTHER_CATEGORY[0], OTHER_CATEGORY[1])
 
-    return categories, payload
+    result = (categories, payload)
+    cache.set(INCOME_CATEGORY_PAYLOAD_CACHE_KEY, result, INCOME_CATEGORY_PAYLOAD_TTL)
+    return result
 
 
 def _get_income_icon(category: str, item_name: str) -> str:
@@ -636,7 +645,18 @@ def _animal_available_count(user, item_name: str, gender: str) -> int:
 @login_required
 def income_list(request):
     query = (request.GET.get("q") or "").strip()
-    incomes_qs = Income.objects.filter(created_by=request.user)
+    incomes_qs = Income.objects.filter(created_by=request.user).only(
+        "id",
+        "category",
+        "item_name",
+        "quantity",
+        "unit",
+        "amount",
+        "gender",
+        "date",
+        "additional_info",
+        "updated_at",
+    )
 
     if query:
         incomes_qs = incomes_qs.filter(
@@ -672,8 +692,9 @@ def income_list(request):
 
 @login_required
 def add_income(request):
+    redirect_to = request.POST.get("next") or "incomes:income_list"
     if request.method != "POST":
-        return redirect("incomes:income_list")
+        return redirect(redirect_to)
 
     category = (request.POST.get("category") or "").strip()
     item_name = (request.POST.get("item_name") or "").strip()
@@ -688,29 +709,29 @@ def add_income(request):
 
     if not category or not quantity_raw or not unit or not amount:
         messages.error(request, "Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
-        return redirect("incomes:income_list")
+        return redirect(redirect_to)
 
     quantity = _parse_positive_decimal(quantity_raw)
     if quantity is None:
         messages.error(request, "Miqdar düzgün deyil.")
-        return redirect("incomes:income_list")
+        return redirect(redirect_to)
 
     amount_val = _parse_positive_decimal(amount)
     if amount_val is None:
         messages.error(request, "Məbləğ düzgün deyil.")
-        return redirect("incomes:income_list")
+        return redirect(redirect_to)
 
     ctype = _category_type(category)
 
     if category.lower() == "digər" or item_name.lower() == "digər" or not item_name:
         if not manual_name:
             messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
-            return redirect("incomes:income_list")
+            return redirect(redirect_to)
         item_name = manual_name
 
     if ctype == "animal" and not gender:
         messages.error(request, "Zəhmət olmasa, heyvanlar üçün cinsiyyət seçin.")
-        return redirect("incomes:income_list")
+        return redirect(redirect_to)
 
     if ctype == "animal":
         try:
@@ -719,10 +740,10 @@ def add_income(request):
             qty_int = 0
         if Decimal(qty_int) != quantity:
             messages.error(request, "Heyvanlar üçün miqdar tam ədəd olmalıdır.")
-            return redirect("incomes:income_list")
+            return redirect(redirect_to)
         if identification_no and abs(qty_int) != 1:
             messages.error(request, "İdentifikasiya nömrəsi yalnız miqdar ±1 olduqda verilə bilər.")
-            return redirect("incomes:income_list")
+            return redirect(redirect_to)
 
     unit_lookup = _farm_unit_lookup()
     if ctype == "animal":
@@ -736,7 +757,7 @@ def add_income(request):
 
     if unit not in allowed_units:
         messages.error(request, "Ölçü vahidi bu kateqoriya üçün uyğun deyil.")
-        return redirect("incomes:income_list")
+        return redirect(redirect_to)
 
     # Stock availability check (no negatives)
     if ctype == "seed":
@@ -744,14 +765,14 @@ def add_income(request):
         needed_kg = _seed_to_kg(quantity, unit)
         if available_kg < needed_kg:
             messages.error(request, "Stokda kifayət qədər toxum yoxdur.")
-            return redirect("incomes:income_list")
+            return redirect(redirect_to)
     elif ctype == "farm":
         base_unit = _farm_base_unit(unit)
         available_base = _farm_stock_base(request.user, item_name, base_unit)
         needed_base = _farm_to_base(quantity, unit, base_unit)
         if available_base < needed_base:
             messages.error(request, "Stokda kifayət qədər məhsul yoxdur.")
-            return redirect("incomes:income_list")
+            return redirect(redirect_to)
     income = Income.objects.create(
         category=category,
         item_name=item_name,
@@ -782,17 +803,17 @@ def add_income(request):
             if not target_animal:
                 messages.error(request, "Bu identifikasiya nömrəsinə uyğun heyvan tapılmadı.")
                 income.delete()
-                return redirect("incomes:income_list")
+                return redirect(redirect_to)
             if target_animal.subcategory:
                 if target_animal.subcategory.name != item_name:
                     messages.error(request, "Seçilmiş heyvan ID-si bu kateqoriyaya uyğun deyil.")
                     income.delete()
-                    return redirect("incomes:income_list")
+                    return redirect(redirect_to)
             else:
                 if (target_animal.manual_name or "").strip() != item_name:
                     messages.error(request, "Seçilmiş heyvan ID-si bu kateqoriyaya uyğun deyil.")
                     income.delete()
-                    return redirect("incomes:income_list")
+                    return redirect(redirect_to)
             subcat = target_animal.subcategory
         else:
             subcat = AnimalSubCategory.objects.filter(name=item_name).first()
@@ -818,7 +839,7 @@ def add_income(request):
             income.save(update_fields=["content_type", "object_id"])
 
     messages.success(request, "Gəlir əlavə edildi.")
-    return redirect("incomes:income_list")
+    return redirect(redirect_to)
 
 
 @login_required

@@ -15,7 +15,7 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Gəlir Məlumatlarını Yenilə</h3>
 
-        <form method="POST" id="income-form" data-sync-entity="income" data-sync-action="update" data-sync-reset="false">
+        <form method="POST" id="income-form" data-sync-entity="income" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'incomes:income_list' %}">
             {% csrf_token %}
             <input type="hidden" name="record_id" value="{{ income.pk }}">
             <input type="hidden" name="record_version" value="{{ income.updated_at|date:'c' }}">

@@ -17,7 +17,7 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Heyvan Məlumatlarını Yenilə</h3>
 
-        <form method="POST" id="animal-form" data-sync-entity="animal" data-sync-action="update" data-sync-reset="false">
+        <form method="POST" id="animal-form" data-sync-entity="animal" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'animals:animal_list' %}">
             {% csrf_token %}
             <input type="hidden" name="record_id" value="{{ animal.pk }}">
             <input type="hidden" name="record_version" value="{{ animal.updated_at|date:'c' }}">

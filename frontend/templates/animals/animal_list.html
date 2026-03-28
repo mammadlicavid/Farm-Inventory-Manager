@@ -14,13 +14,37 @@
 </header>
 
 <main class="main-content" style="position: relative; z-index: 10;">
-    <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
-        <div style="position: relative;" class="click-focus">
-            <i class="fa-solid fa-search"
-                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+    <form method="get" action="" class="inventory-filter-shell" id="animal-filter-form">
+        <div class="inventory-filter-grid">
+            <select name="category" id="animal-filter-category" class="custom-input inventory-filter-control">
+                <option value="">Bütün kateqoriyalar</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="subcategory" id="animal-filter-subcategory" class="custom-input inventory-filter-control">
+                <option value="">Bütün heyvan növləri</option>
+                {% for sub in filter_subcategories %}
+                <option value="{{ sub.id }}" {% if selected_subcategory == sub.id|stringformat:"s" %}selected{% endif %}>{{ sub.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="movement" class="custom-input inventory-filter-control">
+                <option value="">Artım və azalma</option>
+                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>Artım</option>
+                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>Azalma</option>
+            </select>
+            <div class="inventory-filter-date-range">
+                <input type="date" name="date_from" value="{{ selected_date_from }}" class="custom-input inventory-filter-control">
+                <span class="inventory-filter-date-arrow" aria-hidden="true">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                </span>
+                <input type="date" name="date_to" value="{{ selected_date_to }}" class="custom-input inventory-filter-control">
+            </div>
+        </div>
+        <div class="inventory-filter-actions">
             <input type="text" name="q" placeholder="Axtar (ID, Məlumat, Növ)..."
-                value="{{ request.GET.q|default:'' }}" autocomplete="off"
-                style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
+                value="{{ request.GET.q|default:'' }}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
+            <button type="button" class="inventory-filter-reset" id="animal-filter-reset">Sıfırla</button>
         </div>
     </form>
     <div class="crud-desktop-wrapper">
@@ -114,9 +138,14 @@
         <div class="crud-list-column">
             <!-- Animals History -->
             <h3 class="recent-expenses-title">Heyvan Siyahısı</h3>
-            <div class="animals-list data-grid-list">
+            <div class="animals-list data-grid-list" id="animal-list">
                 {% for animal in animals %}
-                <div class="expense-item-card">
+                <div class="expense-item-card"
+                    data-category="{% if animal.subcategory and animal.subcategory.category %}{{ animal.subcategory.category.id }}{% endif %}"
+                    data-subcategory="{% if animal.subcategory %}{{ animal.subcategory.id }}{% endif %}"
+                    data-date="{{ animal.date|date:'Y-m-d' }}"
+                    data-movement="{% if animal.quantity < 0 %}decrease{% else %}increase{% endif %}"
+                    data-search="{% if animal.subcategory and animal.subcategory.name != 'Digər' %}{{ animal.subcategory.name|lower }}{% else %}{{ animal.manual_name|default:''|lower }}{% endif %} {{ animal.identification_no|default:''|lower }} {{ animal.display_additional_info|default:''|lower }}">
                     <div class="expense-item-icon">
                         {% if animal.icon_class|slice:":6" == "emoji:" %}
                         <span class="emoji-icon">{{ animal.icon_class|slice:"6:" }}</span>
@@ -186,7 +215,7 @@
                     </div>
                 </div>
                 {% empty %}
-                <div class="expense-item-card" style="justify-content: center;">
+                <div class="expense-item-card" style="justify-content: center;" id="animal-list-empty">
                     <span style="color: #888;">Heç bir heyvan tapılmadı</span>
                 </div>
                 {% endfor %}
@@ -195,8 +224,248 @@
     </div>
 </main>
 
+<style>
+    .inventory-filter-shell {
+        margin-bottom: 18px;
+        padding: 16px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(244,250,246,0.96) 100%);
+        border: 1px solid rgba(46, 139, 87, 0.14);
+        box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
+        display: grid;
+        gap: 12px;
+    }
+
+    .inventory-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .inventory-filter-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 12px;
+    }
+
+    .inventory-filter-date-range {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+    }
+
+    .inventory-filter-date-arrow {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: rgba(46, 139, 87, 0.1);
+        color: var(--primary-green);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        box-shadow: inset 0 0 0 1px rgba(46, 139, 87, 0.08);
+    }
+
+    .inventory-filter-control {
+        min-height: 52px;
+        border: 1px solid rgba(46, 139, 87, 0.12);
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    }
+
+    .inventory-filter-button {
+        margin: 0;
+        width: auto;
+        min-width: 120px;
+        padding-inline: 20px;
+        align-self: stretch;
+    }
+
+    .inventory-filter-reset {
+        min-height: 52px;
+        padding: 0 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(46, 139, 87, 0.22);
+        background: linear-gradient(180deg, #39a363 0%, #2e8b57 100%);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(46, 139, 87, 0.18);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .inventory-filter-reset:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(46, 139, 87, 0.26);
+        background: linear-gradient(180deg, #43b26d 0%, #349a61 100%);
+    }
+
+    .inventory-filter-reset:active {
+        transform: translateY(0);
+        background: linear-gradient(180deg, #246c44 0%, #1f5d3a 100%);
+        box-shadow: 0 8px 16px rgba(31, 93, 58, 0.24);
+    }
+
+    @media (max-width: 1100px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 3;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .inventory-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .inventory-filter-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .inventory-filter-date-range {
+            grid-column: span 2;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        }
+
+        .inventory-filter-date-arrow {
+            width: 44px;
+            border-radius: 14px;
+        }
+
+        .inventory-filter-button,
+        .inventory-filter-reset {
+            width: 100%;
+        }
+    }
+</style>
+
 {{ subcategory_data|json_script:"animal-subcats-data" }}
 <script>
+    const animalFilterForm = document.getElementById("animal-filter-form");
+    const animalFilterCategory = document.getElementById("animal-filter-category");
+    const animalFilterSubcategory = document.getElementById("animal-filter-subcategory");
+    const selectedAnimalFilterSubcategory = "{{ selected_subcategory|default:''|escapejs }}";
+    const animalFilterSearch = animalFilterForm?.querySelector('input[name="q"]');
+    const animalFilterReset = document.getElementById("animal-filter-reset");
+    const animalCards = Array.from(document.querySelectorAll("#animal-list .expense-item-card"));
+    const animalListController = window.createProgressiveListController({ items: animalCards, batchSize: 100 });
+    const animalListEmpty = document.getElementById("animal-list-empty");
+    const animalCrudWrapper = document.querySelector(".crud-desktop-wrapper");
+    const animalListColumn = document.querySelector(".crud-list-column");
+    const animalFilterPlaceholder = document.createComment("animal-filter-placeholder");
+    let animalFilterTimer = null;
+
+    animalFilterForm?.parentNode?.insertBefore(animalFilterPlaceholder, animalFilterForm);
+
+    animalFilterForm?.addEventListener("submit", (event) => event.preventDefault());
+
+    function normalizeAnimalText(value) {
+        return String(value || "").trim().toLocaleLowerCase("az");
+    }
+
+    function applyAnimalFilters() {
+        const category = animalFilterCategory?.value || "";
+        const subcategory = animalFilterSubcategory?.value || "";
+        const movement = animalFilterForm?.querySelector('select[name="movement"]')?.value || "";
+        const dateFrom = animalFilterForm?.querySelector('input[name="date_from"]')?.value || "";
+        const dateTo = animalFilterForm?.querySelector('input[name="date_to"]')?.value || "";
+        const term = normalizeAnimalText(animalFilterSearch?.value || "");
+        let visibleCount = 0;
+
+        animalCards.forEach((card) => {
+            const matchCategory = !category || (card.dataset.category || "") === category;
+            const matchSubcategory = !subcategory || (card.dataset.subcategory || "") === subcategory;
+            const matchMovement = !movement || (card.dataset.movement || "") === movement;
+            const cardDate = card.dataset.date || "";
+            const matchDateFrom = !dateFrom || (cardDate && cardDate >= dateFrom);
+            const matchDateTo = !dateTo || (cardDate && cardDate <= dateTo);
+            const matchSearch = !term || normalizeAnimalText(card.dataset.search).includes(term);
+            const show = matchCategory && matchSubcategory && matchMovement && matchDateFrom && matchDateTo && matchSearch;
+            card.dataset.filterMatch = show ? "1" : "0";
+            if (show) visibleCount += 1;
+        });
+
+        animalListController.refresh(true);
+
+        if (animalListEmpty) {
+            animalListEmpty.style.display = visibleCount === 0 ? "flex" : "none";
+        }
+    }
+
+    function updateAnimalFilterSubcategories(categoryId, selectedSubId = "") {
+        if (!animalFilterSubcategory) return;
+        animalFilterSubcategory.innerHTML = '<option value="">Bütün heyvan növləri</option>';
+        if (!categoryId) return;
+        const filterData = JSON.parse(document.getElementById('animal-subcats-data').textContent);
+        const subcats = filterData[categoryId] || [];
+        subcats.forEach((sub) => {
+            const option = document.createElement("option");
+            option.value = String(sub.id);
+            option.textContent = sub.name;
+            if (String(sub.id) === String(selectedSubId)) {
+                option.selected = true;
+            }
+            animalFilterSubcategory.appendChild(option);
+        });
+    }
+
+    if (animalFilterCategory) {
+        animalFilterCategory.addEventListener("change", () => {
+            updateAnimalFilterSubcategories(animalFilterCategory.value);
+            applyAnimalFilters();
+        });
+        if (animalFilterCategory.value) {
+            updateAnimalFilterSubcategories(animalFilterCategory.value, selectedAnimalFilterSubcategory);
+        }
+    }
+
+    animalFilterForm?.querySelectorAll('select[name="subcategory"], select[name="movement"], input[name="date_from"], input[name="date_to"]').forEach((control) => {
+        control.addEventListener("change", applyAnimalFilters);
+    });
+
+    animalFilterSearch?.addEventListener("input", () => {
+        clearTimeout(animalFilterTimer);
+        animalFilterTimer = setTimeout(applyAnimalFilters, 300);
+    });
+
+    animalFilterReset?.addEventListener("click", () => {
+        if (animalFilterCategory) animalFilterCategory.value = "";
+        if (animalFilterSubcategory) {
+            animalFilterSubcategory.innerHTML = '<option value="">Bütün heyvan növləri</option>';
+            animalFilterSubcategory.value = "";
+        }
+        const movementInput = animalFilterForm?.querySelector('select[name="movement"]');
+        const dateFromInput = animalFilterForm?.querySelector('input[name="date_from"]');
+        const dateToInput = animalFilterForm?.querySelector('input[name="date_to"]');
+        if (movementInput) movementInput.value = "";
+        if (dateFromInput) dateFromInput.value = "";
+        if (dateToInput) dateToInput.value = "";
+        if (animalFilterSearch) animalFilterSearch.value = "";
+        applyAnimalFilters();
+    });
+
+    function repositionAnimalFilter() {
+        if (!animalFilterForm || !animalListColumn || !animalFilterPlaceholder) return;
+        if (window.innerWidth < 1024) {
+            animalCrudWrapper?.insertBefore(animalFilterForm, animalListColumn);
+        } else if (animalFilterPlaceholder.parentNode) {
+            animalFilterPlaceholder.parentNode.insertBefore(animalFilterForm, animalFilterPlaceholder.nextSibling);
+        }
+    }
+
+    window.addEventListener("resize", repositionAnimalFilter);
+    repositionAnimalFilter();
+    applyAnimalFilters();
+
     const ANIMAL_STATE_KEY = "animal_form_state_session_v1";
     const ANIMAL_KEEP_KEY = "animal_form_keep_v1";
 
@@ -234,9 +503,7 @@
         if (gender) gender.value = "erkek";
     }
 
-    const subcategoryData = JSON.parse(
-        document.getElementById('animal-subcats-data').textContent
-    );
+    const subcategoryData = JSON.parse(document.getElementById('animal-subcats-data').textContent);
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');

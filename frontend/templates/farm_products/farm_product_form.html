@@ -15,7 +15,7 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Məhsul Məlumatlarını Yenilə</h3>
 
-        <form method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="update" data-sync-reset="false">
+        <form method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'farm_products:product_list' %}">
             {% csrf_token %}
             <input type="hidden" name="record_id" value="{{ product.pk }}">
             <input type="hidden" name="record_version" value="{{ product.updated_at|date:'c' }}">
@@ -101,8 +101,9 @@
         </form>
     </div>
 </main>
-
+{{ category_item_map|json_script:"farm-form-category-item-map" }}
 <script>
+    const farmFormCategoryItemMap = JSON.parse(document.getElementById("farm-form-category-item-map")?.textContent || "{}");
     const manualGroup = document.getElementById("manual-name-group");
     const manualInput = document.getElementById("manual-name-input");
     const unitSelect = document.getElementById("unit-select");
@@ -192,6 +193,25 @@
         }
     }
 
+    function populateFarmFormItems(categoryId, selectedItemId = "") {
+        const itemSelect = document.getElementById("item-select");
+        if (!itemSelect) return;
+        const items = farmFormCategoryItemMap[String(categoryId)] || [];
+        itemSelect.innerHTML = '<option value="" disabled selected>Məhsul seçin</option>';
+        items.forEach((item) => {
+            const option = document.createElement("option");
+            option.value = String(item.id);
+            option.textContent = item.name;
+            option.dataset.name = item.name;
+            option.dataset.unit = item.unit || "";
+            if (String(item.id) === String(selectedItemId)) {
+                option.selected = true;
+            }
+            itemSelect.appendChild(option);
+        });
+        itemSelect.disabled = false;
+    }
+
     document.getElementById("category-select").addEventListener("change", function () {
         const categoryId = this.value;
         const categoryText = this.options[this.selectedIndex]?.text || "";
@@ -211,35 +231,15 @@
 
         itemGroup.style.display = "block";
         itemSelect.required = true;
-        itemSelect.disabled = true;
-        itemSelect.innerHTML = '<option value="" disabled selected>Yüklənir...</option>';
-
-        fetch(`{% url 'farm_products:get_items' %}?category_id=${categoryId}`)
-            .then(response => response.json())
-            .then(data => {
-                itemSelect.innerHTML = '<option value="" disabled selected>Məhsul seçin</option>';
-                data.forEach(item => {
-                    const option = document.createElement("option");
-                    option.value = item.id;
-                    option.textContent = item.name;
-                    option.dataset.name = item.name;
-                    option.dataset.unit = item.unit || "";
-                    itemSelect.appendChild(option);
-                });
-                itemSelect.disabled = false;
-                const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-                if (selectedOption && selectedOption.value) {
-                    handleItemSelection(selectedOption);
-                } else {
-                    manualGroup.style.display = "none";
-                    manualInput.required = false;
-                    setUnitForItem("kq", false, ALL_UNITS);
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching farm product items:", error);
-                itemSelect.innerHTML = '<option value="" disabled selected>Xəta baş verdi</option>';
-            });
+        populateFarmFormItems(categoryId);
+        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            handleItemSelection(selectedOption);
+        } else {
+            manualGroup.style.display = "none";
+            manualInput.required = false;
+            setUnitForItem("kq", false, ALL_UNITS);
+        }
     });
 
     document.getElementById("item-select").addEventListener("change", function () {
