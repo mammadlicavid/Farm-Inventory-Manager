@@ -86,6 +86,188 @@
         </a>
     </div>
 
+    <!-- Low Stock Alert Card (Ehtiyat Xəbərdarlığı) -->
+    <style>
+    .low-stock-card {
+        background-color: white;
+        border-radius: 12px;
+        padding: 18px;
+        margin: 24px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .lsc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .lsc-header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .lsc-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background-color: #fef2f2;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+    .lsc-title-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+    .lsc-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    .lsc-subtitle {
+        font-size: 13px;
+        color: #64748b;
+        margin: 4px 0 0 0;
+    }
+    .lsc-badge-main {
+        background-color: #dc2626;
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 12px;
+    }
+    .lsc-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .lsc-item {
+        background-color: #f4f5f4;
+        border-radius: 14px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .lsc-item:hover {
+        background-color: #eceee9;
+    }
+    .lsc-item-icon-wrapper {
+        width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .lsc-item-icon {
+        font-size: 22px;
+    }
+    .lsc-item-icon.fa-seedling { color: #65a30d; }
+    .lsc-item-icon.fa-gas-pump { color: #dc2626; }
+    .lsc-item-icon.fa-wheat-awn { color: #84cc16; }
+    .lsc-item-icon.fa-capsules { color: #f59e0b; }
+
+    .lsc-item-content {
+        flex: 1;
+    }
+    .lsc-item-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+    .lsc-item-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #334155;
+        margin: 0;
+    }
+    .lsc-item-badge {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 8px;
+        color: white;
+    }
+    .lsc-item-badge.yellow { background-color: #f59e0b; }
+    .lsc-item-badge.red { background-color: #dc2626; }
+    
+    .lsc-progress-bar-bg {
+        height: 6px;
+        background-color: #e2e8f0;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        width: 100%;
+        position: relative;
+    }
+    .lsc-progress-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    .lsc-progress-bar-fill.yellow { background-color: #f59e0b; }
+    .lsc-progress-bar-fill.red { background-color: #dc2626; }
+    
+    .lsc-item-stats {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 4px;
+    }
+    .lsc-item-arrow {
+        color: #94a3b8;
+        font-size: 14px;
+        padding-left: 8px;
+    }
+    </style>
+    
+    {% if low_stock_alerts %}
+    <div class="low-stock-card">
+        <div class="lsc-header">
+            <div class="lsc-header-left">
+                <div class="lsc-icon-wrapper">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="lsc-title-wrapper">
+                    <h2 class="lsc-title">Ehtiyat Xəbərdarlığı</h2>
+                    <p class="lsc-subtitle">{{ critical_count }} məhsul kritik səviyyədə!</p>
+                </div>
+            </div>
+            <div class="lsc-badge-main">{{ low_stock_alerts|length }}</div>
+        </div>
+        
+        <div class="lsc-list">
+            {% for alert in low_stock_alerts %}
+            <a href="{% url 'stock_warnings' %}" style="text-decoration: none;">
+                <div class="lsc-item">
+                    <div class="lsc-item-icon-wrapper">
+                        <i class="fa-solid {{ alert.icon }} lsc-item-icon"></i>
+                    </div>
+                    <div class="lsc-item-content">
+                        <div class="lsc-item-header">
+                            <h3 class="lsc-item-title">{{ alert.name }}</h3>
+                            <span class="lsc-item-badge {{ alert.color }}">{{ alert.status_text }}</span>
+                        </div>
+                        <div class="lsc-progress-bar-bg">
+                            <div class="lsc-progress-bar-fill {{ alert.color }}" style="width: {{ alert.percentage }}%;"></div>
+                        </div>
+                        <div class="lsc-item-stats">{{ alert.current }} / {{ alert.max }} {{ alert.unit }}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right lsc-item-arrow"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="stats-footer">
         <h3 style="font-size: 20px; color: #333; margin-bottom: 6px; font-weight: 700;">Bu həftə</h3>
         <div class="stats-row">
