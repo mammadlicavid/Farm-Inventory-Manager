@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
+{% load common_extras %}
 
 {% block content %}
 <header class="main-header">
@@ -6,7 +9,7 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Təsərrüfat Məhsulları</span>
+                <span>{% trans "Təsərrüfat Məhsulları" %}</span>
             </a>
         </div>
     </div>
@@ -16,21 +19,21 @@
     <form method="get" action="" class="inventory-filter-shell" id="farm-filter-form">
         <div class="inventory-filter-grid">
             <select name="category" id="farm-filter-category" class="custom-input inventory-filter-control">
-                <option value="">Bütün kateqoriyalar</option>
+                <option value="">{% trans "Bütün kateqoriyalar" %}</option>
                 {% for cat in categories %}
                 <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
                 {% endfor %}
             </select>
             <select name="item" id="farm-filter-item" class="custom-input inventory-filter-control">
-                <option value="">Bütün məhsul növləri</option>
+                <option value="">{% trans "Bütün məhsul növləri" %}</option>
                 {% for item in filter_items %}
                 <option value="{{ item.id }}" {% if selected_item == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>
                 {% endfor %}
             </select>
             <select name="movement" class="custom-input inventory-filter-control">
-                <option value="">Artım və azalma</option>
-                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>Artım</option>
-                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>Azalma</option>
+                <option value="">{% trans "Artım və azalma" %}</option>
+                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>{% trans "Artım" %}</option>
+                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>{% trans "Azalma" %}</option>
             </select>
             <div class="inventory-filter-date-range">
                 <input type="date" name="date_from" value="{{ selected_date_from }}" class="custom-input inventory-filter-control">
@@ -41,22 +44,22 @@
             </div>
         </div>
         <div class="inventory-filter-actions">
-            <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+            <input type="text" name="q" placeholder="{% trans 'Axtar (Ad, Kateqoriya)...' %}"
                 value="{{ request.GET.q|default:'' }}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
-            <button type="button" class="inventory-filter-reset" id="farm-filter-reset">Sıfırla</button>
+            <button type="button" class="inventory-filter-reset" id="farm-filter-reset">{% trans "Sıfırla" %}</button>
         </div>
     </form>
     <div class="crud-desktop-wrapper">
         <div class="crud-form-column">
             <div class="form-container-white">
-                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Məhsul Əlavə Et</h3>
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Yeni Məhsul Əlavə Et" %}</h3>
                 <form action="{% url 'farm_products:product_create' %}" method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="create" data-sync-keep-key="farm_product_form_keep_v1">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
                             <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                             <select id="category-select" name="category" required class="custom-input">
-                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Kateqoriya seçin" %}</option>
                                 {% for cat in categories %}
                                 <option value="{{ cat.id }}">{{ cat.name }}</option>
                                 {% endfor %}
@@ -66,14 +69,14 @@
                         <div class="form-group" id="item-field-group">
                             <label>Məhsul Növü <span style="color: #dc3545;">*</span></label>
                             <select id="item-select" name="item" required class="custom-input" disabled>
-                                <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Əvvəlcə kateqoriya seçin" %}</option>
                             </select>
                         </div>
 
                         <div class="form-group" id="manual-name-group" style="display: none;">
                             <label>Məhsulun Adı (Digər) <span style="color: #dc3545;">*</span></label>
                             <input type="text" name="manual_name" id="manual-name-input"
-                                placeholder="Məhsulun adını daxil edin" class="custom-input">
+                                placeholder="{% trans 'Məhsulun adını daxil edin' %}" class="custom-input">
                         </div>
 
                         <div class="form-row"
@@ -85,15 +88,8 @@
                             </div>
                             <div class="form-group">
                                 <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
-                                <select name="unit" id="unit-select" class="custom-input" required>
-                                    <option value="kq">kq</option>
-                                    <option value="ton">ton</option>
-                                    <option value="qram">qram</option>
-                                    <option value="litr">litr</option>
-                                    <option value="ml">millilitr</option>
-                                    <option value="ədəd">ədəd</option>
-                                    <option value="dəstə">dəstə</option>
-                                    <option value="bağlama">bağlama</option>
+                                <select name="unit" id="unit-select" class="custom-input" required disabled>
+                                    <option value="" selected>{% trans "Əvvəlcə məhsul seçin" %}</option>
                                 </select>
                                 <input type="hidden" id="unit-hidden" name="unit_disabled" value="">
                             </div>
@@ -102,7 +98,7 @@
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Məbləğ (₼)</label>
+                                <label>Məbləğ ({% currency_symbol request.user %})</label>
                                 <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
                             </div>
                             <div class="form-group">
@@ -113,8 +109,8 @@
                         </div>
 
                         <div class="form-group form-full-width">
-                            <label>Əlavə Məlumat</label>
-                            <textarea name="additional_info" placeholder="Məsələn: Məhsulun vəziyyəti və s."
+                            <label>{% trans "Əlavə Məlumat" %}</label>
+                            <textarea name="additional_info" placeholder="{% trans 'Məsələn: Məhsulun vəziyyəti və s.' %}"
                                 class="custom-input" rows="3"></textarea>
                         </div>
 
@@ -128,7 +124,7 @@
         </div>
 
         <div class="crud-list-column">
-            <h3 class="recent-expenses-title">Təsərrüfat Məhsulları Siyahısı</h3>
+            <h3 class="recent-expenses-title">{% trans "Təsərrüfat Məhsulları Siyahısı" %}</h3>
             <div class="seeds-list data-grid-list" id="farm-list">
                 {% for product in products %}
                 <div class="expense-item-card"
@@ -161,7 +157,7 @@
                             {% endif %}
                         </h4>
                         <span>
-                            {{ product.quantity }} {{ product.unit }} •
+                            {% display_measure product.quantity product.unit request.user %} •
                             {% if product.date == today %}
                             Bu gün
                             {% elif product.date == yesterday %}
@@ -176,7 +172,11 @@
                     </div>
                     <div style="text-align: right;">
                         <div class="expense-item-amount" style="{% if product.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
-                            {% if product.quantity < 0 %}+{% else %}-{% endif %}{{ product.price_display }}₼
+                            {% if product.quantity < 0 %}
+                            {% money product.price_display request.user "+" %}
+                            {% else %}
+                            {% money product.price_display request.user "-" %}
+                            {% endif %}
                         </div>
                         <div
                             style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
@@ -201,7 +201,7 @@
                 </div>
                 {% empty %}
                 <div class="expense-item-card" style="justify-content: center;" id="farm-list-empty">
-                    <span style="color: #888;">Heç bir məhsul tapılmadı</span>
+                    <span style="color: #888;">{% trans "Heç bir məhsul tapılmadı" %}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -388,7 +388,7 @@
 
     function updateFarmFilterItems(categoryId, selectedItemId = "") {
         if (!farmFilterItem) return;
-        farmFilterItem.innerHTML = '<option value="">Bütün məhsul növləri</option>';
+        farmFilterItem.innerHTML = '<option value="">{% trans "Bütün məhsul növləri" %}</option>';
         if (!categoryId) return;
         const items = farmCategoryItemMap[String(categoryId)] || [];
         items.forEach((item) => {
@@ -424,7 +424,7 @@
     farmFilterReset?.addEventListener("click", () => {
         if (farmFilterCategory) farmFilterCategory.value = "";
         if (farmFilterItem) {
-            farmFilterItem.innerHTML = '<option value="">Bütün məhsul növləri</option>';
+            farmFilterItem.innerHTML = '<option value="">{% trans "Bütün məhsul növləri" %}</option>';
             farmFilterItem.value = "";
         }
         const movementInput = farmFilterForm?.querySelector('select[name="movement"]');
@@ -482,15 +482,21 @@
         if (price) price.value = "";
         const info = document.querySelector('textarea[name="additional_info"]');
         if (info) info.value = "";
-        if (unitSelect) unitSelect.value = "kq";
     }
 
-    const ALL_UNITS = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
+    const weightUnitSystem = "{% unit_system request.user %}";
+    const volumeUnitSystem = "{% volume_system request.user %}";
+    const WEIGHT_UNITS = weightUnitSystem === "lb" ? ["kq", "qram"] : ["kq", "qram", "ton"];
+    const VOLUME_UNITS = volumeUnitSystem === "gallon" ? ["litr"] : ["litr", "ml"];
+    const ALL_UNITS = [...WEIGHT_UNITS, ...VOLUME_UNITS, "ədəd", "dəstə", "bağlama"];
+    const KG_PER_POUND = 0.45359237;
+    const GRAMS_PER_OUNCE = 28.349523125;
+    const LITERS_PER_GALLON = 3.785411784;
     const UNIT_LABELS = {
-        kq: "kq",
+        kq: weightUnitSystem === "lb" ? "pound" : "kq",
         ton: "ton",
-        qram: "qram",
-        litr: "litr",
+        qram: weightUnitSystem === "lb" ? "ounce" : "qram",
+        litr: volumeUnitSystem === "gallon" ? "gallon" : "litr",
         ml: "millilitr",
         "ədəd": "ədəd",
         "dəstə": "dəstə",
@@ -510,6 +516,22 @@
             unitSelect.value = defaultValue;
         } else if (allowed.length) {
             unitSelect.value = allowed[0];
+        }
+    }
+
+    function resetUnitSelect(message) {
+        if (!unitSelect) return;
+        unitSelect.innerHTML = "";
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = message;
+        option.selected = true;
+        unitSelect.appendChild(option);
+        unitSelect.disabled = true;
+        unitSelect.name = "unit_disabled";
+        if (unitHidden) {
+            unitHidden.name = "unit_disabled";
+            unitHidden.value = "";
         }
     }
 
@@ -548,9 +570,9 @@
         if (isForage) {
             allowed = ["kq", "bağlama"];
         } else if (itemUnit === "kq") {
-            allowed = ["kq", "ton", "qram"];
+            allowed = [...WEIGHT_UNITS];
         } else if (itemUnit === "litr") {
-            allowed = ["litr", "ml"];
+            allowed = [...VOLUME_UNITS];
         } else if (itemUnit) {
             allowed = [itemUnit];
             lockUnit = true;
@@ -574,7 +596,7 @@
         const itemSelect = document.getElementById("item-select");
         if (!itemSelect) return;
         const items = farmCategoryItemMap[String(categoryId)] || [];
-        itemSelect.innerHTML = '<option value="" disabled selected>Məhsul seçin</option>';
+        itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Məhsul seçin" %}</option>';
         items.forEach((item) => {
             const option = document.createElement("option");
             option.value = String(item.id);
@@ -599,11 +621,11 @@
             itemGroup.style.display = "none";
             itemSelect.required = false;
             itemSelect.disabled = true;
-            itemSelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya yoxdur</option>';
+            itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Alt kateqoriya yoxdur" %}</option>';
             manualGroup.style.display = "block";
             manualInput.required = true;
-            setUnitForItem("kq", false);
             resetFarmProductOtherFields();
+            setUnitForItem("kq", false, ALL_UNITS);
             saveFarmProductState(categoryId, "");
             return;
         }
@@ -619,7 +641,7 @@
         } else {
             manualGroup.style.display = "none";
             manualInput.required = false;
-            setUnitForItem("kq", false, ALL_UNITS);
+            resetUnitSelect('{% trans "Əvvəlcə məhsul seçin" %}');
         }
         saveFarmProductState(categoryId, itemSelect.value || "");
     });
@@ -634,6 +656,22 @@
     const farmProductForm = document.getElementById("farm-product-form");
     if (farmProductForm) {
         farmProductForm.addEventListener("submit", () => {
+            const quantityInput = document.querySelector('input[name="quantity"]');
+            if (quantityInput && unitSelect && !unitSelect.disabled) {
+                const value = parseFloat(quantityInput.value || "");
+                if (Number.isFinite(value)) {
+                    if (weightUnitSystem === "lb") {
+                        if (unitSelect.value === "kq") {
+                            quantityInput.value = String(Number((value * KG_PER_POUND).toFixed(4)));
+                        } else if (unitSelect.value === "qram") {
+                            quantityInput.value = String(Number((value * GRAMS_PER_OUNCE).toFixed(4)));
+                        }
+                    }
+                    if (volumeUnitSystem === "gallon" && unitSelect.value === "litr") {
+                        quantityInput.value = String(Number((parseFloat(quantityInput.value || "0") * LITERS_PER_GALLON).toFixed(4)));
+                    }
+                }
+            }
             sessionStorage.setItem(FARM_PRODUCT_KEEP_KEY, "1");
             const categoryId = document.getElementById("category-select").value;
             const itemId = document.getElementById("item-select")?.value || "";

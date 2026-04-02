@@ -27,6 +27,10 @@ This project is a Farm Inventory Manager application, part of the Senior Design 
     ```bash
     pip install -r requirements.txt
     ```
+   Voice input for `add-product` also needs:
+    ```bash
+    pip install faster-whisper av
+    ```
 3. Configure environment variables in the project root `.env` file.
    Required database variables:
     ```env
@@ -51,6 +55,24 @@ This project is a Farm Inventory Manager application, part of the Senior Design 
     python manage.py runserver
     ```
 7. Open your browser and go to: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/)
+
+## Voice Input
+
+`add-product` includes server-based Azerbaijani voice transcription.
+
+- Frontend records audio with the browser microphone
+- Backend transcribes with `faster-whisper`
+- The transcript is parsed and the matching form is filled automatically
+
+Optional environment variables:
+
+```env
+FASTER_WHISPER_MODEL=small
+FASTER_WHISPER_DEVICE=cpu
+FASTER_WHISPER_COMPUTE_TYPE=int8
+FASTER_WHISPER_LANGUAGE=az
+FASTER_WHISPER_BEAM_SIZE=3
+```
 
 ## Initial Setup & Development
 

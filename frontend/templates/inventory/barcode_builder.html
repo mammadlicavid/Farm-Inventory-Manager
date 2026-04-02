@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load common_extras %}
+{% load i18n %}
 
 {% block content %}
 <header class="main-header">
@@ -6,7 +8,7 @@
         <div class="header-top">
             <a href="{% url 'inventory:add_placeholder' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Barkod Yarat</span>
+                <span>{% trans "Barkod Yarat" %}</span>
             </a>
         </div>
     </div>
@@ -15,13 +17,13 @@
 <main class="main-content add-page">
     <section class="scan-panel">
         <div class="section-head">
-            <h3>Barkod generatoru</h3>
-            <p>Kateqoriya seçin, formu doldurun, sonra `Barkodu Göstər` düyməsinə basın.</p>
+            <h3>{% trans "Barkod generatoru" %}</h3>
+            <p>{% trans "Kateqoriya seçin, formu doldurun, sonra `Barkodu Göstər` düyməsinə basın." %}</p>
         </div>
         <div class="input-group" style="margin-top: 14px;">
-            <label>Form növü</label>
+            <label>{% trans "Form növü" %}</label>
             <select id="builder-form-type" class="custom-input" required>
-                <option value="">Seçin</option>
+                <option value="">{% trans "Seçin" %}</option>
                 {% for form_type in form_types %}
                 <option value="{{ form_type.key }}">{{ form_type.label }}</option>
                 {% endfor %}
@@ -31,109 +33,109 @@
 
     <section id="builder-form-shell" class="dynamic-form-shell" hidden>
         <div class="section-head">
-            <h3 id="builder-active-form-title">Form</h3>
-            <p>Bu formdakı bütün məlumat birlikdə barkoda daxil ediləcək.</p>
+            <h3 id="builder-active-form-title">{% trans "Form" %}</h3>
+            <p>{% trans "Bu formdakı bütün məlumat birlikdə barkoda daxil ediləcək." %}</p>
         </div>
 
         <div class="form-card" data-form-panel="expense" hidden>
             <div class="two-col">
-                <div class="input-group"><label>Ana Kateqoriya</label><select id="expense-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
-                <div class="input-group"><label>Alt Kateqoriya</label><select id="expense-subcategory" class="custom-input" required><option value="">Alt kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>{% trans "Ana Kateqoriya" %}</label><select id="expense-category" class="custom-input" required><option value="">{% trans "Kateqoriya seçin" %}</option></select></div>
+                <div class="input-group"><label>{% trans "Alt Kateqoriya" %}</label><select id="expense-subcategory" class="custom-input" required><option value="">{% trans "Alt kateqoriya seçin" %}</option></select></div>
             </div>
-            <div class="input-group" id="expense-manual-wrap" hidden><label>Xərc adı (Digər)</label><input id="expense-manual-name" type="text" class="custom-input" placeholder="Xərcin adını daxil edin"></div>
-            <div class="input-group"><label>Məbləğ</label><input id="expense-amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
-            <button type="button" class="submit-green-btn" data-show-barcode="expense">Barkodu Göstər</button>
+            <div class="input-group" id="expense-manual-wrap" hidden><label>{% trans "Xərc adı (Digər)" %}</label><input id="expense-manual-name" type="text" class="custom-input" placeholder="{% trans 'Xərcin adını daxil edin' %}"></div>
+            <div class="input-group"><label>{% trans "Məbləğ" %}</label><input id="expense-amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="expense">{% trans "Barkodu Göstər" %}</button>
         </div>
 
         <div class="form-card" data-form-panel="income" hidden>
             <div class="two-col">
-                <div class="input-group"><label>Ana Kateqoriya</label><select id="income-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
-                <div class="input-group"><label>Məhsul</label><select id="income-item" class="custom-input" required><option value="">Məhsul seçin</option></select></div>
+                <div class="input-group"><label>{% trans "Ana Kateqoriya" %}</label><select id="income-category" class="custom-input" required><option value="">{% trans "Kateqoriya seçin" %}</option></select></div>
+                <div class="input-group"><label>{% trans "Məhsul" %}</label><select id="income-item" class="custom-input" required><option value="">{% trans "Məhsul seçin" %}</option></select></div>
             </div>
-            <div class="input-group" id="income-manual-wrap" hidden><label>Məhsul adı (Digər)</label><input id="income-manual-name" type="text" class="custom-input" placeholder="Məhsulun adını daxil edin"></div>
+            <div class="input-group" id="income-manual-wrap" hidden><label>{% trans "Məhsul adı (Digər)" %}</label><input id="income-manual-name" type="text" class="custom-input" placeholder="{% trans 'Məhsulun adını daxil edin' %}"></div>
             <div class="two-col">
-                <div class="input-group"><label>Miqdar</label><input id="income-quantity" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
-                <div class="input-group"><label>Ölçü vahidi</label><select id="income-unit" class="custom-input" required></select></div>
+                <div class="input-group"><label>{% trans "Miqdar" %}</label><input id="income-quantity" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
+                <div class="input-group"><label>{% trans "Ölçü vahidi" %}</label><select id="income-unit" class="custom-input" required></select></div>
             </div>
             <div class="two-col">
-                <div class="input-group" id="income-gender-wrap" hidden><label>Cinsiyyət</label><select id="income-gender" class="custom-input"><option value="">Seçin</option><option value="erkek">Erkək</option><option value="disi">Dişi</option></select></div>
-                <div class="input-group" id="income-animal-id-wrap" hidden><label>İdentifikasiya No</label><input id="income-animal-id" type="text" class="custom-input" placeholder="Məsələn: AZ12345"></div>
+                <div class="input-group" id="income-gender-wrap" hidden><label>{% trans "Cinsiyyət" %}</label><select id="income-gender" class="custom-input"><option value="">{% trans "Seçin" %}</option><option value="erkek">{% trans "Erkək" %}</option><option value="disi">{% trans "Dişi" %}</option></select></div>
+                <div class="input-group" id="income-animal-id-wrap" hidden><label>{% trans "İdentifikasiya No" %}</label><input id="income-animal-id" type="text" class="custom-input" placeholder="{% trans 'Məsələn: AZ12345' %}"></div>
             </div>
-            <div class="input-group"><label>Məbləğ</label><input id="income-amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
-            <button type="button" class="submit-green-btn" data-show-barcode="income">Barkodu Göstər</button>
+            <div class="input-group"><label>{% trans "Məbləğ" %}</label><input id="income-amount" type="number" step="0.01" min="0" class="custom-input" placeholder="0.00" required></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="income">{% trans "Barkodu Göstər" %}</button>
         </div>
 
         <div class="form-card" data-form-panel="animal" hidden>
             <div class="two-col">
-                <div class="input-group"><label>Ana Kateqoriya</label><select id="animal-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
-                <div class="input-group"><label>Alt Kateqoriya</label><select id="animal-subcategory" class="custom-input" required><option value="">Alt kateqoriya seçin</option></select></div>
+                <div class="input-group"><label>{% trans "Ana Kateqoriya" %}</label><select id="animal-category" class="custom-input" required><option value="">{% trans "Kateqoriya seçin" %}</option></select></div>
+                <div class="input-group"><label>{% trans "Alt Kateqoriya" %}</label><select id="animal-subcategory" class="custom-input" required><option value="">{% trans "Alt kateqoriya seçin" %}</option></select></div>
             </div>
-            <div class="input-group" id="animal-manual-wrap" hidden><label>Heyvan növü (Digər)</label><input id="animal-manual-name" type="text" class="custom-input" placeholder="Heyvanın növünü daxil edin"></div>
+            <div class="input-group" id="animal-manual-wrap" hidden><label>{% trans "Heyvan növü (Digər)" %}</label><input id="animal-manual-name" type="text" class="custom-input" placeholder="{% trans 'Heyvanın növünü daxil edin' %}"></div>
             <div class="two-col">
-                <div class="input-group"><label>Miqdar</label><input id="animal-quantity" type="number" value="1" class="custom-input" placeholder="1" required></div>
-                <div class="input-group"><label>İdentifikasiya No</label><input id="animal-id" type="text" class="custom-input" placeholder="Məsələn: AZ12345"></div>
+                <div class="input-group"><label>{% trans "Miqdar" %}</label><input id="animal-quantity" type="number" value="1" class="custom-input" placeholder="1" required></div>
+                <div class="input-group"><label>{% trans "İdentifikasiya No" %}</label><input id="animal-id" type="text" class="custom-input" placeholder="{% trans 'Məsələn: AZ12345' %}"></div>
             </div>
             <div class="two-col">
-                <div class="input-group"><label>Cinsiyyət</label><select id="animal-gender" class="custom-input" required><option value="erkek">Erkək</option><option value="disi">Dişi</option></select></div>
-                <div class="input-group"><label>Çəki</label><input id="animal-weight" type="number" step="0.1" class="custom-input" placeholder="0.0"></div>
+                <div class="input-group"><label>{% trans "Cinsiyyət" %}</label><select id="animal-gender" class="custom-input" required><option value="erkek">{% trans "Erkək" %}</option><option value="disi">{% trans "Dişi" %}</option></select></div>
+                <div class="input-group"><label>{% trans "Çəki" %}</label><input id="animal-weight" type="number" step="0.1" class="custom-input" placeholder="0.0"></div>
             </div>
-            <div class="input-group"><label>Məbləğ</label><input id="animal-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
-            <button type="button" class="submit-green-btn" data-show-barcode="animal">Barkodu Göstər</button>
+            <div class="input-group"><label>{% trans "Məbləğ" %}</label><input id="animal-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="animal">{% trans "Barkodu Göstər" %}</button>
         </div>
 
         <div class="form-card" data-form-panel="seed" hidden>
             <div class="two-col">
-                <div class="input-group"><label>Ana Kateqoriya</label><select id="seed-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
-                <div class="input-group"><label>Toxum növü</label><select id="seed-item" class="custom-input" required><option value="">Toxum seçin</option></select></div>
+                <div class="input-group"><label>{% trans "Ana Kateqoriya" %}</label><select id="seed-category" class="custom-input" required><option value="">{% trans "Kateqoriya seçin" %}</option></select></div>
+                <div class="input-group"><label>{% trans "Toxum növü" %}</label><select id="seed-item" class="custom-input" required><option value="">{% trans "Toxum seçin" %}</option></select></div>
             </div>
-            <div class="input-group" id="seed-manual-wrap" hidden><label>Toxum adı (Digər)</label><input id="seed-manual-name" type="text" class="custom-input" placeholder="Toxumun adını daxil edin"></div>
+            <div class="input-group" id="seed-manual-wrap" hidden><label>{% trans "Toxum adı (Digər)" %}</label><input id="seed-manual-name" type="text" class="custom-input" placeholder="{% trans 'Toxumun adını daxil edin' %}"></div>
             <div class="two-col">
-                <div class="input-group"><label>Miqdar</label><input id="seed-quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required></div>
-                <div class="input-group"><label>Ölçü vahidi</label><select id="seed-unit" class="custom-input" required><option value="kg">kg</option><option value="ton">ton</option><option value="qram">qram</option></select></div>
+                <div class="input-group"><label>{% trans "Miqdar" %}</label><input id="seed-quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required></div>
+                <div class="input-group"><label>{% trans "Ölçü vahidi" %}</label><select id="seed-unit" class="custom-input" required><option value="kg">{% trans "kq" %}</option><option value="ton">{% trans "ton" %}</option><option value="qram">{% trans "qram" %}</option></select></div>
             </div>
-            <div class="input-group"><label>Məbləğ</label><input id="seed-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
-            <button type="button" class="submit-green-btn" data-show-barcode="seed">Barkodu Göstər</button>
+            <div class="input-group"><label>{% trans "Məbləğ" %}</label><input id="seed-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="seed">{% trans "Barkodu Göstər" %}</button>
         </div>
 
         <div class="form-card" data-form-panel="tool" hidden>
             <div class="two-col">
-                <div class="input-group"><label>Ana Kateqoriya</label><select id="tool-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
-                <div class="input-group"><label>Alət növü</label><select id="tool-item" class="custom-input" required><option value="">Alət seçin</option></select></div>
+                <div class="input-group"><label>{% trans "Ana Kateqoriya" %}</label><select id="tool-category" class="custom-input" required><option value="">{% trans "Kateqoriya seçin" %}</option></select></div>
+                <div class="input-group"><label>{% trans "Alət növü" %}</label><select id="tool-item" class="custom-input" required><option value="">{% trans "Alət seçin" %}</option></select></div>
             </div>
-            <div class="input-group" id="tool-manual-wrap" hidden><label>Alət adı (Digər)</label><input id="tool-manual-name" type="text" class="custom-input" placeholder="Alət adını daxil edin"></div>
+            <div class="input-group" id="tool-manual-wrap" hidden><label>{% trans "Alət adı (Digər)" %}</label><input id="tool-manual-name" type="text" class="custom-input" placeholder="{% trans 'Alət adını daxil edin' %}"></div>
             <div class="two-col">
-                <div class="input-group"><label>Miqdar</label><input id="tool-quantity" type="number" class="custom-input" placeholder="0" required></div>
-                <div class="input-group"><label>Məbləğ</label><input id="tool-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+                <div class="input-group"><label>{% trans "Miqdar" %}</label><input id="tool-quantity" type="number" class="custom-input" placeholder="0" required></div>
+                <div class="input-group"><label>{% trans "Məbləğ" %}</label><input id="tool-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
             </div>
-            <button type="button" class="submit-green-btn" data-show-barcode="tool">Barkodu Göstər</button>
+            <button type="button" class="submit-green-btn" data-show-barcode="tool">{% trans "Barkodu Göstər" %}</button>
         </div>
 
         <div class="form-card" data-form-panel="farm" hidden>
             <div class="two-col">
-                <div class="input-group"><label>Ana Kateqoriya</label><select id="farm-category" class="custom-input" required><option value="">Kateqoriya seçin</option></select></div>
-                <div class="input-group"><label>Məhsul növü</label><select id="farm-item" class="custom-input" required><option value="">Məhsul seçin</option></select></div>
+                <div class="input-group"><label>{% trans "Ana Kateqoriya" %}</label><select id="farm-category" class="custom-input" required><option value="">{% trans "Kateqoriya seçin" %}</option></select></div>
+                <div class="input-group"><label>{% trans "Məhsul növü" %}</label><select id="farm-item" class="custom-input" required><option value="">{% trans "Məhsul seçin" %}</option></select></div>
             </div>
-            <div class="input-group" id="farm-manual-wrap" hidden><label>Məhsul adı (Digər)</label><input id="farm-manual-name" type="text" class="custom-input" placeholder="Məhsulun adını daxil edin"></div>
+            <div class="input-group" id="farm-manual-wrap" hidden><label>{% trans "Məhsul adı (Digər)" %}</label><input id="farm-manual-name" type="text" class="custom-input" placeholder="{% trans 'Məhsulun adını daxil edin' %}"></div>
             <div class="two-col">
-                <div class="input-group"><label>Miqdar</label><input id="farm-quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required></div>
-                <div class="input-group"><label>Ölçü vahidi</label><select id="farm-unit" class="custom-input" required><option value="kq">kq</option><option value="ton">ton</option><option value="qram">qram</option><option value="litr">litr</option><option value="ml">millilitr</option><option value="ədəd">ədəd</option><option value="dəstə">dəstə</option><option value="bağlama">bağlama</option></select></div>
+                <div class="input-group"><label>{% trans "Miqdar" %}</label><input id="farm-quantity" type="number" step="0.01" class="custom-input" placeholder="0.00" required></div>
+                <div class="input-group"><label>{% trans "Ölçü vahidi" %}</label><select id="farm-unit" class="custom-input" required><option value="kq">{% trans "kq" %}</option><option value="ton">{% trans "ton" %}</option><option value="qram">{% trans "qram" %}</option><option value="litr">{% trans "litr" %}</option><option value="ml">{% trans "millilitr" %}</option><option value="ədəd">{% trans "ədəd" %}</option><option value="dəstə">{% trans "dəstə" %}</option><option value="bağlama">{% trans "bağlama" %}</option></select></div>
             </div>
-            <div class="input-group"><label>Məbləğ</label><input id="farm-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
-            <button type="button" class="submit-green-btn" data-show-barcode="farm">Barkodu Göstər</button>
+            <div class="input-group"><label>{% trans "Məbləğ" %}</label><input id="farm-price" type="number" step="0.01" class="custom-input" placeholder="0.00"></div>
+            <button type="button" class="submit-green-btn" data-show-barcode="farm">{% trans "Barkodu Göstər" %}</button>
         </div>
     </section>
 
     <section id="barcode-preview" class="barcode-preview" hidden>
         <div class="section-head">
-            <h3 id="barcode-preview-title">Barkod</h3>
+            <h3 id="barcode-preview-title">{% trans "Barkod" %}</h3>
             <p id="barcode-preview-text"></p>
         </div>
         <div class="barcode-canvas-wrap"><svg id="barcode-svg"></svg></div>
         <div class="barcode-code-row">
             <div class="barcode-code" id="barcode-code-text"></div>
-            <button type="button" id="barcode-copy-btn" class="barcode-copy-btn">Kopyala</button>
+            <button type="button" id="barcode-copy-btn" class="barcode-copy-btn">{% trans "Kopyala" %}</button>
         </div>
-        <button type="button" id="barcode-download-btn" class="submit-green-btn">Download JPG</button>
+        <button type="button" id="barcode-download-btn" class="submit-green-btn">{% trans "Download JPG" %}</button>
     </section>
 </main>
 
@@ -188,7 +190,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const barcodeCodeText = document.getElementById("barcode-code-text");
     const copyBtn = document.getElementById("barcode-copy-btn");
     const downloadBtn = document.getElementById("barcode-download-btn");
-    const allUnits = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
+    const weightUnitSystem = "{% unit_system request.user %}";
+    const volumeUnitSystem = "{% volume_system request.user %}";
+    const weightUnits = weightUnitSystem === "lb" ? ["kq", "qram"] : ["kq", "qram", "ton"];
+    const volumeUnits = volumeUnitSystem === "gallon" ? ["litr"] : ["litr", "ml"];
+    const allUnits = [...weightUnits, ...volumeUnits, "ədəd", "dəstə", "bağlama"];
     let barcodeDownloadName = "barcode";
 
     const panelTitles = { expense: "Xərc formu", income: "Gəlir formu", animal: "Heyvan formu", seed: "Toxum formu", tool: "Alət formu", farm: "Təsərrüfat formu" };
@@ -259,9 +265,27 @@ document.addEventListener("DOMContentLoaded", function () {
         idInput.placeholder = "Məsələn: AZ12345";
     }
 
+    function displayUnitLabel(unit) {
+        if (weightUnitSystem === "lb") {
+            if (unit === "kg" || unit === "kq") return "pound";
+            if (unit === "qram") return "ounce";
+        }
+        if (volumeUnitSystem === "gallon") {
+            if (unit === "litr") return "gallon";
+        }
+        return unit === "kg" ? "kq" : (unit === "ml" ? "millilitr" : unit);
+    }
+
     function setIncomeUnits(units, preferred) {
         const unitSelect = document.getElementById("income-unit");
-        fillOptions(unitSelect, units, "Vahid seçin", (value) => ({ value, label: value }));
+        fillOptions(unitSelect, units, "Vahid seçin", (value) => ({ value, label: displayUnitLabel(value) }));
+        unitSelect.value = preferred && units.includes(preferred) ? preferred : (units[0] || "");
+    }
+
+    function setUnitSelectOptions(selectId, units, preferred) {
+        const unitSelect = document.getElementById(selectId);
+        if (!unitSelect) return;
+        fillOptions(unitSelect, units, "Vahid seçin", (value) => ({ value, label: displayUnitLabel(value) }));
         unitSelect.value = preferred && units.includes(preferred) ? preferred : (units[0] || "");
     }
 
@@ -340,6 +364,7 @@ document.addEventListener("DOMContentLoaded", function () {
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
+        setUnitSelectOptions("seed-unit", weightUnits, document.getElementById("seed-unit")?.value || weightUnits[0]);
     }
 
     function updateToolItems(selectedItemId) {
@@ -384,7 +409,12 @@ document.addEventListener("DOMContentLoaded", function () {
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
-        if (selectedOption?.dataset.unit) unitSelect.value = selectedOption.dataset.unit;
+        let units = allUnits.slice();
+        const itemUnit = selectedOption?.dataset.unit || "";
+        if (itemUnit === "kq") units = weightUnits.slice();
+        else if (itemUnit === "litr") units = volumeUnits.slice();
+        else if (itemUnit) units = [itemUnit];
+        setUnitSelectOptions("farm-unit", units, itemUnit || unitSelect.value || units[0]);
     }
 
     function updateIncomeItems(selectedItemName) {
@@ -419,9 +449,9 @@ document.addEventListener("DOMContentLoaded", function () {
         let units = allUnits.slice();
         const itemUnit = itemSelect.options[itemSelect.selectedIndex]?.dataset.unit || "";
         if (type === "animal") units = ["ədəd"];
-        else if (type === "seed") units = ["kq", "ton", "qram"];
-        else if (itemUnit === "kq") units = ["kq", "ton", "qram"];
-        else if (itemUnit === "litr") units = ["litr", "ml"];
+        else if (type === "seed") units = weightUnits.slice();
+        else if (itemUnit === "kq") units = weightUnits.slice();
+        else if (itemUnit === "litr") units = volumeUnits.slice();
         else if (itemUnit) units = [itemUnit];
         setIncomeUnits(units, units[0]);
     }
@@ -434,6 +464,8 @@ document.addEventListener("DOMContentLoaded", function () {
         fillOptions(document.getElementById("farm-category"), farmData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
         fillOptions(document.getElementById("income-category"), incomeCategories, "Kateqoriya seçin", (row) => ({ value: row, label: row }));
         setIncomeUnits(allUnits, "kq");
+        setUnitSelectOptions("seed-unit", weightUnits, document.getElementById("seed-unit")?.value || weightUnits[0]);
+        setUnitSelectOptions("farm-unit", allUnits, document.getElementById("farm-unit")?.value || allUnits[0]);
     }
 
     function showPanel(formType) {

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -5,6 +6,7 @@ from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.db.models import Q
+from hashlib import md5
 from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
 from django.utils import timezone
@@ -48,6 +50,7 @@ LEGACY_SEED_CATEGORY_ALIASES = {
 
 SEED_FORM_CATALOG_CACHE_KEY = "seeds:form-catalog:v1"
 SEED_FORM_CATALOG_TTL = 300
+SEED_LIST_CACHE_TTL = 30
 
 
 def _seed_to_kg(value: Decimal, unit: str) -> Decimal:
@@ -74,11 +77,11 @@ def _seed_stock_kg(user, item, manual_name: str | None) -> Decimal:
 
 def _parse_date(value: str | None):
     if not value:
-        return timezone.now().date()
+        return timezone.localdate()
     try:
         return date.fromisoformat(value)
     except Exception:
-        return timezone.now().date()
+        return timezone.localdate()
 
 
 def _parse_filter_date(value: str | None):
@@ -283,6 +286,11 @@ def _merge_manual_seed(user, manual_name, quantity_val, unit, price, additional_
 
 @login_required
 def seed_list(request):
+    cache_key = f"seeds:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cached_context = cache.get(cache_key)
+    if cached_context is not None:
+        return render(request, 'seeds/seed_list.html', cached_context)
+
     query = (request.GET.get('q') or '').strip()
     category_id = (request.GET.get('category') or '').strip()
     item_id = (request.GET.get('item') or '').strip()
@@ -312,7 +320,8 @@ def seed_list(request):
             | Q(manual_name__icontains=query)
         )
 
-    selected_category = SeedCategory.objects.filter(pk=category_id).first() if category_id else None
+    form_catalog = _seed_form_catalog()
+    selected_category = next((category for category in form_catalog["categories"] if str(category.id) == category_id), None) if category_id else None
     if selected_category:
         if (selected_category.name or "").strip().lower() == "digər":
             seeds_qs = seeds_qs.filter(Q(item__category=selected_category) | Q(item__isnull=True))
@@ -321,12 +330,7 @@ def seed_list(request):
 
     filtered_items = []
     if selected_category:
-        filtered_items = list(
-            order_queryset_by_name_list(
-                SeedItem.objects.filter(category=selected_category),
-                SEED_ITEM_ORDER.get(selected_category.name, []),
-            )
-        )
+        filtered_items = form_catalog["item_map"].get(str(selected_category.id), [])
 
     if item_id:
         seeds_qs = seeds_qs.filter(item_id=item_id)
@@ -353,9 +357,7 @@ def seed_list(request):
         except Exception:
             seed.price_display = seed.price
 
-    form_catalog = _seed_form_catalog()
-    
-    today = timezone.now().date()
+    today = timezone.localdate()
     context = {
         'seeds': seeds,
         'categories': form_catalog["categories"],
@@ -369,6 +371,7 @@ def seed_list(request):
         'today': today,
         'yesterday': today - timedelta(days=1),
     }
+    cache.set(cache_key, context, SEED_LIST_CACHE_TTL)
     return render(request, 'seeds/seed_list.html', context)
 
 @login_required
@@ -400,7 +403,7 @@ def seed_create(request):
 
         # Backend Validation
         if not (item_id or manual_name) or not quantity or not unit:
-            messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             return redirect(redirect_to)
 
         # Handle empty numeric fields
@@ -409,7 +412,7 @@ def seed_create(request):
         try:
             quantity_val = Decimal(str(quantity))
         except (InvalidOperation, TypeError, ValueError):
-            messages.error(request, "Miqdar düzgün deyil.")
+            messages.error(request, _("Miqdar düzgün deyil."))
             return redirect(redirect_to)
         
         try:
@@ -417,7 +420,7 @@ def seed_create(request):
             if item_id:
                 item = SeedItem.objects.get(id=item_id)
                 if item.name == "Digər" and not manual_name:
-                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    messages.error(request, _("Zəhmət olmasa, Digər üçün ad daxil edin."))
                     return redirect(redirect_to)
             
             if quantity_val < 0:
@@ -428,7 +431,7 @@ def seed_create(request):
                 )
                 needed_kg = _seed_to_kg(abs(quantity_val), unit)
                 if available_kg < needed_kg:
-                    messages.error(request, "Stokda kifayət qədər toxum yoxdur.")
+                    messages.error(request, _("Stokda kifayət qədər toxum yoxdur."))
                     return redirect(redirect_to)
 
             manual_value = manual_name if (not item or item.name == "Digər") else None
@@ -457,7 +460,7 @@ def seed_create(request):
                 except (TypeError, ValueError):
                     amount_val = 0
                 if amount_val <= 0:
-                    messages.error(request, "Gəlir üçün məbləğ daxil edin.")
+                    messages.error(request, _("Gəlir üçün məbləğ daxil edin."))
                     seed.delete()
                     return redirect(redirect_to)
 
@@ -503,7 +506,7 @@ def seed_create(request):
                     # Don't let expense creation failure break seed creation
                     print(f"Error creating seed expense: {e}")
         except SeedItem.DoesNotExist:
-            messages.error(request, "Seçilmiş toxum növü tapılmadı.")
+            messages.error(request, _("Seçilmiş toxum növü tapılmadı."))
         else:
             add_crud_success_message(request, "Seed", "create")
 
@@ -526,13 +529,13 @@ def seed_update(request, pk):
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity or not unit:
-            messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             return render(request, 'seeds/seed_form.html', _seed_form_context(seed))
 
         try:
             quantity_val = Decimal(str(quantity))
         except (InvalidOperation, TypeError, ValueError):
-            messages.error(request, "Miqdar düzgün deyil.")
+            messages.error(request, _("Miqdar düzgün deyil."))
             return render(request, 'seeds/seed_form.html', _seed_form_context(seed))
 
         prev_quantity = Decimal(str(seed.quantity))
@@ -548,7 +551,7 @@ def seed_update(request, pk):
         if item_id:
             item = SeedItem.objects.get(id=item_id)
             if item.name == "Digər" and not manual_name:
-                messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
+                messages.error(request, _("Zəhmət olmasa, Digər üçün ad daxil edin."))
                 return render(request, 'seeds/seed_form.html', _seed_form_context(seed))
             seed.manual_name = manual_name if item.name == "Digər" else None
         else:
@@ -570,7 +573,7 @@ def seed_update(request, pk):
                 available_kg += prev_total
             needed_kg = _seed_to_kg(abs(quantity_val), unit)
             if available_kg < needed_kg:
-                messages.error(request, "Stokda kifayət qədər toxum yoxdur.")
+                messages.error(request, _("Stokda kifayət qədər toxum yoxdur."))
                 return render(request, 'seeds/seed_form.html', _seed_form_context(seed))
 
         seed.save()

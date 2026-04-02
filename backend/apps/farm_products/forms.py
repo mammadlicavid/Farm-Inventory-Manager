@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django import forms
 from .models import FarmProduct, FarmProductCategory, FarmProductItem
 from common.category_order import (
@@ -13,7 +14,7 @@ class FarmProductForm(forms.ModelForm):
             FarmProductCategory.objects.all(),
             FARM_PRODUCT_CATEGORY_ORDER,
         ),
-        label="Kateqoriya",
+        label=_("Kateqoriya"),
         widget=forms.Select(attrs={"class": "custom-input"}),
         required=True,
     )
@@ -23,12 +24,12 @@ class FarmProductForm(forms.ModelForm):
         fields = ["item", "quantity", "unit", "price", "manual_name", "additional_info"]
         widgets = {
             "item": forms.Select(attrs={"class": "custom-input"}),
-            "quantity": forms.NumberInput(attrs={"class": "custom-input", "placeholder": "Miqdar"}),
+            "quantity": forms.NumberInput(attrs={"class": "custom-input", "placeholder": _("Miqdar")}),
             "unit": forms.Select(attrs={"class": "custom-input"}),
-            "price": forms.NumberInput(attrs={"class": "custom-input", "placeholder": "Qiymət (₼)"}),
-            "manual_name": forms.TextInput(attrs={"class": "custom-input", "placeholder": "Məhsulun adı (Digər)"}),
+            "price": forms.NumberInput(attrs={"class": "custom-input", "placeholder": _("Qiymət (₼)")}),
+            "manual_name": forms.TextInput(attrs={"class": "custom-input", "placeholder": _("Məhsulun adı (Digər)")}),
             "additional_info": forms.Textarea(
-                attrs={"class": "custom-input", "placeholder": "Əlavə məlumat", "rows": 2}
+                attrs={"class": "custom-input", "placeholder": _("Əlavə məlumat"), "rows": 2}
             ),
         }
 

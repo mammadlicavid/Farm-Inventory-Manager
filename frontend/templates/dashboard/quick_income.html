@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
 {% load static %}
 
 {% block content %}
@@ -7,24 +9,25 @@
             <div class="header-top">
                 <a href="{% url 'incomes:income_list' %}" class="back-btn-box">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>Tez Gəlir</span>
+                    <span>{% trans "Tez Gəlir" %}</span>
                 </a>
             </div>
         </div>
     </header>
 
     <main class="main-content">
+        {% currency_symbol request.user as current_currency_symbol %}
         <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
             <div style="position: relative;" class="click-focus">
                 <i class="fa-solid fa-search"
                     style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                <input type="text" id="template-search" placeholder="Şablon axtar..." autocomplete="off"
+                <input type="text" id="template-search" placeholder="{% trans 'Şablon axtar...' %}" autocomplete="off"
                     style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
             </div>
         </form>
 
         <div class="quick-expense-section">
-            <h2 class="quick-expense-section-title">Bir toxunuşla gəlir</h2>
+            <h2 class="quick-expense-section-title">{% trans "Bir toxunuşla gəlir" %}</h2>
             <div class="quick-tap-grid">
                 {% for item in quick_items %}
                 <form method="POST" action="" class="quick-tap-form" data-sync-entity="quick_income" data-sync-action="quick_add">
@@ -39,8 +42,8 @@
                     <button type="submit" class="quick-tap-card">
                         <span class="quick-tap-icon">{{ item.icon }}</span>
                         <span class="quick-tap-name">{{ item.name }}</span>
-                        <span class="quick-tap-meta">{{ item.quantity }} {{ item.unit }}</span>
-                        <span class="quick-tap-amount">{{ item.amount }}₼</span>
+                        <span class="quick-tap-meta">{% display_measure item.quantity item.unit request.user %}</span>
+                        <span class="quick-tap-amount">{% money item.amount request.user %}</span>
                     </button>
                 </form>
                 {% endfor %}
@@ -48,11 +51,11 @@
         </div>
 
         <div class="quick-expense-section">
-            <h2 class="quick-expense-section-title">Xüsusi məbləğ</h2>
+            <h2 class="quick-expense-section-title">{% trans "Xüsusi məbləğ" %}</h2>
             <form method="POST" action="" class="custom-amount-row" data-sync-entity="quick_income" data-sync-action="custom_amount">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="custom_amount">
-                <input type="number" name="amount" step="0.01" min="0.01" placeholder="Məbləğ (₼)"
+                <input type="number" name="amount" step="0.01" min="0.01" placeholder="{% blocktrans trimmed with symbol=current_currency_symbol %}Məbləğ ({{ symbol }}){% endblocktrans %}"
                     id="custom-amount-input" class="custom-amount-input" required>
                 <button type="submit" class="custom-amount-btn">
                     <i class="fa-solid fa-plus"></i>
@@ -62,9 +65,9 @@
 
         <div class="quick-expense-section">
             <div class="templates-header">
-                <h2 class="quick-expense-section-title">Şablonlar</h2>
+                <h2 class="quick-expense-section-title">{% trans "Şablonlar" %}</h2>
                 <span class="templates-new-badge">
-                    <i class="fa-regular fa-star"></i> Yeni
+                    <i class="fa-regular fa-star"></i> {% trans "Yeni" %}
                 </span>
             </div>
 
@@ -78,7 +81,7 @@
                     <button type="submit" class="template-item">
                         <div class="template-item-left">
                             <span class="template-item-title">{{ tmpl.item_name }}</span>
-                            <span class="quick-template-meta">{{ tmpl.quantity_display }} {{ tmpl.unit }}</span>
+                            <span class="quick-template-meta">{% display_measure tmpl.quantity_display tmpl.unit request.user %}</span>
                             <div class="template-item-tags">
                                 {% for tag in tmpl.primary_tags %}
                                 <span class="template-tag">{{ tag }}</span>
@@ -86,14 +89,14 @@
                             </div>
                         </div>
                         <div class="template-item-right">
-                            <span class="template-item-amount">{{ tmpl.amount_display }}₼</span>
+                            <span class="template-item-amount">{% money tmpl.amount_display request.user %}</span>
                             <i class="fa-solid fa-check template-item-check"></i>
                         </div>
                     </button>
                 </form>
                 {% empty %}
                 <div class="templates-empty">
-                    <p>Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək.</p>
+                    <p>{% trans "Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək." %}</p>
                 </div>
                 {% endfor %}
             </div>

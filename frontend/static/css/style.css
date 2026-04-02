@@ -2517,3 +2517,124 @@ body.drawer-open #menuToggle {
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(46, 139, 87, 0.4);
 }
+
+@media (max-width: 768px) {
+    .suppliers-page {
+        padding-bottom: 18px;
+    }
+
+    .suppliers-page .search-section,
+    .suppliers-list,
+    .action-buttons-container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .supplier-filter-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .suppliers-page .search-bar,
+    .supplier-category-filter {
+        min-width: 0;
+        padding: 13px 14px;
+        gap: 10px;
+    }
+
+    .suppliers-page .search-bar input,
+    .supplier-category-filter select {
+        min-width: 0;
+        font-size: 15px;
+    }
+
+    .supplier-card {
+        padding: 14px;
+        gap: 12px;
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .supplier-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        font-size: 22px;
+    }
+
+    .supplier-info {
+        min-width: 0;
+    }
+
+    .supplier-name-row,
+    .supplier-meta-row {
+        min-width: 0;
+    }
+
+    .supplier-name-row h3 {
+        font-size: 17px;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .supplier-meta-row {
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .supplier-tag,
+    .supplier-location,
+    .supplier-date,
+    .supplier-phone,
+    .supplier-note {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .supplier-tag {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .supplier-location,
+    .supplier-date,
+    .supplier-phone,
+    .supplier-note {
+        font-size: 13px;
+    }
+
+    .supplier-rating {
+        font-size: 13px;
+        letter-spacing: 1px;
+    }
+
+    .supplier-action {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 4px;
+    }
+
+    .call-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        flex: 0 0 auto;
+    }
+
+    .suppliers-page .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+    }
+
+    .suppliers-page .form-container-white {
+        padding: 18px 16px;
+    }
+
+    .btn-primary-large {
+        padding: 14px;
+        font-size: 15px;
+    }
+}

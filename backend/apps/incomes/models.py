@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -35,7 +36,7 @@ GENDER_CHOICES = [
 class Income(models.Model):
     category = models.CharField(max_length=120, verbose_name="Kateqoriya")
     item_name = models.CharField(max_length=120, verbose_name="Məhsul adı")
-    quantity = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Miqdar")
+    quantity = models.DecimalField(max_digits=12, decimal_places=4, verbose_name="Miqdar")
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES, verbose_name="Ölçü vahidi")
     amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Məbləğ")
     gender = models.CharField(

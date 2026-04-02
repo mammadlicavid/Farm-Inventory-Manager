@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import tempfile
 from decimal import Decimal
 
 from django.contrib import messages
@@ -9,6 +11,7 @@ from django.http import JsonResponse
 from django.http import HttpResponse
 from django.db.models import Case, DecimalField, F, IntegerField, Q, Sum, Value, When
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -38,6 +41,7 @@ from tools.models import Tool, ToolCategory, ToolItem
 ADD_PAGE_CATALOG_CACHE_KEY = "inventory:add-page-catalog:v1"
 ADD_PAGE_CATALOG_CACHE_TTL = 300
 STOCKS_PAGE_CACHE_TTL = 20
+VOICE_MODEL_CACHE = {"model": None, "model_name": None}
 
 
 def _is_forage_item(name: str) -> bool:
@@ -235,10 +239,59 @@ def _build_add_page_catalog():
     return payload
 
 
-def _build_add_page_context():
+def _build_add_page_context(request=None):
+    voice_input_language = "system"
+    if request is not None:
+        voice_input_language = (request.session.get("voice_input_language") or request.COOKIES.get("voice_input_language") or "system").strip().lower()
     return {
-        "today": timezone.now().date(),
+        "today": timezone.localdate(),
+        "voice_input_language": voice_input_language,
         **_build_add_page_catalog(),
+    }
+
+
+def _get_whisper_model():
+    model_name = os.getenv("FASTER_WHISPER_MODEL", "small")
+    if VOICE_MODEL_CACHE["model"] is not None and VOICE_MODEL_CACHE["model_name"] == model_name:
+        return VOICE_MODEL_CACHE["model"]
+
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError as exc:
+        raise RuntimeError("`faster-whisper` quraşdırılmayıb.") from exc
+
+    compute_type = os.getenv("FASTER_WHISPER_COMPUTE_TYPE", "int8")
+    device = os.getenv("FASTER_WHISPER_DEVICE", "cpu")
+    model = WhisperModel(model_name, device=device, compute_type=compute_type)
+    VOICE_MODEL_CACHE["model"] = model
+    VOICE_MODEL_CACHE["model_name"] = model_name
+    return model
+
+
+def _resolve_voice_language(request, explicit_language: str | None = None):
+    allowed = {"az", "en", "ru"}
+    candidate = (explicit_language or "").strip().lower()
+    if candidate == "system":
+        candidate = ""
+    if not candidate:
+        candidate = (request.session.get("voice_input_language") or request.COOKIES.get("voice_input_language") or "").strip().lower()
+    if candidate == "system":
+        candidate = ""
+    if not candidate:
+        candidate = (getattr(request, "LANGUAGE_CODE", "") or "").split("-")[0].lower()
+    return candidate if candidate in allowed else os.getenv("FASTER_WHISPER_LANGUAGE", "az")
+
+
+def _transcribe_audio_file(audio_path: str, language: str | None = None):
+    model = _get_whisper_model()
+    language = (language or os.getenv("FASTER_WHISPER_LANGUAGE", "az")).strip().lower()
+    beam_size = int(os.getenv("FASTER_WHISPER_BEAM_SIZE", "3"))
+    segments, info = model.transcribe(audio_path, language=language, vad_filter=True, beam_size=beam_size)
+    transcript = " ".join((segment.text or "").strip() for segment in segments).strip()
+    return {
+        "transcript": transcript,
+        "language": getattr(info, "language", language),
+        "language_probability": getattr(info, "language_probability", None),
     }
 
 def home(request):
@@ -580,48 +633,46 @@ def stocks_placeholder(request):
 
     # Farm products (item-based)
     farm_totals = {}
-    farm_qs = (
+    farm_rows = (
         FarmProduct.objects.filter(created_by=user, item__isnull=False)
-        .select_related("item", "item__category")
-        .only(
-            "id",
-            "quantity",
-            "unit",
+        .exclude(item__name__iexact="Digər")
+        .values(
             "item_id",
             "item__name",
             "item__unit",
             "item__category_id",
             "item__category__name",
+            "unit",
         )
+        .annotate(total_qty=Sum("quantity"))
     )
-    for product in farm_qs:
-        if not product.item:
-            continue
-        if (product.item.name or "").strip().lower() == "digər":
-            continue
-        is_forage = _is_forage_item(product.item.name)
-        if is_forage and product.unit == "bağlama":
+    for row in farm_rows:
+        item_name = row["item__name"] or ""
+        item_unit = row["item__unit"] or row["unit"] or ""
+        stock_unit = row["unit"] or ""
+        is_forage = _is_forage_item(item_name)
+        if is_forage and stock_unit == "bağlama":
             base_unit = "bağlama"
-        elif product.unit in {"kq", "ton", "qram"}:
+        elif stock_unit in {"kq", "ton", "qram"}:
             base_unit = "kq"
-        elif product.unit in {"litr", "ml"}:
+        elif stock_unit in {"litr", "ml"}:
             base_unit = "litr"
         else:
-            base_unit = product.unit
+            base_unit = stock_unit
 
-        key = (product.item_id, product.unit) if base_unit == "bağlama" else (product.item_id, "base")
+        key = (row["item_id"], stock_unit) if base_unit == "bağlama" else (row["item_id"], "base")
         payload = farm_totals.setdefault(
             key,
             {
-                "name": product.item.name,
-                "category_id": product.item.category_id,
-                "category_name": product.item.category.name if product.item.category else "",
+                "name": item_name,
+                "category_id": row["item__category_id"],
+                "category_name": row["item__category__name"] or "",
                 "total_qty": Decimal("0"),
-                "unit": product.unit if base_unit == "bağlama" else (product.item.unit or product.unit),
+                "unit": stock_unit if base_unit == "bağlama" else item_unit,
                 "base_unit": base_unit,
             },
         )
-        payload["total_qty"] += _convert_farm_qty(Decimal(product.quantity), product.unit, payload["base_unit"])
+        payload["total_qty"] += _convert_farm_qty(Decimal(row["total_qty"] or 0), stock_unit, payload["base_unit"])
 
     farm_items = FarmProductItem.objects.select_related("category").only(
         "id", "name", "unit", "category_id", "category__name"
@@ -658,27 +709,22 @@ def stocks_placeholder(request):
         )
 
     # Farm products manual (Digər)
-    farm_other_totals = {}
-    farm_other_qs = (
-        FarmProduct.objects.filter(created_by=user)
-        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
-        .exclude(manual_name__isnull=True)
-        .exclude(manual_name="")
-        .exclude(manual_name__iexact="Digər")
-    )
-    for product in farm_other_qs:
-        name_key = product.manual_name.strip()
-        unit_key = product.unit or ""
-        key = f"{name_key}||{unit_key}"
-        payload = farm_other_totals.setdefault(
-            key,
-            {
-                "name": name_key,
-                "unit": unit_key,
-                "total_qty": Decimal("0"),
-            },
+    farm_other_totals = {
+        f"{(row['manual_name'] or '').strip()}||{row['unit'] or ''}": {
+            "name": (row["manual_name"] or "").strip(),
+            "unit": row["unit"] or "",
+            "total_qty": Decimal(row["total_qty"] or 0),
+        }
+        for row in (
+            FarmProduct.objects.filter(created_by=user)
+            .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
+            .exclude(manual_name__isnull=True)
+            .exclude(manual_name="")
+            .exclude(manual_name__iexact="Digər")
+            .values("manual_name", "unit")
+            .annotate(total_qty=Sum("quantity"))
         )
-        payload["total_qty"] += Decimal(product.quantity)
+    }
 
     for key, payload in farm_other_totals.items():
         qty_display = f"{payload['total_qty']:.2f}"
@@ -729,13 +775,13 @@ def update_stock_quantity(request):
     cache.delete(f"inventory:stocks-page:v3:user:{request.user.id}")
 
     if not update_type or not update_id or target_raw is None:
-        messages.error(request, "Məlumatlar natamamdır.")
+        messages.error(request, _("Məlumatlar natamamdır."))
         return redirect("inventory:stocks")
 
     try:
         target_value = Decimal(str(target_raw))
     except Exception:
-        messages.error(request, "Miqdar düzgün deyil.")
+        messages.error(request, _("Miqdar düzgün deyil."))
         return redirect("inventory:stocks")
 
     note = "Stok səhifəsindən düzəliş"
@@ -799,7 +845,7 @@ def update_stock_quantity(request):
     if update_type == "tool":
         tool_qs = Tool.objects.filter(created_by=request.user, item_id=update_id)
         if target_value % 1 != 0:
-            messages.error(request, "Alətlər üçün miqdar tam ədəd olmalıdır.")
+            messages.error(request, _("Alətlər üçün miqdar tam ədəd olmalıdır."))
             return redirect("inventory:stocks")
         current_total = sum(int(t.quantity) for t in tool_qs)
         delta = int(target_value) - current_total
@@ -820,7 +866,7 @@ def update_stock_quantity(request):
             manual_name=update_id,
         ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
         if target_value % 1 != 0:
-            messages.error(request, "Alətlər üçün miqdar tam ədəd olmalıdır.")
+            messages.error(request, _("Alətlər üçün miqdar tam ədəd olmalıdır."))
             return redirect("inventory:stocks")
         current_total = sum(int(t.quantity) for t in tool_qs)
         delta = int(target_value) - current_total
@@ -847,7 +893,7 @@ def update_stock_quantity(request):
         try:
             item = FarmProductItem.objects.get(id=update_id)
         except FarmProductItem.DoesNotExist:
-            messages.error(request, "Məhsul tapılmadı.")
+            messages.error(request, _("Məhsul tapılmadı."))
             return redirect("inventory:stocks")
 
         is_forage = _is_forage_item(item.name)
@@ -875,7 +921,7 @@ def update_stock_quantity(request):
 
     if update_type == "farm_product_other":
         if "||" not in update_id:
-            messages.error(request, "Məlumatlar natamamdır.")
+            messages.error(request, _("Məlumatlar natamamdır."))
             return redirect("inventory:stocks")
         name_key, unit_key = update_id.rsplit("||", 1)
         product_qs = FarmProduct.objects.filter(
@@ -907,14 +953,14 @@ def update_stock_quantity(request):
         male_raw = request.POST.get("male_target")
         female_raw = request.POST.get("female_target")
         if male_raw is None or female_raw is None:
-            messages.error(request, "Məlumatlar natamamdır.")
+            messages.error(request, _("Məlumatlar natamamdır."))
             return redirect("inventory:stocks")
 
         try:
             male_target = int(male_raw)
             female_target = int(female_raw)
         except Exception:
-            messages.error(request, "Heyvanlar üçün miqdar tam ədəd olmalıdır.")
+            messages.error(request, _("Heyvanlar üçün miqdar tam ədəd olmalıdır."))
             return redirect("inventory:stocks")
 
         if update_type == "animal_sub":
@@ -1001,17 +1047,17 @@ def update_stock_quantity(request):
             add_crud_success_message(request, "Animal", "update")
         return redirect("inventory:stocks")
 
-    messages.error(request, "Bu kateqoriya üçün yeniləmə dəstəklənmir.")
+    messages.error(request, _("Bu kateqoriya üçün yeniləmə dəstəklənmir."))
     return redirect("inventory:stocks")
 
 @login_required
 def add_product(request):
-    return render(request, "inventory/add_product.html", _build_add_page_context())
+    return render(request, "inventory/add_product.html", _build_add_page_context(request))
 
 
 @login_required
 def barcode_builder(request):
-    return render(request, "inventory/barcode_builder.html", _build_add_page_context())
+    return render(request, "inventory/barcode_builder.html", _build_add_page_context(request))
 
 @login_required
 def lookup_scan_code(request):
@@ -1068,6 +1114,35 @@ def lookup_scan_code(request):
             },
         }
     })
+
+
+@login_required
+@require_POST
+def transcribe_voice_input(request):
+    audio_file = request.FILES.get("audio")
+    if not audio_file:
+        return JsonResponse({"success": False, "message": _("Audio göndərilməyib.")}, status=400)
+
+    suffix = os.path.splitext(audio_file.name or "")[1] or ".webm"
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            for chunk in audio_file.chunks():
+                temp_file.write(chunk)
+            temp_path = temp_file.name
+
+        result = _transcribe_audio_file(temp_path, _resolve_voice_language(request, request.POST.get("language")))
+        if not result["transcript"]:
+            return JsonResponse({"success": False, "message": _("Səsdən mətn çıxarmaq alınmadı.")}, status=422)
+
+        return JsonResponse({"success": True, **result})
+    except RuntimeError as exc:
+        return JsonResponse({"success": False, "message": str(exc)}, status=503)
+    except Exception:
+        return JsonResponse({"success": False, "message": _("Səs emalı zamanı xəta baş verdi.")}, status=500)
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
 
 
 @login_required

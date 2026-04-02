@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block content %}
@@ -7,7 +8,7 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Təchizatçılar</span>
+                <span>{% trans "Təchizatçılar" %}</span>
             </a>
         </div>
     </div>
@@ -26,7 +27,7 @@
                 <div class="supplier-category-filter click-focus">
                     <i class="fa-solid fa-filter"></i>
                     <select name="category" id="supplier-category-filter">
-                        <option value="">Bütün kateqoriyalar</option>
+                        <option value="">{% trans "Bütün kateqoriyalar" %}</option>
                         {% for category in supplier_categories %}
                         <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
                         {% endfor %}
@@ -34,7 +35,7 @@
                 </div>
                 <div class="search-bar">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input id="supplier-search-input" type="text" name="q" placeholder="Təchizatçı axtar..." value="{{ search_query }}" autocomplete="off">
+                    <input id="supplier-search-input" type="text" name="q" placeholder="{% trans 'Təchizatçı axtar...' %}" value="{{ search_query }}" autocomplete="off">
                 </div>
             </div>
         </form>
@@ -165,10 +166,10 @@
         </div>
         <div class="supplier-info">
             <div class="supplier-name-row">
-                <h3>Nəticə tapılmadı</h3>
+                <h3>{% trans "Nəticə tapılmadı" %}</h3>
             </div>
             <div class="supplier-meta-row">
-                <span class="supplier-location supplier-empty-text">Axtarışa uyğun təchizatçı tapılmadı.</span>
+                <span class="supplier-location supplier-empty-text">{% trans "Axtarışa uyğun təchizatçı tapılmadı." %}</span>
             </div>
             <div class="supplier-date">Başqa açar söz və ya kateqoriya ilə yenidən yoxlayın.</div>
         </div>

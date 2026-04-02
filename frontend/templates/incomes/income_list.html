@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
 {% load static %}
 
 {% block content %}
@@ -7,7 +9,7 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Gəlirlər</span>
+                <span>{% trans "Gəlirlər" %}</span>
             </a>
         </div>
     </div>
@@ -16,26 +18,26 @@
 <main class="main-content" style="position: relative; z-index: 10;">
     <div class="summary-row">
         <div class="summary-card-cream summary-compact">
-            <span class="label">Bu həftə ümumi gəlir</span>
-            <span class="value">{{ weekly_total_display }}₼</span>
+            <span class="label">{% trans "Bu həftə ümumi gəlir" %}</span>
+            <span class="value">{% money weekly_total_display request.user %}</span>
         </div>
         <a href="{% url 'quick_income' %}" class="summary-card-quick">
             <i class="fa-solid fa-bolt"></i>
-            <span>Tez Gəlir</span>
+            <span>{% trans "Tez Gəlir" %}</span>
         </a>
     </div>
 
     <div class="crud-desktop-wrapper">
         <div class="crud-form-column">
             <div class="form-container-white">
-                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Gəlir Əlavə Et</h3>
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Yeni Gəlir Əlavə Et" %}</h3>
                 <form action="{% url 'incomes:add_income' %}" method="POST" id="income-form" data-sync-entity="income" data-sync-action="create" data-sync-keep-key="income_form_keep_v1">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
                             <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                             <select id="category-select" name="category" required class="custom-input">
-                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Kateqoriya seçin" %}</option>
                                 {% for cat in categories %}
                                 <option value="{{ cat }}">{{ cat }}</option>
                                 {% endfor %}
@@ -45,14 +47,14 @@
                         <div class="form-group" id="item-field-group">
                             <label>Məhsul <span style="color: #dc3545;">*</span></label>
                             <select id="item-select" name="item_name" required class="custom-input" disabled>
-                                <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Əvvəlcə kateqoriya seçin" %}</option>
                             </select>
                         </div>
 
                         <div class="form-group" id="manual-name-group" style="display: none;">
                             <label>Məhsulun Adı (Digər) <span style="color: #dc3545;">*</span></label>
                             <input type="text" name="manual_name" id="manual-name-input"
-                                placeholder="Məhsulun adını daxil edin" class="custom-input">
+                                placeholder="{% trans 'Məhsulun adını daxil edin' %}" class="custom-input">
                         </div>
 
                         <div class="form-row"
@@ -64,15 +66,8 @@
                             </div>
                             <div class="form-group">
                                 <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
-                                <select name="unit" id="unit-select" class="custom-input" required>
-                                    <option value="kq">kq</option>
-                                    <option value="ton">ton</option>
-                                    <option value="qram">qram</option>
-                                    <option value="litr">litr</option>
-                                    <option value="ml">ml</option>
-                                    <option value="ədəd">ədəd</option>
-                                    <option value="dəstə">dəstə</option>
-                                    <option value="bağlama">bağlama</option>
+                                <select name="unit" id="unit-select" class="custom-input" required disabled>
+                                    <option value="" selected>{% trans "Əvvəlcə məhsul seçin" %}</option>
                                 </select>
                             </div>
                         </div>
@@ -82,23 +77,23 @@
                             <div class="form-group" id="gender-group" style="display: none;">
                                 <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
                                 <select id="gender-select" name="gender" class="custom-input">
-                                    <option value="" disabled selected>Cinsiyyət seçin</option>
-                                    <option value="erkek">Erkək</option>
-                                    <option value="disi">Dişi</option>
+                                    <option value="" disabled selected>{% trans "Cinsiyyət seçin" %}</option>
+                                    <option value="erkek">{% trans "Erkək" %}</option>
+                                    <option value="disi">{% trans "Dişi" %}</option>
                                 </select>
                             </div>
 
                             <div class="form-group" id="animal-id-group" style="display: none;">
-                                <label>İdentifikasiya No</label>
+                                <label>{% trans "İdentifikasiya No" %}</label>
                                 <input type="text" name="identification_no" id="animal-id-input"
-                                    placeholder="Məsələn: AZ12345" class="custom-input">
+                                    placeholder="{% trans 'Məsələn: AZ12345' %}" class="custom-input">
                             </div>
                         </div>
 
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
+                                <label>Məbləğ ({% currency_symbol request.user %}) <span style="color: #dc3545;">*</span></label>
                                 <input type="number" name="amount" step="0.01" min="0" placeholder="0.00" required
                                     class="custom-input">
                             </div>
@@ -110,14 +105,14 @@
                         </div>
 
                         <div class="form-group form-full-width">
-                            <label>Əlavə Məlumat</label>
-                            <textarea name="additional_info" placeholder="Məsələn: satış yeri, qeyd və s."
+                            <label>{% trans "Əlavə Məlumat" %}</label>
+                            <textarea name="additional_info" placeholder="{% trans 'Məsələn: satış yeri, qeyd və s.' %}"
                                 class="custom-input" rows="3"></textarea>
                         </div>
 
                         <button type="submit" class="add-expense-btn" style="width: 100%;">
                             <i class="fa-solid fa-plus"></i>
-                            <span>Gəlir Əlavə Et</span>
+                            <span>{% trans "Gəlir Əlavə Et" %}</span>
                         </button>
                     </div>
                 </form>
@@ -128,13 +123,13 @@
             <form method="get" action="" class="inventory-filter-shell" id="income-filter-form">
                 <div class="inventory-filter-grid">
                     <select id="income-filter-category" class="custom-input inventory-filter-control">
-                        <option value="">Bütün kateqoriyalar</option>
+                        <option value="">{% trans "Bütün kateqoriyalar" %}</option>
                         {% for cat in categories %}
                         <option value="{{ cat }}">{{ cat }}</option>
                         {% endfor %}
                     </select>
                     <select id="income-filter-item" class="custom-input inventory-filter-control">
-                        <option value="">Bütün məhsullar</option>
+                        <option value="">{% trans "Bütün məhsullar" %}</option>
                     </select>
                     <div class="inventory-filter-date-range">
                         <input type="date" name="date_from" class="custom-input inventory-filter-control">
@@ -145,11 +140,11 @@
                     </div>
                 </div>
                 <div class="inventory-filter-actions">
-                    <input type="search" name="q" placeholder="Axtarış..." autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
-                    <button type="button" class="inventory-filter-reset" id="income-filter-reset">Sıfırla</button>
+                    <input type="search" name="q" placeholder="{% trans 'Axtarış...' %}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
+                    <button type="button" class="inventory-filter-reset" id="income-filter-reset">{% trans "Sıfırla" %}</button>
                 </div>
             </form>
-            <h3 class="recent-expenses-title">Son Gəlirlər</h3>
+            <h3 class="recent-expenses-title">{% trans "Son Gəlirlər" %}</h3>
             <div class="expenses-list data-grid-list" id="income-list">
                 {% for income in incomes %}
                 <div class="expense-item-card"
@@ -165,9 +160,16 @@
                         {% endif %}
                     </div>
                     <div class="expense-item-info">
-                        <h4>{{ income.item_name }}</h4>
+                        <h4>
+                            {{ income.item_name }}
+                            {% if income.category %}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ income.category }})
+                            </span>
+                            {% endif %}
+                        </h4>
                         <span>
-                            {{ income.category }} • {{ income.quantity }} {{ income.unit }}
+                            {% display_measure income.quantity income.unit request.user %}
                             {% if income.gender %}
                             • {{ income.get_gender_display }}
                             {% endif %}
@@ -186,7 +188,7 @@
                     </div>
                     <div class="expense-item-amount">
                         <div style="text-align: right;">
-                            <span style="display: block; font-weight: 700; color: var(--primary-green);">+{{ income.amount_display }}₼</span>
+                            <span style="display: block; font-weight: 700; color: var(--primary-green);">{% money income.amount_display request.user "+" %}</span>
                             <div
                                 style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
                                 <a href="{% url 'incomes:edit_income' income.pk %}"
@@ -211,13 +213,13 @@
                 </div>
                 {% empty %}
                 <div style="text-align: center; padding: 40px; color: #999;" id="income-list-empty">
-                    <p>Hələ heç bir gəlir qeydə alınmayıb</p>
+                    <p>{% trans "Hələ heç bir gəlir qeydə alınmayıb" %}</p>
                 </div>
                 {% endfor %}
             </div>
             {% if incomes %}
             <div style="text-align: center; padding: 40px; color: #999; display: none;" id="income-filter-empty">
-                <p>Filterə uyğun gəlir tapılmadı</p>
+                <p>{% trans "Filterə uyğun gəlir tapılmadı" %}</p>
             </div>
             {% endif %}
         </div>
@@ -367,12 +369,19 @@
     const incomeFilterPlaceholder = document.createComment('income-filter-placeholder');
     let incomeFilterTimer = null;
 
-    const allUnits = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
-    const seedUnits = ["kq", "ton", "qram"];
+    const weightUnitSystem = "{% unit_system request.user %}";
+    const volumeUnitSystem = "{% volume_system request.user %}";
+    const weightUnits = weightUnitSystem === "lb" ? ["kq", "qram"] : ["kq", "qram", "ton"];
+    const volumeUnits = volumeUnitSystem === "gallon" ? ["litr"] : ["litr", "ml"];
+    const allUnits = [...weightUnits, ...volumeUnits, "ədəd", "dəstə", "bağlama"];
+    const seedUnits = [...weightUnits];
     const animalUnits = ["ədəd"];
     const forageItems = new Set(["yonca", "koronilla", "seradella"]);
     const INCOME_STATE_KEY = "income_form_state_session_v1";
     const INCOME_KEEP_KEY = "income_form_keep_v1";
+    const KG_PER_POUND = 0.45359237;
+    const GRAMS_PER_OUNCE = 28.349523125;
+    const LITERS_PER_GALLON = 3.785411784;
 
     incomeFilterForm?.parentNode?.insertBefore(incomeFilterPlaceholder, incomeFilterForm);
     incomeFilterForm?.addEventListener('submit', (event) => event.preventDefault());
@@ -394,34 +403,73 @@
         sessionStorage.removeItem(INCOME_KEEP_KEY);
     }
 
+    function displayUnitLabel(unit) {
+        if (weightUnitSystem === "lb") {
+            if (unit === "kg" || unit === "kq") return "pound";
+            if (unit === "qram") return "ounce";
+        }
+        if (volumeUnitSystem === "gallon") {
+            if (unit === "litr") return "gallon";
+        }
+        return unit === "kg" ? "kq" : (unit === "ml" ? "millilitr" : unit);
+    }
+
     function setUnits(units) {
+        unitSelect.disabled = false;
         unitSelect.innerHTML = '';
         units.forEach(unit => {
             const option = document.createElement('option');
             option.value = unit;
-            option.textContent = unit;
+            option.textContent = displayUnitLabel(unit);
             unitSelect.appendChild(option);
         });
     }
 
+    function resetUnitSelect(message) {
+        unitSelect.disabled = true;
+        unitSelect.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = message;
+        option.selected = true;
+        unitSelect.appendChild(option);
+    }
+
     function resolveFarmUnits(itemName, itemUnit) {
         if (!itemName) {
-            return allUnits;
+            return [];
         }
         const key = itemName.trim().toLowerCase();
         if (forageItems.has(key)) {
             return ["kq", "bağlama"];
         }
         if (!itemUnit) {
-            return allUnits;
+            return [];
         }
         if (itemUnit === "kq") {
-            return ["kq", "ton", "qram"];
+            return [...weightUnits];
         }
         if (itemUnit === "litr") {
-            return ["litr", "ml"];
+            return [...volumeUnits];
         }
         return [itemUnit];
+    }
+
+    function normalizeUnitForSubmit() {
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        if (!quantityInput || !unitSelect || unitSelect.disabled) return;
+        const value = parseFloat(quantityInput.value || '');
+        if (!Number.isFinite(value)) return;
+        if (weightUnitSystem === "lb") {
+            if (unitSelect.value === "kq") {
+                quantityInput.value = String(Number((value * KG_PER_POUND).toFixed(4)));
+            } else if (unitSelect.value === "qram") {
+                quantityInput.value = String(Number((value * GRAMS_PER_OUNCE).toFixed(4)));
+            }
+        }
+        if (volumeUnitSystem === "gallon" && unitSelect.value === "litr") {
+            quantityInput.value = String(Number((parseFloat(quantityInput.value || '0') * LITERS_PER_GALLON).toFixed(4)));
+        }
     }
 
     function updateManualState(showManual) {
@@ -465,10 +513,10 @@
         const data = incomeData[category];
         if (!data) {
             itemSelect.disabled = true;
-            itemSelect.innerHTML = '<option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>';
+            itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Əvvəlcə kateqoriya seçin" %}</option>';
             updateManualState(false);
             updateGenderState('');
-            setUnits(allUnits);
+            resetUnitSelect('{% trans "Əvvəlcə məhsul seçin" %}');
             return;
         }
 
@@ -486,7 +534,7 @@
         itemGroup.style.display = 'block';
         itemSelect.required = true;
         itemSelect.disabled = false;
-        itemSelect.innerHTML = '<option value="" disabled selected>Alt məhsul seçin</option>';
+        itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Alt məhsul seçin" %}</option>';
 
         data.items.forEach(item => {
             const option = document.createElement('option');
@@ -497,12 +545,12 @@
         });
 
         updateManualState(false);
-        setUnits(data.type === "seed" ? seedUnits : (data.type === "animal" ? animalUnits : allUnits));
+        resetUnitSelect('{% trans "Əvvəlcə məhsul seçin" %}');
     }
 
     function populateIncomeFilterItems(category, selectedItem = "") {
         if (!incomeFilterItem) return;
-        incomeFilterItem.innerHTML = '<option value="">Bütün məhsullar</option>';
+        incomeFilterItem.innerHTML = '<option value="">{% trans "Bütün məhsullar" %}</option>';
         const data = incomeData[category];
         if (!data) return;
         data.items.forEach((item) => {
@@ -552,6 +600,12 @@
         const selectedOption = itemSelect.options[itemSelect.selectedIndex];
         const itemName = selectedOption ? selectedOption.value : '';
         const itemUnit = selectedOption ? selectedOption.dataset.unit : '';
+
+        if (!itemName) {
+            updateManualState(false);
+            resetUnitSelect('{% trans "Əvvəlcə məhsul seçin" %}');
+            return;
+        }
 
         if (itemName === "Digər") {
             updateManualState(true);
@@ -604,7 +658,7 @@
     incomeFilterReset?.addEventListener('click', () => {
         if (incomeFilterCategory) incomeFilterCategory.value = '';
         if (incomeFilterItem) {
-            incomeFilterItem.innerHTML = '<option value="">Bütün məhsullar</option>';
+            incomeFilterItem.innerHTML = '<option value="">{% trans "Bütün məhsullar" %}</option>';
             incomeFilterItem.value = '';
         }
         const dateFromInput = incomeFilterForm?.querySelector('input[name="date_from"]');
@@ -641,6 +695,7 @@
     const form = document.getElementById('income-form');
     if (form) {
         form.addEventListener('submit', () => {
+            normalizeUnitForSubmit();
             sessionStorage.setItem(INCOME_KEEP_KEY, '1');
         });
     }

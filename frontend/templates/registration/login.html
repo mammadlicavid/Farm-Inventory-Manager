@@ -1,13 +1,24 @@
+{% load i18n %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!-- templates/registration/login.html -->
 <!DOCTYPE html>
-<html lang="az">
+<html lang="{{ LANGUAGE_CODE|default:'az' }}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ferma idarəsi — Daxil ol</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    rel="preload"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    as="style"
+    onload="this.onload=null;this.rel='stylesheet'"
+  >
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </noscript>
 
   <style>
     :root{
@@ -71,19 +82,19 @@
 <body>
   <main class="shell">
     <section class="brand" aria-label="Brand">
-      <h1>🌿 Ferma idarəsi</h1>
-      <p>Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə.</p>
+      <h1>{% trans "🌿 Ferma idarəsi" %}</h1>
+      <p>{% trans "Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə." %}</p>
       <div>
-        <span class="pill">🌱 Toxumlar</span>
-        <span class="pill">🐄 Heyvanlar</span>
-        <span class="pill">🔧 Alətlər</span>
-        <span class="pill">💰 Xərclər</span>
+        <span class="pill">{% trans "🌱 Toxumlar" %}</span>
+        <span class="pill">{% trans "🐄 Heyvanlar" %}</span>
+        <span class="pill">{% trans "🔧 Alətlər" %}</span>
+        <span class="pill">{% trans "💰 Xərclər" %}</span>
       </div>
     </section>
 
     <section class="card" aria-label="Login">
-      <h2>Daxil ol</h2>
-      <p class="sub">Davam etmək üçün məlumatları daxil edin</p>
+      <h2>{% trans "Daxil ol" %}</h2>
+      <p class="sub">{% trans "Davam etmək üçün məlumatları daxil edin" %}</p>
 
       {% if messages %}
         <div class="messages" role="alert" aria-live="polite">
@@ -97,21 +108,25 @@
       <form method="post" action="{% url 'process_login' %}" autocomplete="off">
         {% csrf_token %}
 
-        <label for="username">İstifadəçi adı</label>
+        <label for="username">{% trans "İstifadəçi adı" %}</label>
         <input id="username" type="text" name="username" required autocomplete="off" value="">
 
-        <label for="password">Şifrə</label>
+        <label for="password">{% trans "Şifrə" %}</label>
         <!-- current-password is the correct autocomplete for login -->
         <input id="password" type="password" name="password" required autocomplete="current-password" value="">
 
-        <button class="btn" type="submit">Daxil ol</button>
+        <button class="btn" type="submit">{% trans "Daxil ol" %}</button>
       </form>
 
       <div class="footer">
         Hesabınız yoxdur?
-        <a href="{% url 'signup' %}">Qeydiyyat</a>
+        <a href="{% url 'signup' %}">{% trans "Qeydiyyat" %}</a>
       </div>
     </section>
   </main>
 </body>
+{% get_current_language as LANGUAGE_CODE %}
+{% if LANGUAGE_CODE != 'az' %}
+<script defer src="{% static 'js/runtime_i18n.js' %}"></script>
+{% endif %}
 </html>

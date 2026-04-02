@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django import forms
 from .models import Seed, SeedCategory, SeedItem
 from common.category_order import (
@@ -12,7 +13,7 @@ class SeedForm(forms.ModelForm):
             SeedCategory.objects.all(),
             SEED_CATEGORY_ORDER,
         ),
-        label="Kateqoriya",
+        label=_("Kateqoriya"),
         widget=forms.Select(attrs={'class': 'custom-input'}),
         required=True
     )
@@ -22,11 +23,11 @@ class SeedForm(forms.ModelForm):
         fields = ['item', 'quantity', 'unit', 'price', 'manual_name', 'additional_info']
         widgets = {
             'item': forms.Select(attrs={'class': 'custom-input'}),
-            'quantity': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': 'Miqdar'}),
+            'quantity': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': _('Miqdar')}),
             'unit': forms.Select(attrs={'class': 'custom-input'}),
-            'price': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': 'Qiymət (₼)'}),
-            'manual_name': forms.TextInput(attrs={'class': 'custom-input', 'placeholder': 'Toxumun adı (Digər)'}),
-            'additional_info': forms.Textarea(attrs={'class': 'custom-input', 'placeholder': 'Əlavə məlumat', 'rows': 2}),
+            'price': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': _('Qiymət (₼)')}),
+            'manual_name': forms.TextInput(attrs={'class': 'custom-input', 'placeholder': _('Toxumun adı (Digər)')}),
+            'additional_info': forms.Textarea(attrs={'class': 'custom-input', 'placeholder': _('Əlavə məlumat'), 'rows': 2}),
         }
 
     def __init__(self, *args, **kwargs):

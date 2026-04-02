@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
 {% load static %}
 
 {% block content %}
@@ -7,7 +9,7 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Xərclər</span>
+                <span>{% trans "Xərclər" %}</span>
             </a>
         </div>
     </div>
@@ -17,12 +19,12 @@
     <!-- Weekly Summary Card -->
     <div class="summary-row">
         <div class="summary-card-cream summary-compact">
-            <span class="label">Bu həftə ümumi xərc</span>
-            <span class="value">{{ weekly_total_display }}₼</span>
+            <span class="label">{% trans "Bu həftə ümumi xərc" %}</span>
+            <span class="value">{% money weekly_total_display request.user %}</span>
         </div>
         <a href="{% url 'quick_expense' %}?source=expenses" class="summary-card-quick">
             <i class="fa-solid fa-bolt"></i>
-            <span>Tez Xərc</span>
+            <span>{% trans "Tez Xərc" %}</span>
         </a>
     </div>
 
@@ -30,14 +32,14 @@
         <div class="crud-form-column">
             <!-- Add Expense Form -->
             <div class="form-container-white">
-                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Xərc Əlavə Et</h3>
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Yeni Xərc Əlavə Et" %}</h3>
                 <form action="{% url 'expenses:add_expense' %}" method="POST" id="expense-form" data-sync-entity="expense" data-sync-action="create">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
                             <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                             <select id="category-select" required class="custom-input">
-                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Kateqoriya seçin" %}</option>
                                 {% for cat in categories %}
                                 <option value="{{ cat.id }}">{{ cat.name }}</option>
                                 {% endfor %}
@@ -47,20 +49,20 @@
                         <div class="form-group" id="subcategory-field-group">
                             <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
                             <select name="subcategory" id="subcategory-select" required class="custom-input" disabled>
-                                <option value="" disabled selected>Əvvəlcə ana kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Əvvəlcə ana kateqoriya seçin" %}</option>
                             </select>
                         </div>
 
                         <div class="form-group" id="manual-name-group" style="display: none;">
                             <label>Xərcin Adı (Digər) <span style="color: #dc3545;">*</span></label>
                             <input type="text" name="manual_name" id="manual-name-input"
-                                placeholder="Xərcin adını daxil edin" class="custom-input">
+                                placeholder="{% trans 'Xərcin adını daxil edin' %}" class="custom-input">
                         </div>
 
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Məbləğ (₼) <span style="color: #dc3545;">*</span></label>
+                                <label>Məbləğ ({% currency_symbol request.user %}) <span style="color: #dc3545;">*</span></label>
                                 <input type="number" name="amount" step="0.01" min="0" placeholder="0.00" required
                                     class="custom-input">
                             </div>
@@ -73,14 +75,14 @@
                         </div>
 
                         <div class="form-group form-full-width">
-                            <label>Əlavə Məlumat</label>
-                            <textarea name="additional_info" placeholder="Məsələn: Əlavə qeydlər..."
+                            <label>{% trans "Əlavə Məlumat" %}</label>
+                            <textarea name="additional_info" placeholder="{% trans 'Məsələn: Əlavə qeydlər...' %}"
                                 class="custom-input" rows="3"></textarea>
                         </div>
 
                         <button type="submit" class="add-expense-btn" style="width: 100%;">
                             <i class="fa-solid fa-plus"></i>
-                            <span>Xərc Əlavə Et</span>
+                            <span>{% trans "Xərc Əlavə Et" %}</span>
                         </button>
                     </div>
                 </form>
@@ -91,14 +93,14 @@
             <form method="get" action="" class="inventory-filter-shell" id="expense-filter-form">
                 <div class="inventory-filter-grid">
                     <select id="expense-filter-category" class="custom-input inventory-filter-control">
-                        <option value="">Bütün kateqoriyalar</option>
+                        <option value="">{% trans "Bütün kateqoriyalar" %}</option>
                         {% for cat in categories %}
                         <option value="{{ cat.name }}">{{ cat.name }}</option>
                         {% endfor %}
-                        <option value="Digər">Digər</option>
+                        <option value="Digər">{% trans "Digər" %}</option>
                     </select>
                     <select id="expense-filter-subcategory" class="custom-input inventory-filter-control">
-                        <option value="">Bütün alt kateqoriyalar</option>
+                        <option value="">{% trans "Bütün alt kateqoriyalar" %}</option>
                     </select>
                     <div class="inventory-filter-date-range">
                         <input type="date" name="date_from" class="custom-input inventory-filter-control">
@@ -109,12 +111,12 @@
                     </div>
                 </div>
                 <div class="inventory-filter-actions">
-                    <input type="search" name="q" placeholder="Axtarış..." autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
-                    <button type="button" class="inventory-filter-reset" id="expense-filter-reset">Sıfırla</button>
+                    <input type="search" name="q" placeholder="{% trans 'Axtarış...' %}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
+                    <button type="button" class="inventory-filter-reset" id="expense-filter-reset">{% trans "Sıfırla" %}</button>
                 </div>
             </form>
             <!-- Recent Expenses History -->
-            <h3 class="recent-expenses-title">Son Xərclər</h3>
+            <h3 class="recent-expenses-title">{% trans "Son Xərclər" %}</h3>
             <div class="expenses-list data-grid-list" id="expense-list">
                 {% for expense in expenses %}
                 <div class="expense-item-card"
@@ -130,9 +132,15 @@
                         {% endif %}
                     </div>
                     <div class="expense-item-info">
-                        <h4>{{ expense.display_title }}</h4>
+                        <h4>
+                            {{ expense.display_title }}
+                            {% if expense.display_category_name %}
+                            <span style="font-size: 15px; font-weight: 400; color: #666;">
+                                ({{ expense.display_category_name }})
+                            </span>
+                            {% endif %}
+                        </h4>
                         <span>
-                            {{ expense.display_category_name }} •
                             {% if expense.display_type_tag %}
                             {{ expense.display_type_tag }} •
                             {% endif %}
@@ -150,7 +158,7 @@
                     </div>
                     <div class="expense-item-amount">
                         <div style="text-align: right;">
-                            <span style="display: block; font-weight: 700;">-{{ expense.amount_display }}₼</span>
+                            <span style="display: block; font-weight: 700;">{% money expense.amount_display request.user "-" %}</span>
                             <div
                                 style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
                                 <a href="{% url 'expenses:edit_expense' expense.pk %}"
@@ -175,13 +183,13 @@
                 </div>
                 {% empty %}
                 <div style="text-align: center; padding: 40px; color: #999;" id="expense-list-empty">
-                    <p>Hələ heç bir xərc qeydə alınmayıb</p>
+                    <p>{% trans "Hələ heç bir xərc qeydə alınmayıb" %}</p>
                 </div>
                 {% endfor %}
             </div>
             {% if expenses %}
             <div style="text-align: center; padding: 40px; color: #999; display: none;" id="expense-filter-empty">
-                <p>Filterə uyğun xərc tapılmadı</p>
+                <p>{% trans "Filterə uyğun xərc tapılmadı" %}</p>
             </div>
             {% endif %}
         </div>
@@ -332,7 +340,7 @@
             subcategoryGroup.style.display = 'block';
             subcategorySelect.required = true;
 
-            subcategorySelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya seçin</option>';
+            subcategorySelect.innerHTML = '<option value="" disabled selected>{% trans "Alt kateqoriya seçin" %}</option>';
 
             subcats.forEach(sub => {
                 const option = document.createElement('option');
@@ -368,7 +376,7 @@
 
     function updateExpenseFilterSubcategories(categoryName, selectedValue = "") {
         if (!expenseFilterSubcategory) return;
-        expenseFilterSubcategory.innerHTML = '<option value="">Bütün alt kateqoriyalar</option>';
+        expenseFilterSubcategory.innerHTML = '<option value="">{% trans "Bütün alt kateqoriyalar" %}</option>';
         if (!categoryName) return;
 
         if (categoryName === "Digər") {
@@ -445,7 +453,7 @@
     expenseFilterReset?.addEventListener("click", () => {
         if (expenseFilterCategory) expenseFilterCategory.value = "";
         if (expenseFilterSubcategory) {
-            expenseFilterSubcategory.innerHTML = '<option value="">Bütün alt kateqoriyalar</option>';
+            expenseFilterSubcategory.innerHTML = '<option value="">{% trans "Bütün alt kateqoriyalar" %}</option>';
             expenseFilterSubcategory.value = "";
         }
         const dateFromInput = expenseFilterForm?.querySelector('input[name="date_from"]');

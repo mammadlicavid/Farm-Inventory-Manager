@@ -1,29 +1,31 @@
 {% extends "base.html" %}
+{% load i18n %}
+{% load common_extras %}
 {% block content %}
 
 <div class="main-header">
     <div class="header-content">
         <div class="header-top">
-            <h1>Hesabatlar</h1>
+            <h1>{% trans "Hesabatlar" %}</h1>
             <div class="status-badge">
                 <div class="status-dot"></div>
                 Aktiv
             </div>
         </div>
-        <p class="welcome-text">Maliyyə və statistik məlumatlar</p>
+        <p class="welcome-text">{% trans "Maliyyə və statistik məlumatlar" %}</p>
     </div>
 </div>
 
 <div class="main-content">
 
     <div class="reports-summary-card">
-        <span class="reports-summary-label">Ümumi Xərc</span>
+        <span class="reports-summary-label">{% trans "Ümumi Xərc" %}</span>
         <span class="reports-summary-value">
-            {{ total_expense }} ₼
+            {% money total_expense request.user %}
         </span>
     </div>
 
-    <h2>Aylıq Hesabat</h2>
+    <h2>{% trans "Aylıq Hesabat" %}</h2>
 
     <div class="report-table-wrapper">
         <table class="report-table">
@@ -39,18 +41,16 @@
                 {% for r in reports %}
                 <tr>
                     <td>{{ r.month }}</td>
-                    <td class="expense-text">-{{ r.expense }} ₼</td>
-                    <td class="income-text">{{ r.income }} ₼</td>
-                    <td>{{ r.balance }} ₼</td>
+                    <td class="expense-text">{% money r.expense request.user "-" %}</td>
+                    <td class="income-text">{% money r.income request.user %}</td>
+                    <td>{% money r.balance request.user %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <a href="{% url 'reports:form' %}" class="add-new-btn">
-        + Yeni Hesabat Əlavə Et
-    </a>
+    <a href="{% url 'reports:form' %}" class="add-new-btn">{% trans "+ Yeni Hesabat Əlavə Et" %}</a>
 
 </div>
 

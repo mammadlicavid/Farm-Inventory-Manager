@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
 {% load static %}
 
 {% block content %}
@@ -7,7 +9,7 @@
         <div class="header-top">
             <a href="{% url 'animals:animal_list' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Heyvanı Düzəlt</span>
+                <span>{% trans "Heyvanı Düzəlt" %}</span>
             </a>
         </div>
     </div>
@@ -15,7 +17,7 @@
 
 <main class="main-content" style="margin-top: -20px; position: relative; z-index: 10;">
     <div class="form-container-white">
-        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Heyvan Məlumatlarını Yenilə</h3>
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Heyvan Məlumatlarını Yenilə" %}</h3>
 
         <form method="POST" id="animal-form" data-sync-entity="animal" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'animals:animal_list' %}">
             {% csrf_token %}
@@ -25,7 +27,7 @@
                 <div class="form-group">
                     <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                     <select id="category-select" required class="custom-input">
-                        <option value="" disabled>Kateqoriya seçin</option>
+                        <option value="" disabled>{% trans "Kateqoriya seçin" %}</option>
                         {% for cat in categories %}
                         <option value="{{ cat.id }}" {% if animal.subcategory and animal.subcategory.category_id == cat.id %}selected{% endif %}>
                             {{ cat.name }}</option>
@@ -34,9 +36,9 @@
                 </div>
 
                 <div class="form-group" id="subcategory-field-group" {% if not animal.subcategory %}style="display: none;" {% endif %}>
-                    <label>Alt Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <label>Heyvan Növü <span style="color: #dc3545;">*</span></label>
                     <select name="subcategory" id="subcategory-select" class="custom-input" required {% if not animal.subcategory %}disabled{% endif %}>
-                        <option value="" disabled>Alt kateqoriya seçin</option>
+                        <option value="" disabled>{% trans "Heyvan növünü seçin" %}</option>
                         {% if animal.subcategory %}
                         {% for sub in animal.subcategory.category.subcategories.all %}
                         <option value="{{ sub.id }}" {% if animal.subcategory_id == sub.id %}selected{% endif %}>{{ sub.name }}</option>
@@ -48,7 +50,7 @@
                 <div class="form-group" id="manual-name-group" {% if animal.subcategory and animal.subcategory.name != "Digər" %}style="display: none;" {% endif %}>
                     <label>Heyvanın Növü (Digər) <span style="color: #dc3545;">*</span></label>
                     <input type="text" name="manual_name" id="manual-name-input"
-                        placeholder="Heyvanın növünü daxil edin" class="custom-input"
+                        placeholder="{% trans 'Heyvanın növünü daxil edin' %}" class="custom-input"
                         value="{{ animal.manual_name|default:'' }}">
                 </div>
             </div>
@@ -60,8 +62,8 @@
                         class="custom-input" value="{{ animal.quantity|default_if_none:1 }}" required>
                 </div>
                 <div class="form-group">
-                    <label>İdentifikasiya No</label>
-                    <input type="text" name="identification_no" placeholder="Məsələn: AZ12345" class="custom-input"
+                    <label>{% trans "İdentifikasiya No" %}</label>
+                    <input type="text" name="identification_no" placeholder="{% trans 'Məsələn: AZ12345' %}" class="custom-input"
                         value="{{ animal.identification_no|default_if_none:'' }}">
                 </div>
             </div>
@@ -70,12 +72,12 @@
                 <div class="form-group">
                     <label>Cinsiyyət <span style="color: #dc3545;">*</span></label>
                     <select name="gender" class="custom-input" required>
-                        <option value="erkek" {% if animal.gender == 'erkek' %}selected{% endif %}>Erkək</option>
-                        <option value="disi" {% if animal.gender == 'disi' %}selected{% endif %}>Dişi</option>
+                        <option value="erkek" {% if animal.gender == 'erkek' %}selected{% endif %}>{% trans "Erkək" %}</option>
+                        <option value="disi" {% if animal.gender == 'disi' %}selected{% endif %}>{% trans "Dişi" %}</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Çəki (kq)</label>
+                    <label>{% trans "Çəki (kq)" %}</label>
                     <input type="number" name="weight" step="0.1" placeholder="0.0" class="custom-input"
                         value="{{ animal.weight|stringformat:'.1f' }}">
                 </div>
@@ -83,7 +85,7 @@
 
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>Məbləğ (₼)</label>
+                    <label>Məbləğ ({% currency_symbol request.user %})</label>
                     <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
                         value="{{ animal.price|stringformat:'.2f' }}">
                 </div>
@@ -95,14 +97,14 @@
             </div>
 
             <div class="form-group">
-                <label>Əlavə Məlumat</label>
-                <textarea name="additional_info" placeholder="Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
+                <label>{% trans "Əlavə Məlumat" %}</label>
+                <textarea name="additional_info" placeholder="{% trans 'Məsələn: Heyvanın vəziyyəti, vaksinasiya və s.' %}"
                     class="custom-input" rows="3">{{ animal.additional_info|default:'' }}</textarea>
             </div>
 
             <button type="submit" class="add-expense-btn">
                 <i class="fa-solid fa-save"></i>
-                <span>Yadda Saxla</span>
+                <span>{% trans "Yadda Saxla" %}</span>
             </button>
         </form>
     </div>
@@ -142,11 +144,11 @@
             subcategoryGroup.style.display = 'block';
             subcategorySelect.required = true;
 
-            subcategorySelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya seçin</option>';
+            subcategorySelect.innerHTML = '<option value="" disabled selected>{% trans "Heyvan növünü seçin" %}</option>';
 
             if (subcats.length === 0) {
                 subcategorySelect.disabled = true;
-                subcategorySelect.innerHTML = '<option value="" selected>Alt kateqoriya yoxdur</option>';
+                subcategorySelect.innerHTML = '<option value="" selected>{% trans "Alt kateqoriya yoxdur" %}</option>';
             } else {
                 subcats.forEach(sub => {
                     const option = document.createElement('option');

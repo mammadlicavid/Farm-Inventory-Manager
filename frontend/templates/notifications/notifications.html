@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n common_extras %}
 {% block title %}Xatırlatmalar{% endblock %}
 
 {% block content %}
@@ -7,20 +8,138 @@
     <div class="header-top">
       <a href="javascript:history.back()" class="back-btn-box">
         <i class="fa-solid fa-arrow-left"></i>
-        <span>Xatırlatmalar</span>
+        <span>{% trans "Xatırlatmalar" %}</span>
       </a>
       <button class="notif-add-btn" id="openAddModal" type="button">
         <i class="fa-solid fa-plus"></i>
       </button>
     </div>
-    <p class="welcome-text">Vaksinasiya, əkin, ödəniş xatırlatmaları</p>
+    <p class="welcome-text">{% trans "Xatırlatmalar və ehtiyat xəbərdarlıqları" %}</p>
   </div>
 </header>
 
-<!-- ── Body ── -->
-<div class="notif-body">
+<div class="notif-body" id="stock-alerts">
+  <section class="stock-panel">
+    <div class="notif-section-header">
+      <i class="fa-solid fa-triangle-exclamation notif-section-icon notif-section-icon--alert"></i>
+      <span>Ehtiyat xəbərdarlıqları ({{ stock_alert_count }})</span>
+    </div>
 
-  <!-- Pending -->
+    {% if stock_alerts %}
+      <div class="stock-alert-list">
+        {% for alert in stock_alerts %}
+        <div class="notif-card notif-card--stock">
+          <div class="stock-alert-icon">
+            <i class="fa-solid {{ alert.icon }}"></i>
+          </div>
+          <div class="notif-card-info">
+            <div class="stock-alert-header">
+              <span class="notif-card-title">{{ alert.item_name }}</span>
+              <span class="stock-state-badge stock-state-badge--{{ alert.color }}">{{ alert.status_text }}</span>
+            </div>
+            <div class="notif-card-meta">
+              <span class="notif-badge notif-badge--stock">{{ alert.source_label }}</span>
+              {% if alert.is_custom_rule %}
+              <span class="notif-badge notif-badge--custom">Fərdi limit</span>
+              {% endif %}
+            </div>
+            <div class="stock-progress">
+              <div class="stock-progress-bar">
+                <span class="stock-progress-fill stock-progress-fill--{{ alert.color }}" style="width: {{ alert.percentage }}%;"></span>
+              </div>
+              <div class="stock-progress-meta">
+                <span>{% display_measure alert.total_display alert.unit request.user %}</span>
+                <span>Limit: {% display_measure alert.threshold_display alert.unit request.user %}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="notif-empty notif-empty--panel">Hazırda aktiv ehtiyat xəbərdarlığı yoxdur.</div>
+    {% endif %}
+  </section>
+
+  <section class="stock-panel">
+    <div class="notif-section-header">
+      <i class="fa-solid fa-sliders notif-section-icon"></i>
+      <span>Limit qur</span>
+    </div>
+
+    {% if stock_items %}
+    <form method="POST" class="stock-rule-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_stock_rule">
+
+      <div class="stock-rule-select-grid">
+        <div class="notif-form-group">
+          <label class="notif-form-label">Ana kateqoriya</label>
+          <select id="stockRuleSource" class="notif-form-input" required>
+            <option value="">Ana kateqoriya seçin</option>
+            {% for source in stock_rule_catalog %}
+            <option value="{{ source.value }}">{{ source.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="notif-form-group">
+          <label class="notif-form-label">Alt kateqoriya</label>
+          <select id="stockRuleCategory" class="notif-form-input" required disabled>
+            <option value="">Alt kateqoriya seçin</option>
+          </select>
+        </div>
+
+        <div class="notif-form-group">
+          <label class="notif-form-label">{% trans "Məhsul növü" %}</label>
+          <select id="stockRuleItem" name="item_key" class="notif-form-input" required disabled>
+            <option value="">Məhsul növü seçin</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stock-rule-grid">
+        <div class="notif-form-group">
+          <label class="notif-form-label">{% trans "Xəbərdarlıq həddi" %}</label>
+          <input type="number" name="threshold" class="notif-form-input" min="0.0001" step="0.0001" placeholder="Məs: 20" required>
+        </div>
+        <button type="submit" class="notif-form-submit stock-rule-submit">
+          <i class="fa-solid fa-bell"></i> Yadda saxla
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <div class="notif-empty notif-empty--panel">Əvvəlcə anbara məhsul əlavə edin, sonra limit qura biləcəksiniz.</div>
+    {% endif %}
+
+    {% if stock_alert_rules %}
+    <div class="stock-rule-list">
+      {% for rule in stock_alert_rules %}
+      <div class="stock-rule-item">
+        <div>
+          <div class="stock-rule-title">{{ rule.item_name }}</div>
+          <div class="stock-rule-meta">
+            {{ rule.source_label }} •
+            Limit: {% display_measure rule.threshold rule.unit request.user %}
+            {% if rule.current_total != None %}
+            • Hazırda: {% display_measure rule.current_total rule.unit request.user %}
+            {% endif %}
+          </div>
+        </div>
+        <form method="POST" class="notif-delete-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_stock_rule">
+          <input type="hidden" name="rule_id" value="{{ rule.id }}">
+          <button type="submit" class="notif-delete-btn">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+
   <div class="notif-section-header">
     <i class="fa-solid fa-bell notif-section-icon"></i>
     <span>Gözləyən ({{ pending_count }})</span>
@@ -47,10 +166,15 @@
             <i class="fa-solid fa-dollar-sign"></i> Ödəniş
           {% elif notif.category == 'ekin' %}
             <i class="fa-solid fa-seedling"></i> Əkin
+          {% elif notif.category == 'ehtiyat' %}
+            <i class="fa-solid fa-triangle-exclamation"></i> Ehtiyat
           {% else %}
             <i class="fa-solid fa-tag"></i> Digər
           {% endif %}
         </span>
+        {% if notif.is_system_generated %}
+        <span class="notif-badge notif-badge--system">Avtomatik</span>
+        {% endif %}
         <span class="notif-due">
           <i class="fa-regular fa-calendar"></i> {{ notif.relative_date }}
         </span>
@@ -70,7 +194,6 @@
   <div class="notif-empty">Gözləyən xatırlatma yoxdur.</div>
   {% endfor %}
 
-  <!-- Completed -->
   <div class="notif-section-header notif-section-header--done">
     <i class="fa-solid fa-square-check notif-section-icon notif-section-icon--done"></i>
     <span>Tamamlanmış ({{ completed_count }})</span>
@@ -105,15 +228,13 @@
   {% empty %}
   <div class="notif-empty">Tamamlanmış xatırlatma yoxdur.</div>
   {% endfor %}
-
 </div>
 
-<!-- ── Add Modal ── -->
 <div class="notif-modal-mask" id="addModal">
   <div class="notif-modal">
     <div class="notif-modal-header">
-      <h3>Yeni xatırlatma</h3>
-      <button class="notif-modal-close" id="closeAddModal">
+      <h3>{% trans "Yeni xatırlatma" %}</h3>
+      <button class="notif-modal-close" id="closeAddModal" type="button">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -122,21 +243,21 @@
       <input type="hidden" name="action" value="add">
 
       <div class="notif-form-group">
-        <label class="notif-form-label">Başlıq</label>
-        <input type="text" name="title" class="notif-form-input" placeholder="Məs: Qoyunlara vaksinasiya" required>
+        <label class="notif-form-label">{% trans "Başlıq" %}</label>
+        <input type="text" name="title" class="notif-form-input" placeholder="{% trans 'Məs: Qoyunlara vaksinasiya' %}" required>
       </div>
 
       <div class="notif-form-group">
-        <label class="notif-form-label">Kateqoriya</label>
+        <label class="notif-form-label">{% trans "Kateqoriya" %}</label>
         <select name="category" class="notif-form-input">
           {% for val, label in category_choices %}
-            <option value="{{ val }}">{{ label }}</option>
+          <option value="{{ val }}">{{ label }}</option>
           {% endfor %}
         </select>
       </div>
 
       <div class="notif-form-group">
-        <label class="notif-form-label">Tarix</label>
+        <label class="notif-form-label">{% trans "Tarix" %}</label>
         <input type="date" name="due_date" class="notif-form-input" required>
       </div>
 
@@ -149,16 +270,22 @@
 
 <style>
   .notif-add-btn {
-    width: 40px; height: 40px; border-radius: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
     background: rgba(255,255,255,0.2);
-    border: none; color: #fff; font-size: 17px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0;
+    border: none;
+    color: #fff;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
     transition: background 0.15s;
   }
   .notif-add-btn:hover { background: rgba(255,255,255,0.35); }
 
-  /* ── Body ── */
   .notif-body {
     width: 100%;
     max-width: 100%;
@@ -166,18 +293,32 @@
     padding: 0 16px 100px;
   }
 
-  /* ── Section headers ── */
+  .stock-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 16px;
+    margin-top: 18px;
+  }
+
   .notif-section-header {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 15px; font-weight: 700; color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #374151;
     margin: 18px 0 10px;
   }
+  .stock-panel .notif-section-header:first-child { margin-top: 0; }
   .notif-section-icon { color: #9ca3af; font-size: 16px; }
   .notif-section-icon--done { color: #16a34a; }
+  .notif-section-icon--alert { color: #dc2626; }
 
-  /* ── Card ── */
   .notif-card {
-    display: flex; align-items: center; gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     background: #fff;
     border-radius: 14px;
     padding: 14px 16px;
@@ -187,81 +328,218 @@
   }
   .notif-card:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
   .notif-card--done { background: #f0fdf4; }
+  .notif-card--stock { align-items: flex-start; }
 
-  /* Check circle */
-  .notif-toggle-form { display: flex; }
+  .notif-toggle-form,
+  .notif-delete-form { display: flex; }
+
   .notif-check-btn {
-    background: none; border: none; padding: 0; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .notif-check-circle {
-    width: 32px; height: 32px; border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     border: 2px solid #d1d5db;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.15s;
     font-size: 0;
   }
   .notif-check-circle:hover { border-color: #16a34a; }
   .notif-check-circle--done {
-    background: #16a34a; border-color: #16a34a; color: #fff;
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
     font-size: 13px;
   }
 
-  /* Card info */
   .notif-card-info { flex: 1; min-width: 0; }
   .notif-card-title {
-    display: block; font-size: 15px; font-weight: 600; color: #111827;
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
     margin-bottom: 4px;
   }
   .notif-card-title--done {
-    color: #6b7280; text-decoration: line-through;
+    color: #6b7280;
+    text-decoration: line-through;
   }
   .notif-card-meta {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
-  /* Badges */
   .notif-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; font-weight: 600;
-    padding: 3px 9px; border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
   }
   .notif-badge--vaksinasiya { background: #fef2f2; color: #dc2626; }
-  .notif-badge--odenis      { background: #fffbeb; color: #d97706; }
-  .notif-badge--ekin         { background: #ecfdf5; color: #16a34a; }
-  .notif-badge--diger        { background: #f3f4f6; color: #6b7280; }
+  .notif-badge--odenis { background: #fffbeb; color: #d97706; }
+  .notif-badge--ekin { background: #ecfdf5; color: #16a34a; }
+  .notif-badge--diger { background: #f3f4f6; color: #6b7280; }
+  .notif-badge--stock { background: #e0f2fe; color: #0369a1; }
+  .notif-badge--custom { background: #ecfccb; color: #4d7c0f; }
+  .notif-badge--ehtiyat { background: #fee2e2; color: #b91c1c; }
+  .notif-badge--system { background: #ede9fe; color: #6d28d9; }
 
   .notif-due {
-    font-size: 12px; color: #9ca3af;
-    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px;
+    color: #9ca3af;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
-  /* Delete */
-  .notif-delete-form { display: flex; }
+  .stock-alert-list,
+  .stock-rule-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .stock-alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #fef3c7;
+    color: #b45309;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .stock-alert-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .stock-state-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .stock-state-badge--red { background: #fee2e2; color: #b91c1c; }
+  .stock-state-badge--yellow { background: #fef3c7; color: #b45309; }
+
+  .stock-progress { margin-top: 8px; }
+  .stock-progress-bar {
+    width: 100%;
+    height: 9px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+  }
+  .stock-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+  }
+  .stock-progress-fill--red { background: #ef4444; }
+  .stock-progress-fill--yellow { background: #f59e0b; }
+  .stock-progress-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+
+  .stock-rule-form { margin-bottom: 14px; }
+  .stock-rule-select-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .stock-rule-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 140px;
+    gap: 12px;
+    align-items: end;
+  }
+  .stock-rule-submit { margin-top: 0; }
+  .stock-rule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .stock-rule-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+  }
+  .stock-rule-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #64748b;
+  }
+
   .notif-delete-btn {
-    background: none; border: none; color: #d1d5db;
-    font-size: 16px; cursor: pointer; padding: 6px;
+    background: none;
+    border: none;
+    color: #d1d5db;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px;
     transition: color 0.15s;
   }
   .notif-delete-btn:hover { color: #ef4444; }
 
-  /* Empty state */
   .notif-empty {
-    text-align: center; color: #9ca3af; font-size: 14px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
     padding: 24px 0;
   }
+  .notif-empty--panel {
+    background: #fff;
+    border: 1px dashed #d1d5db;
+    border-radius: 14px;
+    padding: 18px;
+  }
 
-  /* ── Modal ── */
   .notif-modal-mask {
-    position: fixed; inset: 0;
+    position: fixed;
+    inset: 0;
     background: rgba(0,0,0,0.45);
     display: none;
-    align-items: flex-end; justify-content: center;
+    align-items: flex-end;
+    justify-content: center;
     z-index: 1000;
   }
   .notif-modal-mask.active { display: flex; }
   .notif-modal {
-    width: 100%; max-width: 100%;
+    width: 100%;
+    max-width: 100%;
     background: #fff;
     border-radius: 20px 20px 0 0;
     padding: 24px 20px 32px;
@@ -269,34 +547,51 @@
   }
   @keyframes notif-slide-up {
     from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
+    to { transform: translateY(0); }
   }
   .notif-modal-header {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 18px;
   }
   .notif-modal-header h3 {
-    font-size: 18px; font-weight: 700; color: #111827; margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
   }
   .notif-modal-close {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: #f3f4f6; border: none; font-size: 15px;
-    color: #374151; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    border: none;
+    font-size: 15px;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: background 0.15s;
   }
   .notif-modal-close:hover { background: #e5e7eb; }
 
-  /* Form */
   .notif-form-group { margin-bottom: 14px; }
   .notif-form-label {
-    display: block; font-size: 13px; font-weight: 600;
-    color: #374151; margin-bottom: 6px;
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
   }
   .notif-form-input {
-    width: 100%; padding: 11px 14px;
-    border: 1.5px solid #e5e7eb; border-radius: 12px;
-    font-size: 14px; color: #111827;
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #111827;
     font-family: inherit;
     background: #f9fafb;
     outline: none;
@@ -306,23 +601,98 @@
   .notif-form-input:focus { border-color: #16a34a; }
 
   .notif-form-submit {
-    width: 100%; padding: 13px;
-    background: #16a34a; color: #fff; border: none;
-    border-radius: 12px; font-size: 15px; font-weight: 600;
+    width: 100%;
+    padding: 13px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     transition: background 0.15s, transform 0.1s;
     margin-top: 6px;
   }
-  .notif-form-submit:hover  { background: #15803d; }
+  .notif-form-submit:hover { background: #15803d; }
   .notif-form-submit:active { transform: scale(0.98); }
+
+  @media (max-width: 640px) {
+    .stock-rule-grid {
+      grid-template-columns: 1fr;
+    }
+    .stock-rule-select-grid {
+      grid-template-columns: 1fr;
+    }
+    .stock-rule-submit {
+      width: 100%;
+    }
+    .stock-alert-header,
+    .stock-progress-meta,
+    .stock-rule-item {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
 </style>
 
 <script>
 ;(function () {
-  const openBtn  = document.getElementById('openAddModal');
+  const stockCatalog = {{ stock_rule_catalog_json|safe }};
+  const openBtn = document.getElementById('openAddModal');
   const closeBtn = document.getElementById('closeAddModal');
-  const modal    = document.getElementById('addModal');
+  const modal = document.getElementById('addModal');
+  const sourceSelect = document.getElementById('stockRuleSource');
+  const categorySelect = document.getElementById('stockRuleCategory');
+  const itemSelect = document.getElementById('stockRuleItem');
+
+  function resetSelect(select, placeholder, disabled) {
+    if (!select) return;
+    select.innerHTML = '';
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = placeholder;
+    select.appendChild(option);
+    select.disabled = disabled;
+  }
+
+  function fillCategories() {
+    if (!sourceSelect || !categorySelect || !itemSelect) return;
+    resetSelect(categorySelect, 'Alt kateqoriya seçin', true);
+    resetSelect(itemSelect, 'Məhsul növü seçin', true);
+
+    const selectedSource = stockCatalog.find((entry) => entry.value === sourceSelect.value);
+    if (!selectedSource) return;
+
+    selectedSource.categories.forEach((category) => {
+      const option = document.createElement('option');
+      option.value = category.value;
+      option.textContent = category.label;
+      categorySelect.appendChild(option);
+    });
+    categorySelect.disabled = false;
+  }
+
+  function fillItems() {
+    if (!sourceSelect || !categorySelect || !itemSelect) return;
+    resetSelect(itemSelect, 'Məhsul növü seçin', true);
+
+    const selectedSource = stockCatalog.find((entry) => entry.value === sourceSelect.value);
+    if (!selectedSource) return;
+    const selectedCategory = selectedSource.categories.find((entry) => entry.value === categorySelect.value);
+    if (!selectedCategory) return;
+
+    selectedCategory.items.forEach((item) => {
+      const option = document.createElement('option');
+      option.value = item.item_key;
+      option.textContent = `${item.label} • ${item.total_display} ${item.unit}`;
+      itemSelect.appendChild(option);
+    });
+    itemSelect.disabled = false;
+  }
 
   if (openBtn && modal) {
     openBtn.addEventListener('click', () => modal.classList.add('active'));
@@ -331,9 +701,17 @@
     closeBtn.addEventListener('click', () => modal.classList.remove('active'));
   }
   if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.remove('active');
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        modal.classList.remove('active');
+      }
     });
+  }
+  if (sourceSelect) {
+    sourceSelect.addEventListener('change', fillCategories);
+  }
+  if (categorySelect) {
+    categorySelect.addEventListener('change', fillItems);
   }
 })();
 </script>

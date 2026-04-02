@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <header class="main-header">
@@ -6,7 +7,7 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Tеzliklə</span>
+                <span>{% trans "Tеzliklə" %}</span>
             </a>
         </div>
     </div>
@@ -14,7 +15,7 @@
 
 <main class="main-content" style="text-align: center; padding-top: 100px;">
     <i class="fa-solid fa-tools" style="font-size: 60px; color: var(--primary-green); margin-bottom: 20px;"></i>
-    <h2 style="font-size: 24px; color: #333;">Tezliklə!</h2>
-    <p style="color: #666; font-size: 16px;">Bu səhifə hazırda hazırlanma mərhələsindədir.</p>
+    <h2 style="font-size: 24px; color: #333;">{% trans "Tezliklə!" %}</h2>
+    <p style="color: #666; font-size: 16px;">{% trans "Bu səhifə hazırda hazırlanma mərhələsindədir." %}</p>
 </main>
 {% endblock %}

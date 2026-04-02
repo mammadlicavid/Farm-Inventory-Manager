@@ -1,106 +1,239 @@
-<!-- templates/registration/signup.html -->
+{% load i18n %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="az">
+<html lang="{{ LANGUAGE_CODE|default:'az' }}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ferma idarəsi — Qeydiyyat</title>
-
+  <title>Ferma idarəsi - Qeydiyyat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+  <link
+    rel="preload"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    as="style"
+    onload="this.onload=null;this.rel='stylesheet'"
+  >
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </noscript>
   <style>
     :root{
-      --bg:#f3f5f6; --card:#fff; --text:#0f172a; --muted:#6b7280; --border:#e5e7eb;
-      --green:#2e8b57; --green-hover:#256f46;
-      --shadow:0 12px 30px rgba(15,23,42,.10); --radius:18px;
+      --bg:#eef5ef;
+      --panel:#ffffff;
+      --text:#17261d;
+      --muted:#647067;
+      --line:#d7e3da;
+      --green:#1f7a4f;
+      --green-dark:#145636;
+      --green-soft:#e8f5ec;
+      --red:#dc2626;
+      --shadow:0 20px 45px rgba(23,38,29,.10);
+      --radius:24px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg); color:var(--text);
-      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
-      font-size:17px;
+      margin:0;
+      min-height:100vh;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(46,139,87,.18), transparent 28%),
+        linear-gradient(180deg, #f5faf6 0%, #eef5ef 100%);
+      color:var(--text);
+      padding:24px;
     }
-    .shell{width:min(900px,100%); display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+    .shell{
+      width:min(1120px,100%);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:minmax(280px, 420px) minmax(320px, 1fr);
+      gap:24px;
+      align-items:stretch;
+    }
     .brand{
-      background:linear-gradient(180deg,var(--green),#2f7d54);
-      color:#fff; border-radius:var(--radius); padding:36px; display:flex; flex-direction:column; justify-content:center;
+      background:linear-gradient(145deg,#1f7a4f,#2ba46a);
+      color:#fff;
+      border-radius:var(--radius);
+      padding:36px;
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      overflow:hidden;
+      position:relative;
     }
-    .brand h1{font-size:36px; margin:10px 0}
-    .brand p{opacity:.9; line-height:1.6; margin:0; font-size:16px}
-    .pill{
-      margin-top:18px; display:inline-block; padding:8px 12px; border-radius:999px;
-      background:rgba(255,255,255,.18); margin-right:10px; font-size:14px;
+    .brand::after{
+      content:"";
+      position:absolute;
+      inset:auto -80px -120px auto;
+      width:240px;
+      height:240px;
+      border-radius:50%;
+      background:rgba(255,255,255,.12);
+    }
+    .brand h1{margin:12px 0;font-size:38px;line-height:1.05}
+    .brand p{margin:0;line-height:1.7;font-size:16px;opacity:.94}
+    .brand-kicker{
+      display:inline-flex;
+      width:max-content;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+    .brand-pills{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:24px;
+    }
+    .brand-pill{
+      padding:9px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      font-size:14px;
     }
     .card{
-      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
-      padding:28px; display:flex; flex-direction:column; justify-content:center;
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:30px;
     }
-    h2{margin:0 0 8px; font-size:26px}
-    .sub{margin:0 0 18px; color:var(--muted); font-size:15px}
-
-    /* messages from Django */
+    .card h2{margin:0;font-size:30px}
+    .sub{margin:8px 0 22px;color:var(--muted);font-size:15px}
     .messages{
-      margin:0 0 12px; padding:12px; border-radius:12px; font-size:13px;
-      background:#e0f2fe; color:#075985;
+      margin:0 0 16px;
+      padding:14px 16px;
+      border-radius:16px;
+      background:#fff4e5;
+      color:#92400e;
+      font-size:14px;
     }
     .messages p{margin:6px 0}
-
-    /* form.as_p output styling */
-    form p{margin:0 0 14px}
-    form label{display:block; font-size:15px; font-weight:600; margin:0 0 8px}
-
-    form input, form select, form textarea{
-      width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
-      font-size:16px; background:#fff;
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
     }
-    form input:focus, form select:focus, form textarea:focus{
-      outline:none; border-color:var(--green); box-shadow:0 0 0 3px rgba(46,139,87,.2);
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-bottom:16px;
     }
-
-    /* Django errors + helptext */
+    .field.full{grid-column:1 / -1}
+    .label-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    label{
+      font-size:14px;
+      font-weight:700;
+    }
+    .required{
+      color:var(--red);
+      font-weight:800;
+    }
+    .optional-note{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:600;
+    }
+    .input-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    input{
+      width:100%;
+      min-width:0;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 16px;
+      font-size:15px;
+      font-family:inherit;
+      background:#fff;
+      color:var(--text);
+    }
+    input:focus{
+      outline:none;
+      border-color:var(--green);
+      box-shadow:0 0 0 4px rgba(31,122,79,.12);
+    }
+    .btn{
+      border:none;
+      border-radius:14px;
+      font-family:inherit;
+      cursor:pointer;
+      font-weight:700;
+      transition:transform .15s ease, background .15s ease, opacity .15s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
     ul.errorlist{
-      margin:8px 0 0; padding-left:18px; color:#b91c1c; font-size:13px;
+      margin:0;
+      padding-left:18px;
+      color:var(--red);
+      font-size:13px;
     }
     .helptext{
-      display:block; margin-top:6px; color:var(--muted); font-size:14px; line-height:1.5;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
     }
-
     .btn{
-      width:100%; padding:14px; border:none; border-radius:12px;
-      background:var(--green); color:#fff; font-weight:700; cursor:pointer; font-size:16px;
+      width:100%;
+      padding:15px 18px;
+      background:var(--green);
+      color:#fff;
+      font-size:16px;
+      margin-top:8px;
     }
-    .btn:hover{background:var(--green-hover)}
-    .footer{margin-top:14px; text-align:center; font-size:15px; color:var(--muted)}
-    a{color:var(--green); text-decoration:none; font-weight:600}
-    a:hover{text-decoration:underline}
-    @media (max-width:850px){
-      .shell{grid-template-columns:1fr; gap:16px;}
-      .brand{order:-1; padding:24px;}
-      .brand h1{font-size:28px;}
-      .brand p{font-size:15px;}
-      .pill{margin-top:12px; font-size:13px;}
+    .btn:hover{background:var(--green-dark)}
+    .footer{
+      margin-top:16px;
+      text-align:center;
+      color:var(--muted);
+      font-size:15px;
+    }
+    a{color:var(--green-dark);text-decoration:none;font-weight:700}
+    @media (max-width:960px){
+      body{padding:16px}
+      .shell{grid-template-columns:1fr}
+      .brand{padding:28px}
+      .brand h1{font-size:32px}
+    }
+    @media (max-width:640px){
+      .card,.brand{padding:22px}
+      .grid{grid-template-columns:1fr}
     }
   </style>
 </head>
-
 <body>
   <main class="shell">
     <section class="brand" aria-label="Brand">
-      <h1>🌿 Ferma idarəsi</h1>
-      <p>Yeni hesab yaradın. Daha sonra admin təsdiqi ilə aktiv olacaq.</p>
       <div>
-        <span class="pill">🌱 Toxumlar</span>
-        <span class="pill">🐄 Heyvanlar</span>
-        <span class="pill">🔧 Alətlər</span>
-        <span class="pill">💰 Xərclər</span>
+        <span class="brand-kicker">{% trans "Ferma idarəsi" %}</span>
+        <h1>{% trans "Yeni hesabınızı bir neçə dəqiqəyə tamamlayın" %}</h1>
+        <p>{% trans "Ad, istifadəçi adı, doğum günü və e-poçt məlumatlarını doldurun. Hesabınız dərhal yaradılır." %}</p>
+      </div>
+      <div class="brand-pills">
+        <span class="brand-pill">{% trans "Toxumlar" %}</span>
+        <span class="brand-pill">{% trans "Heyvanlar" %}</span>
+        <span class="brand-pill">{% trans "Alətlər" %}</span>
+        <span class="brand-pill">{% trans "Xərclər" %}</span>
       </div>
     </section>
 
     <section class="card" aria-label="Signup">
-      <h2>Qeydiyyat</h2>
-      <p class="sub">Məlumatları doldurun</p>
+      <h2>{% trans "Qeydiyyat" %}</h2>
+      <p class="sub">{% trans "Soyaddan başqa bütün sahələr məcburidir." %}</p>
 
       {% if messages %}
         <div class="messages" role="status" aria-live="polite">
@@ -110,18 +243,88 @@
         </div>
       {% endif %}
 
-      <!-- Must match urls.py: action -> process_signup -->
-      <form method="post" action="{% url 'process_signup' %}" autocomplete="off">
+      <form method="post" action="{% url 'process_signup' %}" autocomplete="off" id="signup-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button class="btn" type="submit">Hesab yarat</button>
+
+        <div class="grid">
+          <div class="field">
+            <div class="label-row">
+              <label for="{{ form.first_name.id_for_label }}">{% trans "Ad" %}</label>
+              <span class="required">*</span>
+            </div>
+            {{ form.first_name }}
+            {{ form.first_name.errors }}
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="{{ form.last_name.id_for_label }}">{% trans "Soyad" %}</label>
+              <span class="optional-note">{% trans "optional" %}</span>
+            </div>
+            {{ form.last_name }}
+            {{ form.last_name.errors }}
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="{{ form.birth_date.id_for_label }}">{% trans "Doğum günü" %}</label>
+              <span class="required">*</span>
+            </div>
+            {{ form.birth_date }}
+            {{ form.birth_date.errors }}
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="{{ form.username.id_for_label }}">{% trans "İstifadəçi adı" %}</label>
+              <span class="required">*</span>
+            </div>
+            {{ form.username }}
+            {{ form.username.errors }}
+          </div>
+
+          <div class="field full">
+            <div class="label-row">
+              <label for="{{ form.email.id_for_label }}">{% trans "E-poçt" %}</label>
+              <span class="required">*</span>
+            </div>
+            {{ form.email }}
+            {{ form.email.errors }}
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="{{ form.password1.id_for_label }}">{% trans "Şifrə" %}</label>
+              <span class="required">*</span>
+            </div>
+            {{ form.password1 }}
+            {{ form.password1.errors }}
+            {% if form.password1.help_text %}
+              <div class="helptext">{{ form.password1.help_text|safe }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="{{ form.password2.id_for_label }}">{% trans "Şifrə təsdiqi" %}</label>
+              <span class="required">*</span>
+            </div>
+            {{ form.password2 }}
+            {{ form.password2.errors }}
+          </div>
+        </div>
+
+        <button class="btn" type="submit">{% trans "Hesab yarat" %}</button>
       </form>
 
       <div class="footer">
-        Artıq hesabınız var?
-        <a href="{% url 'login' %}">Daxil ol</a>
+        {% trans "Artıq hesabınız var?" %}
+        <a href="{% url 'login' %}">{% trans "Daxil ol" %}</a>
       </div>
     </section>
   </main>
 </body>
+{% if LANGUAGE_CODE != 'az' %}
+<script defer src="{% static 'js/runtime_i18n.js' %}"></script>
+{% endif %}
 </html>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <header class="main-header">
@@ -6,7 +7,7 @@
     <div class="header-top">
       <a href="{% url 'dashboard' %}" class="back-btn-box">
         <i class="fa-solid fa-arrow-left"></i>
-        <span>Sinxronizasiya</span>
+        <span>{% trans "Sinxronizasiya" %}</span>
       </a>
     </div>
   </div>
@@ -16,29 +17,29 @@
   <div class="form-container-white sync-shell">
     <div class="sync-stat-row">
       <div class="summary-card-cream summary-compact sync-stat-card">
-        <span class="label">Bağlantı</span>
-        <span class="value" data-sync-online>Yoxlanır</span>
+        <span class="label">{% trans "Bağlantı" %}</span>
+        <span class="value" data-sync-online>{% trans "Yoxlanır" %}</span>
       </div>
 
       <div class="summary-card-cream summary-compact sync-stat-card">
-        <span class="label">Gözləyən qeyd</span>
+        <span class="label">{% trans "Gözləyən qeyd" %}</span>
         <span class="value"><span data-sync-pending>0</span></span>
       </div>
 
       <div class="summary-card-cream summary-compact sync-stat-card">
-        <span class="label">Son uğurlu sync</span>
-        <span class="value" data-sync-last>Heç vaxt</span>
+        <span class="label">{% trans "Son uğurlu sync" %}</span>
+        <span class="value" data-sync-last>{% trans "Heç vaxt" %}</span>
       </div>
     </div>
 
     <div class="sync-stack">
       <div class="summary-card-cream summary-compact sync-stat-card sync-wide-card">
-        <span class="label">Uzaq dəyişikliklər</span>
-        <span class="value" data-sync-remote>Yoxlanır</span>
+        <span class="label">{% trans "Uzaq dəyişikliklər" %}</span>
+        <span class="value" data-sync-remote>{% trans "Yoxlanır" %}</span>
       </div>
 
       <div class="form-group sync-field">
-        <label>Son xəta</label>
+        <label>{% trans "Son xəta" %}</label>
         <div class="custom-input sync-box" data-sync-error>-</div>
       </div>
 
@@ -48,14 +49,14 @@
       </button>
 
       <div class="form-group sync-field">
-        <label>Gözləyən əməliyyatlar</label>
+        <label>{% trans "Gözləyən əməliyyatlar" %}</label>
         <div class="custom-input sync-box sync-list-box">
           <div data-sync-pending-list>Gözləyən əməliyyat yoxdur.</div>
         </div>
       </div>
 
       <div class="form-group sync-field">
-        <label>Sinxronizasiya tarixçəsi</label>
+        <label>{% trans "Sinxronizasiya tarixçəsi" %}</label>
         <div class="custom-input sync-box sync-list-box">
           <div data-sync-history-list>Hələ sinxronizasiya tarixçəsi yoxdur.</div>
         </div>

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Parametrlər{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Parametrlər" %}{% endblock %}
 
 {% block content %}
 <header class="main-header">
@@ -7,7 +8,7 @@
     <div class="header-top">
       <a href="javascript:history.back()" class="back-btn-box">
         <i class="fa-solid fa-arrow-left"></i>
-        <span>Parametrlər</span>
+        <span>{% trans "Parametrlər" %}</span>
       </a>
     </div>
   </div>
@@ -16,24 +17,40 @@
 <div class="page-container">
 
   <div class="form-card">
-    <form method="POST" action="{% url 'sidebar_menu:setting' %}">
+    <form method="POST" action="{% url 'sidebar_menu:setting' %}" id="settings-form">
       {% csrf_token %}
 
       <!-- Language & Region -->
-      <p class="section-label">Dil və Bölgə</p>
+      <p class="section-label">{% trans "Dil və Bölgə" %}</p>
 
       <div class="param-row click-focus">
         <div class="param-info">
           <i class="fa-solid fa-globe param-icon"></i>
           <div>
-            <span class="param-title">Dil</span>
-            <span class="param-sub">İnterfeys dili</span>
+            <span class="param-title">{% trans "Dil" %}</span>
+            <span class="param-sub">{% trans "İnterfeys dili" %}</span>
           </div>
         </div>
         <select name="language" class="param-select">
-          <option value="az" {% if user_settings.language == 'az' %}selected{% endif %}>AZ</option>
-          <option value="en" {% if user_settings.language == 'en' %}selected{% endif %}>EN</option>
-          <option value="ru" {% if user_settings.language == 'ru' %}selected{% endif %}>RU</option>
+          <option value="az" {% if user_settings.language == 'az' %}selected{% endif %}>{% trans "AZ" %}</option>
+          <option value="en" {% if user_settings.language == 'en' %}selected{% endif %}>{% trans "EN" %}</option>
+          <option value="ru" {% if user_settings.language == 'ru' %}selected{% endif %}>{% trans "RU" %}</option>
+        </select>
+      </div>
+
+      <div class="param-row click-focus">
+        <div class="param-info">
+          <i class="fa-solid fa-microphone-lines param-icon"></i>
+          <div>
+            <span class="param-title">{% trans "Səs dili" %}</span>
+            <span class="param-sub">{% trans "Voice input dili" %}</span>
+          </div>
+        </div>
+        <select name="voice_language" class="param-select">
+          <option value="system" {% if voice_input_language == 'system' %}selected{% endif %}>{% trans "Sistem dili" %}</option>
+          <option value="az" {% if voice_input_language == 'az' %}selected{% endif %}>{% trans "Azərbaycan dili" %}</option>
+          <option value="en" {% if voice_input_language == 'en' %}selected{% endif %}>{% trans "English" %}</option>
+          <option value="ru" {% if voice_input_language == 'ru' %}selected{% endif %}>{% trans "Русский" %}</option>
         </select>
       </div>
 
@@ -41,62 +58,75 @@
         <div class="param-info">
           <i class="fa-solid fa-clock param-icon"></i>
           <div>
-            <span class="param-title">Vaxt zonası</span>
-            <span class="param-sub">Sistem saatı</span>
+            <span class="param-title">{% trans "Vaxt zonası" %}</span>
+            <span class="param-sub">{% trans "Sistem saatı" %}</span>
           </div>
         </div>
         <select name="timezone" class="param-select">
-          <option value="Asia/Baku"     {% if user_settings.timezone == 'Asia/Baku'     %}selected{% endif %}>UTC+4 Bakı</option>
-          <option value="Europe/London" {% if user_settings.timezone == 'Europe/London' %}selected{% endif %}>UTC+0 London</option>
-          <option value="Europe/Moscow" {% if user_settings.timezone == 'Europe/Moscow' %}selected{% endif %}>UTC+3 Moskva</option>
+          <option value="Asia/Baku"     {% if user_settings.timezone == 'Asia/Baku'     %}selected{% endif %}>{% trans "UTC+4 Bakı" %}</option>
+          <option value="Europe/London" {% if user_settings.timezone == 'Europe/London' %}selected{% endif %}>{% trans "UTC+0 London" %}</option>
+          <option value="Europe/Moscow" {% if user_settings.timezone == 'Europe/Moscow' %}selected{% endif %}>{% trans "UTC+3 Moskva" %}</option>
         </select>
       </div>
 
       <!-- Units -->
-      <p class="section-label" style="margin-top:24px;">Ölçü Vahidləri</p>
+      <p class="section-label" style="margin-top:24px;">{% trans "Ölçü Vahidləri" %}</p>
 
       <div class="param-row click-focus">
         <div class="param-info">
           <i class="fa-solid fa-weight-hanging param-icon"></i>
           <div>
-            <span class="param-title">Vahid</span>
-            <span class="param-sub">Çəki / Həcm ölçüsü</span>
+            <span class="param-title">Çəki vahidi</span>
+            <span class="param-sub">Çəkini necə göstərək</span>
           </div>
         </div>
-        <select name="unit" class="param-select">
-          <option value="kg"   {% if user_settings.unit == 'kg'   %}selected{% endif %}>kg</option>
-          <option value="litr" {% if user_settings.unit == 'litr' %}selected{% endif %}>litr</option>
-          <option value="bas"  {% if user_settings.unit == 'bas'  %}selected{% endif %}>baş</option>
+        <select name="weight_unit" class="param-select">
+          <option value="kg" {% if weight_unit_value == 'kg' %}selected{% endif %}>kq</option>
+          <option value="lb" {% if weight_unit_value == 'lb' %}selected{% endif %}>pound</option>
+        </select>
+      </div>
+
+      <div class="param-row click-focus">
+        <div class="param-info">
+          <i class="fa-solid fa-glass-water param-icon"></i>
+          <div>
+            <span class="param-title">Həcm vahidi</span>
+            <span class="param-sub">Mayeni necə göstərək</span>
+          </div>
+        </div>
+        <select name="volume_unit" class="param-select">
+          <option value="litr" {% if volume_unit_value == 'litr' %}selected{% endif %}>litr</option>
+          <option value="gallon" {% if volume_unit_value == 'gallon' %}selected{% endif %}>gallon</option>
         </select>
       </div>
 
       <!-- Currency -->
-      <p class="section-label" style="margin-top:24px;">Maliyyə</p>
+      <p class="section-label" style="margin-top:24px;">{% trans "Maliyyə" %}</p>
 
       <div class="param-row click-focus">
         <div class="param-info">
           <i class="fa-solid fa-coins param-icon"></i>
           <div>
-            <span class="param-title">Valyuta</span>
-            <span class="param-sub">Əsas valyuta</span>
+            <span class="param-title">{% trans "Valyuta" %}</span>
+            <span class="param-sub">{% trans "Əsas valyuta" %}</span>
           </div>
         </div>
         <select name="currency" class="param-select">
-          <option value="AZN" {% if user_settings.currency == 'AZN' %}selected{% endif %}>AZN ₼</option>
-          <option value="EUR" {% if user_settings.currency == 'EUR' %}selected{% endif %}>EUR €</option>
-          <option value="USD" {% if user_settings.currency == 'USD' %}selected{% endif %}>USD $</option>
+          <option value="AZN" {% if user_settings.currency == 'AZN' %}selected{% endif %}>{% trans "AZN ₼" %}</option>
+          <option value="EUR" {% if user_settings.currency == 'EUR' %}selected{% endif %}>{% trans "EUR €" %}</option>
+          <option value="USD" {% if user_settings.currency == 'USD' %}selected{% endif %}>{% trans "USD $" %}</option>
         </select>
       </div>
 
       <!-- Notifications -->
-      <p class="section-label" style="margin-top:24px;">Bildirişlər</p>
+      <p class="section-label" style="margin-top:24px;">{% trans "Bildirişlər" %}</p>
 
       <div class="param-row">
         <div class="param-info">
           <i class="fa-solid fa-envelope param-icon"></i>
           <div>
-            <span class="param-title">E-poçt bildirişləri</span>
-            <span class="param-sub">Yeniləmələri e-poçtla al</span>
+            <span class="param-title">{% trans "E-poçt bildirişləri" %}</span>
+            <span class="param-sub">{% trans "Yeniləmələri e-poçtla al" %}</span>
           </div>
         </div>
         <label class="toggle-switch">
@@ -110,8 +140,8 @@
         <div class="param-info">
           <i class="fa-solid fa-bell param-icon"></i>
           <div>
-            <span class="param-title">Sistem bildirişləri</span>
-            <span class="param-sub">Tətbiq daxili bildirişlər</span>
+            <span class="param-title">{% trans "Sistem bildirişləri" %}</span>
+            <span class="param-sub">{% trans "Tətbiq daxili bildirişlər" %}</span>
           </div>
         </div>
         <label class="toggle-switch">
@@ -121,9 +151,9 @@
         </label>
       </div>
 
-      <div class="form-actions">
+      <div class="form-actions" hidden>
         <button type="submit" class="save-btn">
-          <i class="fa-solid fa-floppy-disk"></i> Yadda saxla
+          <i class="fa-solid fa-floppy-disk"></i> {% trans "Yadda saxla" %}
         </button>
       </div>
 
@@ -256,4 +286,27 @@
   .save-btn:hover  { background: #15803d; }
   .save-btn:active { transform: scale(0.98); }
 </style>
+
+<script>
+  ;(function () {
+    const form = document.getElementById('settings-form')
+    if (!form) return
+
+    let submitting = false
+    let submitTimer = null
+
+    function submitSettings() {
+      if (submitting) return
+      submitting = true
+      form.requestSubmit()
+    }
+
+    form.querySelectorAll('select, input[type="checkbox"]').forEach((control) => {
+      control.addEventListener('change', () => {
+        if (submitTimer) window.clearTimeout(submitTimer)
+        submitTimer = window.setTimeout(submitSettings, 120)
+      })
+    })
+  })()
+</script>
 {% endblock %}

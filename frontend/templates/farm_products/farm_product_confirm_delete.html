@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <header class="main-header">
@@ -7,7 +8,7 @@
             <a href="{% url 'farm_products:product_list' %}"
                 style="text-decoration: none; color: white; display: flex; align-items: center; gap: 10px;">
                 <i class="fa-solid fa-arrow-left"></i>
-                <h1>Silmək</h1>
+                <h1>{% trans "Silmək" %}</h1>
             </a>
         </div>
     </div>
@@ -22,13 +23,9 @@
 
         <form method="post">
             {% csrf_token %}
-            <button type="submit" class="add-new-btn" style="background-color: #dc3545; margin-bottom: 10px;">
-                Bəli, Sil
-            </button>
+            <button type="submit" class="add-new-btn" style="background-color: #dc3545; margin-bottom: 10px;">{% trans "Bəli, Sil" %}</button>
             <a href="{% url 'farm_products:product_list' %}" class="back-btn-box"
-                style="background-color: #6c757d; text-decoration: none;">
-                Xeyr, Geri Qayıt
-            </a>
+                style="background-color: #6c757d; text-decoration: none;">{% trans "Xeyr, Geri Qayıt" %}</a>
         </form>
     </div>
 </main>

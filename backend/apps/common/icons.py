@@ -225,7 +225,6 @@ def get_farm_product_icon_by_name(name: Optional[str]) -> str:
         "qaymaq": _emoji("🥛"),
         "yumurta": _emoji("🥚"),
         "mal əti": _emoji("🍖"),
-        "dana əti": _emoji("🍖"),
         "camış əti": _emoji("🍖"),
         "qoyun əti": _emoji("🍖"),
         "keçi əti": _emoji("🍖"),
