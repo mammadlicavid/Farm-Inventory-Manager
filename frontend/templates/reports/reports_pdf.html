@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <title>Xərc Hesabatı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 32px;
+            color: #1f2937;
+        }
+
+        .report-header {
+            margin-bottom: 24px;
+        }
+
+        .report-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .report-meta {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .report-total {
+            margin-top: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #2E8B57;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f3f4f6;
+            font-weight: 700;
+        }
+
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .amount {
+            font-weight: 700;
+            color: #8B1E1E;
+        }
+
+        .print-btn {
+            margin-top: 24px;
+            display: inline-block;
+            padding: 12px 18px;
+            background: #2E8B57;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        @media print {
+            .print-btn {
+                display: none;
+            }
+
+            body {
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <div class="report-title">Xərc Hesabatı</div>
+        <div class="report-meta">İl: {{ report_year }}</div>
+        <div class="report-meta">Tarix: {{ today }}</div>
+        <div class="report-total">Ümumi Xərc: {{ total_expense_display }}₼</div>
+    </div>
+
+    <a href="#" class="print-btn" onclick="window.print(); return false;">
+        PDF kimi çap et
+    </a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tarix</th>
+                <th>Kateqoriya</th>
+                <th>Alt Kateqoriya</th>
+                <th>Məbləğ</th>
+                <th>Qeyd</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in expense_rows %}
+            <tr>
+                <td>{{ row.date }}</td>
+                <td>{{ row.category }}</td>
+                <td>{{ row.subcategory }}</td>
+                <td class="amount">{{ row.amount }}₼</td>
+                <td>{{ row.note }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Məlumat yoxdur</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
