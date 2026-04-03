@@ -2,10 +2,13 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .forms import SignUpForm
+from .models import UserProfile
+from .services import send_account_notification_email
 from common.messages import add_crud_success_message
 
 # Create your views here.
@@ -29,7 +32,7 @@ def process_login(request):
         request.session["session_start"] = timezone.now().isoformat()
         return redirect("dashboard")
 
-    messages.error(request, "İstifadəçi adı və ya şifrə səhvdir.")
+    messages.error(request, _("İstifadəçi adı və ya şifrə səhvdir."))
     return redirect("login")
 
 def logout_view(request):
@@ -56,8 +59,16 @@ def process_signup(request):
         return render(request, "registration/signup.html", {"form": form})
 
     user = form.save(commit=False)
-    user.is_active = False  # admin approval required
+    user.is_active = True
     user.save()
+    UserProfile.objects.update_or_create(
+        user=user,
+        defaults={"birth_date": form.cleaned_data["birth_date"]},
+    )
+    try:
+        send_account_notification_email(user, form.cleaned_data["email"])
+    except Exception:
+        messages.warning(request, _("Hesab yaradıldı, amma bildiriş emaili göndərilmədi."))
 
     add_crud_success_message(request, "Account", "create")
     return redirect("login")

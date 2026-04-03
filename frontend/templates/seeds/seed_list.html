@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
 
 {% block content %}
 <header class="main-header">
@@ -6,31 +8,32 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Toxumlar</span>
+                <span>{% trans "Toxumlar" %}</span>
             </a>
         </div>
     </div>
 </header>
 
 <main class="main-content" style="position: relative; z-index: 10;">
+    {% unit_system request.user as weight_unit_system %}
     <form method="get" action="" class="inventory-filter-shell" id="seed-filter-form">
         <div class="inventory-filter-grid">
             <select name="category" id="seed-filter-category" class="custom-input inventory-filter-control">
-                <option value="">Bütün kateqoriyalar</option>
+                <option value="">{% trans "Bütün kateqoriyalar" %}</option>
                 {% for cat in categories %}
                 <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
                 {% endfor %}
             </select>
             <select name="item" id="seed-filter-item" class="custom-input inventory-filter-control">
-                <option value="">Bütün toxum növləri</option>
+                <option value="">{% trans "Bütün toxum növləri" %}</option>
                 {% for item in filter_items %}
                 <option value="{{ item.id }}" {% if selected_item == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>
                 {% endfor %}
             </select>
             <select name="movement" class="custom-input inventory-filter-control">
-                <option value="">Artım və azalma</option>
-                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>Artım</option>
-                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>Azalma</option>
+                <option value="">{% trans "Artım və azalma" %}</option>
+                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>{% trans "Artım" %}</option>
+                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>{% trans "Azalma" %}</option>
             </select>
             <div class="inventory-filter-date-range">
                 <input type="date" name="date_from" value="{{ selected_date_from }}" class="custom-input inventory-filter-control">
@@ -41,23 +44,23 @@
             </div>
         </div>
         <div class="inventory-filter-actions">
-            <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+            <input type="text" name="q" placeholder="{% trans 'Axtar (Ad, Kateqoriya)...' %}"
                 value="{{ request.GET.q|default:'' }}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
-            <button type="button" class="inventory-filter-reset" id="seed-filter-reset">Sıfırla</button>
+            <button type="button" class="inventory-filter-reset" id="seed-filter-reset">{% trans "Sıfırla" %}</button>
         </div>
     </form>
     <div class="crud-desktop-wrapper">
         <div class="crud-form-column">
             <!-- Add Seed Form -->
             <div class="form-container-white">
-                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Toxum Əlavə Et</h3>
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Yeni Toxum Əlavə Et" %}</h3>
                 <form action="{% url 'seeds:seed_create' %}" method="POST" id="seed-form" data-sync-entity="seed" data-sync-action="create" data-sync-keep-key="seed_form_keep_v1">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
                             <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                             <select id="category-select" name="category" required class="custom-input">
-                                <option value="" disabled selected>Kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Kateqoriya seçin" %}</option>
                                 {% for cat in categories %}
                                 <option value="{{ cat.id }}">{{ cat.name }}</option>
                                 {% endfor %}
@@ -67,14 +70,14 @@
                         <div class="form-group" id="item-field-group">
                             <label>Toxum Növü <span style="color: #dc3545;">*</span></label>
                             <select id="item-select" name="item" required class="custom-input" disabled>
-                                <option value="" disabled selected>Əvvəlcə kateqoriya seçin</option>
+                                <option value="" disabled selected>{% trans "Əvvəlcə kateqoriya seçin" %}</option>
                             </select>
                         </div>
 
                         <div class="form-group" id="manual-name-group" style="display: none;">
                             <label>Toxumun Adı (Digər) <span style="color: #dc3545;">*</span></label>
                             <input type="text" name="manual_name" id="manual-name-input"
-                                placeholder="Toxumun adını daxil edin" class="custom-input">
+                                placeholder="{% trans 'Toxumun adını daxil edin' %}" class="custom-input">
                         </div>
 
                         <div class="form-row"
@@ -87,9 +90,11 @@
                             <div class="form-group">
                                 <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
                                 <select name="unit" class="custom-input" required>
-                                    <option value="kg">kg</option>
-                                    <option value="ton">ton</option>
-                                    <option value="qram">qram</option>
+                                    <option value="kg">{% if weight_unit_system == 'lb' %}pound{% else %}{% trans "kq" %}{% endif %}</option>
+                                    <option value="qram">{% if weight_unit_system == 'lb' %}ounce{% else %}{% trans "qram" %}{% endif %}</option>
+                                    {% if weight_unit_system != 'lb' %}
+                                    <option value="ton">{% trans "ton" %}</option>
+                                    {% endif %}
                                 </select>
                             </div>
                         </div>
@@ -97,7 +102,7 @@
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Məbləğ (₼)</label>
+                                <label>Məbləğ ({% currency_symbol request.user %})</label>
                                 <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
                             </div>
                             <div class="form-group">
@@ -108,8 +113,8 @@
                         </div>
 
                         <div class="form-group form-full-width">
-                            <label>Əlavə Məlumat</label>
-                            <textarea name="additional_info" placeholder="Məsələn: Toxumun vəziyyəti və s."
+                            <label>{% trans "Əlavə Məlumat" %}</label>
+                            <textarea name="additional_info" placeholder="{% trans 'Məsələn: Toxumun vəziyyəti və s.' %}"
                                 class="custom-input" rows="3"></textarea>
                         </div>
 
@@ -124,7 +129,7 @@
 
         <div class="crud-list-column">
             <!-- Seeds History -->
-            <h3 class="recent-expenses-title">Toxum Siyahısı</h3>
+            <h3 class="recent-expenses-title">{% trans "Toxum Siyahısı" %}</h3>
             <div class="seeds-list data-grid-list" id="seed-list">
                 {% for seed in seeds %}
                 <div class="expense-item-card"
@@ -157,7 +162,7 @@
                             {% endif %}
                         </h4>
                         <span>
-                            {{ seed.quantity }} {{ seed.unit }} •
+                            {% display_measure seed.quantity seed.unit request.user %} •
                             {% if seed.date == today %}
                             Bu gün
                             {% elif seed.date == yesterday %}
@@ -176,7 +181,11 @@
                     </div>
                     <div style="text-align: right;">
                         <div class="expense-item-amount" style="{% if seed.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
-                            {% if seed.quantity < 0 %}+{% else %}-{% endif %}{{ seed.price_display }}₼
+                            {% if seed.quantity < 0 %}
+                            {% money seed.price_display request.user "+" %}
+                            {% else %}
+                            {% money seed.price_display request.user "-" %}
+                            {% endif %}
                         </div>
                         <div
                             style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
@@ -199,7 +208,7 @@
                 </div>
                 {% empty %}
                 <div style="text-align: center; padding: 40px; color: #999;" id="seed-list-empty">
-                    <p>Hələ heç bir toxum qeydə alınmayıb</p>
+                    <p>{% trans "Hələ heç bir toxum qeydə alınmayıb" %}</p>
                 </div>
                 {% endfor %}
             </div>
@@ -352,6 +361,9 @@
 </style>
 {{ category_item_map|json_script:"seed-category-item-map" }}
 <script>
+    const weightDisplaySystem = "{{ weight_unit_system }}";
+    const KG_PER_POUND = 0.45359237;
+    const GRAMS_PER_OUNCE = 28.349523125;
     const seedCategoryItemMap = JSON.parse(document.getElementById("seed-category-item-map")?.textContent || "{}");
     const seedFilterForm = document.getElementById("seed-filter-form");
     const seedFilterCategory = document.getElementById("seed-filter-category");
@@ -407,7 +419,7 @@
 
     function updateSeedFilterItems(categoryId, selectedItemId = "") {
         if (!seedFilterItem) return;
-        seedFilterItem.innerHTML = '<option value="">Bütün toxum növləri</option>';
+        seedFilterItem.innerHTML = '<option value="">{% trans "Bütün toxum növləri" %}</option>';
         if (!categoryId) return;
         const items = seedCategoryItemMap[String(categoryId)] || [];
         items.forEach((item) => {
@@ -443,7 +455,7 @@
     seedFilterReset?.addEventListener("click", () => {
         if (seedFilterCategory) seedFilterCategory.value = "";
         if (seedFilterItem) {
-            seedFilterItem.innerHTML = '<option value="">Bütün toxum növləri</option>';
+            seedFilterItem.innerHTML = '<option value="">{% trans "Bütün toxum növləri" %}</option>';
             seedFilterItem.value = "";
         }
         const movementInput = seedFilterForm?.querySelector('select[name="movement"]');
@@ -509,7 +521,7 @@
         const itemSelect = document.getElementById('item-select');
         if (!itemSelect) return;
         const items = seedCategoryItemMap[String(categoryId)] || [];
-        itemSelect.innerHTML = '<option value="" disabled selected>Toxum seçin</option>';
+        itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Toxum seçin" %}</option>';
         items.forEach((item) => {
             const option = document.createElement('option');
             option.value = String(item.id);
@@ -580,6 +592,18 @@
     const seedForm = document.getElementById('seed-form');
     if (seedForm) {
         seedForm.addEventListener('submit', () => {
+            const quantityInput = document.querySelector('#seed-form input[name="quantity"]');
+            const unitSelect = document.querySelector('#seed-form select[name="unit"]');
+            if (quantityInput && unitSelect) {
+                const value = parseFloat(quantityInput.value || "");
+                if (Number.isFinite(value) && weightDisplaySystem === "lb") {
+                    if (unitSelect.value === "kg") {
+                        quantityInput.value = String(Number((value * KG_PER_POUND).toFixed(4)));
+                    } else if (unitSelect.value === "qram") {
+                        quantityInput.value = String(Number((value * GRAMS_PER_OUNCE).toFixed(4)));
+                    }
+                }
+            }
             sessionStorage.setItem(SEED_KEEP_KEY, "1");
             const categoryId = document.getElementById('category-select').value;
             const itemId = document.getElementById('item-select')?.value || "";

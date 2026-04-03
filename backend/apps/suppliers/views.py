@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -56,14 +57,14 @@ def supplier_add(request):
         last_order_date = (request.POST.get('last_order_date') or '').strip()
 
         if not category:
-            messages.error(request, "Kateqoriya seçin.")
+            messages.error(request, _("Kateqoriya seçin."))
             return render(request, 'suppliers/suppliers_add.html', {
                 'supplier': _form_supplier(request.POST),
                 'supplier_categories': _supplier_categories(),
             })
 
         if category == "Digər" and not manual_category:
-            messages.error(request, "Zəhmət olmasa, Digər üçün kateqoriya adı daxil edin.")
+            messages.error(request, _("Zəhmət olmasa, Digər üçün kateqoriya adı daxil edin."))
             return render(request, 'suppliers/suppliers_add.html', {
                 'supplier': _form_supplier(request.POST),
                 'supplier_categories': _supplier_categories(),
@@ -83,7 +84,7 @@ def supplier_add(request):
             supplier.last_order_date = last_order_date
         
         supplier.save()
-        messages.success(request, f"{name} sistemə əlavə edildi.")
+        messages.success(request, _("{name} sistemə əlavə edildi.").format(name=name))
         return redirect('suppliers_list')
 
     return render(request, 'suppliers/suppliers_add.html', {
@@ -104,14 +105,14 @@ def supplier_edit(request, pk):
         supplier.additional_info = (request.POST.get('additional_info') or '').strip()
         last_order_date = (request.POST.get('last_order_date') or '').strip()
         if not supplier.category:
-            messages.error(request, "Kateqoriya seçin.")
+            messages.error(request, _("Kateqoriya seçin."))
             return render(request, 'suppliers/suppliers_add.html', {
                 'supplier': supplier,
                 'is_edit': True,
                 'supplier_categories': _supplier_categories(),
             })
         if supplier.category == "Digər" and not supplier.manual_category:
-            messages.error(request, "Zəhmət olmasa, Digər üçün kateqoriya adı daxil edin.")
+            messages.error(request, _("Zəhmət olmasa, Digər üçün kateqoriya adı daxil edin."))
             return render(request, 'suppliers/suppliers_add.html', {
                 'supplier': supplier,
                 'is_edit': True,
@@ -122,7 +123,7 @@ def supplier_edit(request, pk):
         else:
             supplier.last_order_date = None
         supplier.save()
-        messages.success(request, f"{supplier.name} yeniləndi.")
+        messages.success(request, _("{name} yeniləndi.").format(name=supplier.name))
         return redirect('suppliers_list')
 
     return render(request, 'suppliers/suppliers_add.html', {
@@ -137,5 +138,5 @@ def supplier_delete(request, pk):
     supplier = get_object_or_404(Supplier, pk=pk, created_by=request.user)
     supplier_name = supplier.name
     supplier.delete()
-    messages.success(request, f"{supplier_name} silindi.")
+    messages.success(request, _("{supplier_name} silindi.").format(supplier_name=supplier_name))
     return redirect('suppliers_list')

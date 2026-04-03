@@ -29,7 +29,6 @@ class Command(BaseCommand):
             ],
             "Ət Məhsulları": [
                 ("Mal əti", "kq"),
-                ("Dana əti", "kq"),
                 ("Camış əti", "kq"),
                 ("Qoyun əti", "kq"),
                 ("Keçi əti", "kq"),

@@ -1,4 +1,5 @@
 (function () {
+  const lang = (document.documentElement.lang || 'az').trim().toLowerCase()
   const DB_NAME = 'farm_inventory_sync'
   const DB_VERSION = 2
   const STORE_NAME = 'operations'
@@ -16,6 +17,98 @@
 
   let dbPromise = null
   let syncInProgress = false
+  let indicatorCache = null
+
+  const I18N = {
+    en: {
+      never: 'Never',
+      now: 'Now',
+      minAgo: (n) => `${n} min ago`,
+      hourAgo: (n) => `${n} hour${n === 1 ? '' : 's'} ago`,
+      dayAgo: (n) => `${n} day${n === 1 ? '' : 's'} ago`,
+      online: 'Online',
+      offline: 'Offline',
+      offlinePending: (n) => `Offline, ${n} pending`,
+      waitingSync: (n) => `${n} waiting to sync`,
+      remoteChanges: (n) => `${n} remote changes`,
+      sync: (label) => `Sync: ${label}`,
+      syncReady: 'Sync is ready',
+      checking: 'Checking',
+      noRemoteChanges: 'No new remote changes',
+      refreshPage: (n) => `${n} changes, refresh the page`,
+      noPendingOps: 'No pending operations.',
+      noSyncHistory: 'No sync history yet.',
+      updated: 'Updated successfully.',
+      deleted: 'Deleted successfully.',
+      added: 'Added successfully.',
+      entities: {
+        seed: 'Seed',
+        tool: 'Tool',
+        animal: 'Animal',
+        expense: 'Expense',
+        income: 'Income',
+        supplier: 'Supplier',
+        farm_product: 'Product',
+        quick_expense: 'Quick expense',
+        quick_income: 'Quick income',
+        stock: 'Stock',
+      },
+      actions: {
+        create: 'add',
+        update: 'update',
+        delete: 'delete',
+        quick_add: 'add',
+        custom_amount: 'add',
+        template_add: 'add',
+      },
+    },
+    ru: {
+      never: 'Никогда',
+      now: 'Сейчас',
+      minAgo: (n) => `${n} мин назад`,
+      hourAgo: (n) => `${n} ч назад`,
+      dayAgo: (n) => `${n} дн назад`,
+      online: 'Онлайн',
+      offline: 'Офлайн',
+      offlinePending: (n) => `Офлайн, ожидает: ${n}`,
+      waitingSync: (n) => `Ожидают синхронизации: ${n}`,
+      remoteChanges: (n) => `Удаленных изменений: ${n}`,
+      sync: (label) => `Синх: ${label}`,
+      syncReady: 'Синхронизация готова',
+      checking: 'Проверяется',
+      noRemoteChanges: 'Новых удаленных изменений нет',
+      refreshPage: (n) => `${n} изменений, обновите страницу`,
+      noPendingOps: 'Нет ожидающих операций.',
+      noSyncHistory: 'История синхронизации пока отсутствует.',
+      updated: 'Успешно обновлено.',
+      deleted: 'Успешно удалено.',
+      added: 'Успешно добавлено.',
+      entities: {
+        seed: 'Семена',
+        tool: 'Инструмент',
+        animal: 'Животное',
+        expense: 'Расход',
+        income: 'Доход',
+        supplier: 'Поставщик',
+        farm_product: 'Продукт',
+        quick_expense: 'Быстрый расход',
+        quick_income: 'Быстрый доход',
+        stock: 'Склад',
+      },
+      actions: {
+        create: 'добавление',
+        update: 'обновление',
+        delete: 'удаление',
+        quick_add: 'добавление',
+        custom_amount: 'добавление',
+        template_add: 'добавление',
+      },
+    },
+  }
+
+  function i18n() {
+    return I18N[lang] || null
+  }
 
   function generateId() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -24,27 +117,37 @@
     return `sync-${Date.now()}-${Math.random().toString(16).slice(2)}`
   }
 
+  function getSyncScope() {
+    const scope = document.body?.dataset?.syncScope
+    return scope ? String(scope).trim() : 'guest'
+  }
+
+  function scopedKey(baseKey) {
+    return `${baseKey}:${getSyncScope()}`
+  }
+
   function getDeviceId() {
-    let deviceId = localStorage.getItem(DEVICE_ID_KEY)
+    const storageKey = scopedKey(DEVICE_ID_KEY)
+    let deviceId = localStorage.getItem(storageKey)
     if (!deviceId) {
       deviceId = generateId()
-      localStorage.setItem(DEVICE_ID_KEY, deviceId)
+      localStorage.setItem(storageKey, deviceId)
     }
     return deviceId
   }
 
   function getLastSync() {
-    return localStorage.getItem(LAST_SYNC_KEY) || null
+    return localStorage.getItem(scopedKey(LAST_SYNC_KEY)) || null
   }
 
   function setLastSync(value) {
     if (value) {
-      localStorage.setItem(LAST_SYNC_KEY, value)
+      localStorage.setItem(scopedKey(LAST_SYNC_KEY), value)
     }
   }
 
   function getLastRemoteCursor() {
-    return localStorage.getItem(LAST_REMOTE_CURSOR_KEY) || null
+    return localStorage.getItem(scopedKey(LAST_REMOTE_CURSOR_KEY)) || null
   }
 
   function isNewerTimestamp(nextValue, currentValue) {
@@ -63,17 +166,17 @@
 
   function setLastRemoteCursor(value) {
     if (isNewerTimestamp(value, getLastRemoteCursor())) {
-      localStorage.setItem(LAST_REMOTE_CURSOR_KEY, value)
+      localStorage.setItem(scopedKey(LAST_REMOTE_CURSOR_KEY), value)
     }
   }
 
   function getLastNotifiedRemoteCursor() {
-    return localStorage.getItem(LAST_NOTIFIED_REMOTE_CURSOR_KEY) || null
+    return localStorage.getItem(scopedKey(LAST_NOTIFIED_REMOTE_CURSOR_KEY)) || null
   }
 
   function setLastNotifiedRemoteCursor(value) {
     if (isNewerTimestamp(value, getLastNotifiedRemoteCursor())) {
-      localStorage.setItem(LAST_NOTIFIED_REMOTE_CURSOR_KEY, value)
+      localStorage.setItem(scopedKey(LAST_NOTIFIED_REMOTE_CURSOR_KEY), value)
     }
   }
 
@@ -134,6 +237,7 @@
     return withStore('readwrite', (store) =>
       store.put({
         ...operation,
+        syncScope: getSyncScope(),
         status: 'pending',
         createdAt: operation.createdAt || now,
         updatedAt: now,
@@ -160,7 +264,8 @@
 
   async function getAllOperations() {
     const items = await withStore('readonly', (store) => store.getAll())
-    return Array.isArray(items) ? items : []
+    const scope = getSyncScope()
+    return Array.isArray(items) ? items.filter((item) => item.syncScope === scope) : []
   }
 
   async function pruneHistory() {
@@ -196,20 +301,22 @@
   }
 
   function relativeTimeLabel(isoString) {
-    if (!isoString) return 'Heç vaxt'
+    const tr = i18n()
+    if (!isoString) return tr?.never || 'Heç vaxt'
 
     const diff = Date.now() - new Date(isoString).getTime()
     const seconds = Math.max(0, Math.floor(diff / 1000))
-    if (seconds < 60) return 'İndi'
+    if (seconds < 60) return tr?.now || 'İndi'
     const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return `${minutes} dəq əvvəl`
+    if (minutes < 60) return tr?.minAgo ? tr.minAgo(minutes) : `${minutes} dəq əvvəl`
     const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours} saat əvvəl`
+    if (hours < 24) return tr?.hourAgo ? tr.hourAgo(hours) : `${hours} saat əvvəl`
     const days = Math.floor(hours / 24)
-    return `${days} gün əvvəl`
+    return tr?.dayAgo ? tr.dayAgo(days) : `${days} gün əvvəl`
   }
 
   function labelForOperation(item) {
+    const tr = i18n()
     const entityMap = {
       seed: 'Toxum',
       tool: 'Alət',
@@ -230,7 +337,9 @@
       custom_amount: 'əlavə',
       template_add: 'əlavə',
     }
-    return `${entityMap[item.entity] || item.entity} ${actionMap[item.action] || item.action}`
+    const entityLabel = tr?.entities?.[item.entity] || entityMap[item.entity] || item.entity
+    const actionLabel = tr?.actions?.[item.action] || actionMap[item.action] || item.action
+    return `${entityLabel} ${actionLabel}`
   }
 
   async function emitStatus(extra = {}) {
@@ -251,60 +360,81 @@
     return detail
   }
 
+  function getIndicatorCache() {
+    if (indicatorCache) return indicatorCache
+    indicatorCache = {
+      indicator: Array.from(document.querySelectorAll('[data-sync-indicator]')),
+      last: Array.from(document.querySelectorAll('[data-sync-last]')),
+      pending: Array.from(document.querySelectorAll('[data-sync-pending]')),
+      online: Array.from(document.querySelectorAll('[data-sync-online]')),
+      error: Array.from(document.querySelectorAll('[data-sync-error]')),
+      remote: Array.from(document.querySelectorAll('[data-sync-remote]')),
+      pendingList: Array.from(document.querySelectorAll('[data-sync-pending-list]')),
+      historyList: Array.from(document.querySelectorAll('[data-sync-history-list]')),
+    }
+    return indicatorCache
+  }
+
   function updateIndicatorElements(detail) {
-    document.querySelectorAll('[data-sync-indicator]').forEach((element) => {
+    const cache = getIndicatorCache()
+
+    cache.indicator.forEach((element) => {
+      const tr = i18n()
       element.dataset.state = detail.online ? 'online' : 'offline'
 
       if (!detail.online) {
-        element.textContent = detail.pendingCount > 0 ? `Oflayn, ${detail.pendingCount} gözləyir` : 'Oflayn'
+        element.textContent = detail.pendingCount > 0 ? (tr?.offlinePending ? tr.offlinePending(detail.pendingCount) : `Oflayn, ${detail.pendingCount} gözləyir`) : (tr?.offline || 'Oflayn')
         return
       }
 
       if (detail.pendingCount > 0) {
-        element.textContent = `${detail.pendingCount} sinxronizasiya gözləyir`
+        element.textContent = tr?.waitingSync ? tr.waitingSync(detail.pendingCount) : `${detail.pendingCount} sinxronizasiya gözləyir`
         return
       }
 
       if (detail.remoteChanges && detail.remoteChanges.total_changes > 0) {
-        element.textContent = `${detail.remoteChanges.total_changes} uzaq dəyişiklik var`
+        element.textContent = tr?.remoteChanges ? tr.remoteChanges(detail.remoteChanges.total_changes) : `${detail.remoteChanges.total_changes} uzaq dəyişiklik var`
         return
       }
 
-      element.textContent = detail.lastSync ? `Sinx: ${relativeTimeLabel(detail.lastSync)}` : 'Sinx hazırdır'
+      element.textContent = detail.lastSync ? (tr?.sync ? tr.sync(relativeTimeLabel(detail.lastSync)) : `Sinx: ${relativeTimeLabel(detail.lastSync)}`) : (tr?.syncReady || 'Sinx hazırdır')
     })
 
-    document.querySelectorAll('[data-sync-last]').forEach((element) => {
+    cache.last.forEach((element) => {
       element.textContent = detail.lastSync ? relativeTimeLabel(detail.lastSync) : 'Heç vaxt'
     })
 
-    document.querySelectorAll('[data-sync-pending]').forEach((element) => {
+    cache.pending.forEach((element) => {
       element.textContent = String(detail.pendingCount)
     })
 
-    document.querySelectorAll('[data-sync-online]').forEach((element) => {
-      element.textContent = detail.online ? 'Onlayn' : 'Oflayn'
+    cache.online.forEach((element) => {
+      const tr = i18n()
+      element.textContent = detail.online ? (tr?.online || 'Onlayn') : (tr?.offline || 'Oflayn')
       element.dataset.state = detail.online ? 'online' : 'offline'
     })
 
-    document.querySelectorAll('[data-sync-error]').forEach((element) => {
+    cache.error.forEach((element) => {
       element.textContent = detail.lastError || '-'
     })
 
-    document.querySelectorAll('[data-sync-remote]').forEach((element) => {
+    cache.remote.forEach((element) => {
+      const tr = i18n()
       if (!detail.online) {
-        element.textContent = 'Oflayn'
+        element.textContent = tr?.offline || 'Oflayn'
       } else if (!detail.remoteChanges) {
-        element.textContent = 'Yoxlanır'
+        element.textContent = tr?.checking || 'Yoxlanır'
       } else if (detail.remoteChanges.total_changes > 0) {
-        element.textContent = `${detail.remoteChanges.total_changes} dəyişiklik, səhifəni yeniləyin`
+        element.textContent = tr?.refreshPage ? tr.refreshPage(detail.remoteChanges.total_changes) : `${detail.remoteChanges.total_changes} dəyişiklik, səhifəni yeniləyin`
       } else {
-        element.textContent = 'Yeni uzaq dəyişiklik yoxdur'
+        element.textContent = tr?.noRemoteChanges || 'Yeni uzaq dəyişiklik yoxdur'
       }
     })
 
-    document.querySelectorAll('[data-sync-pending-list]').forEach((element) => {
+    cache.pendingList.forEach((element) => {
+      const tr = i18n()
       if (!detail.pendingOperations.length) {
-        element.innerHTML = 'Gözləyən əməliyyat yoxdur.'
+        element.innerHTML = tr?.noPendingOps || 'Gözləyən əməliyyat yoxdur.'
         return
       }
 
@@ -314,9 +444,10 @@
         .join('')
     })
 
-    document.querySelectorAll('[data-sync-history-list]').forEach((element) => {
+    cache.historyList.forEach((element) => {
+      const tr = i18n()
       if (!detail.history.length) {
-        element.innerHTML = 'Hələ sinxronizasiya tarixçəsi yoxdur.'
+        element.innerHTML = tr?.noSyncHistory || 'Hələ sinxronizasiya tarixçəsi yoxdur.'
         return
       }
 
@@ -356,9 +487,10 @@
   }
 
   function successMessageForAction(action) {
-    if (action === 'update') return 'Uğurla yeniləndi.'
-    if (action === 'delete') return 'Uğurla silindi.'
-    return 'Uğurla əlavə edildi.'
+    const tr = i18n()
+    if (action === 'update') return tr?.updated || 'Uğurla yeniləndi.'
+    if (action === 'delete') return tr?.deleted || 'Uğurla silindi.'
+    return tr?.added || 'Uğurla əlavə edildi.'
   }
 
   function createToastContainer() {
@@ -634,17 +766,14 @@
         sessionStorage.removeItem(form.dataset.syncKeepKey)
       }
 
-      if (form.dataset.syncReset !== 'false') {
-        resetOfflineForm(form)
-      }
-
       if (!navigator.onLine) {
+        if (form.dataset.syncReset !== 'false') {
+          resetOfflineForm(form)
+        }
         showToast('Offline saxlanıldı. İnternet gələndə göndəriləcək.', 'warning')
         await emitStatus()
         return
       }
-
-      await emitStatus()
 
       syncPendingOperations({
         reloadOnOperationId: operationId,
@@ -706,10 +835,12 @@
       }
     }, RETRY_INTERVAL_MS)
 
-    await emitStatus()
-    if (navigator.onLine) {
-      triggerBackgroundSync({ silentSuccess: true })
-    }
+    scheduleBackgroundTask(() => {
+      emitStatus()
+      if (navigator.onLine) {
+        triggerBackgroundSync({ silentSuccess: true })
+      }
+    }, 400)
   }
 
   window.farmSync = {
@@ -719,5 +850,9 @@
     syncNow: () => syncPendingOperations(),
   }
 
-  initialize()
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize, { once: true })
+  } else {
+    initialize()
+  }
 })()

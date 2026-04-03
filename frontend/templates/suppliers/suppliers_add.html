@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block content %}
@@ -21,14 +22,14 @@
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>Təchizatçı Adı <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="name" class="custom-input click-focus" required placeholder="Məsələn: Əhməd Toxumçuluq" value="{{ supplier.name|default:'' }}">
+                    <input type="text" name="name" class="custom-input click-focus" required placeholder="{% trans 'Məsələn: Əhməd Toxumçuluq' %}" value="{{ supplier.name|default:'' }}">
                 </div>
 
                 <div class="form-group">
                     <label>Kateqoriya <span style="color: #dc3545;">*</span></label>
                     <div class="click-focus">
                         <select name="category" id="supplier-category-select" class="custom-input" required>
-                            <option value="" disabled {% if not supplier.category %}selected{% endif %}>Kateqoriya seçin</option>
+                            <option value="" disabled {% if not supplier.category %}selected{% endif %}>{% trans "Kateqoriya seçin" %}</option>
                             {% for category in supplier_categories %}
                             <option value="{{ category }}" {% if supplier.category == category %}selected{% endif %}>{{ category }}</option>
                             {% endfor %}
@@ -38,14 +39,14 @@
             </div>
 
             <div class="form-group" id="supplier-manual-category-group" {% if supplier.category != 'Digər' %}style="display: none;"{% endif %}>
-                <label>Kateqoriya Adı (Digər)</label>
-                <input type="text" name="manual_category" id="supplier-manual-category-input" class="custom-input click-focus" placeholder="Kateqoriya adını daxil edin" value="{{ supplier.manual_category|default:'' }}">
+                <label>{% trans "Kateqoriya Adı (Digər)" %}</label>
+                <input type="text" name="manual_category" id="supplier-manual-category-input" class="custom-input click-focus" placeholder="{% trans 'Kateqoriya adını daxil edin' %}" value="{{ supplier.manual_category|default:'' }}">
             </div>
 
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>Ünvan</label>
-                    <input type="text" name="location" class="custom-input click-focus" placeholder="Məsələn: Gəncə" value="{{ supplier.location|default:'' }}">
+                    <label>{% trans "Ünvan" %}</label>
+                    <input type="text" name="location" class="custom-input click-focus" placeholder="{% trans 'Məsələn: Gəncə' %}" value="{{ supplier.location|default:'' }}">
                 </div>
 
                 <div class="form-group">
@@ -64,19 +65,19 @@
 
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>Telefon Nömrəsi</label>
-                    <input type="text" name="phone" class="custom-input click-focus" placeholder="Məsələn: +994 50 123 45 67" value="{% if supplier %}{{ supplier.formatted_phone }}{% endif %}">
+                    <label>{% trans "Telefon Nömrəsi" %}</label>
+                    <input type="text" name="phone" class="custom-input click-focus" placeholder="{% trans 'Məsələn: +994 50 123 45 67' %}" value="{% if supplier %}{{ supplier.formatted_phone }}{% endif %}">
                 </div>
 
                 <div class="form-group">
-                    <label>Son Sifariş Tarixi</label>
+                    <label>{% trans "Son Sifariş Tarixi" %}</label>
                     <input type="date" name="last_order_date" class="custom-input click-focus" value="{{ supplier.last_order_date|date:'Y-m-d' }}">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Əlavə Məlumat</label>
-                <textarea name="additional_info" class="custom-input click-focus" rows="4" placeholder="Məsələn: Sifarişdən əvvəl zəng edin, çatdırılma edir, qiymətləri münasibdir">{{ supplier.additional_info|default:'' }}</textarea>
+                <label>{% trans "Əlavə Məlumat" %}</label>
+                <textarea name="additional_info" class="custom-input click-focus" rows="4" placeholder="{% trans 'Məsələn: Sifarişdən əvvəl zəng edin, çatdırılma edir, qiymətləri münasibdir' %}">{{ supplier.additional_info|default:'' }}</textarea>
             </div>
 
             <button type="submit" class="add-expense-btn" style="margin-top: 30px;">

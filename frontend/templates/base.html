@@ -1,15 +1,25 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="az">
+<html lang="{{ LANGUAGE_CODE|default:'az' }}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ferma İdarəsi</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <title>{% block title %}{% trans "Ferma İdarəsi" %}{% endblock %}</title>
+    <link
+      rel="preload"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    </noscript>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
   </head>
 
-  <body>
+  <body{% if user.is_authenticated %} data-sync-scope="user-{{ user.id }}"{% endif %}>
     <div class="dashboard-container">
       <script>
         ;(function () {
@@ -107,24 +117,24 @@
       <div class="side-drawer-mask">
         <div id="sideDrawer" class="side-drawer">
           <div class="drawer-header">
-            <h3>Menyu</h3>
+            <h3>{% trans "Menyu" %}</h3>
           </div>
           <div class="drawer-content">
             <ul class="drawer-menu">
               <li>
-                <a href="{% url 'sidebar_menu:profile' %}"><i class="fa-solid fa-user"></i> Profil</a>
+                <a href="{% url 'sidebar_menu:profile' %}"><i class="fa-solid fa-user"></i> {% trans "Profil" %}</a>
               </li>
               <li>
-                <a href="{% url 'sidebar_menu:setting' %}"><i class="fa-solid fa-gear"></i> Parametrlər</a>
+                <a href="{% url 'sidebar_menu:setting' %}"><i class="fa-solid fa-gear"></i> {% trans "Parametrlər" %}</a>
               </li>
               <li>
-                <a href="{% url 'sidebar_menu:help' %}"><i class="fa-solid fa-question-circle"></i> Kömək</a>
+                <a href="{% url 'sidebar_menu:help' %}"><i class="fa-solid fa-question-circle"></i> {% trans "Kömək" %}</a>
               </li>
               <li>
-                <a href="{% url 'sync:page' %}"><i class="fa-solid fa-cloud-arrow-up"></i> Sinxronizasiya</a>
+                <a href="{% url 'sync:page' %}"><i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Sinxronizasiya" %}</a>
               </li>
               <li>
-                <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Çıxış</a>
+                <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> {% trans "Çıxış" %}</a>
               </li>
             </ul>
           </div>
@@ -280,7 +290,7 @@
         ;(function () {
           const existingIndicator = document.querySelector('[data-sync-indicator]')
           if (existingIndicator) {
-            existingIndicator.textContent = 'Yoxlanır'
+            existingIndicator.textContent = "{% trans 'Yoxlanır' %}"
             return
           }
         
@@ -291,7 +301,7 @@
           indicator.href = "{% url 'sync:page' %}"
           indicator.className = 'status-badge sync-header-link'
           indicator.setAttribute('data-sync-indicator', '')
-          indicator.textContent = 'Yoxlanır'
+          indicator.textContent = "{% trans 'Yoxlanır' %}"
         
           const legacyBadge = headerTop.querySelector('.status-badge')
           if (legacyBadge) {
@@ -342,13 +352,13 @@
         <!-- Dashboard / Ana Səhifə -->
         <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'index' %}active{% endif %}">
           <i class="fa-solid fa-house"></i>
-          <span>Ana Səhifə</span>
+          <span>{% trans "Ana Səhifə" %}</span>
         </a>
 
         <!-- Stok (Products placeholder) -->
         <a href="{% url 'inventory:stocks' %}" class="nav-item {% if request.resolver_match.url_name == 'stocks' %}active{% endif %}">
           <i class="fa-solid fa-cube"></i>
-          <span>Stok</span>
+          <span>{% trans "Stok" %}</span>
         </a>
 
         <!-- Add Button (+) -->
@@ -357,13 +367,13 @@
         <!-- Tez Xərc (Quick Expense) -->
         <a href="{% url 'quick_expense' %}?source=footer" class="nav-item {% if request.resolver_match.url_name == 'quick_expense' %}active{% endif %}">
           <i class="fa-solid fa-bolt"></i>
-          <span>Tez Xərc</span>
+          <span>{% trans "Tez Xərc" %}</span>
         </a>
 
         <!-- Menyu (More/Menu) -->
         <a href="#" id="menuToggle" class="nav-item">
           <i class="fa-solid fa-bars"></i>
-          <span>Menyu</span>
+          <span>{% trans "Menyu" %}</span>
         </a>
       </nav>
     {% endif %}
@@ -389,9 +399,12 @@
         }
       })()
     </script>
+    {% if LANGUAGE_CODE != 'az' %}
+      <script defer src="{% static 'js/runtime_i18n.js' %}"></script>
+    {% endif %}
 
     {% if user.is_authenticated %}
-      <script src="{% static 'js/offline_sync.js' %}"></script>
+      <script defer src="{% static 'js/offline_sync.js' %}"></script>
     {% endif %}
   </body>
 </html>

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django import forms
 from .models import Tool, ToolCategory, ToolItem
 from common.category_order import (
@@ -12,7 +13,7 @@ class ToolForm(forms.ModelForm):
             ToolCategory.objects.all(),
             TOOL_CATEGORY_ORDER,
         ),
-        label="Ana Kateqoriya",
+        label=_("Ana Kateqoriya"),
         widget=forms.Select(attrs={'class': 'custom-input', 'id': 'id_category'}),
         required=True
     )
@@ -22,10 +23,10 @@ class ToolForm(forms.ModelForm):
         fields = ['item', 'quantity', 'price', 'additional_info', 'manual_name']
         widgets = {
             'item': forms.Select(attrs={'class': 'custom-input', 'id': 'id_item'}),
-            'quantity': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': 'Miqdar'}),
-            'price': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': 'Qiymət (₼)'}),
-            'additional_info': forms.Textarea(attrs={'class': 'custom-input', 'placeholder': 'Əlavə məlumat', 'rows': 3}),
-            'manual_name': forms.TextInput(attrs={'class': 'custom-input', 'placeholder': 'Alət adı (Digər)'}),
+            'quantity': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': _('Miqdar')}),
+            'price': forms.NumberInput(attrs={'class': 'custom-input', 'placeholder': _('Qiymət (₼)')}),
+            'additional_info': forms.Textarea(attrs={'class': 'custom-input', 'placeholder': _('Əlavə məlumat'), 'rows': 3}),
+            'manual_name': forms.TextInput(attrs={'class': 'custom-input', 'placeholder': _('Alət adı (Digər)')}),
         }
 
     def __init__(self, *args, **kwargs):

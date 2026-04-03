@@ -8,6 +8,7 @@ from .views import (
     home,
     lookup_scan_code,
     stocks_placeholder,
+    transcribe_voice_input,
     update_stock_quantity,
 )
 
@@ -18,6 +19,7 @@ urlpatterns = [
     path('stocks/update-quantity/', update_stock_quantity, name='stocks_update_quantity'),
     path('add-product/', add_product, name='add_placeholder'),
     path('add-product/barcode-builder/', barcode_builder, name='barcode_builder'),
+    path('add-product/voice-transcribe/', transcribe_voice_input, name='voice_transcribe'),
     path('scan-lookup/', lookup_scan_code, name='scan_lookup'),
     path('barcode/', get_or_create_barcode, name='barcode'),
 ]

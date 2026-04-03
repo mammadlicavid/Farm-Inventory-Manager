@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -26,7 +27,7 @@ class SeedItem(models.Model):
 class Seed(models.Model):
     item = models.ForeignKey(SeedItem, on_delete=models.CASCADE, verbose_name="Toxum", null=True, blank=True)
     manual_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Xüsusi Ad")
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Miqdar")
+    quantity = models.DecimalField(max_digits=10, decimal_places=4, verbose_name="Miqdar")
     unit = models.CharField(max_length=20, choices=[
         ('kg', 'kg'),
         ('ton', 'ton'),

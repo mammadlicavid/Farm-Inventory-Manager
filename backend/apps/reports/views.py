@@ -1,8 +1,8 @@
-from datetime import date
-
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django.shortcuts import render, redirect
 
 from expenses.models import Expense
@@ -12,7 +12,7 @@ from common.formatting import format_currency
 @login_required
 def reports_list(request):
     user = request.user
-    today = date.today()
+    today = timezone.localdate()
     year = today.year
 
     qs = (

@@ -1,109 +1,53 @@
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import timedelta
 
 from seeds.models import Seed
-from animals.models import Animal, AnimalCategory, AnimalSubCategory
+from animals.models import Animal
 from tools.models import Tool
 from expenses.models import Expense
 from incomes.models import Income
 from django.db.models import Sum
 from common.formatting import format_currency
+from notifications.services import sync_stock_alert_notifications
 
 @login_required
 def dashboard(request):
+    user = request.user
     now = timezone.localtime(timezone.now())
     start_of_week = (now - timedelta(days=now.weekday())).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
+    cache_key = f"dashboard:v4:{user.pk}:{start_of_week.date().isoformat()}"
+    cached_context = cache.get(cache_key)
+    if cached_context is not None:
+        return render(request, "dashboard/index.html", cached_context)
 
-    new_stocks = (
-        Seed.objects.filter(created_by=request.user, created_at__gte=start_of_week).count()
-        + Animal.objects.filter(created_by=request.user, created_at__gte=start_of_week).count()
-        + Tool.objects.filter(created_by=request.user, created_at__gte=start_of_week).count()
-    )
+    weekly_seed_count = Seed.objects.filter(created_by=user, created_at__gte=start_of_week).count()
+    weekly_animal_count = Animal.objects.filter(created_by=user, created_at__gte=start_of_week).count()
+    weekly_tool_count = Tool.objects.filter(created_by=user, created_at__gte=start_of_week).count()
+    new_stocks = weekly_seed_count + weekly_animal_count + weekly_tool_count
 
     weekly_expenses = (
-        Expense.objects.filter(created_by=request.user, created_at__gte=start_of_week)
+        Expense.objects.filter(created_by=user, created_at__gte=start_of_week)
         .aggregate(Sum("amount"))
         .get("amount__sum")
         or 0
     )
     weekly_income = (
-        Income.objects.filter(created_by=request.user, created_at__gte=start_of_week)
+        Income.objects.filter(created_by=user, created_at__gte=start_of_week)
         .aggregate(Sum("amount"))
         .get("amount__sum")
         or 0
     )
     weekly_net = weekly_income - weekly_expenses
-    display_name = (request.user.first_name or "").strip() or request.user.get_username()
+    display_name = (user.first_name or "").strip() or user.get_username()
 
-    # Dynamic data for Low Stock Alerts (Ehtiyat Xəbərdarlığı)
-    from farm_products.models import FarmProduct
-    low_stock_alerts = []
-
-    def add_alert(name, total, unit, icon, critical_threshold, warning_threshold, max_val_base):
-        if total <= warning_threshold:
-            status = "kritik" if total <= critical_threshold else "az"
-            max_val = max(max_val_base, int(total) + (20 if status == 'az' else 10))
-            percentage = 100 if max_val == 0 else int((total / max_val) * 100)
-            low_stock_alerts.append({
-                "name": name,
-                "status": status,
-                "status_text": "Kritik" if status == "kritik" else "Az qalıb",
-                "current": int(total) if total == int(total) else float(total),
-                "max": max_val,
-                "unit": unit,
-                "icon": icon,
-                "color": "red" if status == "kritik" else "yellow",
-                "percentage": percentage
-            })
-
-    # Seeds (Threshold 10/25)
-    for row in Seed.objects.filter(created_by=request.user).values('item__name', 'manual_name').annotate(total=Sum('quantity')):
-        name = row['item__name'] or row['manual_name'] or "Toxum"
-        add_alert(name, row['total'] or 0, "kq", "fa-wheat-awn", 10, 25, 50)
-
-    # Animals (Threshold 2/8)
-    for row in Animal.objects.filter(created_by=request.user).values('subcategory__name', 'manual_name').annotate(total=Sum('quantity')):
-        name = row['subcategory__name'] or row['manual_name'] or "Heyvan"
-        add_alert(name, row['total'] or 0, "ədəd", "fa-cow", 2, 8, 20)
-
-    # Tools (Threshold 2/5)
-    for row in Tool.objects.filter(created_by=request.user).values('item__name', 'manual_name').annotate(total=Sum('quantity')):
-        name = row['item__name'] or row['manual_name'] or "Alət"
-        add_alert(name, row['total'] or 0, "ədəd", "fa-wrench", 2, 5, 10)
-
-    # Farm Products (Threshold 15/40)
-    for row in FarmProduct.objects.filter(created_by=request.user).values('item__name', 'manual_name', 'unit').annotate(total=Sum('quantity')):
-        name = row['item__name'] or row['manual_name'] or "Məhsul"
-        unit = row['unit'] or "kq"
-        add_alert(name, row['total'] or 0, unit, "fa-box", 15, 40, 50)
-
-    low_stock_alerts.sort(key=lambda x: (0 if x['status'] == 'kritik' else 1, x['percentage']))
+    low_stock_alerts, pending_notification_count = sync_stock_alert_notifications(user)
     low_stock_alerts = low_stock_alerts[:4]
-
-    # Fallback to display mock if completely empty so design can be seen by user when starting fresh
-    if not low_stock_alerts:
-        low_stock_alerts = [
-            {
-                "name": "Heyvan yemi (Nümunə)", "status": "az", "status_text": "Az qalıb", 
-                "current": 15, "max": 50, "unit": "kq", "icon": "fa-seedling", "color": "yellow", "percentage": 30
-            },
-            {
-                "name": "Dizel yanacaq (Nümunə)", "status": "az", "status_text": "Az qalıb", 
-                "current": 8, "max": 20, "unit": "litr", "icon": "fa-gas-pump", "color": "yellow", "percentage": 40
-            },
-            {
-                "name": "Arpa toxumu (Nümunə)", "status": "kritik", "status_text": "Kritik", 
-                "current": 5, "max": 30, "unit": "kq", "icon": "fa-wheat-awn", "color": "red", "percentage": 16
-            },
-            {
-                "name": "Baytarlıq dərmanı (Nümunə)", "status": "kritik", "status_text": "Kritik", 
-                "current": 2, "max": 10, "unit": "ədəd", "icon": "fa-capsules", "color": "red", "percentage": 20
-            }
-        ]
     critical_count = sum(1 for item in low_stock_alerts if item["status"] == "kritik")
 
     context = {
@@ -112,11 +56,13 @@ def dashboard(request):
             "new_addition": new_stocks,
             "weekly_net": weekly_net,
             "weekly_net_display": format_currency(weekly_net, 2),
-            "animals": Animal.objects.filter(created_by=request.user, created_at__gte=start_of_week).count(),
+            "animals": weekly_animal_count,
         },
         "low_stock_alerts": low_stock_alerts,
         "critical_count": critical_count,
+        "pending_notification_count": pending_notification_count,
     }
+    cache.set(cache_key, context, 60)
 
     return render(request, "dashboard/index.html", context)
 
@@ -191,7 +137,13 @@ def quick_expense(request):
                     manual_name=name if not subcat else None,
                     created_by=request.user,
                 )
-                django_messages.success(request, f"{name} — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                django_messages.success(
+                    request,
+                    _("{name} — {amount}₼ əlavə edildi").format(
+                        name=name,
+                        amount=format_currency(amount_val, 0),
+                    ),
+                )
 
         elif action == "custom_amount":
             amount = request.POST.get("amount", "0")
@@ -209,7 +161,12 @@ def quick_expense(request):
                     manual_name=None,
                     created_by=request.user,
                 )
-                django_messages.success(request, f"Xüsusi xərc — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                django_messages.success(
+                    request,
+                    _("Xüsusi xərc — {amount}₼ əlavə edildi").format(
+                        amount=format_currency(amount_val, 0),
+                    ),
+                )
 
         elif action == "template_add":
             template_id = request.POST.get("template_id")
@@ -230,7 +187,13 @@ def quick_expense(request):
                         manual_name=original.manual_name,
                         created_by=request.user,
                     )
-                    django_messages.success(request, f"{original.title} — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                    django_messages.success(
+                        request,
+                        _("{title} — {amount}₼ əlavə edildi").format(
+                            title=original.title,
+                            amount=format_currency(amount_val, 0),
+                        ),
+                    )
                 except Expense.DoesNotExist:
                     pass
 
@@ -475,7 +438,13 @@ def quick_income(request):
                         unit=unit,
                         amount=amount_val,
                     )
-                    django_messages.success(request, f"{name} — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                    django_messages.success(
+                        request,
+                        _("{name} — {amount}₼ əlavə edildi").format(
+                            name=name,
+                            amount=format_currency(amount_val, 0),
+                        ),
+                    )
                 except ValueError as exc:
                     django_messages.error(request, str(exc))
 
@@ -495,7 +464,12 @@ def quick_income(request):
                     amount=amount_val,
                     created_by=request.user,
                 )
-                django_messages.success(request, f"Xüsusi gəlir — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                django_messages.success(
+                    request,
+                    _("Xüsusi gəlir — {amount}₼ əlavə edildi").format(
+                        amount=format_currency(amount_val, 0),
+                    ),
+                )
 
         elif action == "template_add":
             template_id = request.POST.get("template_id")
@@ -519,7 +493,13 @@ def quick_income(request):
                             gender=original.gender or "",
                             additional_info=original.additional_info,
                         )
-                        django_messages.success(request, f"{original.item_name} — {format_currency(amount_val, 0)}₼ əlavə edildi")
+                        django_messages.success(
+                            request,
+                            _("{item_name} — {amount}₼ əlavə edildi").format(
+                                item_name=original.item_name,
+                                amount=format_currency(amount_val, 0),
+                            ),
+                        )
                     except ValueError as exc:
                         django_messages.error(request, str(exc))
                 except Income.DoesNotExist:
@@ -548,4 +528,4 @@ def quick_income(request):
 
 @login_required
 def stock_warnings(request):
-    return render(request, "dashboard/stock_warnings_placeholder.html")
+    return redirect("notifications:list")

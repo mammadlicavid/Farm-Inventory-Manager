@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
 {% block content %}
 <header class="main-header">
     <div class="header-content">
         <div class="header-top">
             <a href="{% url 'farm_products:product_list' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Məhsulu Düzəlt</span>
+                <span>{% trans "Məhsulu Düzəlt" %}</span>
             </a>
         </div>
     </div>
@@ -13,7 +15,7 @@
 
 <main class="main-content" style="margin-top: -20px; position: relative; z-index: 10;">
     <div class="form-container-white">
-        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Məhsul Məlumatlarını Yenilə</h3>
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Məhsul Məlumatlarını Yenilə" %}</h3>
 
         <form method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'farm_products:product_list' %}">
             {% csrf_token %}
@@ -23,7 +25,7 @@
                 <div class="form-group">
                     <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                     <select id="category-select" name="category" required class="custom-input">
-                        <option value="" disabled>Kateqoriya seçin</option>
+                        <option value="" disabled>{% trans "Kateqoriya seçin" %}</option>
                         {% for cat in categories %}
                         <option value="{{ cat.id }}" {% if product.item and product.item.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                         {% endfor %}
@@ -33,7 +35,7 @@
                 <div class="form-group" id="item-field-group" {% if not product.item %}style="display: none;" {% endif %}>
                     <label>Məhsul Növü <span style="color: #dc3545;">*</span></label>
                     <select id="item-select" name="item" required class="custom-input" {% if not product.item %}disabled{% endif %}>
-                        <option value="" disabled>Məhsul seçin</option>
+                        <option value="" disabled>{% trans "Məhsul seçin" %}</option>
                         {% if product.item %}
                         {% for item in product.item.category.items.all %}
                         <option value="{{ item.id }}" data-name="{{ item.name }}" data-unit="{{ item.unit|default:'' }}"
@@ -48,7 +50,7 @@
                 <div class="form-group" id="manual-name-group"
                     {% if product.item and product.item.name != "Digər" %}style="display: none;" {% endif %}>
                     <label>Məhsulun Adı (Digər) <span style="color: #dc3545;">*</span></label>
-                    <input type="text" name="manual_name" id="manual-name-input" placeholder="Məhsulun adını daxil edin"
+                    <input type="text" name="manual_name" id="manual-name-input" placeholder="{% trans 'Məhsulun adını daxil edin' %}"
                         class="custom-input" value="{{ product.manual_name|default:'' }}">
                 </div>
             </div>
@@ -61,15 +63,19 @@
                 </div>
                 <div class="form-group">
                     <label>Ölçü Vahidi <span style="color: #dc3545;">*</span></label>
-                    <select name="unit" id="unit-select" class="custom-input" required>
-                        <option value="kq" {% if product.unit == 'kq' %}selected{% endif %}>kq</option>
-                        <option value="ton" {% if product.unit == 'ton' %}selected{% endif %}>ton</option>
-                        <option value="qram" {% if product.unit == 'qram' %}selected{% endif %}>qram</option>
-                        <option value="litr" {% if product.unit == 'litr' %}selected{% endif %}>litr</option>
-                        <option value="ml" {% if product.unit == 'ml' %}selected{% endif %}>millilitr</option>
-                        <option value="ədəd" {% if product.unit == 'ədəd' %}selected{% endif %}>ədəd</option>
-                        <option value="dəstə" {% if product.unit == 'dəstə' %}selected{% endif %}>dəstə</option>
-                        <option value="bağlama" {% if product.unit == 'bağlama' %}selected{% endif %}>bağlama</option>
+                    <select name="unit" id="unit-select" class="custom-input" required {% if not product.item and not product.manual_name %}disabled{% endif %}>
+                        {% if product.item or product.manual_name %}
+                        <option value="kq" {% if product.unit == 'kq' %}selected{% endif %}>{% trans "kq" %}</option>
+                        <option value="ton" {% if product.unit == 'ton' %}selected{% endif %}>{% trans "ton" %}</option>
+                        <option value="qram" {% if product.unit == 'qram' %}selected{% endif %}>{% trans "qram" %}</option>
+                        <option value="litr" {% if product.unit == 'litr' %}selected{% endif %}>{% trans "litr" %}</option>
+                        <option value="ml" {% if product.unit == 'ml' %}selected{% endif %}>{% trans "millilitr" %}</option>
+                        <option value="ədəd" {% if product.unit == 'ədəd' %}selected{% endif %}>{% trans "ədəd" %}</option>
+                        <option value="dəstə" {% if product.unit == 'dəstə' %}selected{% endif %}>{% trans "dəstə" %}</option>
+                        <option value="bağlama" {% if product.unit == 'bağlama' %}selected{% endif %}>{% trans "bağlama" %}</option>
+                        {% else %}
+                        <option value="" selected>{% trans "Əvvəlcə məhsul seçin" %}</option>
+                        {% endif %}
                     </select>
                     <input type="hidden" id="unit-hidden" name="unit_disabled" value="">
                 </div>
@@ -77,7 +83,7 @@
 
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>Məbləğ (₼)</label>
+                    <label>Məbləğ ({% currency_symbol request.user %})</label>
                     <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input"
                         value="{{ product.price|stringformat:'.2f' }}">
                 </div>
@@ -89,14 +95,14 @@
             </div>
 
             <div class="form-group">
-                <label>Əlavə Məlumat</label>
-                <textarea name="additional_info" placeholder="Məsələn: Məhsulun vəziyyəti və s." class="custom-input"
+                <label>{% trans "Əlavə Məlumat" %}</label>
+                <textarea name="additional_info" placeholder="{% trans 'Məsələn: Məhsulun vəziyyəti və s.' %}" class="custom-input"
                     rows="3">{{ product.additional_info|default:'' }}</textarea>
             </div>
 
             <button type="submit" class="add-expense-btn">
                 <i class="fa-solid fa-save"></i>
-                <span>Yadda Saxla</span>
+                <span>{% trans "Yadda Saxla" %}</span>
             </button>
         </form>
     </div>
@@ -109,12 +115,19 @@
     const unitSelect = document.getElementById("unit-select");
     const unitHidden = document.getElementById("unit-hidden");
 
-    const ALL_UNITS = ["kq", "ton", "qram", "litr", "ml", "ədəd", "dəstə", "bağlama"];
+    const weightUnitSystem = "{% unit_system request.user %}";
+    const volumeUnitSystem = "{% volume_system request.user %}";
+    const WEIGHT_UNITS = weightUnitSystem === "lb" ? ["kq", "qram"] : ["kq", "qram", "ton"];
+    const VOLUME_UNITS = volumeUnitSystem === "gallon" ? ["litr"] : ["litr", "ml"];
+    const ALL_UNITS = [...WEIGHT_UNITS, ...VOLUME_UNITS, "ədəd", "dəstə", "bağlama"];
+    const KG_PER_POUND = 0.45359237;
+    const GRAMS_PER_OUNCE = 28.349523125;
+    const LITERS_PER_GALLON = 3.785411784;
     const UNIT_LABELS = {
-        kq: "kq",
+        kq: weightUnitSystem === "lb" ? "pound" : "kq",
         ton: "ton",
-        qram: "qram",
-        litr: "litr",
+        qram: weightUnitSystem === "lb" ? "ounce" : "qram",
+        litr: volumeUnitSystem === "gallon" ? "gallon" : "litr",
         ml: "millilitr",
         "ədəd": "ədəd",
         "dəstə": "dəstə",
@@ -134,6 +147,22 @@
             unitSelect.value = defaultValue;
         } else if (allowed.length) {
             unitSelect.value = allowed[0];
+        }
+    }
+
+    function resetUnitSelect(message) {
+        if (!unitSelect) return;
+        unitSelect.innerHTML = "";
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = message;
+        option.selected = true;
+        unitSelect.appendChild(option);
+        unitSelect.disabled = true;
+        unitSelect.name = "unit_disabled";
+        if (unitHidden) {
+            unitHidden.name = "unit_disabled";
+            unitHidden.value = "";
         }
     }
 
@@ -172,9 +201,9 @@
         if (isForage) {
             allowed = ["kq", "bağlama"];
         } else if (itemUnit === "kq") {
-            allowed = ["kq", "ton", "qram"];
+            allowed = [...WEIGHT_UNITS];
         } else if (itemUnit === "litr") {
-            allowed = ["litr", "ml"];
+            allowed = [...VOLUME_UNITS];
         } else if (itemUnit) {
             allowed = [itemUnit];
             lockUnit = true;
@@ -197,7 +226,7 @@
         const itemSelect = document.getElementById("item-select");
         if (!itemSelect) return;
         const items = farmFormCategoryItemMap[String(categoryId)] || [];
-        itemSelect.innerHTML = '<option value="" disabled selected>Məhsul seçin</option>';
+        itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Məhsul seçin" %}</option>';
         items.forEach((item) => {
             const option = document.createElement("option");
             option.value = String(item.id);
@@ -222,7 +251,7 @@
             itemGroup.style.display = "none";
             itemSelect.required = false;
             itemSelect.disabled = true;
-            itemSelect.innerHTML = '<option value="" disabled selected>Alt kateqoriya yoxdur</option>';
+            itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Alt kateqoriya yoxdur" %}</option>';
             manualGroup.style.display = "block";
             manualInput.required = true;
             setUnitForItem("kq", false, ALL_UNITS);
@@ -238,13 +267,30 @@
         } else {
             manualGroup.style.display = "none";
             manualInput.required = false;
-            setUnitForItem("kq", false, ALL_UNITS);
+            resetUnitSelect('{% trans "Əvvəlcə məhsul seçin" %}');
         }
     });
 
     document.getElementById("item-select").addEventListener("change", function () {
         const selectedOption = this.options[this.selectedIndex];
         handleItemSelection(selectedOption);
+    });
+
+    document.getElementById("farm-product-form")?.addEventListener("submit", function () {
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        if (!quantityInput || !unitSelect || unitSelect.disabled) return;
+        const value = parseFloat(quantityInput.value || "");
+        if (!Number.isFinite(value)) return;
+        if (weightUnitSystem === "lb") {
+            if (unitSelect.value === "kq") {
+                quantityInput.value = String(Number((value * KG_PER_POUND).toFixed(4)));
+            } else if (unitSelect.value === "qram") {
+                quantityInput.value = String(Number((value * GRAMS_PER_OUNCE).toFixed(4)));
+            }
+        }
+        if (volumeUnitSystem === "gallon" && unitSelect.value === "litr") {
+            quantityInput.value = String(Number((parseFloat(quantityInput.value || "0") * LITERS_PER_GALLON).toFixed(4)));
+        }
     });
 
     (function initSelection() {
@@ -263,6 +309,8 @@
         }
         if (itemSelect && itemSelect.value) {
             handleItemSelection(itemSelect.options[itemSelect.selectedIndex]);
+        } else if (!manualInput.value) {
+            resetUnitSelect('{% trans "Əvvəlcə məhsul seçin" %}');
         }
     })();
 </script>

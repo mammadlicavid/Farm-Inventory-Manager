@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Kömək{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Kömək" %}{% endblock %}
 
 {% block content %}
 <header class="main-header">
@@ -7,7 +8,7 @@
     <div class="header-top">
       <a href="javascript:history.back()" class="back-btn-box">
         <i class="fa-solid fa-arrow-left"></i>
-        <span>Kömək</span>
+        <span>{% trans "Kömək" %}</span>
       </a>
     </div>
   </div>
@@ -16,84 +17,82 @@
 <div class="page-container">
 
   <div class="faq-card">
-    <p class="section-label">Tez-tez verilən suallar</p>
+    <p class="section-label">{% trans "Tez-tez verilən suallar" %}</p>
 
     <div class="faq-list">
 
       <div class="faq-item">
         <button class="faq-q" type="button">
-          <span>Sistemə necə daxil olunur?</span>
+          <span>{% trans "Sistemə necə daxil olunur?" %}</span>
           <i class="fa-solid fa-chevron-down faq-chevron"></i>
         </button>
         <div class="faq-a">
-          <p>Giriş səhifəsindəki istifadəçi adı və şifrə sahələrini doldurun, sonra
-          <strong>Daxil ol</strong> düyməsinə klikləyin.</p>
+          <p>{% trans "Giriş səhifəsindəki istifadəçi adı və şifrə sahələrini doldurun, sonra" %}
+          <strong>{% trans "Daxil ol" %}</strong> {% trans "düyməsinə klikləyin." %}</p>
         </div>
       </div>
 
       <div class="faq-item">
         <button class="faq-q" type="button">
-          <span>Profil məlumatlarımı necə yeniləyə bilərəm?</span>
+          <span>{% trans "Profil məlumatlarımı necə yeniləyə bilərəm?" %}</span>
           <i class="fa-solid fa-chevron-down faq-chevron"></i>
         </button>
         <div class="faq-a">
-          <p>Aşağıdakı menyudan <strong>Profil</strong> seçin, lazımi məlumatları dəyişdirin
-          və <strong>Yadda saxla</strong> düyməsinə klikləyin.</p>
+          <p>{% trans "Aşağıdakı menyudan" %} <strong>{% trans "Profil" %}</strong> {% trans "seçin, lazımi məlumatları dəyişdirin və" %}
+          <strong>{% trans "Yadda saxla" %}</strong> {% trans "düyməsinə klikləyin." %}</p>
         </div>
       </div>
 
       <div class="faq-item">
         <button class="faq-q" type="button">
-          <span>Şifrəmi necə dəyişə bilərəm?</span>
+          <span>{% trans "Şifrəmi necə dəyişə bilərəm?" %}</span>
           <i class="fa-solid fa-chevron-down faq-chevron"></i>
         </button>
         <div class="faq-a">
-          <p>Profil səhifəsinin alt hissəsindəki <strong>Şifrəni dəyiş</strong>
-          bölməsindən cari və yeni şifrənizi daxil edib təsdiqləyin.</p>
+          <p>{% trans "Profil səhifəsinin alt hissəsindəki" %} <strong>{% trans "Şifrəni dəyiş" %}</strong>
+          {% trans "bölməsindən cari və yeni şifrənizi daxil edib təsdiqləyin." %}</p>
         </div>
       </div>
 
       <div class="faq-item">
         <button class="faq-q" type="button">
-          <span>Hesabat necə yaradılır?</span>
+          <span>{% trans "Hesabat necə yaradılır?" %}</span>
           <i class="fa-solid fa-chevron-down faq-chevron"></i>
         </button>
         <div class="faq-a">
-          <p>Alt menyudan <strong>Hesabatlar</strong> bölməsinə keçin, hesabat növünü seçin,
-          tarix aralığını təyin edin və <strong>Hesabatı yarat</strong> düyməsinə klikləyin.</p>
+          <p>{% trans "Alt menyudan" %} <strong>{% trans "Hesabatlar" %}</strong> {% trans "bölməsinə keçin, hesabat növünü seçin, tarix aralığını təyin edin və" %}
+          <strong>{% trans "Hesabatı yarat" %}</strong> {% trans "düyməsinə klikləyin." %}</p>
         </div>
       </div>
 
       <div class="faq-item">
         <button class="faq-q" type="button">
-          <span>Stoka yeni məhsul necə əlavə edilir?</span>
+          <span>{% trans "Stoka yeni məhsul necə əlavə edilir?" %}</span>
           <i class="fa-solid fa-chevron-down faq-chevron"></i>
         </button>
         <div class="faq-a">
-          <p>Alt naviqasiyada mərkəzdəki <strong>+</strong> düyməsinə klikləyin,
-          məhsul növünü seçin və lazımi məlumatları daxil edin.</p>
+          <p>{% trans "Alt naviqasiyada mərkəzdəki" %} <strong>+</strong> {% trans "düyməsinə klikləyin, məhsul növünü seçin və lazımi məlumatları daxil edin." %}</p>
         </div>
       </div>
 
       <div class="faq-item">
         <button class="faq-q" type="button">
-          <span>Tez xərc nədir?</span>
+          <span>{% trans "Tez xərc nədir?" %}</span>
           <i class="fa-solid fa-chevron-down faq-chevron"></i>
         </button>
         <div class="faq-a">
-          <p><strong>Tez Xərc</strong> bölməsi gündəlik xərclərinizi sürətli şəkildə
-          qeydə almağa imkan verir. Kateqoriya seçib məbləği daxil etmək kifayətdir.</p>
+          <p><strong>{% trans "Tez Xərc" %}</strong> {% trans "bölməsi gündəlik xərclərinizi sürətli şəkildə qeydə almağa imkan verir. Kateqoriya seçib məbləği daxil etmək kifayətdir." %}</p>
         </div>
       </div>
 
       <div class="faq-item">
         <button class="faq-q" type="button">
-          <span>Məlumatlarım avtomatik saxlanılırmı?</span>
+          <span>{% trans "Məlumatlarım avtomatik saxlanılırmı?" %}</span>
           <i class="fa-solid fa-chevron-down faq-chevron"></i>
         </button>
         <div class="faq-a">
-          <p>Bəli, bütün əməliyyatlar real vaxt rejimində verilənlər bazasına yazılır.
-          Əlavə olaraq <strong>Sync</strong> bölməsindən manual sinxronizasiya da edə bilərsiniz.</p>
+          <p>{% trans "Bəli, bütün əməliyyatlar real vaxt rejimində verilənlər bazasına yazılır. Əlavə olaraq" %}
+          <strong>{% trans "Sync" %}</strong> {% trans "bölməsindən manual sinxronizasiya da edə bilərsiniz." %}</p>
         </div>
       </div>
 

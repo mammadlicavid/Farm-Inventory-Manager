@@ -90,7 +90,6 @@ FARM_PRODUCT_ITEM_ORDER: Dict[str, List[str]] = {
     "Ət Məhsulları": ensure_diger_last(
         [
             "Mal əti",
-            "Dana əti",
             "Camış əti",
             "Qoyun əti",
             "Keçi əti",

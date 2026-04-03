@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -7,6 +8,7 @@ from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
+from hashlib import md5
 from django.utils import timezone
 
 from .models import FarmProduct, FarmProductCategory, FarmProductItem
@@ -23,6 +25,7 @@ from incomes.models import Income
 
 FARM_FORM_CATALOG_CACHE_KEY = "farm-products:form-catalog:v1"
 FARM_FORM_CATALOG_TTL = 300
+FARM_LIST_CACHE_TTL = 30
 
 
 def _is_forage_item(name: str) -> bool:
@@ -118,11 +121,11 @@ def _farm_stock_base(user, item, manual_name: str | None, base_unit: str) -> Dec
 
 def _parse_date(value: str | None):
     if not value:
-        return timezone.now().date()
+        return timezone.localdate()
     try:
         return date.fromisoformat(value)
     except Exception:
-        return timezone.now().date()
+        return timezone.localdate()
 
 
 def _parse_filter_date(value: str | None):
@@ -237,6 +240,11 @@ def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, add
 
 @login_required
 def farm_product_list(request):
+    cache_key = f"farm-products:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cached_context = cache.get(cache_key)
+    if cached_context is not None:
+        return render(request, "farm_products/farm_product_list.html", cached_context)
+
     query = (request.GET.get("q") or "").strip()
     category_id = (request.GET.get("category") or "").strip()
     item_id = (request.GET.get("item") or "").strip()
@@ -269,7 +277,8 @@ def farm_product_list(request):
             | Q(manual_name__icontains=query)
         )
 
-    selected_category = FarmProductCategory.objects.filter(pk=category_id).first() if category_id else None
+    form_catalog = _farm_form_catalog()
+    selected_category = next((category for category in form_catalog["categories"] if str(category.id) == category_id), None) if category_id else None
     if selected_category:
         if (selected_category.name or "").strip().lower().startswith("digər"):
             products_qs = products_qs.filter(Q(item__category=selected_category) | Q(item__isnull=True))
@@ -278,12 +287,7 @@ def farm_product_list(request):
 
     filtered_items = []
     if selected_category and not (selected_category.name or "").strip().lower().startswith("digər"):
-        filtered_items = list(
-            order_queryset_by_name_list(
-                FarmProductItem.objects.filter(category=selected_category),
-                FARM_PRODUCT_ITEM_ORDER.get(selected_category.name, []),
-            )
-        )
+        filtered_items = form_catalog["item_map"].get(str(selected_category.id), [])
 
     if item_id:
         products_qs = products_qs.filter(item_id=item_id)
@@ -309,9 +313,7 @@ def farm_product_list(request):
         except Exception:
             product.price_display = product.price
 
-    form_catalog = _farm_form_catalog()
-
-    today = timezone.now().date()
+    today = timezone.localdate()
     context = {
         "products": products,
         "categories": form_catalog["categories"],
@@ -325,6 +327,7 @@ def farm_product_list(request):
         "today": today,
         "yesterday": today - timedelta(days=1),
     }
+    cache.set(cache_key, context, FARM_LIST_CACHE_TTL)
     return render(request, "farm_products/farm_product_list.html", context)
 
 
@@ -358,14 +361,14 @@ def farm_product_create(request):
         entry_date = _parse_date(date_raw)
 
         if not (item_id or manual_name) or not quantity or not unit:
-            messages.error(request, "Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             return redirect(redirect_to)
 
         price = price if price and price.strip() else 0
         try:
             quantity_val = Decimal(str(quantity))
         except (InvalidOperation, TypeError, ValueError):
-            messages.error(request, "Miqdar düzgün deyil.")
+            messages.error(request, _("Miqdar düzgün deyil."))
             return redirect(redirect_to)
 
         def allowed_units_for_item(item_obj):
@@ -389,13 +392,13 @@ def farm_product_create(request):
             effective_manual = manual_name if not item else None
             if item and item.name == "Digər":
                 if not manual_name:
-                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    messages.error(request, _("Zəhmət olmasa, Digər üçün ad daxil edin."))
                     return redirect(redirect_to)
                 effective_manual = manual_name
             if item:
                 allowed_units = allowed_units_for_item(item)
                 if unit not in allowed_units:
-                    messages.error(request, "Ölçü vahidi bu kateqoriya üçün uyğun deyil.")
+                    messages.error(request, _("Ölçü vahidi bu kateqoriya üçün uyğun deyil."))
                     return redirect(redirect_to)
                 if item.unit and item.unit not in {"kq", "litr"}:
                     effective_unit = item.unit
@@ -415,7 +418,7 @@ def farm_product_create(request):
                 )
                 needed_base = _farm_to_base(abs(quantity_val), effective_unit, base_unit)
                 if available_base < needed_base:
-                    messages.error(request, "Stokda kifayət qədər məhsul yoxdur.")
+                    messages.error(request, _("Stokda kifayət qədər məhsul yoxdur."))
                     return redirect(redirect_to)
 
             merged = _merge_manual_farm_product(
@@ -451,7 +454,7 @@ def farm_product_create(request):
                 except (TypeError, ValueError):
                     amount_val = 0
                 if amount_val <= 0:
-                    messages.error(request, "Gəlir üçün məbləğ daxil edin.")
+                    messages.error(request, _("Gəlir üçün məbləğ daxil edin."))
                     product.delete()
                     return redirect(redirect_to)
 
@@ -492,7 +495,7 @@ def farm_product_create(request):
                         content_object=product,
                     )
         except FarmProductItem.DoesNotExist:
-            messages.error(request, "Seçilmiş məhsul tapılmadı.")
+            messages.error(request, _("Seçilmiş məhsul tapılmadı."))
         else:
             add_crud_success_message(request, "FarmProduct", "create")
 
@@ -515,7 +518,7 @@ def farm_product_update(request, pk):
         entry_date = _parse_date(date_raw)
 
         if not (item_id or manual_name) or not quantity or not unit:
-            messages.error(request, "Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             return render(
                 request,
                 "farm_products/farm_product_form.html",
@@ -526,7 +529,7 @@ def farm_product_update(request, pk):
         try:
             quantity_val = Decimal(str(quantity))
         except (InvalidOperation, TypeError, ValueError):
-            messages.error(request, "Miqdar düzgün deyil.")
+            messages.error(request, _("Miqdar düzgün deyil."))
             return render(
                 request,
                 "farm_products/farm_product_form.html",
@@ -560,7 +563,7 @@ def farm_product_update(request, pk):
             product.item = item
             if item.name == "Digər":
                 if not manual_name:
-                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    messages.error(request, _("Zəhmət olmasa, Digər üçün ad daxil edin."))
                     return render(
                         request,
                         "farm_products/farm_product_form.html",
@@ -568,7 +571,7 @@ def farm_product_update(request, pk):
                     )
                 product.manual_name = manual_name
                 if unit not in allowed_units_for_item(item):
-                    messages.error(request, "Ölçü vahidi bu kateqoriya üçün uyğun deyil.")
+                    messages.error(request, _("Ölçü vahidi bu kateqoriya üçün uyğun deyil."))
                     return render(
                         request,
                         "farm_products/farm_product_form.html",
@@ -577,7 +580,7 @@ def farm_product_update(request, pk):
                 product.unit = unit
             elif item.unit:
                 if unit not in allowed_units_for_item(item):
-                    messages.error(request, "Ölçü vahidi bu kateqoriya üçün uyğun deyil.")
+                    messages.error(request, _("Ölçü vahidi bu kateqoriya üçün uyğun deyil."))
                     return render(
                         request,
                         "farm_products/farm_product_form.html",
@@ -591,7 +594,7 @@ def farm_product_update(request, pk):
             else:
                 product.manual_name = None
                 if unit not in allowed_units_for_item(item):
-                    messages.error(request, "Ölçü vahidi bu kateqoriya üçün uyğun deyil.")
+                    messages.error(request, _("Ölçü vahidi bu kateqoriya üçün uyğun deyil."))
                     return render(
                         request,
                         "farm_products/farm_product_form.html",
@@ -628,7 +631,7 @@ def farm_product_update(request, pk):
 
             needed_base = _farm_to_base(abs(quantity_val), new_unit, base_unit)
             if available_base + prev_add_back < needed_base:
-                messages.error(request, "Stokda kifayət qədər məhsul yoxdur.")
+                messages.error(request, _("Stokda kifayət qədər məhsul yoxdur."))
                 return render(
                     request,
                     "farm_products/farm_product_form.html",

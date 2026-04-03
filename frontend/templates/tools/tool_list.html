@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
 
 {% block content %}
 <header class="main-header">
@@ -6,7 +8,7 @@
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Alətlər</span>
+                <span>{% trans "Alətlər" %}</span>
             </a>
         </div>
     </div>
@@ -16,21 +18,21 @@
     <form method="get" action="" class="inventory-filter-shell" id="tool-filter-form">
         <div class="inventory-filter-grid">
             <select name="category" id="tool-filter-category" class="custom-input inventory-filter-control">
-                <option value="">Bütün kateqoriyalar</option>
+                <option value="">{% trans "Bütün kateqoriyalar" %}</option>
                 {% for category in categories %}
                 <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
                 {% endfor %}
             </select>
             <select name="item" id="tool-filter-item" class="custom-input inventory-filter-control">
-                <option value="">Bütün alət növləri</option>
+                <option value="">{% trans "Bütün alət növləri" %}</option>
                 {% for item in filter_items %}
                 <option value="{{ item.id }}" {% if selected_item == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>
                 {% endfor %}
             </select>
             <select name="movement" class="custom-input inventory-filter-control">
-                <option value="">Artım və azalma</option>
-                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>Artım</option>
-                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>Azalma</option>
+                <option value="">{% trans "Artım və azalma" %}</option>
+                <option value="increase" {% if selected_movement == "increase" %}selected{% endif %}>{% trans "Artım" %}</option>
+                <option value="decrease" {% if selected_movement == "decrease" %}selected{% endif %}>{% trans "Azalma" %}</option>
             </select>
             <div class="inventory-filter-date-range">
                 <input type="date" name="date_from" value="{{ selected_date_from }}" class="custom-input inventory-filter-control">
@@ -41,23 +43,23 @@
             </div>
         </div>
         <div class="inventory-filter-actions">
-            <input type="text" name="q" placeholder="Axtar (Ad, Kateqoriya)..."
+            <input type="text" name="q" placeholder="{% trans 'Axtar (Ad, Kateqoriya)...' %}"
                 value="{{ request.GET.q|default:'' }}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
-            <button type="button" class="inventory-filter-reset" id="tool-filter-reset">Sıfırla</button>
+            <button type="button" class="inventory-filter-reset" id="tool-filter-reset">{% trans "Sıfırla" %}</button>
         </div>
     </form>
     <div class="crud-desktop-wrapper">
         <div class="crud-form-column">
             <!-- Add Tool Form -->
             <div class="form-container-white">
-                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Yeni Alət Əlavə Et</h3>
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Yeni Alət Əlavə Et" %}</h3>
                 <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form" data-sync-entity="tool" data-sync-action="create" data-sync-keep-key="tool_form_keep_v1">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
                             <label>Ana Kateqoriya <span style="color: #dc3545;">*</span></label>
                             <select name="category" id="id_category" required class="custom-input">
-                                <option value="">Kateqoriya seçin...</option>
+                                <option value="">{% trans "Kateqoriya seçin..." %}</option>
                                 {% for category in categories %}
                                 <option value="{{ category.id }}">{{ category.name }}</option>
                                 {% endfor %}
@@ -67,14 +69,14 @@
                         <div class="form-group" id="item-field-group">
                             <label>Alət Növü <span style="color: #dc3545;">*</span></label>
                             <select name="item" id="id_item" required class="custom-input" disabled>
-                                <option value="">Əvvəlcə kateqoriya seçin...</option>
+                                <option value="">{% trans "Əvvəlcə kateqoriya seçin..." %}</option>
                             </select>
                         </div>
 
                         <div class="form-group" id="manual-name-group" style="display: none;">
                             <label>Alət Adı (Digər) <span style="color: #dc3545;">*</span></label>
                             <input type="text" name="manual_name" id="manual-name-input"
-                                placeholder="Alət adını daxil edin" class="custom-input">
+                                placeholder="{% trans 'Alət adını daxil edin' %}" class="custom-input">
                         </div>
 
                         <div class="form-group">
@@ -85,7 +87,7 @@
                         <div class="form-row"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; grid-column: 1 / -1;">
                             <div class="form-group">
-                                <label>Qiymət (₼)</label>
+                                <label>Qiymət ({% currency_symbol request.user %})</label>
                                 <input type="number" name="price" step="0.01" placeholder="0.00" class="custom-input">
                             </div>
                             <div class="form-group">
@@ -96,8 +98,8 @@
                         </div>
 
                         <div class="form-group form-full-width">
-                            <label>Əlavə Məlumat</label>
-                            <textarea name="additional_info" placeholder="Məsələn: Alətin vəziyyəti və s."
+                            <label>{% trans "Əlavə Məlumat" %}</label>
+                            <textarea name="additional_info" placeholder="{% trans 'Məsələn: Alətin vəziyyəti və s.' %}"
                                 class="custom-input" rows="3"></textarea>
                         </div>
 
@@ -112,7 +114,7 @@
 
         <div class="crud-list-column">
             <!-- Tools List -->
-            <h3 class="recent-expenses-title">Mövcud Alətlər</h3>
+            <h3 class="recent-expenses-title">{% trans "Mövcud Alətlər" %}</h3>
             <div class="alets-list data-grid-list" id="tool-list">
                 {% for alet in alets %}
                 <div class="expense-item-card"
@@ -164,7 +166,11 @@
                     </div>
                     <div style="text-align: right;">
                         <div class="expense-item-amount" style="{% if alet.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
-                            {% if alet.quantity < 0 %}+{% else %}-{% endif %}{{ alet.price_display }}₼
+                            {% if alet.quantity < 0 %}
+                            {% money alet.price_display request.user "+" %}
+                            {% else %}
+                            {% money alet.price_display request.user "-" %}
+                            {% endif %}
                         </div>
                         <div
                             style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
@@ -187,7 +193,7 @@
                 </div>
                 {% empty %}
                 <div class="expense-item-card" style="justify-content: center;" id="tool-list-empty">
-                    <span style="color: #888;">Heç bir alət tapılmadı</span>
+                    <span style="color: #888;">{% trans "Heç bir alət tapılmadı" %}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -374,7 +380,7 @@
 
     function updateToolFilterItems(categoryId, selectedItemId = "") {
         if (!toolFilterItem) return;
-        toolFilterItem.innerHTML = '<option value="">Bütün alət növləri</option>';
+        toolFilterItem.innerHTML = '<option value="">{% trans "Bütün alət növləri" %}</option>';
         if (!categoryId) return;
         const items = toolCategoryItemMap[String(categoryId)] || [];
         items.forEach((item) => {
@@ -410,7 +416,7 @@
     toolFilterReset?.addEventListener("click", () => {
         if (toolFilterCategory) toolFilterCategory.value = "";
         if (toolFilterItem) {
-            toolFilterItem.innerHTML = '<option value="">Bütün alət növləri</option>';
+            toolFilterItem.innerHTML = '<option value="">{% trans "Bütün alət növləri" %}</option>';
             toolFilterItem.value = "";
         }
         const movementInput = toolFilterForm?.querySelector('select[name="movement"]');
@@ -473,7 +479,7 @@
         const itemSelect = document.getElementById('id_item');
         if (!itemSelect) return;
         const items = toolCategoryItemMap[String(categoryId)] || [];
-        let html = '<option value="">Seçin...</option>';
+        let html = '<option value="">{% trans "Seçin..." %}</option>';
         items.forEach((item) => {
             const selectedAttr = String(item.id) === String(selectedItemId) ? ' selected' : '';
             html += `<option value="${item.id}"${selectedAttr}>${item.name}</option>`;
@@ -510,7 +516,7 @@
 
             if (!categoryId) {
                 itemSelect.disabled = true;
-                itemSelect.innerHTML = '<option value="">Əvvəlcə kateqoriya seçin...</option>';
+                itemSelect.innerHTML = '<option value="">{% trans "Əvvəlcə kateqoriya seçin..." %}</option>';
                 return;
             }
             populateToolItems(categoryId, pendingToolItemId);

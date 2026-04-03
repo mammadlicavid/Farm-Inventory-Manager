@@ -1,7 +1,9 @@
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db.models import Q, Sum
+from hashlib import md5
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib import messages
@@ -20,6 +22,7 @@ from tools.models import Tool
 
 EXPENSE_FORM_CATALOG_CACHE_KEY = "expenses:form-catalog:v1"
 EXPENSE_FORM_CATALOG_TTL = 300
+EXPENSE_LIST_CACHE_TTL = 30
 
 
 def _build_subcategory_data(categories):
@@ -150,6 +153,11 @@ def _merge_manual_expense(user, title, amount_val, additional_info):
 
 @login_required
 def expense_list(request):
+    cache_key = f"expenses:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cached_context = cache.get(cache_key)
+    if cached_context is not None:
+        return render(request, 'expenses/expense_list.html', cached_context)
+
     query = (request.GET.get("q") or "").strip()
     expenses_qs = Expense.objects.filter(created_by=request.user).select_related(
         'subcategory', 'subcategory__category'
@@ -182,7 +190,7 @@ def expense_list(request):
     total_amount = expenses_qs.aggregate(Sum('amount'))['amount__sum'] or 0
     
     # Weekly total calculation on QuerySet
-    last_week = timezone.now().date() - timedelta(days=7)
+    last_week = timezone.localdate() - timedelta(days=7)
     weekly_total = expenses_qs.filter(date__gte=last_week).aggregate(Sum('amount'))['amount__sum'] or 0
     
     # Convert to list for secondary processing (attaching display info)
@@ -232,9 +240,10 @@ def expense_list(request):
         'weekly_total_display': format_currency(weekly_total, 2),
         'categories': form_catalog["categories"],
         'subcategory_data': form_catalog["subcategory_data"],
-        'today': timezone.now().date(),
-        'yesterday': timezone.now().date() - timedelta(days=1),
+        'today': timezone.localdate(),
+        'yesterday': timezone.localdate() - timedelta(days=1),
     }
+    cache.set(cache_key, context, EXPENSE_LIST_CACHE_TTL)
     return render(request, 'expenses/expense_list.html', context)
 
 @login_required
@@ -255,7 +264,7 @@ def add_expense(request):
                 pass
         
         if not (subcategory or manual_name) or not amount:
-            messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             return redirect(redirect_to)
 
         try:
@@ -263,7 +272,7 @@ def add_expense(request):
         except (TypeError, ValueError):
             amount_val = 0
         if amount_val <= 0:
-            messages.error(request, 'Məbləğ düzgün deyil.')
+            messages.error(request, _("Məbləğ düzgün deyil."))
             return redirect(redirect_to)
         
         if not title:
@@ -309,7 +318,7 @@ def edit_expense(request, pk):
                 pass
         
         if not (subcategory or manual_name) or not amount:
-            messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             form_catalog = _expense_form_catalog()
             return render(request, 'expenses/expense_form.html', {
                 'expense': expense,
@@ -322,7 +331,7 @@ def edit_expense(request, pk):
         except (TypeError, ValueError):
             amount_val = 0
         if amount_val <= 0:
-            messages.error(request, 'Məbləğ düzgün deyil.')
+            messages.error(request, _("Məbləğ düzgün deyil."))
             form_catalog = _expense_form_catalog()
             return render(request, 'expenses/expense_form.html', {
                 'expense': expense,

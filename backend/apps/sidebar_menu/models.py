@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -14,9 +15,10 @@ class UserSettings(models.Model):
         ('Europe/Moscow', 'Moskva (UTC+3)'),
     ]
     UNIT_CHOICES = [
-        ('kg',   'kg'),
-        ('litr', 'litr'),
-        ('bas',  'baş'),
+        ('kg_litr', 'kq / litr'),
+        ('kg_gallon', 'kq / gallon'),
+        ('lb_litr', 'pound / litr'),
+        ('lb_gallon', 'pound / gallon'),
     ]
     CURRENCY_CHOICES = [
         ('AZN', 'AZN ₼'),
@@ -27,7 +29,7 @@ class UserSettings(models.Model):
     user                  = models.OneToOneField(User, on_delete=models.CASCADE, related_name='sidebar_settings')
     language              = models.CharField(max_length=10,  choices=LANGUAGE_CHOICES,  default='az')
     timezone              = models.CharField(max_length=50,  choices=TIMEZONE_CHOICES,  default='Asia/Baku')
-    unit                  = models.CharField(max_length=10,  choices=UNIT_CHOICES,      default='kg')
+    unit                  = models.CharField(max_length=10,  choices=UNIT_CHOICES,      default='kg_litr')
     currency              = models.CharField(max_length=5,   choices=CURRENCY_CHOICES,  default='AZN')
     email_notifications   = models.BooleanField(default=True)
     system_notifications  = models.BooleanField(default=True)

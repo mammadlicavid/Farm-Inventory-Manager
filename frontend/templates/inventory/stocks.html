@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load common_extras %}
+{% load i18n %}
 
 {% block content %}
 <div class="stocks-page">
@@ -7,7 +9,7 @@
             <div class="header-top">
                 <a href="{% url 'dashboard' %}" class="back-btn-box">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>Stok</span>
+                    <span>{% trans "Stok" %}</span>
                 </a>
             </div>
         </div>
@@ -17,50 +19,50 @@
         <section class="stocks-toolbar">
             <div class="stocks-filter">
                 <div class="filter-field category-field">
-                    <label for="main-category-select">Ana Kateqoriya</label>
+                    <label for="main-category-select">{% trans "Ana Kateqoriya" %}</label>
                     <div class="filter-input click-focus">
                         <select id="main-category-select">
-                            <option value="all" selected>Hamısı</option>
-                            <option value="toxumlar">Toxumlar</option>
-                            <option value="aletler">Alətlər</option>
-                            <option value="heyvanlar">Heyvanlar</option>
-                            <option value="teserrufat">Təsərrüfat Məhsulları</option>
+                            <option value="all" selected>{% trans "Hamısı" %}</option>
+                            <option value="toxumlar">{% trans "Toxumlar" %}</option>
+                            <option value="aletler">{% trans "Alətlər" %}</option>
+                            <option value="heyvanlar">{% trans "Heyvanlar" %}</option>
+                            <option value="teserrufat">{% trans "Təsərrüfat Məhsulları" %}</option>
                         </select>
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
                 </div>
                 <div class="filter-field category-field">
-                    <label for="subcategory-select">Alt Kateqoriya</label>
+                    <label for="subcategory-select">{% trans "Alt Kateqoriya" %}</label>
                     <div class="filter-input click-focus">
                         <select id="subcategory-select">
-                            <option value="all">Hamısı</option>
+                            <option value="all">{% trans "Hamısı" %}</option>
                         </select>
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
                 </div>
                 <div class="filter-field category-field">
-                    <label for="stocks-sort">Sıralama</label>
+                    <label for="stocks-sort">{% trans "Sıralama" %}</label>
                     <div class="filter-input click-focus">
                         <select id="stocks-sort">
-                            <option value="default">Standart düzülüş</option>
-                            <option value="title_asc">Ada görə A-Z</option>
-                            <option value="title_desc">Ada görə Z-A</option>
-                            <option value="qty_desc">Saya görə çox olan</option>
-                            <option value="qty_asc">Saya görə az olan</option>
+                            <option value="default">{% trans "Standart düzülüş" %}</option>
+                            <option value="title_asc">{% trans "Ada görə A-Z" %}</option>
+                            <option value="title_desc">{% trans "Ada görə Z-A" %}</option>
+                            <option value="qty_desc">{% trans "Saya görə çox olan" %}</option>
+                            <option value="qty_asc">{% trans "Saya görə az olan" %}</option>
                         </select>
                         <i class="fa-solid fa-chevron-down"></i>
                     </div>
                 </div>
                 <div class="filter-field">
-                    <label for="stocks-search">Axtarış</label>
+                    <label for="stocks-search">{% trans "Axtarış" %}</label>
                     <div class="filter-input click-focus search-field">
-                        <input id="stocks-search" type="text" placeholder="Axtar..." autocomplete="off" />
+                        <input id="stocks-search" type="text" placeholder="{% trans 'Axtar...' %}" autocomplete="off" />
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </div>
                 </div>
                 <div class="filter-field stocks-reset-field">
-                    <label>&nbsp;</label>
-                    <button type="button" id="stocks-reset" class="stocks-reset-btn">Sıfırla</button>
+                    <label>{% trans "&nbsp;" %}</label>
+                    <button type="button" id="stocks-reset" class="stocks-reset-btn">{% trans "Sıfırla" %}</button>
                 </div>
             </div>
         </section>
@@ -86,14 +88,15 @@
                     {% endif %}
                 </div>
                 <div class="product-qty">
-                    <span class="product-qty-value">{{ item.quantity_display }}</span>
-                    <span class="product-qty-unit">{{ item.unit }}</span>
+                    <span class="product-qty-value">{% display_quantity item.quantity_display item.unit request.user %}</span>
+                    <span class="product-qty-unit">{% display_unit_for_user item.quantity_display item.unit request.user %}</span>
                 </div>
                 {% if item.update_type %}
                 <button type="button" class="product-update-btn" data-update-type="{{ item.update_type }}"
                     data-update-id="{{ item.update_id }}" data-title="{{ item.title }}"
                     data-subtitle="{{ item.subtitle }}" data-qty="{{ item.quantity_display }}"
                     data-unit="{{ item.unit }}" data-step="{{ item.input_step|default:'0.01' }}"
+                    data-display-unit="{% display_unit_for_user item.quantity_display item.unit request.user %}"
                     data-male="{{ item.male_display|default:'' }}" data-female="{{ item.female_display|default:'' }}">
                     <i class="fa-solid fa-pen-to-square"></i> Yenilə
                 </button>
@@ -493,27 +496,27 @@
             <input type="hidden" name="update_type" id="modal-update-type">
             <input type="hidden" name="update_id" id="modal-update-id">
             <div class="modal-row" id="modal-quantity-row">
-                <label for="modal-quantity">Yeni miqdar</label>
+                <label for="modal-quantity">{% trans "Yeni miqdar" %}</label>
                 <input type="number" name="target_quantity" id="modal-quantity" class="modal-input" step="0.01"
                     placeholder="0">
                 <div class="product-qty-unit" id="modal-unit" style="margin-top: 6px;"></div>
             </div>
             <div class="modal-row" id="modal-gender-row" style="display: none;">
-                <label>Erkək / Dişi sayı</label>
+                <label>{% trans "Erkək / Dişi sayı" %}</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <input type="number" name="male_target" id="modal-male" class="modal-input" step="1"
-                        placeholder="Erkək">
+                        placeholder="{% trans 'Erkək' %}">
                     <input type="number" name="female_target" id="modal-female" class="modal-input" step="1"
-                        placeholder="Dişi">
+                        placeholder="{% trans 'Dişi' %}">
                 </div>
                 <div class="modal-total-box">
-                    <span class="modal-total-label">Ümumi</span>
+                    <span class="modal-total-label">{% trans "Ümumi" %}</span>
                     <span class="modal-total-value"><span id="modal-total">0</span> ədəd</span>
                 </div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="modal-btn cancel" id="modal-cancel">Ləğv et</button>
-                <button type="submit" class="modal-btn save" id="modal-save">Yadda saxla</button>
+                <button type="button" class="modal-btn cancel" id="modal-cancel">{% trans "Ləğv et" %}</button>
+                <button type="submit" class="modal-btn save" id="modal-save">{% trans "Yadda saxla" %}</button>
             </div>
         </form>
     </div>
@@ -730,7 +733,7 @@
         modalSubtitle.textContent = button.dataset.subtitle || "";
         modalQty.value = button.dataset.qty || "";
         modalQty.step = button.dataset.step || "0.01";
-        modalUnit.textContent = button.dataset.unit || "";
+        modalUnit.textContent = button.dataset.displayUnit || "";
         modalUpdateType.value = button.dataset.updateType || "";
         modalUpdateId.value = button.dataset.updateId || "";
         const updateType = button.dataset.updateType || "";

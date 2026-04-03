@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -5,6 +6,7 @@ from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from datetime import date, timedelta
+from hashlib import md5
 from django.utils import timezone
 from django.db.models import Q
 
@@ -23,6 +25,7 @@ from incomes.models import Income
 
 TOOL_FORM_CATALOG_CACHE_KEY = "tools:form-catalog:v1"
 TOOL_FORM_CATALOG_TTL = 300
+TOOL_LIST_CACHE_TTL = 30
 
 
 def _tool_stock_total(user, item, manual_name: str | None) -> int:
@@ -41,11 +44,11 @@ def _tool_stock_total(user, item, manual_name: str | None) -> int:
 
 def _parse_date(value: str | None):
     if not value:
-        return timezone.now().date()
+        return timezone.localdate()
     try:
         return date.fromisoformat(value)
     except Exception:
-        return timezone.now().date()
+        return timezone.localdate()
 
 
 def _parse_filter_date(value: str | None):
@@ -185,6 +188,11 @@ def _merge_manual_tool(user, manual_name, quantity_val, price, additional_info, 
 
 @login_required
 def tool_list(request):
+    cache_key = f"tools:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cached_context = cache.get(cache_key)
+    if cached_context is not None:
+        return render(request, 'tools/tool_list.html', cached_context)
+
     query = (request.GET.get('q') or '').strip()
     category_id = (request.GET.get('category') or '').strip()
     item_id = (request.GET.get('item') or '').strip()
@@ -213,7 +221,8 @@ def tool_list(request):
             | Q(manual_name__icontains=query)
         )
 
-    selected_category = ToolCategory.objects.filter(pk=category_id).first() if category_id else None
+    form_catalog = _tool_form_catalog()
+    selected_category = next((category for category in form_catalog["categories"] if str(category.id) == category_id), None) if category_id else None
     if selected_category:
         if (selected_category.name or "").strip().lower() == "digər":
             alets_qs = alets_qs.filter(Q(item__category=selected_category) | Q(item__isnull=True))
@@ -222,12 +231,7 @@ def tool_list(request):
 
     filtered_items = []
     if selected_category:
-        filtered_items = list(
-            order_queryset_by_name_list(
-                ToolItem.objects.filter(category=selected_category),
-                TOOL_ITEM_ORDER.get(selected_category.name, []),
-            )
-        )
+        filtered_items = form_catalog["item_map"].get(str(selected_category.id), [])
 
     if item_id:
         alets_qs = alets_qs.filter(item_id=item_id)
@@ -253,9 +257,7 @@ def tool_list(request):
         except Exception:
             alet.price_display = alet.price
 
-    form_catalog = _tool_form_catalog()
-    
-    today = timezone.now().date()
+    today = timezone.localdate()
     context = {
         'alets': alets,
         'categories': form_catalog["categories"],
@@ -269,6 +271,7 @@ def tool_list(request):
         'today': today,
         'yesterday': today - timedelta(days=1),
     }
+    cache.set(cache_key, context, TOOL_LIST_CACHE_TTL)
     return render(request, 'tools/tool_list.html', context)
 
 @login_required
@@ -298,7 +301,7 @@ def tool_create(request):
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
-            messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             return redirect(redirect_to)
 
         # Handle empty price
@@ -307,7 +310,7 @@ def tool_create(request):
         try:
             quantity_val = int(quantity)
         except (TypeError, ValueError):
-            messages.error(request, "Miqdar düzgün deyil.")
+            messages.error(request, _("Miqdar düzgün deyil."))
             return redirect(redirect_to)
         
         try:
@@ -315,7 +318,7 @@ def tool_create(request):
             if item_id:
                 item = ToolItem.objects.get(id=item_id)
                 if item.name == "Digər" and not manual_name:
-                    messages.error(request, "Zəhmət olmasa, Digər üçün ad daxil edin.")
+                    messages.error(request, _("Zəhmət olmasa, Digər üçün ad daxil edin."))
                     return redirect(redirect_to)
             
             if quantity_val < 0:
@@ -325,7 +328,7 @@ def tool_create(request):
                     manual_name if (not item or item.name == "Digər") else None,
                 )
                 if available < abs(quantity_val):
-                    messages.error(request, "Stokda kifayət qədər alət yoxdur.")
+                    messages.error(request, _("Stokda kifayət qədər alət yoxdur."))
                     return redirect(redirect_to)
 
             manual_value = manual_name if (not item or item.name == "Digər") else None
@@ -353,7 +356,7 @@ def tool_create(request):
                 except (TypeError, ValueError):
                     amount_val = 0
                 if amount_val <= 0:
-                    messages.error(request, "Gəlir üçün məbləğ daxil edin.")
+                    messages.error(request, _("Gəlir üçün məbləğ daxil edin."))
                     tool.delete()
                     return redirect(redirect_to)
 
@@ -394,7 +397,7 @@ def tool_create(request):
                         content_object=tool
                     )
         except ToolItem.DoesNotExist:
-            messages.error(request, "Seçilmiş alət növü tapılmadı.")
+            messages.error(request, _("Seçilmiş alət növü tapılmadı."))
         else:
             add_crud_success_message(request, "Tool", "create")
 
@@ -416,13 +419,13 @@ def tool_update(request, pk):
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
-            messages.error(request, 'Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.')
+            messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
             return render(request, 'tools/tool_form.html', _tool_form_context(tool))
 
         try:
             quantity_val = int(quantity)
         except (TypeError, ValueError):
-            messages.error(request, "Miqdar düzgün deyil.")
+            messages.error(request, _("Miqdar düzgün deyil."))
             return render(request, 'tools/tool_form.html', _tool_form_context(tool))
 
         prev_quantity = int(tool.quantity)
@@ -436,7 +439,7 @@ def tool_update(request, pk):
         if item_id:
             item = ToolItem.objects.get(id=item_id)
             if item.name == "Digər" and not manual_name:
-                messages.error(request, 'Zəhmət olmasa, Digər üçün ad daxil edin.')
+                messages.error(request, _("Zəhmət olmasa, Digər üçün ad daxil edin."))
                 return render(request, 'tools/tool_form.html', _tool_form_context(tool))
             tool.manual_name = manual_name if item.name == "Digər" else None
         else:
@@ -459,7 +462,7 @@ def tool_update(request, pk):
             if prev_item == tool.item and prev_manual == tool.manual_name:
                 available += prev_quantity
             if available < abs(quantity_val):
-                messages.error(request, "Stokda kifayət qədər alət yoxdur.")
+                messages.error(request, _("Stokda kifayət qədər alət yoxdur."))
                 return render(request, 'tools/tool_form.html', _tool_form_context(tool))
             
         tool.save()
