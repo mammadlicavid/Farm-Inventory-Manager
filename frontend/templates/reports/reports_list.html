@@ -3,9 +3,7 @@
 {% load common_extras %}
 {% load static %}
 {% block content %}
-
-
-<header class="main-header">
+  <header class="main-header">
     <div class="header-content">
         <div class="header-top">
             <a href="{% url 'dashboard' %}" class="back-btn-box">
@@ -14,10 +12,9 @@
             </a>
         </div>
     </div>
-</header>
+  </header>
 
-<main class="main-content" style="position: relative; z-index: 10;">
-
+  <main class="main-content" style="position: relative; z-index: 10;">
     <div class="reports-desktop-split">
         <!-- LEFT COLUMN -->
         <div class="reports-desktop-left">
@@ -33,8 +30,8 @@
                 </div>
             </div>
 
-            <div class="reports-section-card reports-breakdown-card">
-                <div class="reports-section-title">Xərclərin Bölgüsü</div>
+        <div class="reports-section-card reports-breakdown-card">
+          <div class="reports-section-title">Xərclərin Bölgüsü</div>
 
                 <div class="reports-breakdown">
                     {% for c in breakdown_list %}
@@ -54,33 +51,38 @@
             <button type="button" class="reports-pdf-btn">{% trans "⬇ Hesabat Yüklə (PDF)" %}</button>
         </div>
 
-        <!-- RIGHT COLUMN -->
-        <div class="reports-desktop-right">
-            <div class="reports-section-card reports-trend-card" style="height: 100%;">
-                <div class="reports-section-title">Aylıq Tendensiya</div>
+        <a href="{% url 'reports:pdf' %}" class="reports-pdf-btn">⬇ Hesabat Print Et (PDF)</a>
+      </div>
 
-                <div class="reports-trend-box">
-                    <canvas id="reportsTrendChart"></canvas>
+      <!-- RIGHT COLUMN -->
+      <div class="reports-desktop-right">
+        <div class="reports-section-card reports-trend-card">
+          <div class="reports-section-title">Kateqoriyalara görə Xərc</div>
 
-                    <div class="reports-months" id="reportsMonthsRow">
-                        {% for m in trend_months %}
-                        <span>{{ m }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
+          <div class="reports-trend-box">
+            <div class="reports-chart-area">
+              <canvas id="reportsCategoryChart"></canvas>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <script id="reportsData" type="application/json">
-        {
-        "months": {{ trend_months|safe }},
-        "values": {{ trend_values|safe }}
-        }
-        </script>
+    {
+        "labels": [
+            {% for c in breakdown_list %}
+                "{{ c.name|escapejs }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        "values": [
+            {% for c in breakdown_list %}
+                {{ c.amount }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+    </script>
 
     <script src="{% static 'css/reports.js' %}"></script>
-
-</main>
-
+  </main>
 {% endblock %}

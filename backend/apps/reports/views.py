@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.shortcuts import render, redirect
 
-from expenses.models import Expense   # Keep this if expenses is installed as "expenses"
+from expenses.models import Expense
 from common.formatting import format_currency
 
 
@@ -23,7 +23,7 @@ def reports_list(request):
 
     total_expense = qs.aggregate(total=Sum("amount"))["total"] or 0
     month_expense = qs.filter(date__month=today.month).aggregate(total=Sum("amount"))["total"] or 0
-    
+
     breakdown_rows = (
         qs.values("subcategory__category__name")
         .annotate(total=Sum("amount"))
@@ -62,15 +62,25 @@ def reports_list(request):
     trend_months = az_months
     trend_values = [month_map.get(i + 1, 0) for i in range(12)]
 
+    trend_items = [
+        {
+            "month": az_months[i],
+            "value": trend_values[i],
+            "value_display": format_currency(trend_values[i], 2)
+        }
+        for i in range(12)
+    ]
+
     context = {
-    "total_expense": float(total_expense),
-    "month_expense": float(month_expense),
-    "total_expense_display": format_currency(total_expense, 2),
-    "month_expense_display": format_currency(month_expense, 2),
-    "breakdown_list": breakdown_list,
-    "trend_months": trend_months,
-    "trend_values": trend_values,
-    "report_year": year,
+        "total_expense": float(total_expense),
+        "month_expense": float(month_expense),
+        "total_expense_display": format_currency(total_expense, 2),
+        "month_expense_display": format_currency(month_expense, 2),
+        "breakdown_list": breakdown_list,
+        "trend_months": trend_months,
+        "trend_values": trend_values,
+        "trend_items": trend_items,
+        "report_year": year,
     }
 
     return render(request, "reports/reports_list.html", context)
@@ -82,3 +92,37 @@ def reports_form(request):
         return redirect("reports:list")
 
     return render(request, "reports/reports_form.html")
+
+@login_required
+def reports_pdf(request):
+    user = request.user
+    today = date.today()
+    year = today.year
+
+    qs = (
+        Expense.objects
+        .filter(created_by=user, date__year=year)
+        .select_related("subcategory", "subcategory__category")
+        .order_by("-date", "-id")
+    )
+
+    total_expense = qs.aggregate(total=Sum("amount"))["total"] or 0
+
+    expense_rows = []
+    for e in qs:
+        expense_rows.append({
+            "date": e.date,
+            "category": getattr(getattr(e.subcategory, "category", None), "name", "Digər"),
+            "subcategory": getattr(e.subcategory, "name", "—"),
+            "amount": format_currency(e.amount, 2),
+            "note": getattr(e, "note", "") or getattr(e, "description", "") or ""
+        })
+
+    context = {
+        "report_year": year,
+        "today": today,
+        "total_expense_display": format_currency(total_expense, 2),
+        "expense_rows": expense_rows,
+    }
+
+    return render(request, "reports/reports_pdf.html", context)
