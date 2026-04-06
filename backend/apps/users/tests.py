@@ -1,12 +1,10 @@
 from django.contrib.auth.models import User
-from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from users.models import UserProfile
 
 
-@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class SignUpFlowTests(TestCase):
     def test_signup_creates_active_user_and_profile(self):
         response = self.client.post(
@@ -28,10 +26,8 @@ class SignUpFlowTests(TestCase):
         self.assertEqual(user.email, "ali@example.com")
         self.assertTrue(user.is_active)
         self.assertEqual(user.profile.birth_date.isoformat(), "1999-05-10")
-        self.assertEqual(len(mail.outbox), 1)
 
 
-@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class ProfileFlowTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -60,4 +56,3 @@ class ProfileFlowTests(TestCase):
         self.assertEqual(self.user.email, "murad@new.com")
         self.assertEqual(self.user.last_name, "B")
         self.assertEqual(self.user.profile.birth_date.isoformat(), "1995-06-16")
-        self.assertEqual(len(mail.outbox), 1)

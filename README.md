@@ -1,93 +1,110 @@
-# Farm-Inventory-Manager
+# Farm Inventory Manager
 
-This project is a Farm Inventory Manager application, part of the Senior Design Project 2025/26.
+Farm Inventory Manager is a Django-based farm operations app for tracking stock, expenses, income, suppliers, reminders, and basic sync activity.
 
 ## Project Structure
-- **backend/**: Django server and application logic.
-- **frontend/**: Django templates (`templates`) and shared CSS/JS assets (`static`).
-- **docs/**: project notes and planning documents.
-- **scripts/**: utility scripts for testing and responsive checks.
 
-## Features
-- Dashboard with quick income and quick expense flows
-- Inventory tracking
+- `backend/`: Django project, apps, migrations, and management commands
+- `frontend/`: Django templates and shared static assets
+- `docs/`: planning and project notes
+- `scripts/`: utility scripts for responsive/manual checks
+
+## Main Modules
+
+- Dashboard with weekly summary, quick expense, and quick income flows
+- Inventory pages for stock overview, add-product flow, barcode generation, and scan lookup
 - Animals, seeds, farm products, and tools management
 - Expenses and incomes tracking
-- Reports and notifications
-- Sidebar settings/help/profile pages
-- Sync page for offline/online data flow
+- Supplier management
+- Notifications and stock alert rules
+- Expense reports and printable report view
+- User login/signup/profile/settings/help pages
+- Sync page with push/status endpoints for offline-first flows
+- Azerbaijani, English, and Russian interface support
 
-## How to Run
+## Tech Stack
 
-1. Open your terminal and navigate to the `backend` directory:
-    ```bash
-    cd backend
-    ```
-2. Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-   Voice input for `add-product` also needs:
-    ```bash
-    pip install faster-whisper av
-    ```
-3. Configure environment variables in the project root `.env` file.
-   Required database variables:
-    ```env
-    SECRET_KEY=your-secret-key
-    DEBUG=True
-    PGDATABASE=your_database_name
-    PGUSER=your_database_user
-    PGPASSWORD=your_database_password
-    PGHOST=your_database_host
-    PGPORT=5432
-    ```
-4. Apply database migrations:
-    ```bash
-    python manage.py migrate
-    ```
-5. Seed the default data:
-    ```bash
-    python manage.py seed_all
-    ```
-6. Start the development server:
-    ```bash
-    python manage.py runserver
-    ```
-7. Open your browser and go to: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/)
+- Python 3.11 or 3.12
+- Django 5.2
+- PostgreSQL for normal development/runtime
+- SQLite only during automated tests
+- Django templates for UI
+- `faster-whisper` + `av` for voice transcription in add-product
 
-## Voice Input
+`Python 3.14` is not recommended here because `faster-whisper` can fail there.
 
-`add-product` includes server-based Azerbaijani voice transcription.
+## Setup
 
-- Frontend records audio with the browser microphone
-- Backend transcribes with `faster-whisper`
-- The transcript is parsed and the matching form is filled automatically
+1. Create and activate a virtual environment:
 
-Optional environment variables:
-
-```env
-FASTER_WHISPER_MODEL=small
-FASTER_WHISPER_DEVICE=cpu
-FASTER_WHISPER_COMPUTE_TYPE=int8
-FASTER_WHISPER_LANGUAGE=az
-FASTER_WHISPER_BEAM_SIZE=3
+```bash
+cd backend
+python3.12 -m venv .venv
+source .venv/bin/activate
 ```
 
-## Initial Setup & Development
+2. Install dependencies:
 
-The app is configured to use PostgreSQL in normal development/runtime, and SQLite only during automated tests. After cloning or pulling, make sure your PostgreSQL database is available and your `.env` values are set correctly before running migrations.
+```bash
+pip install -r requirements.txt
+```
 
-`python manage.py seed_all` runs the built-in seed commands for:
+3. Create a root-level `.env` file in the project directory:
+
+```env
+SECRET_KEY=your-secret-key
+DEBUG=True
+
+PGDATABASE=your_database_name
+PGUSER=your_database_user
+PGPASSWORD=your_database_password
+PGHOST=your_database_host
+PGPORT=5432
+
+ALLOWED_HOSTS=127.0.0.1,localhost
+CSRF_TRUSTED_ORIGINS=
+```
+
+Notes:
+
+- The app loads `.env` from the repository root, not from `backend/`.
+- Normal runtime uses PostgreSQL with `sslmode=require`.
+- If `DEBUG=True`, Django allows all hosts.
+
+4. Apply migrations:
+
+```bash
+python manage.py migrate
+```
+
+5. Seed default catalog data:
+
+```bash
+python manage.py seed_all
+```
+
+This seeds:
+
 - Animals
 - Expenses
 - Seeds
 - Farm Products
 - Tools
 
-## Creating a User Account
+6. Start the development server:
 
-Create an account for dashboard access with either command:
+```bash
+python manage.py runserver
+```
+
+7. Open the app:
+
+- Dashboard: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/)
+- Login: [http://127.0.0.1:8000/login/](http://127.0.0.1:8000/login/)
+
+## User Creation
+
+Create an admin account with either command:
 
 ```bash
 python manage.py createsuperuser
@@ -99,8 +116,25 @@ or:
 python create_admin.py
 ```
 
-The helper script creates or resets a default admin user:
+`create_admin.py` creates or resets this default account:
+
 - username: `admin`
 - password: `admin123`
 
-Login page: [http://127.0.0.1:8000/login/](http://127.0.0.1:8000/login/)
+## Voice Input
+
+The add-product page includes server-side voice transcription.
+
+- Browser audio is uploaded from the add-product form
+- Backend transcription runs through `faster-whisper`
+- Supported UI/voice language flow is Azerbaijani, English, and Russian
+
+## Testing
+
+Run tests with:
+
+```bash
+python manage.py test
+```
+
+During tests, settings automatically switch the database to SQLite.

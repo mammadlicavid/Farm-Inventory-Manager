@@ -7,10 +7,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.utils import translation
 from django.utils.translation import gettext as _
 
-from users.services import (
-    get_or_create_profile,
-    send_account_notification_email,
-)
+from users.services import get_or_create_profile
 from .models import UserSettings
 
 VOICE_LANGUAGE_CHOICES = {"system", "az", "en", "ru"}
@@ -57,8 +54,6 @@ def profile_view(request):
             messages.error(request, _('Bu e-poçt artıq istifadə olunur.'))
             return render(request, 'sidebar_menu/profile.html', {'profile': profile})
 
-        email_changed = email != (user.email or "").strip().lower()
-
         user.username = username
         user.first_name = first_name
         user.last_name = last_name
@@ -66,11 +61,6 @@ def profile_view(request):
         user.save()
         profile.birth_date = birth_date
         profile.save(update_fields=['birth_date', 'updated_at'])
-        if email_changed:
-            try:
-                send_account_notification_email(user, email, is_email_change=True)
-            except Exception:
-                messages.warning(request, _('E-poçt yeniləndi, amma bildiriş emaili göndərilmədi.'))
         messages.success(request, _('Profil məlumatları uğurla yeniləndi.'))
         return redirect('sidebar_menu:profile')
     return render(request, 'sidebar_menu/profile.html', {'profile': profile})

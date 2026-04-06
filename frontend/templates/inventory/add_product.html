@@ -459,7 +459,6 @@
     }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const expenseData = JSON.parse(document.getElementById("inventory-expense-data").textContent);
@@ -513,6 +512,9 @@ document.addEventListener("DOMContentLoaded", function () {
     let voiceLevelData = null;
     let voiceVocabularyWords = [];
     let voiceVocabularyPhrases = [];
+    let voiceVocabularyReady = false;
+    let voiceVocabularyScheduled = false;
+    let barcodeLibraryPromise = null;
 
     const panelTitles = { expense: "{% trans 'Xərc formu' %}", income: "{% trans 'Gəlir formu' %}", animal: "{% trans 'Heyvan formu' %}", seed: "{% trans 'Toxum formu' %}", tool: "{% trans 'Alət formu' %}", farm: "{% trans 'Təsərrüfat formu' %}" };
     const voiceFormFilledSubtitles = {
@@ -1671,7 +1673,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ]);
 
     const voiceKeywordAliases = {
-        "xerc": "xerc", "xerca": "xerc", "xerci": "xerc", "xerce": "xerc", "xercl": "xerc", "xerj": "xerc", "herc": "xerc", "xercin": "xerc", "xercg": "xerc", "sarc": "xerc", "serc": "xerc", "xeraci": "xerc", "iserc": "xerc", "dserc": "xerc",
+        "xerc": "xerc", "xerca": "xerc", "xerci": "xerc", "xerce": "xerc", "xercl": "xerc", "xerj": "xerc", "herc": "xerc", "xercin": "xerc", "xercg": "xerc", "sarc": "xerc", "serc": "xerc", "xeraci": "xerc", "iserc": "xerc", "dserc": "xerc", "xelcele": "xerc", "xelceleve": "xerc", "xelce": "xerc", "helcele": "xerc",
         "celir": "gelir", "celdir": "gelir", "caldir": "gelir", "cellir": "gelir", "cellr": "gelir", "gelr": "gelir", "geli": "gelir", "jelir": "gelir", "qelir": "gelir", "delir": "gelir", "telir": "gelir", "belir": "gelir", "pelir": "gelir", "selir": "gelir", "jeldir": "gelir",
         "elave": "elave", "elavi": "elave", "elavii": "elave", "elavı": "elave", "elav": "elave", "elaf": "elave", "elaveyet": "elave et", "elaveyat": "elave et", "alave": "elave", "elawa": "elave", "ilawe": "elave", "ilafe": "elave", "olave": "elave", "ilave": "elave",
         "et": "et", "it": "et", "ed": "et", "evid": "et", "edid": "et", "td": "et", "ad": "et", "at": "et",
@@ -1731,6 +1733,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     function collectVoiceVocabulary() {
+        if (voiceVocabularyReady) return;
         const words = new Set();
         const phrases = new Set();
 
@@ -1747,6 +1750,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
         voiceVocabularyWords = Array.from(words).sort((a, b) => b.length - a.length);
         voiceVocabularyPhrases = Array.from(phrases).sort((a, b) => b.length - a.length);
+        voiceVocabularyReady = true;
+    }
+
+    function ensureVoiceVocabularyReady() {
+        if (!voiceVocabularyReady) collectVoiceVocabulary();
+    }
+
+    function scheduleVoiceVocabularyCollection() {
+        if (voiceVocabularyReady || voiceVocabularyScheduled) return;
+        voiceVocabularyScheduled = true;
+        const run = () => {
+            voiceVocabularyScheduled = false;
+            collectVoiceVocabulary();
+        };
+        if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(run, { timeout: 1200 });
+            return;
+        }
+        window.setTimeout(run, 250);
+    }
+
+    function ensureBarcodeLibraryLoaded() {
+        if (window.ZXingBrowser) return Promise.resolve(window.ZXingBrowser);
+        if (barcodeLibraryPromise) return barcodeLibraryPromise;
+        barcodeLibraryPromise = new Promise((resolve, reject) => {
+            const existingScript = document.querySelector('script[data-zxing-browser="true"]');
+            if (existingScript) {
+                existingScript.addEventListener("load", () => resolve(window.ZXingBrowser), { once: true });
+                existingScript.addEventListener("error", () => reject(new Error("{% trans 'Scanner kitabxanası yüklənmədi.' %}")), { once: true });
+                return;
+            }
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js";
+            script.async = true;
+            script.dataset.zxingBrowser = "true";
+            script.addEventListener("load", () => resolve(window.ZXingBrowser), { once: true });
+            script.addEventListener("error", () => reject(new Error("{% trans 'Scanner kitabxanası yüklənmədi.' %}")), { once: true });
+            document.head.appendChild(script);
+        });
+        return barcodeLibraryPromise;
     }
 
     function candidateCompatible(source, candidate) {
@@ -2047,7 +2090,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const formTypeKeywordMap = {
-        expense: ["xerc"],
+        expense: ["xerc", "gubre", "pestisid", "baytarliq", "yem", "suvarma", "yanacaq", "dizel", "benzin"],
         income: ["gelir", "satis"],
         animal: ["heyvan", "inek", "dana", "qoyun", "keci", "toyuq", "at", "essek", "qatir"],
         seed: ["toxum", "bugda", "arpa", "qargidali", "yonca", "pambiq"],
@@ -2077,7 +2120,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const intents = [
             { formType: "income", keywords: ["gelir", "satis"] },
-            { formType: "expense", keywords: ["xerc"] },
+            { formType: "expense", keywords: ["xerc", "gubre", "pestisid", "baytarliq", "yem", "suvarma"] },
             { formType: "animal", keywords: ["heyvan"] },
             { formType: "seed", keywords: ["toxum"] },
             { formType: "tool", keywords: ["alet"] },
@@ -2180,8 +2223,8 @@ document.addEventListener("DOMContentLoaded", function () {
             addEntry(weightText, [/\bceki\b/, /\bteki\b/, /\bdeki\b/], 50);
         }
 
-        if (draft.amount != null && draft.amount !== "") addEntry(`${draft.amount} manat`, [/\bmebleg\b/, /\bmanat\b/], 60);
-        else if (draft.price != null && draft.price !== "") addEntry(`${draft.price} manat`, [/\bqiymet\b/, /\bmanat\b/], 60);
+        if (draft.amount != null && draft.amount !== "") addEntry(`${draft.amountExplicit ? "Məbləğ " : ""}${draft.amount} manat`, [/\bmebleg\b/, /\bmanat\b/], 60);
+        else if (draft.price != null && draft.price !== "") addEntry(`${draft.priceExplicit ? "Məbləğ " : ""}${draft.price} manat`, [/\bqiymet\b/, /\bmanat\b/], 60);
 
         if (draft.date) {
             addEntry(
@@ -2260,7 +2303,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const amount = fieldValue("income-amount") || draft?.amount || draft?.price || "";
             const date = fieldValue("income-date") || draft?.date || "";
             if (quantity) parts.push(unit ? `${quantity} ${unit}` : quantity);
-            if (amount) parts.push(`${amount} manat`);
+            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
         } else if (formType === "animal") {
@@ -2270,13 +2313,13 @@ document.addEventListener("DOMContentLoaded", function () {
             const date = fieldValue("animal-date") || draft?.date || "";
             if (quantity && quantity !== "1") parts.push(`${quantity} ədəd`);
             if (weight) parts.push(`${weight} kilo`);
-            if (amount) parts.push(`${amount} manat`);
+            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
         } else if (formType === "expense") {
             const amount = fieldValue("expense-amount") || draft?.amount || "";
             const date = fieldValue("expense-date") || draft?.date || "";
-            if (amount) parts.push(`${amount} manat`);
+            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
         } else if (formType === "seed") {
@@ -2285,7 +2328,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const amount = fieldValue("seed-price") || draft?.price || draft?.amount || "";
             const date = fieldValue("seed-date") || draft?.date || "";
             if (quantity) parts.push(unit ? `${quantity} ${unit}` : quantity);
-            if (amount) parts.push(`${amount} manat`);
+            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
         } else if (formType === "tool") {
@@ -2293,7 +2336,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const amount = fieldValue("tool-price") || draft?.price || draft?.amount || "";
             const date = fieldValue("tool-date") || draft?.date || "";
             if (quantity) parts.push(`${quantity} ədəd`);
-            if (amount) parts.push(`${amount} manat`);
+            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
         } else if (formType === "farm") {
@@ -2302,7 +2345,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const amount = fieldValue("farm-price") || draft?.price || draft?.amount || "";
             const date = fieldValue("farm-date") || draft?.date || "";
             if (quantity) parts.push(unit ? `${quantity} ${unit}` : quantity);
-            if (amount) parts.push(`${amount} manat`);
+            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
         }
@@ -2312,7 +2355,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return buildPrettyVoiceSummary({}, transcript);
     }
 
-    collectVoiceVocabulary();
+    scheduleVoiceVocabularyCollection();
 
     function escapeRegex(value) {
         return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -2504,6 +2547,11 @@ document.addEventListener("DOMContentLoaded", function () {
         return parseSpokenNumber(segment);
     }
 
+    function hasExplicitAmountLabel(text) {
+        const normalized = canonicalizeVoiceText(text);
+        return /\b(mebleg|qiymet)\b/.test(normalized);
+    }
+
     function extractAmountValue(text) {
         if (activeVoiceLanguage === "en") {
             const native = normalizeNativeVoiceText(text);
@@ -2676,14 +2724,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (monthMatch) {
             const year = Number(monthMatch[3] || currentYear);
             const guessed = createLocalDate(year, Number(monthMap[monthMatch[2]]), Number(monthMatch[1]));
-            if (guessed) return { value: formatDateIso(guessed), label: formatDateIso(guessed) };
+            if (guessed) return { value: formatDateIso(guessed), label: monthMatch[3] ? `${Number(monthMatch[1])} ${monthMatch[2]} ${monthMatch[3]}` : `${Number(monthMatch[1])} ${monthMatch[2]}` };
         }
 
         const reversedMonthMatch = normalized.match(/\b(yanvar|fevral|mart|aprel|may|iyun|iyul|avqust|sentyabr|oktyabr|noyabr|dekabr)\s+(\d{1,2})(?:-?u|-?un|-?in|-?cu|-?ci)?(?:\s+(\d{4}))?\b/);
         if (reversedMonthMatch) {
             const year = Number(reversedMonthMatch[3] || currentYear);
             const guessed = createLocalDate(year, Number(monthMap[reversedMonthMatch[1]]), Number(reversedMonthMatch[2]));
-            if (guessed) return { value: formatDateIso(guessed), label: formatDateIso(guessed) };
+            if (guessed) return { value: formatDateIso(guessed), label: reversedMonthMatch[3] ? `${Number(reversedMonthMatch[2])} ${reversedMonthMatch[1]} ${reversedMonthMatch[3]}` : `${Number(reversedMonthMatch[2])} ${reversedMonthMatch[1]}` };
         }
 
         const explicitDayMatch = normalized.match(/\b(\d{1,2})(?:-?u|-?un|-?in|-?cu|-?ci)\b/);
@@ -2864,7 +2912,9 @@ document.addEventListener("DOMContentLoaded", function () {
             formType,
             quantity: extractQuantityValue(text),
             amount: extractAmountValue(text),
+            amountExplicit: hasExplicitAmountLabel(text),
             price: extractNumericField(normalized, ["qiymet"]),
+            priceExplicit: /\bqiymet\b/.test(normalized),
             weight: extractNumericField(normalized, ["ceki"]),
             date: dateDetails.value,
             dateLabel: dateDetails.label,
@@ -3501,7 +3551,7 @@ document.addEventListener("DOMContentLoaded", function () {
         listening = false;
         syncVoiceButtonLabel();
         setVoiceRecorderVisible(false);
-        setVoiceResult("{% trans 'Səs emal olunur...' %}");
+        setVoiceResult("");
         setResultMessage("");
 
         try {
@@ -3537,6 +3587,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function startVoiceRecognition() {
+        ensureVoiceVocabularyReady();
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
             setResultMessage("{% trans 'Bu cihazda səs yazısı dəstəklənmir.' %}", true);
             return;
@@ -3652,7 +3703,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function startScanner() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setResultMessage("{% trans 'Bu cihazda kamera dəstəklənmir.' %}", true); return; }
-        if (!window.ZXingBrowser) { setResultMessage("{% trans 'Scanner kitabxanası yüklənmədi.' %}", true); return; }
         if (scanning) { await stopScanner(true); return; }
         try {
             stopVoiceRecognition();
@@ -3661,6 +3711,7 @@ document.addEventListener("DOMContentLoaded", function () {
             scannerWrapper.hidden = false;
             setActionState("scan");
             setResultMessage("{% trans 'Kamera açılır...' %}");
+            await ensureBarcodeLibraryLoaded();
             codeReader = new ZXingBrowser.BrowserMultiFormatReader();
             scanning = true;
             syncBarcodeButtonLabel();
