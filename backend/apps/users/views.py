@@ -8,7 +8,6 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .forms import SignUpForm
 from .models import UserProfile
-from .services import send_account_notification_email
 from common.messages import add_crud_success_message
 
 # Create your views here.
@@ -65,10 +64,6 @@ def process_signup(request):
         user=user,
         defaults={"birth_date": form.cleaned_data["birth_date"]},
     )
-    try:
-        send_account_notification_email(user, form.cleaned_data["email"])
-    except Exception:
-        messages.warning(request, _("Hesab yaradıldı, amma bildiriş emaili göndərilmədi."))
 
     add_crud_success_message(request, "Account", "create")
     return redirect("login")
