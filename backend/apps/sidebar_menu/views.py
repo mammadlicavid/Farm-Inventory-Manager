@@ -83,7 +83,27 @@ def change_password_view(request):
 
 @login_required
 def setting_view(request):
-    settings_obj, created = UserSettings.objects.get_or_create(user=request.user)
+    settings_obj, created = UserSettings.objects.get_or_create(
+        user=request.user,
+        defaults={"weight_unit": "kg", "volume_unit": "litr"},
+    )
+
+    # Heal any legacy/broken rows defensively (DB currently expects NOT NULL).
+    if not getattr(settings_obj, "weight_unit", None):
+        settings_obj.weight_unit = "kg"
+    if not getattr(settings_obj, "volume_unit", None):
+        settings_obj.volume_unit = "litr"
+    if settings_obj.unit and "_" in settings_obj.unit:
+        w, v = settings_obj.unit.split("_", 1)
+        w = (w or "").strip()
+        v = (v or "").strip()
+        if w in {"kg", "lb"}:
+            settings_obj.weight_unit = w
+        if v in {"litr", "gallon"}:
+            settings_obj.volume_unit = v
+    if created:
+        settings_obj.unit = f"{settings_obj.weight_unit}_{settings_obj.volume_unit}"
+    settings_obj.save(update_fields=["unit", "weight_unit", "volume_unit"])
     if request.method == 'POST':
         settings_obj.language             = request.POST.get('language', 'az')
         settings_obj.timezone             = request.POST.get('timezone', 'Asia/Baku')
@@ -92,6 +112,8 @@ def setting_view(request):
             weight_unit = 'lb'
         volume_unit = request.POST.get('volume_unit', 'litr')
         settings_obj.unit                 = f"{weight_unit}_{volume_unit}"
+        settings_obj.weight_unit          = weight_unit
+        settings_obj.volume_unit          = volume_unit
         settings_obj.currency             = request.POST.get('currency', 'AZN')
         settings_obj.email_notifications  = 'email_notifications'  in request.POST
         settings_obj.system_notifications = 'system_notifications' in request.POST
