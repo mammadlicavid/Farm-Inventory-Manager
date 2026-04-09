@@ -27,6 +27,13 @@
 <main class="main-content">
 
     <div class="categories-grid">
+        <a href="{% url 'inventory:add_placeholder' %}?mode=combined" class="category-card" style="text-decoration: none;">
+            <div class="icon-box green-icon">
+                <i class="fa-solid fa-plus"></i>
+            </div>
+            <span>{% trans "İnventar əlavə et" %}</span>
+        </a>
+
         <a href="{% url 'seeds:seed_list' %}" class="category-card" style="text-decoration: none;">
             <div class="icon-box green-icon">
                 <i class="fa-solid fa-seedling"></i>

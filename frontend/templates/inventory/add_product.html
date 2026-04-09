@@ -77,6 +77,22 @@
         <div class="section-head">
             <h3 id="active-form-title">{% trans "Form" %}</h3>
             <p id="active-form-subtitle">{% trans "Scan olunan barkoda uyğun form açıldı." %}</p>
+
+            {% if combined_mode %}
+                <div class="form-switch-row" aria-label="{% trans 'Add inventory form selector' %}">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label for="inventory-form-type">{% trans "Nə əlavə edirsiniz?" %}</label>
+                        <div class="click-focus">
+                            <select id="inventory-form-type" class="custom-input">
+                                <option value="seed">{% trans "Toxum" %}</option>
+                                <option value="animal">{% trans "Heyvan" %}</option>
+                                <option value="tool">{% trans "Alət" %}</option>
+                                <option value="farm">{% trans "Təsərrüfat Məhsulu" %}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
 
         <div class="form-card" data-form-panel="expense" hidden>
@@ -445,6 +461,7 @@
     .manual-code-wrapper { margin-top: 4px; }
     .section-head h3 { margin: 0 0 4px; font-size: 18px; }
     .section-head p { margin: 0; color: #6b7280; font-size: 14px; }
+    .form-switch-row { margin-top: 14px; }
     .form-card { margin-top: 14px; border-top: 1px solid #eef2f7; padding-top: 14px; }
     .input-group { margin-bottom: 14px; }
     .input-group label { display: block; font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 8px; }
@@ -489,6 +506,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const formShell = document.getElementById("dynamic-form-shell");
     const activeFormTitle = document.getElementById("active-form-title");
     const activeFormSubtitle = document.getElementById("active-form-subtitle");
+    const inventoryFormTypeSelect = document.getElementById("inventory-form-type");
+    const combinedMode = {% if combined_mode %}true{% else %}false{% endif %};
 
     const weightUnitSystem = "{% unit_system request.user %}";
     const volumeUnitSystem = "{% volume_system request.user %}";
@@ -2995,6 +3014,9 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = panel.dataset.formPanel !== formType; });
         activeFormTitle.textContent = panelTitles[formType] || "Form";
         activeFormSubtitle.textContent = subtitle || "Scan nəticəsinə uyğun form açıldı.";
+        if (combinedMode && inventoryFormTypeSelect && ["seed", "animal", "tool", "farm"].includes(formType)) {
+            inventoryFormTypeSelect.value = formType;
+        }
         window.scrollTo({ top: formShell.offsetTop - 20, behavior: "smooth" });
     }
 
@@ -3795,6 +3817,25 @@ document.addEventListener("DOMContentLoaded", function () {
     updateFarmItems();
     updateIncomeItems();
     syncAnimalIdentificationState();
+
+    if (combinedMode && inventoryFormTypeSelect) {
+        const manualSubtitles = {
+            seed: "{% trans 'Toxum əlavə etmə formu açıldı.' %}",
+            animal: "{% trans 'Heyvan əlavə etmə formu açıldı.' %}",
+            tool: "{% trans 'Alət əlavə etmə formu açıldı.' %}",
+            farm: "{% trans 'Təsərrüfat məhsulu əlavə etmə formu açıldı.' %}",
+        };
+        inventoryFormTypeSelect.addEventListener("change", () => {
+            const nextType = (inventoryFormTypeSelect.value || "").trim();
+            if (!["seed", "animal", "tool", "farm"].includes(nextType)) return;
+            showPanel(nextType, manualSubtitles[nextType] || "{% trans 'Form açıldı.' %}");
+            setResultMessage("{% trans 'Form açıqdır.' %}");
+        });
+
+        // Default: show one combined "Add Inventory" form immediately.
+        const initialType = (inventoryFormTypeSelect.value || "seed").trim() || "seed";
+        showPanel(initialType, "{% trans 'Kateqoriyanı seçin və məlumatları daxil edin. İstəsəniz barkod və ya səs də istifadə edə bilərsiniz.' %}");
+    }
 });
 </script>
 {% endblock %}

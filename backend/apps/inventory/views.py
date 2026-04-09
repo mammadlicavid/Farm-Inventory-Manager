@@ -1044,7 +1044,10 @@ def update_stock_quantity(request):
 
 @login_required
 def add_product(request):
-    return render(request, "inventory/add_product.html", _build_add_page_context(request))
+    context = _build_add_page_context(request)
+    mode = (request.GET.get("mode") or "").strip().lower()
+    context["combined_mode"] = mode == "combined"
+    return render(request, "inventory/add_product.html", context)
 
 
 @login_required
