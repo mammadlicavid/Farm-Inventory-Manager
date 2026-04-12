@@ -17,7 +17,7 @@
 
 <main class="main-content" style="position: relative; z-index: 10;">
     <!-- Weekly Summary Card -->
-    <div class="summary-row">
+    <div class="summary-row summary-row--single">
         <div class="summary-card-cream summary-compact">
             <span class="label">{% trans "Bu həftə ümumi xərc" %}</span>
             <span class="value">{% money weekly_total_display request.user %}</span>
@@ -90,31 +90,6 @@
         </div>
 
         <div class="crud-list-column">
-            <form method="get" action="" class="inventory-filter-shell" id="expense-filter-form">
-                <div class="inventory-filter-grid">
-                    <select id="expense-filter-category" class="custom-input inventory-filter-control">
-                        <option value="">{% trans "Bütün kateqoriyalar" %}</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.name }}">{{ cat.name }}</option>
-                        {% endfor %}
-                        <option value="Digər">{% trans "Digər" %}</option>
-                    </select>
-                    <select id="expense-filter-subcategory" class="custom-input inventory-filter-control">
-                        <option value="">{% trans "Bütün alt kateqoriyalar" %}</option>
-                    </select>
-                    <div class="inventory-filter-date-range">
-                        <input type="date" name="date_from" class="custom-input inventory-filter-control">
-                        <span class="inventory-filter-date-arrow" aria-hidden="true">
-                            <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                        </span>
-                        <input type="date" name="date_to" class="custom-input inventory-filter-control">
-                    </div>
-                </div>
-                <div class="inventory-filter-actions">
-                    <input type="search" name="q" placeholder="{% trans 'Axtarış...' %}" autocomplete="off" class="custom-input inventory-filter-control inventory-filter-search">
-                    <button type="button" class="inventory-filter-reset" id="expense-filter-reset">{% trans "Sıfırla" %}</button>
-                </div>
-            </form>
             <!-- Recent Expenses History -->
             <h3 class="recent-expenses-title">{% trans "Son Xərclər" %}</h3>
             <div class="expenses-list data-grid-list" id="expense-list">
@@ -187,126 +162,105 @@
                 </div>
                 {% endfor %}
             </div>
-            {% if expenses %}
-            <div style="text-align: center; padding: 40px; color: #999; display: none;" id="expense-filter-empty">
-                <p>{% trans "Filterə uyğun xərc tapılmadı" %}</p>
-            </div>
-            {% endif %}
         </div>
     </div>
 </main>
 
 {{ subcategory_data|json_script:"expense-subcats-data" }}
 <style>
-    .inventory-filter-shell {
-        display: grid;
-        gap: 14px;
-        background: rgba(255, 255, 255, 0.78);
-        border: 1px solid rgba(255, 255, 255, 0.75);
-        border-radius: 24px;
-        padding: 16px;
-        margin-bottom: 18px;
-        box-shadow: 0 14px 30px rgba(36, 64, 45, 0.08);
-        backdrop-filter: blur(10px);
+    .summary-row--single {
+        grid-template-columns: 1fr;
+        justify-items: center;
     }
 
-    .inventory-filter-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-    }
-
-    .inventory-filter-actions {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px;
-        align-items: center;
-    }
-
-    .inventory-filter-date-range {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-        gap: 10px;
-        align-items: center;
-    }
-
-    .inventory-filter-date-arrow {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: #24915e;
-        background: rgba(36, 145, 94, 0.12);
-        border: 1px solid rgba(36, 145, 94, 0.14);
-    }
-
-    .inventory-filter-control {
-        min-width: 0;
-        background: rgba(255, 255, 255, 0.96);
-    }
-
-    .inventory-filter-search {
+    .summary-row--single .summary-card-cream {
         width: 100%;
+        max-width: 560px;
     }
 
-    .inventory-filter-reset {
-        border: none;
-        border-radius: 16px;
-        padding: 13px 22px;
-        font-weight: 700;
-        color: #fff;
-        cursor: pointer;
-        background: linear-gradient(135deg, #2f965a 0%, #3ca86a 100%);
-        box-shadow: 0 10px 18px rgba(47, 150, 90, 0.24);
-        transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease, background 0.18s ease;
+    /* Subtle tint on main boxes for clearer separation */
+    .form-container-white,
+    .expense-item-card {
+        border: 1px solid rgba(46, 139, 87, 0.14);
+        box-shadow: 0 14px 30px rgba(36, 64, 45, 0.08);
+        background: linear-gradient(180deg, rgba(46, 139, 87, 0.055), rgba(255, 255, 255, 0.96) 42%);
     }
 
-    .inventory-filter-reset:hover {
-        transform: translateY(-1px);
-        filter: saturate(1.05) brightness(1.02);
-        box-shadow: 0 14px 24px rgba(47, 150, 90, 0.3);
+    /* Small accent edge (very subtle) */
+    .form-container-white {
+        position: relative;
+        overflow: hidden;
     }
 
-    .inventory-filter-reset:active {
-        transform: translateY(0);
-        background: linear-gradient(135deg, #206f41 0%, #2a8250 100%);
-        box-shadow: 0 8px 14px rgba(32, 111, 65, 0.24);
+    .form-container-white::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: rgba(46, 139, 87, 0.16);
+        pointer-events: none;
     }
 
-    @media (max-width: 1600px) {
-        .inventory-filter-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .inventory-filter-date-range {
-            grid-column: span 2;
-        }
+    /* Subtle input accents (expenses page only) */
+    #expense-form .custom-input,
+    .crud-list-column .custom-input {
+        background: rgba(226, 232, 240, 0.72); /* greyer fill for clearer differentiation */
+        border: 1px solid rgba(46, 139, 87, 0.24);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
     }
 
-    @media (max-width: 720px) {
-        .inventory-filter-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
+    #expense-form .custom-input:hover,
+    .crud-list-column .custom-input:hover {
+        border-color: rgba(46, 139, 87, 0.34);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        background: rgba(226, 232, 240, 0.85);
+    }
 
-        .inventory-filter-actions {
-            grid-template-columns: 1fr;
-        }
+    #expense-form .custom-input:focus,
+    .crud-list-column .custom-input:focus {
+        outline: none;
+        border-color: rgba(46, 139, 87, 0.55);
+        box-shadow: 0 0 0 4px rgba(46, 139, 87, 0.12), 0 12px 26px rgba(15, 23, 42, 0.08);
+        background: #ffffff;
+    }
 
-        .inventory-filter-date-range {
-            grid-column: span 2;
-            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-        }
+    #expense-form .custom-input::placeholder,
+    .crud-list-column .custom-input::placeholder {
+        color: rgba(100, 116, 139, 0.9);
+    }
 
-        .inventory-filter-date-arrow {
-            width: 44px;
-            border-radius: 14px;
-        }
+    /* Ensure disabled subcategory still looks like an input */
+    #expense-form .custom-input:disabled {
+        opacity: 1;
+        color: rgba(30, 41, 59, 0.75);
+        border-color: rgba(46, 139, 87, 0.18);
+        background: rgba(203, 213, 225, 0.65);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        cursor: not-allowed;
+    }
 
-        .inventory-filter-reset {
-            width: 100%;
-        }
+    /* Recent expenses container (list "card") tint */
+    .expenses-list {
+        border-radius: 24px;
+        padding: 12px;
+        border: 1px solid rgba(46, 139, 87, 0.14);
+        background: linear-gradient(180deg, rgba(46, 139, 87, 0.045), rgba(255, 255, 255, 0.92) 45%);
+        box-shadow: 0 14px 30px rgba(36, 64, 45, 0.08);
+    }
+
+    .expenses-list .expense-item-card {
+        margin: 0;
+    }
+
+    .expenses-list .expense-item-card + .expense-item-card {
+        margin-top: 12px;
+    }
+
+    .recent-expenses-title {
+        margin-top: 6px;
     }
 </style>
 <script>

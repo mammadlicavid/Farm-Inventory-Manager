@@ -152,7 +152,23 @@
     <section id="dynamic-form-shell" class="dynamic-form-shell" hidden>
         <div class="section-head">
             <h3 id="active-form-title">{% trans "Form" %}</h3>
-            <p id="active-form-subtitle">{% trans "Seçilən əməliyyata uyğun form açıldı." %}</p>
+            <p id="active-form-subtitle">{% trans "Scan olunan barkoda uyğun form açıldı." %}</p>
+
+            {% if combined_mode %}
+                <div class="form-switch-row" aria-label="{% trans 'Add inventory form selector' %}">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label for="inventory-form-type">{% trans "Nə əlavə edirsiniz?" %}</label>
+                        <div class="click-focus">
+                            <select id="inventory-form-type" class="custom-input">
+                                <option value="seed">{% trans "Toxum" %}</option>
+                                <option value="animal">{% trans "Heyvan" %}</option>
+                                <option value="tool">{% trans "Alət" %}</option>
+                                <option value="farm">{% trans "Təsərrüfat Məhsulu" %}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
 
         <div class="form-card" data-form-panel="expense" hidden>
@@ -544,6 +560,33 @@
     .manual-type-copy { display: block; font-size: 13px; line-height: 1.5; color: #6b7280; }
     .add-help-strip { margin-top: 14px; border-radius: 18px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e5e7eb; display: flex; align-items: flex-start; gap: 10px; font-size: 13px; font-weight: 600; color: #475569; }
     .add-help-strip i { color: #2e8b57; margin-top: 2px; }
+    .scan-panel, .dynamic-form-shell {
+        background: linear-gradient(180deg, var(--ui-tint, rgba(46, 139, 87, 0.055)), rgba(255, 255, 255, 0.96) 42%);
+        border-radius: 22px;
+        padding: 18px;
+        border: 1px solid var(--ui-border, rgba(46, 139, 87, 0.14));
+        box-shadow: 0 14px 30px rgba(36, 64, 45, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .scan-panel::before,
+    .dynamic-form-shell::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: rgba(46, 139, 87, 0.16);
+        pointer-events: none;
+    }
+
+    .scan-panel > *,
+    .dynamic-form-shell > * {
+        position: relative;
+        z-index: 1;
+    }
     .scan-action, .scan-stop-btn, .submit-green-btn { width: 100%; border: none; border-radius: 16px; padding: 16px 18px; font-size: 16px; font-weight: 700; cursor: pointer; }
     .scan-action { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; text-decoration: none; transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background-color 0.16s ease; }
     .scan-action:hover, .scan-stop-btn:hover, .submit-green-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12); filter: brightness(0.99); }
@@ -553,7 +596,7 @@
     .scan-panel .section-head { margin-bottom: 14px; }
     .scan-action-primary { background: #d9ecde; color: #184d26; box-shadow: 0 8px 20px rgba(31, 95, 47, 0.18); }
     .scan-action-primary.is-scanning { background: #2f7d32; color: #fff; box-shadow: 0 12px 28px rgba(47, 125, 50, 0.28); }
-    .scan-action-link { background: #f8fafc; color: #0f172a; border: 1px solid #000; }
+    .scan-action-link { background: rgba(248, 250, 252, 0.9); color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.16); }
     .scan-action-voice { background: #c4b5fd; color: #3b0764; box-shadow: 0 8px 20px rgba(109, 40, 217, 0.22); }
     .scan-action-voice.is-recording,
     .scan-action-voice.is-transcribing { background: #5b21b6; color: #fff; box-shadow: 0 12px 28px rgba(91, 33, 182, 0.28); }
@@ -586,11 +629,45 @@
     .manual-code-wrapper { margin-top: 4px; }
     .section-head h3 { margin: 0 0 4px; font-size: 18px; }
     .section-head p { margin: 0; color: #6b7280; font-size: 14px; }
-    .form-card { margin-top: 14px; border-top: 1px solid #eef2f7; padding-top: 14px; }
+    .form-switch-row { margin-top: 14px; }
+    .form-card { margin-top: 14px; border-top: 1px solid rgba(46, 139, 87, 0.14); padding-top: 14px; }
     .input-group { margin-bottom: 14px; }
     .input-group label { display: block; font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 8px; }
     .required-star { color: #dc3545; margin-left: 4px; }
-    .custom-input { width: 100%; border: none; border-radius: 14px; background: #f8fafc; padding: 14px 15px; font-size: 15px; }
+    /* Input differentiation (match global theme, but keep page sizing) */
+    .custom-input {
+        width: 100%;
+        border-radius: 14px;
+        padding: 14px 15px;
+        font-size: 15px;
+        border: 1.5px solid rgba(46, 139, 87, 0.24);
+        background: var(--ui-input-bg, rgba(226, 232, 240, 0.72));
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+        outline: none;
+        color: #0f172a;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    }
+
+    .custom-input:hover {
+        border-color: rgba(46, 139, 87, 0.34);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        background: var(--ui-input-bg-hover, rgba(226, 232, 240, 0.85));
+    }
+
+    .custom-input:focus {
+        border-color: rgba(46, 139, 87, 0.55);
+        box-shadow: 0 0 0 4px var(--ui-focus-ring, rgba(46, 139, 87, 0.12)), 0 12px 26px rgba(15, 23, 42, 0.08);
+        background: #ffffff;
+    }
+
+    .custom-input:disabled {
+        opacity: 1;
+        color: rgba(30, 41, 59, 0.75);
+        border-color: rgba(46, 139, 87, 0.18);
+        background: rgba(203, 213, 225, 0.65);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        cursor: not-allowed;
+    }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .submit-green-btn { background: #2f7d32; color: #fff; box-shadow: 0 8px 20px rgba(47, 125, 50, 0.22); }
     @media (max-width: 640px) {

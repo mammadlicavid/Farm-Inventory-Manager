@@ -20,6 +20,16 @@ class UserSettings(models.Model):
         ('lb_litr', 'pound / litr'),
         ('lb_gallon', 'pound / gallon'),
     ]
+
+    WEIGHT_UNIT_CHOICES = [
+        ("kg", "kq"),
+        ("lb", "pound"),
+    ]
+
+    VOLUME_UNIT_CHOICES = [
+        ("litr", "litr"),
+        ("gallon", "gallon"),
+    ]
     CURRENCY_CHOICES = [
         ('AZN', 'AZN ₼'),
         ('EUR', 'EUR €'),
@@ -30,6 +40,8 @@ class UserSettings(models.Model):
     language              = models.CharField(max_length=10,  choices=LANGUAGE_CHOICES,  default='az')
     timezone              = models.CharField(max_length=50,  choices=TIMEZONE_CHOICES,  default='Asia/Baku')
     unit                  = models.CharField(max_length=10,  choices=UNIT_CHOICES,      default='kg_litr')
+    volume_unit           = models.CharField(max_length=10,  choices=VOLUME_UNIT_CHOICES, default="litr")
+    weight_unit           = models.CharField(max_length=10,  choices=WEIGHT_UNIT_CHOICES, default="kg")
     currency              = models.CharField(max_length=5,   choices=CURRENCY_CHOICES,  default='AZN')
     email_notifications   = models.BooleanField(default=True)
     system_notifications  = models.BooleanField(default=True)
