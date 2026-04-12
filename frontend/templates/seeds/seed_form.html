@@ -18,7 +18,7 @@
         {% unit_system request.user as weight_unit_system %}
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Toxum Məlumatlarını Yenilə" %}</h3>
 
-        <form method="POST" id="seed-form" data-sync-entity="seed" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'seeds:seed_list' %}">
+        <form method="POST" id="seed-form" data-sync-entity="seed" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'seeds:seed_list' %}" data-sync-direct-online="true">
             {% csrf_token %}
             <input type="hidden" name="record_id" value="{{ seed.pk }}">
             <input type="hidden" name="record_version" value="{{ seed.updated_at|date:'c' }}">
@@ -85,6 +85,17 @@
                 </div>
             </div>
 
+            <div class="form-group" id="seed-zero-price-source-group" style="display: none;">
+                <label>{% trans "Bu stok haradan gəlib?" %} <span class="required-star">*</span></label>
+                <select name="zero_price_source" id="seed-zero-price-source" class="custom-input">
+                    <option value="">{% trans "Seçin" %}</option>
+                    {% for value, label in zero_price_source_choices %}
+                    <option value="{{ value }}" {% if seed.zero_price_source == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="zero-price-source-note">{% trans "Məbləğ 0 olduqda mənbəni seçin." %}</div>
+            </div>
+
             <div class="form-group">
                 <label>{% trans "Əlavə Məlumat" %}</label>
                 <textarea name="additional_info" placeholder="{% trans 'Məsələn: Toxumun vəziyyəti və s.' %}" class="custom-input"
@@ -100,91 +111,6 @@
 </main>
 {{ category_item_map|json_script:"seed-form-category-item-map" }}
 <script>
-    const seedFormCategoryItemMap = JSON.parse(document.getElementById("seed-form-category-item-map")?.textContent || "{}");
-    const seedFormManualGroup = document.getElementById('manual-name-group');
-    const seedFormManualInput = document.getElementById('manual-name-input');
-    const seedUnitSelect = document.getElementById('seed-unit-select');
-    const weightUnitSystem = "{% unit_system request.user %}";
-    const KG_PER_POUND = 0.45359237;
-    const GRAMS_PER_OUNCE = 28.349523125;
-
-    function populateSeedFormItems(categoryId, selectedItemId = "") {
-        const itemSelect = document.getElementById('item-select');
-        if (!itemSelect) return;
-        const items = seedFormCategoryItemMap[String(categoryId)] || [];
-        itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Toxum seçin" %}</option>';
-        items.forEach((item) => {
-            const option = document.createElement('option');
-            option.value = String(item.id);
-            option.textContent = item.name;
-            if (String(item.id) === String(selectedItemId)) {
-                option.selected = true;
-            }
-            itemSelect.appendChild(option);
-        });
-        itemSelect.disabled = false;
-    }
-
-    document.getElementById('category-select').addEventListener('change', function () {
-        const categoryId = this.value;
-        const categoryText = this.options[this.selectedIndex].text;
-        const itemSelect = document.getElementById('item-select');
-        const itemGroup = document.getElementById('item-field-group');
-        const manualGroup = document.getElementById('manual-name-group');
-        const manualInput = document.getElementById('manual-name-input');
-
-        if (categoryText === "Digər") {
-            itemGroup.style.display = 'none';
-            itemSelect.required = false;
-            itemSelect.disabled = true;
-
-            seedFormManualGroup.style.display = 'block';
-            seedFormManualInput.required = true;
-        } else {
-            seedFormManualGroup.style.display = 'none';
-            seedFormManualInput.required = false;
-            seedFormManualInput.value = '';
-
-            itemGroup.style.display = 'block';
-            itemSelect.style.display = 'block';
-            itemSelect.required = true;
-            populateSeedFormItems(categoryId);
-            handleSeedItemSelection();
-        }
-    });
-
-    function handleSeedItemSelection() {
-        const selected = document.getElementById('item-select').options[document.getElementById('item-select').selectedIndex];
-        const isOther = (selected?.textContent || "").trim() === "Digər";
-        if (isOther) {
-            seedFormManualGroup.style.display = 'block';
-            seedFormManualInput.required = true;
-        } else {
-            seedFormManualGroup.style.display = 'none';
-            seedFormManualInput.required = false;
-            seedFormManualInput.value = '';
-        }
-    }
-
-    document.getElementById('item-select').addEventListener('change', handleSeedItemSelection);
-
-    (function initSelection() {
-        const itemSelect = document.getElementById('item-select');
-        if (itemSelect && itemSelect.value) {
-            handleSeedItemSelection();
-        }
-    })();
-
-    document.getElementById('seed-form')?.addEventListener('submit', function () {
-        const quantityInput = document.querySelector('input[name="quantity"]');
-        if (!quantityInput || !seedUnitSelect) return;
-        const value = parseFloat(quantityInput.value || "");
-        if (!Number.isFinite(value) || weightUnitSystem !== "lb") return;
-        if (seedUnitSelect.value === "kg") {
-            quantityInput.value = String(Number((value * KG_PER_POUND).toFixed(4)));
-        } else if (seedUnitSelect.value === "qram") {
-            quantityInput.value = String(Number((value * GRAMS_PER_OUNCE).toFixed(4)));
-        }
-    });
+  {% include 'scripts/seeds/seed_form.js' %}
 </script>
 {% endblock %}

@@ -3,15 +3,18 @@
 {% load common_extras %}
 
 {% block content %}
-<header class="main-header">
+<header class="main-header dashboard-hero">
     <div class="header-content">
         <div class="header-top">
-            <h1>{% trans "Ferma İdarəsi" %}</h1>
+            <div>
+                <p class="dashboard-eyebrow">{% trans "Ferma idarəsi" %}</p>
+                <h1>{% trans "Bu gün nə etmək istəyirsiniz?" %}</h1>
+            </div>
             <div class="header-right-actions">
                 <div class="status-badge">
-                    <span class="status-dot"></span> Onlayn
+                    <span class="status-dot"></span> {% trans "Onlayn" %}
                 </div>
-                <a href="{% url 'notifications:list' %}" class="header-icon-btn header-icon-btn--with-badge" title="Xatırlatmalar">
+                <a href="{% url 'notifications:list' %}" class="header-icon-btn header-icon-btn--with-badge" title="{% trans 'Xatırlatmalar' %}">
                     <i class="fa-solid fa-bell"></i>
                     {% if pending_notification_count %}
                     <span class="header-icon-badge">{{ pending_notification_count }}</span>
@@ -19,88 +22,270 @@
                 </a>
             </div>
         </div>
-        <p class="welcome-text">Xoş gəlmisiniz, {{ user_name }}!</p>
+        <p class="welcome-text">
+            {% blocktrans trimmed with name=user_name %}
+            Salam, {{ name }}. Buradan stok əlavə edə, qalığa baxa, satış yaza və xərcləri qeyd edə bilərsiniz.
+            {% endblocktrans %}
+        </p>
+        {% if pending_notification_count %}
+        <div class="dashboard-alert-pill">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>
+                {% blocktrans trimmed with count=pending_notification_count %}
+                Diqqət tələb edən {{ count }} xəbərdarlıq və xatırlatma var.
+                {% endblocktrans %}
+            </span>
+        </div>
+        {% endif %}
     </div>
     <div class="header-curve"></div>
 </header>
 
-<main class="main-content">
-
-    <div class="categories-grid">
-        <a href="{% url 'seeds:seed_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box green-icon">
-                <i class="fa-solid fa-seedling"></i>
+<main class="main-content dashboard-main">
+    <section class="dashboard-panel dashboard-panel--primary">
+        <div class="dashboard-section-head">
+            <div>
+                <p class="dashboard-section-label">{% trans "Əsas hərəkətlər" %}</p>
+                <h2 class="dashboard-section-heading">{% trans "Bu səhifədə nə edə bilərsiniz?" %}</h2>
+                <p class="dashboard-section-text">{% trans "Ən vacib işlər birbaşa açılır. Kateqoriya axtarmağa ehtiyac yoxdur." %}</p>
             </div>
-            <span>{% trans "Toxumlar" %}</span>
-        </a>
+        </div>
+        <div class="dashboard-primary-grid">
+            <a href="{% url 'inventory:add_placeholder' %}" class="dashboard-action-card dashboard-action-card--add">
+                <span class="dashboard-action-icon"><i class="fa-solid fa-plus"></i></span>
+                <span class="dashboard-action-title">{% trans "Stok əlavə et" %}</span>
+                <span class="dashboard-action-copy">{% trans "Heyvan, toxum, alət və ya məhsul daxil edin." %}</span>
+            </a>
+            <a href="{% url 'inventory:stocks' %}" class="dashboard-action-card dashboard-action-card--track">
+                <span class="dashboard-action-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+                <span class="dashboard-action-title">{% trans "Stoka bax" %}</span>
+                <span class="dashboard-action-copy">{% trans "Qalıq miqdarını görün və sayımı düzəldin." %}</span>
+            </a>
+            <a href="{% url 'inventory:add_placeholder' %}?form=income" class="dashboard-action-card dashboard-action-card--sell">
+                <span class="dashboard-action-icon"><i class="fa-solid fa-money-bill-trend-up"></i></span>
+                <span class="dashboard-action-title">{% trans "Məhsul sat" %}</span>
+                <span class="dashboard-action-copy">{% trans "Satışdan gələn məbləği və miqdarı yazın." %}</span>
+            </a>
+            <a href="{% url 'inventory:add_placeholder' %}?form=expense" class="dashboard-action-card dashboard-action-card--expense">
+                <span class="dashboard-action-icon"><i class="fa-solid fa-receipt"></i></span>
+                <span class="dashboard-action-title">{% trans "Xərc yaz" %}</span>
+                <span class="dashboard-action-copy">{% trans "Yem, yanacaq, gübrə və digər xərcləri qeyd edin." %}</span>
+            </a>
+        </div>
+    </section>
 
-        <a href="{% url 'animals:animal_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box lime-icon">
-                <i class="fa-solid fa-cow"></i>
+    <section class="dashboard-panel dashboard-panel--secondary">
+        <div class="dashboard-section-head">
+            <div>
+                <p class="dashboard-section-label">{% trans "Maliyyə və tərəfdaşlar" %}</p>
+                <h2 class="dashboard-section-heading">{% trans "Əlavə iş bölmələri" %}</h2>
+                <p class="dashboard-section-text">{% trans "Hesabat hazırlamaq və təchizatçı siyahısını idarə etmək üçün bu bölmələri açın." %}</p>
             </div>
-            <span>{% trans "Heyvanlar" %}</span>
-        </a>
+        </div>
+        <div class="dashboard-secondary-grid">
+            <a href="{% url 'reports:list' %}" class="dashboard-secondary-card dashboard-secondary-card--reports">
+                <span class="dashboard-secondary-icon"><i class="fa-solid fa-chart-column"></i></span>
+                <span class="dashboard-secondary-title">{% trans "Hesabatlar" %}</span>
+                <span class="dashboard-secondary-copy">{% trans "Gəlir, xərc, vergi və yüklənə bilən hesabatları açın." %}</span>
+            </a>
+            <a href="{% url 'suppliers_list' %}" class="dashboard-secondary-card dashboard-secondary-card--suppliers">
+                <span class="dashboard-secondary-icon"><i class="fa-solid fa-handshake"></i></span>
+                <span class="dashboard-secondary-title">{% trans "Təchizatçılar" %}</span>
+                <span class="dashboard-secondary-copy">{% trans "Əlaqə məlumatı və alış etdiyiniz tərəfdaş siyahısını görün." %}</span>
+            </a>
+        </div>
+    </section>
 
-        <a href="{% url 'tools:tool_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box brown-icon">
-                <i class="fa-solid fa-wrench"></i>
+    <section class="dashboard-overview-grid">
+        <article class="dashboard-metric-card">
+            <span class="dashboard-metric-label">{% trans "Bu həftə yeni əlavə" %}</span>
+            <strong class="dashboard-metric-value">{{ overview.new_additions }}</strong>
+            <span class="dashboard-metric-note">{% trans "Bu həftə əlavə olunan yeni stok qeydləri" %}</span>
+        </article>
+        <article class="dashboard-metric-card dashboard-metric-card--income">
+            <span class="dashboard-metric-label">{% trans "Bu həftə gəlir" %}</span>
+            <strong class="dashboard-metric-value dashboard-metric-value--income">{% money overview.weekly_income_display request.user "+" %}</strong>
+            <span class="dashboard-metric-note">{% trans "Satış və digər gəlirlər" %}</span>
+        </article>
+        <article class="dashboard-metric-card dashboard-metric-card--expense">
+            <span class="dashboard-metric-label">{% trans "Bu həftə xərc" %}</span>
+            <strong class="dashboard-metric-value dashboard-metric-value--expense">{% money overview.weekly_expenses_display request.user "-" %}</strong>
+            <span class="dashboard-metric-note">{% trans "Alışlar və gündəlik xərclər" %}</span>
+        </article>
+        <article class="dashboard-metric-card dashboard-metric-card--balance">
+            <span class="dashboard-metric-label">{% trans "Həftəlik balans" %}</span>
+            <strong class="dashboard-metric-value {% if overview.weekly_balance >= 0 %}dashboard-metric-value--income{% else %}dashboard-metric-value--expense{% endif %}">
+                {% if overview.weekly_balance >= 0 %}
+                {% money overview.weekly_balance_display request.user "+" %}
+                {% else %}
+                {% money overview.weekly_balance_display request.user %}
+                {% endif %}
+            </strong>
+            <span class="dashboard-metric-note">{% trans "Gəlir və xərc fərqi" %}</span>
+        </article>
+    </section>
+
+    <section class="dashboard-panel dashboard-story-card {% if show_onboarding %}dashboard-story-card--onboarding{% endif %}">
+        <div class="dashboard-section-head">
+            <div>
+                <p class="dashboard-section-label">{% if show_onboarding %}{% trans "Başlamaq üçün" %}{% else %}{% trans "İş axını" %}{% endif %}</p>
+                <h2 class="dashboard-section-heading">{% trans "Dashboard → Əlavə et → İzləyin → Satın" %}</h2>
+                <p class="dashboard-section-text">
+                    {% if show_onboarding %}
+                    {% trans "İlk dəfə istifadə edirsinizsə, aşağıdakı addımlar proqramı ilk 10 saniyədə başa düşməyə kömək edəcək." %}
+                    {% else %}
+                    {% trans "Hər gün eyni axınla işləyin: əvvəl əlavə edin, sonra izləyin, sonda satış və xərci yazın." %}
+                    {% endif %}
+                </p>
             </div>
-            <span>{% trans "Alətlər" %}</span>
-        </a>
+        </div>
+        <div class="dashboard-story-grid">
+            <a href="{% url 'inventory:add_placeholder' %}" class="dashboard-story-step">
+                <span class="dashboard-step-index">1</span>
+                <span class="dashboard-step-title">{% trans "Əvvəl stok əlavə edin" %}</span>
+                <span class="dashboard-step-copy">{% trans "Yeni heyvanı, toxumu, aləti və ya hazır məhsulu yazın." %}</span>
+            </a>
+            <a href="{% url 'inventory:stocks' %}" class="dashboard-story-step">
+                <span class="dashboard-step-index">2</span>
+                <span class="dashboard-step-title">{% trans "Sonra qalığa baxın" %}</span>
+                <span class="dashboard-step-copy">{% trans "Stok səhifəsində hansı məhsuldan nə qədər qaldığını görün." %}</span>
+            </a>
+            <a href="{% url 'inventory:add_placeholder' %}?form=income" class="dashboard-story-step">
+                <span class="dashboard-step-index">3</span>
+                <span class="dashboard-step-title">{% trans "Satışı yazın" %}</span>
+                <span class="dashboard-step-copy">{% trans "Məhsul satanda gəliri dərhal qeyd edin ki, stok azalsın və qazanc görünsün." %}</span>
+            </a>
+        </div>
+    </section>
 
-        <a href="{% url 'farm_products:product_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box dark-red-icon">
-                <i class="fa-solid fa-warehouse"></i>
+    {% if low_stock_alerts %}
+    <section class="low-stock-card">
+        <div class="lsc-header">
+            <div class="lsc-header-left">
+                <div class="lsc-icon-wrapper">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="lsc-title-wrapper">
+                    <h2 class="lsc-title">{% trans "Azalan stoklar" %}</h2>
+                    <p class="lsc-subtitle">
+                        {% blocktrans trimmed with count=critical_count %}
+                        Kritik səviyyəyə düşən məhsul sayı: {{ count }}
+                        {% endblocktrans %}
+                    </p>
+                </div>
             </div>
-            <span>{% trans "Təsərrüfat Məhsulları" %}</span>
-        </a>
+            <div class="lsc-badge-main">{{ low_stock_alerts|length }}</div>
+        </div>
 
-        <a href="{% url 'expenses:expense_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box yellow-icon">
-                <i class="fa-solid fa-sack-dollar"></i>
+        <div class="lsc-list">
+            {% for alert in low_stock_alerts %}
+            <a href="{% url 'notifications:list' %}#stock-alerts" class="lsc-link">
+                <div class="lsc-item">
+                    <div class="lsc-item-icon-wrapper">
+                        <i class="fa-solid {{ alert.icon }} lsc-item-icon"></i>
+                    </div>
+                    <div class="lsc-item-content">
+                        <div class="lsc-item-header">
+                            <h3 class="lsc-item-title">{{ alert.item_name }}</h3>
+                            <span class="lsc-item-badge {{ alert.color }}">{{ alert.status_text }}</span>
+                        </div>
+                        <div class="lsc-progress-bar-bg">
+                            <div class="lsc-progress-bar-fill {{ alert.color }}" style="width: {{ alert.percentage }}%;"></div>
+                        </div>
+                        <div class="lsc-item-stats">
+                            {% display_measure alert.total_display alert.unit request.user %} / {% trans "Minimum limit" %} {% display_measure alert.threshold_display alert.unit request.user %}
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right lsc-item-arrow"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% else %}
+    <section class="dashboard-panel dashboard-panel--calm">
+        <div class="dashboard-calm-state">
+            <span class="dashboard-calm-icon"><i class="fa-solid fa-circle-check"></i></span>
+            <div>
+                <h2 class="dashboard-section-heading">{% trans "Hazırda kritik stok xəbərdarlığı yoxdur" %}</h2>
+                <p class="dashboard-section-text">{% trans "Qalıq minimum limitdən aşağı düşəndə burada avtomatik görünəcək." %}</p>
             </div>
-            <span>{% trans "Xərclər" %}</span>
-        </a>
+        </div>
+    </section>
+    {% endif %}
 
-        <a href="{% url 'incomes:income_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box income-pink-icon">
-                <i class="fa-solid fa-money-bill-trend-up"></i>
+    <section class="dashboard-panel">
+        <div class="dashboard-section-head">
+            <div>
+                <p class="dashboard-section-label">{% trans "Ətraflı bölmələr" %}</p>
+                <h2 class="dashboard-section-heading">{% trans "Bölmələr üzrə işləyin" %}</h2>
+                <p class="dashboard-section-text">{% trans "Ayrı-ayrı inventar və maliyyə səhifələrinə birbaşa keçin." %}</p>
             </div>
-            <span>{% trans "Gəlirlər" %}</span>
-        </a>
+        </div>
+        <div class="dashboard-shortcuts-grid">
+            <a href="{% url 'animals:animal_list' %}" class="dashboard-shortcut-card">
+                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-cow"></i></span>
+                <span class="dashboard-shortcut-title">{% trans "Heyvanlar" %}</span>
+                <span class="dashboard-shortcut-copy">{% trans "Alış, satış və say dəyişimini izləyin." %}</span>
+            </a>
+            <a href="{% url 'seeds:seed_list' %}" class="dashboard-shortcut-card">
+                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-seedling"></i></span>
+                <span class="dashboard-shortcut-title">{% trans "Toxumlar" %}</span>
+                <span class="dashboard-shortcut-copy">{% trans "Toxum ehtiyatını və əlavə qeydləri açın." %}</span>
+            </a>
+            <a href="{% url 'tools:tool_list' %}" class="dashboard-shortcut-card">
+                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-wrench"></i></span>
+                <span class="dashboard-shortcut-title">{% trans "Alətlər" %}</span>
+                <span class="dashboard-shortcut-copy">{% trans "İş alətlərinin sayını və vəziyyətini görün." %}</span>
+            </a>
+            <a href="{% url 'farm_products:product_list' %}" class="dashboard-shortcut-card">
+                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-warehouse"></i></span>
+                <span class="dashboard-shortcut-title">{% trans "Hazır məhsullar" %}</span>
+                <span class="dashboard-shortcut-copy">{% trans "Süd, yumurta, tərəvəz və digər məhsulları açın." %}</span>
+            </a>
+            <a href="{% url 'incomes:income_list' %}" class="dashboard-shortcut-card">
+                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-sack-dollar"></i></span>
+                <span class="dashboard-shortcut-title">{% trans "Gəlirlər" %}</span>
+                <span class="dashboard-shortcut-copy">{% trans "Bütün satış və gəlir qeydlərini görün." %}</span>
+            </a>
+            <a href="{% url 'expenses:expense_list' %}" class="dashboard-shortcut-card">
+                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-wallet"></i></span>
+                <span class="dashboard-shortcut-title">{% trans "Xərclər" %}</span>
+                <span class="dashboard-shortcut-copy">{% trans "Yem, yanacaq və digər xərcləri yoxlayın." %}</span>
+            </a>
+        </div>
+    </section>
+</main>
 
-        <a href="{% url 'reports:list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box dark-green-icon">
-                <i class="fa-solid fa-clipboard-list"></i>
-            </div>
-            <span>{% trans "Hesabatlar" %}</span>
-        </a>
-
-        <a href="{% url 'sync:page' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box gray-icon">
-                <i class="fa-solid fa-cloud"></i>
-            </div>
-            <span>{% trans "Bulud" %}</span>
-        </a>
-
-        <a href="{% url 'suppliers_list' %}" class="category-card" style="text-decoration: none;">
-            <div class="icon-box lime-icon" style="background-color: #E2E8F0;">
-                <i class="fa-solid fa-handshake"></i>
-            </div>
-            <span>{% trans "Təchizatçılar" %}</span>
-        </a>
-    </div>
-
-    <!-- Low Stock Alert Card (Ehtiyat Xəbərdarlığı) -->
-    <style>
-    .low-stock-card {
-        background-color: white;
-        border-radius: 12px;
-        padding: 18px;
-        margin: 24px 0;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+<style>
+    .dashboard-main {
+        display: grid;
+        gap: 18px;
+        padding-bottom: 18px;
     }
+
+    .dashboard-eyebrow {
+        margin: 0 0 8px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    .dashboard-alert-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
     .header-icon-btn--with-badge {
         position: relative;
         width: 48px;
@@ -110,6 +295,7 @@
         justify-content: center;
         font-size: 20px;
     }
+
     .header-icon-badge {
         position: absolute;
         top: -4px;
@@ -129,17 +315,437 @@
         line-height: 1;
         z-index: 2;
     }
+
+    .dashboard-panel {
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+    }
+
+    .dashboard-panel--primary {
+        background:
+            radial-gradient(circle at top right, rgba(250, 204, 21, 0.16), transparent 28%),
+            linear-gradient(180deg, #ffffff 0%, #f7fbf7 100%);
+    }
+
+    .dashboard-panel--secondary {
+        background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 28%),
+            linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .dashboard-panel--calm {
+        background: linear-gradient(180deg, #ffffff 0%, #f5fbf7 100%);
+    }
+
+    .dashboard-section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 18px;
+    }
+
+    .dashboard-section-head--split {
+        align-items: center;
+    }
+
+    .dashboard-section-label {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+
+    .dashboard-section-heading {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .dashboard-section-text {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: #4b5563;
+    }
+
+    .dashboard-primary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .dashboard-shortcuts-grid,
+    .dashboard-secondary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .dashboard-action-card,
+    .dashboard-shortcut-card,
+    .dashboard-story-step {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .dashboard-action-card {
+        min-height: 164px;
+        border-radius: 22px;
+        padding: 18px;
+        display: grid;
+        gap: 10px;
+        align-content: start;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    }
+
+    .dashboard-action-card:hover,
+    .dashboard-shortcut-card:hover,
+    .dashboard-story-step:hover {
+        transform: translateY(-2px);
+    }
+
+    .dashboard-action-card--add {
+        background: linear-gradient(160deg, #204f2e 0%, #2e8b57 100%);
+        color: #f8fff9;
+    }
+
+    .dashboard-action-card--track {
+        background: linear-gradient(160deg, #0f766e 0%, #2dd4bf 100%);
+        color: #f2fffd;
+    }
+
+    .dashboard-action-card--sell {
+        background: linear-gradient(160deg, #8b5e16 0%, #f59e0b 100%);
+        color: #fffaf0;
+    }
+
+    .dashboard-action-card--expense {
+        background: linear-gradient(160deg, #7c2d12 0%, #f97316 100%);
+        color: #fff8f4;
+    }
+
+    .dashboard-action-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.16);
+        font-size: 22px;
+    }
+
+    .dashboard-action-title {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .dashboard-action-copy {
+        font-size: 14px;
+        line-height: 1.45;
+        opacity: 0.92;
+    }
+
+    .dashboard-secondary-card {
+        text-decoration: none;
+        color: inherit;
+        min-height: 152px;
+        border-radius: 22px;
+        padding: 18px;
+        display: grid;
+        gap: 10px;
+        align-content: start;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    }
+
+    .dashboard-secondary-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .dashboard-secondary-card--reports {
+        background: linear-gradient(160deg, #1d4ed8 0%, #38bdf8 100%);
+        color: #f4fbff;
+    }
+
+    .dashboard-secondary-card--suppliers {
+        background: linear-gradient(160deg, #5b2c83 0%, #c084fc 100%);
+        color: #fbf7ff;
+    }
+
+    .dashboard-secondary-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.16);
+        font-size: 22px;
+    }
+
+    .dashboard-secondary-title {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .dashboard-secondary-copy {
+        font-size: 14px;
+        line-height: 1.45;
+        opacity: 0.92;
+    }
+
+    .dashboard-overview-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .dashboard-metric-card {
+        background: #ffffff;
+        border-radius: 22px;
+        padding: 18px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+        display: grid;
+        gap: 8px;
+    }
+
+    .dashboard-metric-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: #6b7280;
+    }
+
+    .dashboard-metric-value {
+        font-size: 30px;
+        font-weight: 900;
+        line-height: 1;
+        color: #111827;
+    }
+
+    .dashboard-metric-value--income {
+        color: #15803d;
+    }
+
+    .dashboard-metric-value--expense {
+        color: #dc2626;
+    }
+
+    .dashboard-metric-note {
+        font-size: 13px;
+        line-height: 1.45;
+        color: #6b7280;
+    }
+
+    .dashboard-inline-stat {
+        min-width: 140px;
+        border-radius: 18px;
+        padding: 14px 16px;
+        background: #f5fbf6;
+        border: 1px solid rgba(46, 139, 87, 0.16);
+        text-align: right;
+    }
+
+    .dashboard-inline-stat-value {
+        display: block;
+        font-size: 28px;
+        font-weight: 900;
+        color: #1f6d3f;
+        line-height: 1;
+    }
+
+    .dashboard-inline-stat-label {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #4b5563;
+    }
+
+    .dashboard-breakdown-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .dashboard-breakdown-pill {
+        border-radius: 18px;
+        padding: 14px 16px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .dashboard-breakdown-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: #e8f3eb;
+        color: #2e8b57;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .dashboard-breakdown-text {
+        font-size: 14px;
+        font-weight: 700;
+        color: #374151;
+    }
+
+    .dashboard-breakdown-count {
+        font-size: 20px;
+        font-weight: 900;
+        color: #111827;
+    }
+
+    .dashboard-story-card {
+        background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 28%),
+            linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .dashboard-story-card--onboarding {
+        background:
+            radial-gradient(circle at top left, rgba(245, 158, 11, 0.1), transparent 30%),
+            linear-gradient(180deg, #fffef7 0%, #fffaf0 100%);
+    }
+
+    .dashboard-story-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .dashboard-story-step {
+        border-radius: 20px;
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        display: grid;
+        gap: 8px;
+        min-height: 154px;
+    }
+
+    .dashboard-step-index {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: #e8f3eb;
+        color: #1f6d3f;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 900;
+    }
+
+    .dashboard-step-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1.25;
+    }
+
+    .dashboard-step-copy {
+        font-size: 14px;
+        line-height: 1.5;
+        color: #4b5563;
+    }
+
+    .dashboard-calm-state {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .dashboard-calm-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        background: #e8f8ec;
+        color: #15803d;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .dashboard-shortcut-card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 16px;
+        display: grid;
+        gap: 8px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+    }
+
+    .dashboard-shortcut-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: #eef7f0;
+        color: #2e8b57;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .dashboard-shortcut-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .dashboard-shortcut-copy {
+        font-size: 13px;
+        line-height: 1.5;
+        color: #6b7280;
+    }
+
+    .low-stock-card {
+        background-color: white;
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+    }
+
+    .lsc-link {
+        text-decoration: none;
+    }
+
     .lsc-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
+        gap: 16px;
     }
+
     .lsc-header-left {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 14px;
     }
+
     .lsc-icon-wrapper {
         width: 48px;
         height: 48px;
@@ -151,56 +757,62 @@
         justify-content: center;
         font-size: 22px;
     }
-    .lsc-title-wrapper {
-        display: flex;
-        flex-direction: column;
-    }
+
     .lsc-title {
-        font-size: 17px;
-        font-weight: 700;
-        color: #1f2937;
+        font-size: 20px;
+        font-weight: 800;
+        color: #111827;
         margin: 0;
     }
+
     .lsc-subtitle {
         font-size: 13px;
         color: #64748b;
         margin: 4px 0 0 0;
     }
+
     .lsc-badge-main {
         background-color: #dc2626;
         color: white;
         font-size: 13px;
         font-weight: 700;
         padding: 4px 12px;
-        border-radius: 12px;
+        border-radius: 999px;
     }
+
     .lsc-list {
         display: flex;
         flex-direction: column;
         gap: 12px;
     }
+
     .lsc-item {
-        background-color: #f4f5f4;
-        border-radius: 14px;
+        background-color: #f8faf8;
+        border-radius: 18px;
         padding: 16px;
         display: flex;
         align-items: center;
         gap: 16px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+        border: 1px solid #eef2f0;
     }
+
     .lsc-item:hover {
-        background-color: #eceee9;
+        background-color: #f1f6f2;
+        transform: translateY(-1px);
     }
+
     .lsc-item-icon-wrapper {
         width: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
+
     .lsc-item-icon {
         font-size: 22px;
     }
+
     .lsc-item-icon.fa-seedling { color: #65a30d; }
     .lsc-item-icon.fa-gas-pump { color: #dc2626; }
     .lsc-item-icon.fa-wheat-awn { color: #84cc16; }
@@ -209,18 +821,22 @@
     .lsc-item-content {
         flex: 1;
     }
+
     .lsc-item-header {
         display: flex;
         align-items: center;
         gap: 10px;
         margin-bottom: 8px;
+        flex-wrap: wrap;
     }
+
     .lsc-item-title {
         font-size: 15px;
-        font-weight: 600;
+        font-weight: 700;
         color: #334155;
         margin: 0;
     }
+
     .lsc-item-badge {
         font-size: 11px;
         font-weight: 700;
@@ -228,9 +844,10 @@
         border-radius: 8px;
         color: white;
     }
+
     .lsc-item-badge.yellow { background-color: #f59e0b; }
     .lsc-item-badge.red { background-color: #dc2626; }
-    
+
     .lsc-progress-bar-bg {
         height: 6px;
         background-color: #e2e8f0;
@@ -239,6 +856,7 @@
         width: 100%;
         position: relative;
     }
+
     .lsc-progress-bar-fill {
         height: 100%;
         border-radius: 4px;
@@ -246,85 +864,77 @@
         left: 0;
         top: 0;
     }
+
     .lsc-progress-bar-fill.yellow { background-color: #f59e0b; }
     .lsc-progress-bar-fill.red { background-color: #dc2626; }
-    
+
     .lsc-item-stats {
         font-size: 13px;
         color: #64748b;
         margin-top: 4px;
     }
+
     .lsc-item-arrow {
         color: #94a3b8;
         font-size: 14px;
         padding-left: 8px;
     }
-    </style>
-    
-    {% if low_stock_alerts %}
-    <div class="low-stock-card">
-        <div class="lsc-header">
-            <div class="lsc-header-left">
-                <div class="lsc-icon-wrapper">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <div class="lsc-title-wrapper">
-                    <h2 class="lsc-title">{% trans "Ehtiyat Xəbərdarlığı" %}</h2>
-                    <p class="lsc-subtitle">{{ critical_count }} məhsul kritik səviyyədə!</p>
-                </div>
-            </div>
-            <div class="lsc-badge-main">{{ low_stock_alerts|length }}</div>
-        </div>
-        
-        <div class="lsc-list">
-            {% for alert in low_stock_alerts %}
-            <a href="{% url 'notifications:list' %}#stock-alerts" style="text-decoration: none;">
-                <div class="lsc-item">
-                    <div class="lsc-item-icon-wrapper">
-                        <i class="fa-solid {{ alert.icon }} lsc-item-icon"></i>
-                    </div>
-                    <div class="lsc-item-content">
-                        <div class="lsc-item-header">
-                            <h3 class="lsc-item-title">{{ alert.item_name }}</h3>
-                            <span class="lsc-item-badge {{ alert.color }}">{{ alert.status_text }}</span>
-                        </div>
-                        <div class="lsc-progress-bar-bg">
-                            <div class="lsc-progress-bar-fill {{ alert.color }}" style="width: {{ alert.percentage }}%;"></div>
-                        </div>
-                        <div class="lsc-item-stats">{% display_measure alert.total_display alert.unit request.user %} / Limit {% display_measure alert.threshold_display alert.unit request.user %}</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right lsc-item-arrow"></i>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
-    <div class="stats-footer">
-        <h3 style="font-size: 20px; color: #333; margin-bottom: 6px; font-weight: 700;">{% trans "Bu həftə" %}</h3>
-        <div class="stats-row">
-            <div class="stat-item">
-                <span class="stat-value text-black">{{ stats.new_addition }}</span>
-                <span class="stat-label">{% trans "Yeni məhsul" %}</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value text-green" style="font-size: 26px;">
-                    {% if stats.weekly_net >= 0 %}
-                    {% money stats.weekly_net_display request.user "+" %}
-                    {% else %}
-                    {% money stats.weekly_net_display request.user %}
-                    {% endif %}
-                </span>
-                <span class="stat-label">{% trans "Qazanc" %}</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value text-green">+{{ stats.animals }}</span>
-                <span class="stat-label">{% trans "Heyvan" %}</span>
-            </div>
-        </div>
-    </div>
+    @media (max-width: 1100px) {
+        .dashboard-overview-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
 
+        .dashboard-breakdown-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
 
-</main>
+    @media (max-width: 768px) {
+        .dashboard-panel,
+        .low-stock-card,
+        .dashboard-metric-card {
+            border-radius: 20px;
+            padding: 18px;
+        }
+
+        .dashboard-section-head,
+        .lsc-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .dashboard-primary-grid,
+        .dashboard-secondary-grid,
+        .dashboard-shortcuts-grid,
+        .dashboard-overview-grid,
+        .dashboard-story-grid,
+        .dashboard-breakdown-row {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-action-card {
+            min-height: 0;
+        }
+
+        .dashboard-action-title,
+        .dashboard-section-heading,
+        .lsc-title {
+            font-size: 20px;
+        }
+
+        .dashboard-metric-value {
+            font-size: 28px;
+        }
+
+        .dashboard-inline-stat {
+            width: 100%;
+            text-align: left;
+        }
+
+        .lsc-item {
+            align-items: flex-start;
+        }
+    }
+</style>
 {% endblock %}

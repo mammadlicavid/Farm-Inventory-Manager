@@ -10,19 +10,34 @@
         <i class="fa-solid fa-arrow-left"></i>
         <span>{% trans "Xatırlatmalar" %}</span>
       </a>
-      <button class="notif-add-btn" id="openAddModal" type="button">
-        <i class="fa-solid fa-plus"></i>
-      </button>
     </div>
     <p class="welcome-text">{% trans "Xatırlatmalar və ehtiyat xəbərdarlıqları" %}</p>
   </div>
 </header>
 
-<div class="notif-body" id="stock-alerts">
+<main class="main-content notif-body" id="stock-alerts">
+  <section class="notif-summary-grid">
+    <article class="notif-summary-card notif-summary-card--total">
+      <span class="notif-summary-label">{% trans "Ümumi diqqət" %}</span>
+      <strong class="notif-summary-value">{{ attention_count }}</strong>
+      <small class="notif-summary-copy">{% trans "Dashboard-da görünən ümumi say" %}</small>
+    </article>
+    <article class="notif-summary-card notif-summary-card--stock">
+      <span class="notif-summary-label">{% trans "Ehtiyat xəbərdarlığı" %}</span>
+      <strong class="notif-summary-value">{{ stock_alert_count }}</strong>
+      <small class="notif-summary-copy">{% trans "Kritik və azalan stoklar" %}</small>
+    </article>
+    <article class="notif-summary-card notif-summary-card--manual">
+      <span class="notif-summary-label">{% trans "Xatırlatma" %}</span>
+      <strong class="notif-summary-value">{{ pending_count }}</strong>
+      <small class="notif-summary-copy">{% trans "Əl ilə əlavə etdiyiniz gözləyən qeydlər" %}</small>
+    </article>
+  </section>
+
   <section class="stock-panel">
     <div class="notif-section-header">
       <i class="fa-solid fa-triangle-exclamation notif-section-icon notif-section-icon--alert"></i>
-      <span>Ehtiyat xəbərdarlıqları ({{ stock_alert_count }})</span>
+      <span>{% blocktrans trimmed with count=stock_alert_count %}Ehtiyat xəbərdarlıqları ({{ count }}){% endblocktrans %}</span>
     </div>
 
     {% if stock_alerts %}
@@ -40,7 +55,7 @@
             <div class="notif-card-meta">
               <span class="notif-badge notif-badge--stock">{{ alert.source_label }}</span>
               {% if alert.is_custom_rule %}
-              <span class="notif-badge notif-badge--custom">Fərdi limit</span>
+              <span class="notif-badge notif-badge--custom">{% trans "Fərdi limit" %}</span>
               {% endif %}
             </div>
             <div class="stock-progress">
@@ -49,7 +64,7 @@
               </div>
               <div class="stock-progress-meta">
                 <span>{% display_measure alert.total_display alert.unit request.user %}</span>
-                <span>Limit: {% display_measure alert.threshold_display alert.unit request.user %}</span>
+                <span>{% trans "Limit" %}: {% display_measure alert.threshold_display alert.unit request.user %}</span>
               </div>
             </div>
           </div>
@@ -57,14 +72,14 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="notif-empty notif-empty--panel">Hazırda aktiv ehtiyat xəbərdarlığı yoxdur.</div>
+      <div class="notif-empty notif-empty--panel">{% trans "Hazırda aktiv ehtiyat xəbərdarlığı yoxdur." %}</div>
     {% endif %}
   </section>
 
   <section class="stock-panel">
     <div class="notif-section-header">
       <i class="fa-solid fa-sliders notif-section-icon"></i>
-      <span>Limit qur</span>
+      <span>{% trans "Limit qur" %}</span>
     </div>
 
     {% if stock_items %}
@@ -72,11 +87,11 @@
       {% csrf_token %}
       <input type="hidden" name="action" value="add_stock_rule">
 
-      <div class="stock-rule-select-grid">
+      <div class="stock-rule-toolbar">
         <div class="notif-form-group">
-          <label class="notif-form-label">Ana kateqoriya</label>
+          <label class="notif-form-label">{% trans "Ana kateqoriya" %}</label>
           <select id="stockRuleSource" class="notif-form-input" required>
-            <option value="">Ana kateqoriya seçin</option>
+            <option value="">{% trans "Ana kateqoriya seçin" %}</option>
             {% for source in stock_rule_catalog %}
             <option value="{{ source.value }}">{{ source.label }}</option>
             {% endfor %}
@@ -84,66 +99,110 @@
         </div>
 
         <div class="notif-form-group">
-          <label class="notif-form-label">Alt kateqoriya</label>
+          <label class="notif-form-label">{% trans "Alt kateqoriya" %}</label>
           <select id="stockRuleCategory" class="notif-form-input" required disabled>
-            <option value="">Alt kateqoriya seçin</option>
+            <option value="">{% trans "Alt kateqoriya seçin" %}</option>
           </select>
         </div>
 
         <div class="notif-form-group">
           <label class="notif-form-label">{% trans "Məhsul növü" %}</label>
           <select id="stockRuleItem" name="item_key" class="notif-form-input" required disabled>
-            <option value="">Məhsul növü seçin</option>
+            <option value="">{% trans "Məhsul növü seçin" %}</option>
           </select>
+        </div>
+        <div class="notif-form-group">
+          <label class="notif-form-label">{% trans "Xəbərdarlıq həddi" %}</label>
+          <input type="number" id="stockRuleThreshold" name="threshold" class="notif-form-input" min="0.0001" step="0.0001" placeholder="{% trans 'Məs: 20' %}" required>
         </div>
       </div>
 
-      <div class="stock-rule-grid">
-        <div class="notif-form-group">
-          <label class="notif-form-label">{% trans "Xəbərdarlıq həddi" %}</label>
-          <input type="number" name="threshold" class="notif-form-input" min="0.0001" step="0.0001" placeholder="Məs: 20" required>
+      <div class="stock-rule-form-footer">
+        <div class="stock-rule-form-actions">
+          <button type="submit" class="notif-form-submit stock-rule-submit">
+            <i class="fa-solid fa-bell" data-stock-rule-submit-icon></i>
+            <span data-stock-rule-submit-label>{% trans "Yadda saxla" %}</span>
+          </button>
         </div>
-        <button type="submit" class="notif-form-submit stock-rule-submit">
-          <i class="fa-solid fa-bell"></i> Yadda saxla
-        </button>
       </div>
     </form>
     {% else %}
-    <div class="notif-empty notif-empty--panel">Əvvəlcə anbara məhsul əlavə edin, sonra limit qura biləcəksiniz.</div>
+    <div class="notif-empty notif-empty--panel">{% trans "Əvvəlcə anbara məhsul əlavə edin, sonra limit qura biləcəksiniz." %}</div>
     {% endif %}
 
+    <button type="button" class="notif-inline-btn stock-rule-toggle-btn" id="toggleStockRuleDetails" aria-expanded="false">
+      {% trans "Limitləri göstər" %}
+    </button>
+
+    <div class="stock-rule-details" id="stockRuleDetails" data-empty="{% if stock_alert_rules %}false{% else %}true{% endif %}" hidden>
     {% if stock_alert_rules %}
     <div class="stock-rule-list">
       {% for rule in stock_alert_rules %}
       <div class="stock-rule-item">
-        <div>
+        <div class="stock-rule-copy">
           <div class="stock-rule-title">{{ rule.item_name }}</div>
           <div class="stock-rule-meta">
+            <span class="notif-badge {% if rule.is_system_generated %}notif-badge--system{% else %}notif-badge--custom{% endif %}">
+              {% if rule.is_system_generated %}
+                {% trans "Sistem" %}
+              {% else %}
+                {% trans "Fərdi limit" %}
+              {% endif %}
+            </span>
             {{ rule.source_label }} •
-            Limit: {% display_measure rule.threshold rule.unit request.user %}
+            {% trans "Limit" %}: {% display_measure rule.threshold rule.unit request.user %}
             {% if rule.current_total != None %}
-            • Hazırda: {% display_measure rule.current_total rule.unit request.user %}
+            • {% trans "Hazırda" %}: {% display_measure rule.current_total rule.unit request.user %}
             {% endif %}
           </div>
         </div>
-        <form method="POST" class="notif-delete-form">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="delete_stock_rule">
-          <input type="hidden" name="rule_id" value="{{ rule.id }}">
-          <button type="submit" class="notif-delete-btn">
-            <i class="fa-regular fa-trash-can"></i>
+        <div class="stock-rule-actions">
+          <button
+            type="button"
+            class="notif-inline-btn notif-inline-btn--ghost"
+            data-edit-stock-rule
+            data-rule-id="{{ rule.id|default:'' }}"
+            data-rule-source="{{ rule.source_type }}"
+            data-rule-category="{{ rule.category_name }}"
+            data-rule-item="{{ rule.item_key }}"
+            data-rule-threshold="{{ rule.threshold|floatformat:'-4' }}"
+            data-rule-name="{{ rule.item_name }}"
+          >
+            {% trans "Düzəliş et" %}
           </button>
-        </form>
+          <form method="POST" class="notif-delete-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_stock_rule">
+            {% if rule.id %}
+            <input type="hidden" name="rule_id" value="{{ rule.id }}">
+            {% else %}
+            <input type="hidden" name="item_key" value="{{ rule.item_key }}">
+            {% endif %}
+            <button type="submit" class="notif-delete-btn">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </form>
+        </div>
       </div>
       {% endfor %}
     </div>
+    {% else %}
+    <div class="notif-empty notif-empty--panel">{% trans "Hələ əlavə edilmiş limit yoxdur." %}</div>
     {% endif %}
+    </div>
   </section>
 
-  <div class="notif-section-header">
-    <i class="fa-solid fa-bell notif-section-icon"></i>
-    <span>Gözləyən ({{ pending_count }})</span>
-  </div>
+  <section class="stock-panel">
+    <div class="notif-section-head-row">
+      <div class="notif-section-header">
+        <i class="fa-solid fa-bell notif-section-icon"></i>
+        <span>{% blocktrans trimmed with count=pending_count %}Xatırlatmalar ({{ count }}){% endblocktrans %}</span>
+      </div>
+      <button class="notif-inline-btn notif-inline-btn--primary" id="openAddModal" type="button">
+        <i class="fa-solid fa-plus"></i>
+        <span>{% trans "Yeni xatırlatma əlavə et" %}</span>
+      </button>
+    </div>
 
   {% for notif in pending %}
   <div class="notif-card">
@@ -161,19 +220,19 @@
       <div class="notif-card-meta">
         <span class="notif-badge notif-badge--{{ notif.category }}">
           {% if notif.category == 'vaksinasiya' %}
-            <i class="fa-solid fa-syringe"></i> Vaksinasiya
+            <i class="fa-solid fa-syringe"></i> {% trans "Vaksinasiya" %}
           {% elif notif.category == 'odenis' %}
-            <i class="fa-solid fa-dollar-sign"></i> Ödəniş
+            <i class="fa-solid fa-dollar-sign"></i> {% trans "Ödəniş" %}
           {% elif notif.category == 'ekin' %}
-            <i class="fa-solid fa-seedling"></i> Əkin
+            <i class="fa-solid fa-seedling"></i> {% trans "Əkin" %}
           {% elif notif.category == 'ehtiyat' %}
-            <i class="fa-solid fa-triangle-exclamation"></i> Ehtiyat
+            <i class="fa-solid fa-triangle-exclamation"></i> {% trans "Ehtiyat" %}
           {% else %}
-            <i class="fa-solid fa-tag"></i> Digər
+            <i class="fa-solid fa-tag"></i> {% trans "Digər" %}
           {% endif %}
         </span>
         {% if notif.is_system_generated %}
-        <span class="notif-badge notif-badge--system">Avtomatik</span>
+        <span class="notif-badge notif-badge--system">{% trans "Avtomatik" %}</span>
         {% endif %}
         <span class="notif-due">
           <i class="fa-regular fa-calendar"></i> {{ notif.relative_date }}
@@ -181,23 +240,36 @@
       </div>
     </div>
 
-    <form method="POST" class="notif-delete-form">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="delete">
-      <input type="hidden" name="notif_id" value="{{ notif.id }}">
-      <button type="submit" class="notif-delete-btn">
-        <i class="fa-regular fa-trash-can"></i>
+    <div class="notif-card-actions">
+      <button
+        type="button"
+        class="notif-inline-btn notif-inline-btn--ghost notif-edit-btn"
+        data-edit-notification
+        data-notif-id="{{ notif.id }}"
+        data-notif-title="{{ notif.title }}"
+        data-notif-category="{{ notif.category }}"
+        data-notif-date="{{ notif.due_date|date:'Y-m-d' }}"
+      >
+        {% trans "Düzəliş et" %}
       </button>
-    </form>
+      <form method="POST" class="notif-delete-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="notif_id" value="{{ notif.id }}">
+        <button type="submit" class="notif-delete-btn">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </form>
+    </div>
   </div>
   {% empty %}
-  <div class="notif-empty">Gözləyən xatırlatma yoxdur.</div>
+  <div class="notif-empty">{% trans "Gözləyən xatırlatma yoxdur." %}</div>
   {% endfor %}
 
-  <div class="notif-section-header notif-section-header--done">
-    <i class="fa-solid fa-square-check notif-section-icon notif-section-icon--done"></i>
-    <span>Tamamlanmış ({{ completed_count }})</span>
-  </div>
+    <div class="notif-section-header notif-section-header--done">
+      <i class="fa-solid fa-square-check notif-section-icon notif-section-icon--done"></i>
+      <span>{% blocktrans trimmed with count=completed_count %}Tamamlanmış ({{ count }}){% endblocktrans %}</span>
+    </div>
 
   {% for notif in completed %}
   <div class="notif-card notif-card--done">
@@ -216,40 +288,55 @@
       <span class="notif-card-title notif-card-title--done">{{ notif.title }}</span>
     </div>
 
-    <form method="POST" class="notif-delete-form">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="delete">
-      <input type="hidden" name="notif_id" value="{{ notif.id }}">
-      <button type="submit" class="notif-delete-btn">
-        <i class="fa-regular fa-trash-can"></i>
+    <div class="notif-card-actions">
+      <button
+        type="button"
+        class="notif-inline-btn notif-inline-btn--ghost notif-edit-btn"
+        data-edit-notification
+        data-notif-id="{{ notif.id }}"
+        data-notif-title="{{ notif.title }}"
+        data-notif-category="{{ notif.category }}"
+        data-notif-date="{{ notif.due_date|date:'Y-m-d' }}"
+      >
+        {% trans "Düzəliş et" %}
       </button>
-    </form>
+      <form method="POST" class="notif-delete-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="notif_id" value="{{ notif.id }}">
+        <button type="submit" class="notif-delete-btn">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </form>
+    </div>
   </div>
   {% empty %}
-  <div class="notif-empty">Tamamlanmış xatırlatma yoxdur.</div>
+  <div class="notif-empty">{% trans "Tamamlanmış xatırlatma yoxdur." %}</div>
   {% endfor %}
-</div>
+  </section>
+</main>
 
 <div class="notif-modal-mask" id="addModal">
   <div class="notif-modal">
     <div class="notif-modal-header">
-      <h3>{% trans "Yeni xatırlatma" %}</h3>
+      <h3 id="notificationModalTitle">{% trans "Yeni xatırlatma" %}</h3>
       <button class="notif-modal-close" id="closeAddModal" type="button">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
-    <form method="POST">
+    <form method="POST" id="notificationModalForm">
       {% csrf_token %}
-      <input type="hidden" name="action" value="add">
+      <input type="hidden" name="action" value="save_notification">
+      <input type="hidden" name="notif_id" id="notificationModalId">
 
       <div class="notif-form-group">
         <label class="notif-form-label">{% trans "Başlıq" %}</label>
-        <input type="text" name="title" class="notif-form-input" placeholder="{% trans 'Məs: Qoyunlara vaksinasiya' %}" required>
+        <input type="text" name="title" id="notificationModalTitleInput" class="notif-form-input" placeholder="{% trans 'Məs: Qoyunlara vaksinasiya' %}" required>
       </div>
 
       <div class="notif-form-group">
         <label class="notif-form-label">{% trans "Kateqoriya" %}</label>
-        <select name="category" class="notif-form-input">
+        <select name="category" id="notificationModalCategory" class="notif-form-input">
           {% for val, label in category_choices %}
           <option value="{{ val }}">{{ label }}</option>
           {% endfor %}
@@ -258,47 +345,176 @@
 
       <div class="notif-form-group">
         <label class="notif-form-label">{% trans "Tarix" %}</label>
-        <input type="date" name="due_date" class="notif-form-input" required>
+        <input type="date" name="due_date" id="notificationModalDate" class="notif-form-input" required>
       </div>
 
       <button type="submit" class="notif-form-submit">
-        <i class="fa-solid fa-plus"></i> Əlavə et
+        <i class="fa-solid fa-plus" id="notificationModalSubmitIcon"></i>
+        <span id="notificationModalSubmitLabel">{% trans "Əlavə et" %}</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="notif-modal-mask" id="stockRuleEditModal">
+  <div class="notif-modal">
+    <div class="notif-modal-header">
+      <h3 id="stockRuleModalTitle">{% trans "Limiti düzəlt" %}</h3>
+      <button class="notif-modal-close" id="closeStockRuleModal" type="button">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form method="POST" id="stockRuleModalForm">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_stock_rule">
+      <input type="hidden" name="rule_id" id="stockRuleModalId">
+
+      <div class="notif-form-group">
+        <label class="notif-form-label">{% trans "Ana kateqoriya" %}</label>
+        <select id="stockRuleModalSource" class="notif-form-input" required>
+          <option value="">{% trans "Ana kateqoriya seçin" %}</option>
+          {% for source in stock_rule_catalog %}
+          <option value="{{ source.value }}">{{ source.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="notif-form-group">
+        <label class="notif-form-label">{% trans "Alt kateqoriya" %}</label>
+        <select id="stockRuleModalCategory" class="notif-form-input" required disabled>
+          <option value="">{% trans "Alt kateqoriya seçin" %}</option>
+        </select>
+      </div>
+
+      <div class="notif-form-group">
+        <label class="notif-form-label">{% trans "Məhsul növü" %}</label>
+        <select id="stockRuleModalItem" name="item_key" class="notif-form-input" required disabled>
+          <option value="">{% trans "Məhsul növü seçin" %}</option>
+        </select>
+      </div>
+
+      <div class="notif-form-group">
+        <label class="notif-form-label">{% trans "Xəbərdarlıq həddi" %}</label>
+        <input type="number" id="stockRuleModalThreshold" name="threshold" class="notif-form-input" min="0.0001" step="0.0001" placeholder="{% trans 'Məs: 20' %}" required>
+      </div>
+
+      <button type="submit" class="notif-form-submit">
+        <i class="fa-solid fa-pen"></i>
+        <span>{% trans "Yenilə" %}</span>
       </button>
     </form>
   </div>
 </div>
 
 <style>
-  .notif-add-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.2);
-    border: none;
-    color: #fff;
-    font-size: 17px;
+  .notif-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0 0;
+  }
+
+  .notif-summary-card {
+    border-radius: 18px;
+    padding: 18px;
+    display: grid;
+    gap: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+    background: #fff;
+  }
+
+  .notif-summary-card--total {
+    background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  }
+
+  .notif-summary-card--stock {
+    background: linear-gradient(180deg, #fff8f5 0%, #fff1eb 100%);
+  }
+
+  .notif-summary-card--manual {
+    background: linear-gradient(180deg, #f4fcf7 0%, #eaf8ee 100%);
+  }
+
+  .notif-summary-label,
+  .notif-summary-copy {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .notif-summary-value {
+    color: #0f172a;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  .notif-section-head-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.15s;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
   }
-  .notif-add-btn:hover { background: rgba(255,255,255,0.35); }
+
+  .notif-inline-btn {
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(255, 255, 255, 0.9);
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  }
+  .notif-inline-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(59, 130, 246, 0.26);
+  }
+  .notif-inline-btn--primary {
+    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 18px 32px rgba(22, 163, 74, 0.18);
+  }
+  .notif-inline-btn--primary:hover {
+    filter: brightness(0.98);
+  }
+  .notif-inline-btn--ghost {
+    background: #fff;
+    color: #0f172a;
+  }
+  .notif-edit-btn {
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .notif-inline-btn[disabled] {
+    opacity: 0.55;
+    cursor: default;
+    transform: none;
+  }
 
   .notif-body {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0 16px 100px;
+    padding: 16px 12px calc(var(--app-footer-min-height) + 28px);
   }
 
   .stock-panel {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    padding: 16px;
+    background:
+      radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 28%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 24px;
+    padding: 20px;
     margin-top: 18px;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
   }
 
   .notif-section-header {
@@ -332,6 +548,13 @@
 
   .notif-toggle-form,
   .notif-delete-form { display: flex; }
+
+  .notif-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
 
   .notif-check-btn {
     background: none;
@@ -469,28 +692,62 @@
     flex-wrap: wrap;
   }
 
-  .stock-rule-form { margin-bottom: 14px; }
-  .stock-rule-select-grid {
+  .stock-rule-form {
+    margin: 14px 0 16px;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 18px;
+    border-radius: 20px;
+    background:
+      radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 26%),
+      linear-gradient(180deg, #f8fbff 0%, #f4f8fc 100%);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+  .stock-rule-toolbar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
   }
-  .stock-rule-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 140px;
-    gap: 12px;
-    align-items: end;
-  }
-  .stock-rule-submit { margin-top: 0; }
-  .stock-rule-item {
+  .stock-rule-form-footer {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .stock-rule-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .stock-rule-submit {
+    width: auto;
+    min-width: 170px;
+    margin-top: 0;
+  }
+  .stock-rule-toggle-btn {
+    margin-top: 4px;
+  }
+  .stock-rule-details {
+    margin-top: 12px;
+  }
+  .stock-rule-item {
+    display: flex;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    padding: 12px 14px;
+    background:
+      radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 30%),
+      #fff;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 18px;
+    padding: 15px 16px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+  }
+  .stock-rule-copy {
+    flex: 1;
+    min-width: 0;
   }
   .stock-rule-title {
     font-size: 14px;
@@ -502,17 +759,30 @@
     font-size: 12px;
     color: #64748b;
   }
+  .stock-rule-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
 
   .notif-delete-btn {
-    background: none;
-    border: none;
-    color: #d1d5db;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.96);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    color: #94a3b8;
     font-size: 16px;
     cursor: pointer;
     padding: 6px;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
   }
-  .notif-delete-btn:hover { color: #ef4444; }
+  .notif-delete-btn:hover {
+    color: #ef4444;
+    background: #fff1f2;
+    border-color: #fecdd3;
+  }
 
   .notif-empty {
     text-align: center;
@@ -530,19 +800,24 @@
   .notif-modal-mask {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.45);
+    background: rgba(15, 23, 42, 0.42);
     display: none;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
+    padding: 24px;
     z-index: 1000;
   }
   .notif-modal-mask.active { display: flex; }
   .notif-modal {
-    width: 100%;
-    max-width: 100%;
-    background: #fff;
-    border-radius: 20px 20px 0 0;
-    padding: 24px 20px 32px;
+    width: min(560px, 100%);
+    max-width: 560px;
+    background:
+      radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 30%),
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 28px;
+    padding: 24px 22px 24px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
     animation: notif-slide-up 0.25s ease-out;
   }
   @keyframes notif-slide-up {
@@ -581,138 +856,89 @@
   .notif-form-label {
     display: block;
     font-size: 13px;
-    font-weight: 600;
-    color: #374151;
+    font-weight: 700;
+    color: #334155;
     margin-bottom: 6px;
   }
   .notif-form-input {
     width: 100%;
-    padding: 11px 14px;
-    border: 1.5px solid #e5e7eb;
-    border-radius: 12px;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1.5px solid rgba(203, 213, 225, 0.9);
+    border-radius: 14px;
     font-size: 14px;
     color: #111827;
     font-family: inherit;
-    background: #f9fafb;
+    background: rgba(255, 255, 255, 0.94);
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     box-sizing: border-box;
   }
-  .notif-form-input:focus { border-color: #16a34a; }
+  .notif-form-input:focus {
+    border-color: #16a34a;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+  }
 
   .notif-form-submit {
     width: 100%;
+    min-height: 48px;
     padding: 13px;
-    background: #16a34a;
+    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
     color: #fff;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 18px 32px rgba(22, 163, 74, 0.18);
+    transition: filter 0.15s, transform 0.1s;
     margin-top: 6px;
   }
-  .notif-form-submit:hover { background: #15803d; }
+  .notif-form-submit:hover { filter: brightness(0.98); }
   .notif-form-submit:active { transform: scale(0.98); }
 
   @media (max-width: 640px) {
-    .stock-rule-grid {
+    .notif-summary-grid,
+    .stock-rule-toolbar {
       grid-template-columns: 1fr;
-    }
-    .stock-rule-select-grid {
-      grid-template-columns: 1fr;
-    }
-    .stock-rule-submit {
-      width: 100%;
     }
     .stock-alert-header,
     .stock-progress-meta,
-    .stock-rule-item {
+    .stock-rule-item,
+    .notif-card {
       align-items: flex-start;
       flex-direction: column;
+    }
+    .stock-rule-form-actions,
+    .stock-rule-actions,
+    .notif-card-actions {
+      width: 100%;
+      margin-left: 0;
+      justify-content: flex-start;
+    }
+    .stock-rule-submit,
+    .notif-inline-btn--primary {
+      width: 100%;
+    }
+    .notif-modal-mask {
+      align-items: flex-end;
+      padding: 0;
+    }
+    .notif-modal {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 24px 24px 0 0;
+      padding: 22px 18px 28px;
     }
   }
 </style>
 
 <script>
-;(function () {
-  const stockCatalog = {{ stock_rule_catalog_json|safe }};
-  const openBtn = document.getElementById('openAddModal');
-  const closeBtn = document.getElementById('closeAddModal');
-  const modal = document.getElementById('addModal');
-  const sourceSelect = document.getElementById('stockRuleSource');
-  const categorySelect = document.getElementById('stockRuleCategory');
-  const itemSelect = document.getElementById('stockRuleItem');
-
-  function resetSelect(select, placeholder, disabled) {
-    if (!select) return;
-    select.innerHTML = '';
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = placeholder;
-    select.appendChild(option);
-    select.disabled = disabled;
-  }
-
-  function fillCategories() {
-    if (!sourceSelect || !categorySelect || !itemSelect) return;
-    resetSelect(categorySelect, 'Alt kateqoriya seçin', true);
-    resetSelect(itemSelect, 'Məhsul növü seçin', true);
-
-    const selectedSource = stockCatalog.find((entry) => entry.value === sourceSelect.value);
-    if (!selectedSource) return;
-
-    selectedSource.categories.forEach((category) => {
-      const option = document.createElement('option');
-      option.value = category.value;
-      option.textContent = category.label;
-      categorySelect.appendChild(option);
-    });
-    categorySelect.disabled = false;
-  }
-
-  function fillItems() {
-    if (!sourceSelect || !categorySelect || !itemSelect) return;
-    resetSelect(itemSelect, 'Məhsul növü seçin', true);
-
-    const selectedSource = stockCatalog.find((entry) => entry.value === sourceSelect.value);
-    if (!selectedSource) return;
-    const selectedCategory = selectedSource.categories.find((entry) => entry.value === categorySelect.value);
-    if (!selectedCategory) return;
-
-    selectedCategory.items.forEach((item) => {
-      const option = document.createElement('option');
-      option.value = item.item_key;
-      option.textContent = `${item.label} • ${item.total_display} ${item.unit}`;
-      itemSelect.appendChild(option);
-    });
-    itemSelect.disabled = false;
-  }
-
-  if (openBtn && modal) {
-    openBtn.addEventListener('click', () => modal.classList.add('active'));
-  }
-  if (closeBtn && modal) {
-    closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-  }
-  if (modal) {
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) {
-        modal.classList.remove('active');
-      }
-    });
-  }
-  if (sourceSelect) {
-    sourceSelect.addEventListener('change', fillCategories);
-  }
-  if (categorySelect) {
-    categorySelect.addEventListener('change', fillItems);
-  }
-})();
+  {% include 'scripts/notifications/notifications.js' %}
 </script>
 {% endblock %}

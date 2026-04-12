@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import tempfile
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib import messages
@@ -15,13 +16,15 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
-from expenses.models import ExpenseCategory
+from expenses.models import Expense, ExpenseCategory
+from incomes.models import Income
 from incomes.views import _build_category_payload
 
 from .models import ScanItem, UserBarcode
 
 from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name, get_farm_product_icon_by_name
 from common.messages import add_crud_success_message
+from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES
 from common.category_order import (
     ANIMAL_CATEGORY_ORDER,
     ANIMAL_SUBCATEGORY_ORDER,
@@ -241,11 +244,40 @@ def _build_add_page_catalog():
 
 def _build_add_page_context(request=None):
     voice_input_language = "system"
+    add_page_mode = "stock"
+    initial_form = ""
+    add_page_weekly_total = Decimal("0")
     if request is not None:
         voice_input_language = (request.session.get("voice_input_language") or request.COOKIES.get("voice_input_language") or "system").strip().lower()
+        requested_form = (request.GET.get("form") or "").strip().lower()
+        if requested_form in {"income", "expense"}:
+            add_page_mode = requested_form
+            initial_form = requested_form
+        elif requested_form in {"animal", "seed", "tool", "farm"}:
+            initial_form = requested_form
+        if getattr(request, "user", None) and request.user.is_authenticated and add_page_mode in {"income", "expense"}:
+            week_start = timezone.localdate() - timedelta(days=7)
+            if add_page_mode == "income":
+                add_page_weekly_total = (
+                    Income.objects.filter(created_by=request.user, date__gte=week_start)
+                    .aggregate(total=Sum("amount"))
+                    .get("total")
+                    or Decimal("0")
+                )
+            else:
+                add_page_weekly_total = (
+                    Expense.objects.filter(created_by=request.user, date__gte=week_start)
+                    .aggregate(total=Sum("amount"))
+                    .get("total")
+                    or Decimal("0")
+                )
     return {
         "today": timezone.localdate(),
         "voice_input_language": voice_input_language,
+        "add_page_mode": add_page_mode,
+        "initial_form": initial_form,
+        "add_page_weekly_total": add_page_weekly_total,
+        "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
         **_build_add_page_catalog(),
     }
 
@@ -745,20 +777,22 @@ def stocks_placeholder(request):
             }
         )
 
+    sorted_items = sorted(
+        items,
+        key=lambda item: (
+            1 if Decimal(str(item["quantity"])) == 0 else 0,
+            {"toxumlar": 0, "aletler": 1, "heyvanlar": 2, "teserrufat": 3, "diger": 4}.get(item["main"], 9),
+            (item.get("subtitle") or "").lower(),
+            (item.get("title") or "").lower(),
+        ),
+    )
+
     context = {
         "seed_categories": seed_categories,
         "tool_categories": tool_categories,
         "animal_categories": animal_categories,
         "farm_product_categories": farm_product_categories,
-        "items": sorted(
-            items,
-            key=lambda item: (
-                1 if Decimal(str(item["quantity"])) == 0 else 0,
-                {"toxumlar": 0, "aletler": 1, "heyvanlar": 2, "teserrufat": 3, "diger": 4}.get(item["main"], 9),
-                (item.get("subtitle") or "").lower(),
-                (item.get("title") or "").lower(),
-            ),
-        ),
+        "items": sorted_items,
     }
     cache.set(cache_key, context, STOCKS_PAGE_CACHE_TTL)
     return render(request, "inventory/stocks.html", context)

@@ -6,7 +6,6 @@ Farm Inventory Manager is a Django-based farm operations app for tracking stock,
 
 - `backend/`: Django project, apps, migrations, and management commands
 - `frontend/`: Django templates and shared static assets
-- `docs/`: planning and project notes
 - `scripts/`: utility scripts for responsive/manual checks
 
 ## Main Modules

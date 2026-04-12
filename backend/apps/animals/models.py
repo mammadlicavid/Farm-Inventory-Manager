@@ -3,6 +3,8 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES
+
 class AnimalCategory(models.Model):
     name = models.CharField(max_length=100, verbose_name="Kateqoriya Adı")
 
@@ -47,6 +49,13 @@ class Animal(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name="Cinsiyyət", default='erkek')
     weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Çəki", null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Qiymət", default=0)
+    zero_price_source = models.CharField(
+        max_length=20,
+        choices=ZERO_PRICE_SOURCE_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name="0 məbləğ mənbəyi",
+    )
     quantity = models.IntegerField(default=1, verbose_name="Miqdar")
     date = models.DateField(default=timezone.now, verbose_name="Tarix")
 

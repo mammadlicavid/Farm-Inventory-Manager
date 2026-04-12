@@ -9,7 +9,15 @@ from django.core.cache import cache
 import json
 
 from .models import Notification, StockAlertRule
-from .services import build_stock_alerts, build_stock_rule_catalog, sync_stock_alert_notifications
+from .services import (
+    build_stock_alerts,
+    build_stock_alert_rule_list,
+    build_stock_rule_catalog,
+    get_default_threshold_for_item,
+    get_stock_items_for_user,
+    invalidate_notification_header_count_cache,
+    sync_stock_alert_notifications,
+)
 
 
 def _relative_date(due_date):
@@ -33,6 +41,7 @@ def _clear_dashboard_cache(user):
         hour=0, minute=0, second=0, microsecond=0
     )
     cache.delete(f"dashboard:v4:{user.pk}:{start_of_week.date().isoformat()}")
+    invalidate_notification_header_count_cache(user.pk)
 
 
 @login_required
@@ -40,20 +49,30 @@ def notifications_page(request):
     if request.method == 'POST':
         action = request.POST.get('action', '')
 
-        if action == 'add':
+        if action in {'add', 'save_notification'}:
+            notif_id = request.POST.get('notif_id', '').strip()
             title = request.POST.get('title', '').strip()
             category = request.POST.get('category', 'diger')
             due_date = request.POST.get('due_date', '')
 
             if title and due_date:
-                Notification.objects.create(
-                    title=title,
-                    category=category,
-                    due_date=due_date,
-                    created_by=request.user,
-                )
-                _clear_dashboard_cache(request.user)
-                messages.success(request, f'"{title}" xatırlatması əlavə edildi.')
+                if notif_id:
+                    notification = get_object_or_404(Notification, pk=notif_id, created_by=request.user)
+                    notification.title = title
+                    notification.category = category
+                    notification.due_date = due_date
+                    notification.save(update_fields=['title', 'category', 'due_date'])
+                    _clear_dashboard_cache(request.user)
+                    messages.success(request, _('"%(title)s" xatırlatması yeniləndi.') % {"title": title})
+                else:
+                    Notification.objects.create(
+                        title=title,
+                        category=category,
+                        due_date=due_date,
+                        created_by=request.user,
+                    )
+                    _clear_dashboard_cache(request.user)
+                    messages.success(request, _('"%(title)s" xatırlatması əlavə edildi.') % {"title": title})
             else:
                 messages.error(request, _("Başlıq və tarix tələb olunur."))
 
@@ -72,6 +91,7 @@ def notifications_page(request):
             messages.success(request, _("Xatırlatma silindi."))
 
         elif action == 'add_stock_rule':
+            rule_id = request.POST.get('rule_id', '').strip()
             item_key = request.POST.get('item_key', '').strip()
             threshold_raw = request.POST.get('threshold', '').strip()
 
@@ -79,6 +99,10 @@ def notifications_page(request):
             del stock_alerts, _rule_map
             stock_map = {item['item_key']: item for item in stock_items}
             stock_item = stock_map.get(item_key)
+            editing_rule = None
+
+            if rule_id:
+                editing_rule = get_object_or_404(StockAlertRule, pk=rule_id, created_by=request.user)
 
             if not stock_item:
                 messages.error(request, _("Seçilmiş məhsul tapılmadı."))
@@ -93,6 +117,78 @@ def notifications_page(request):
                 if threshold <= 0:
                     messages.error(request, _("Xəbərdarlıq həddi 0-dan böyük olmalıdır."))
                 else:
+                    if editing_rule:
+                        duplicate_rule = (
+                            StockAlertRule.objects.filter(
+                                created_by=request.user,
+                                item_key=item_key,
+                            )
+                            .exclude(pk=editing_rule.pk)
+                            .exists()
+                        )
+                        if duplicate_rule:
+                            messages.error(request, _("Bu məhsul üçün limit artıq mövcuddur."))
+                        else:
+                            editing_rule.source_type = stock_item['source_type']
+                            editing_rule.item_key = item_key
+                            editing_rule.item_name = stock_item['item_name']
+                            editing_rule.unit = stock_item['unit']
+                            editing_rule.threshold = threshold
+                            editing_rule.is_active = True
+                            editing_rule.save(
+                                update_fields=[
+                                    'source_type',
+                                    'item_key',
+                                    'item_name',
+                                    'unit',
+                                    'threshold',
+                                    'is_active',
+                                    'updated_at',
+                                ]
+                            )
+                            _clear_dashboard_cache(request.user)
+                            messages.success(
+                                request,
+                                _('"{name}" üçün ehtiyat xəbərdarlığı yeniləndi.').format(
+                                    name=stock_item['item_name']
+                                ),
+                            )
+                    else:
+                        StockAlertRule.objects.update_or_create(
+                            created_by=request.user,
+                            item_key=item_key,
+                            defaults={
+                                'source_type': stock_item['source_type'],
+                                'item_name': stock_item['item_name'],
+                                'unit': stock_item['unit'],
+                                'threshold': threshold,
+                                'is_active': True,
+                            },
+                        )
+                        _clear_dashboard_cache(request.user)
+                        messages.success(
+                            request,
+                            _('"{name}" üçün ehtiyat xəbərdarlığı yeniləndi.').format(
+                                name=stock_item['item_name']
+                            ),
+                        )
+
+        elif action == 'delete_stock_rule':
+            rule_id = request.POST.get('rule_id')
+            item_key = request.POST.get('item_key', '').strip()
+
+            if rule_id:
+                rule = get_object_or_404(StockAlertRule, pk=rule_id, created_by=request.user)
+                rule.delete()
+                _clear_dashboard_cache(request.user)
+                messages.success(request, _('Ehtiyat xəbərdarlığı silindi.'))
+            elif item_key:
+                stock_items = get_stock_items_for_user(request.user)
+                stock_item = next((item for item in stock_items if item['item_key'] == item_key), None)
+
+                if not stock_item or not stock_item.get('is_important'):
+                    messages.error(request, _('Bu limit silinə bilmədi.'))
+                else:
                     StockAlertRule.objects.update_or_create(
                         created_by=request.user,
                         item_key=item_key,
@@ -100,29 +196,19 @@ def notifications_page(request):
                             'source_type': stock_item['source_type'],
                             'item_name': stock_item['item_name'],
                             'unit': stock_item['unit'],
-                            'threshold': threshold,
-                            'is_active': True,
+                            'threshold': get_default_threshold_for_item(stock_item),
+                            'is_active': False,
                         },
                     )
                     _clear_dashboard_cache(request.user)
-                    messages.success(
-                        request,
-                        _('"{name}" üçün ehtiyat xəbərdarlığı yeniləndi.').format(
-                            name=stock_item['item_name']
-                        ),
-                    )
-
-        elif action == 'delete_stock_rule':
-            rule_id = request.POST.get('rule_id')
-            rule = get_object_or_404(StockAlertRule, pk=rule_id, created_by=request.user)
-            rule.delete()
-            _clear_dashboard_cache(request.user)
-            messages.success(request, _('Ehtiyat xəbərdarlığı silindi.'))
+                    messages.success(request, _('Ehtiyat xəbərdarlığı silindi.'))
+            else:
+                messages.error(request, _('Bu limit silinə bilmədi.'))
 
         return redirect('notifications:list')
 
     # GET — build context
-    generated_alerts, _pending_notification_count = sync_stock_alert_notifications(request.user)
+    generated_alerts, attention_count = sync_stock_alert_notifications(request.user)
     user_notifications = Notification.objects.filter(
         created_by=request.user,
     ).exclude(
@@ -143,29 +229,14 @@ def notifications_page(request):
     if generated_alerts:
         stock_alerts = generated_alerts
     stock_rule_catalog = build_stock_rule_catalog(stock_items)
-    stock_item_map = {item['item_key']: item for item in stock_items}
-    stock_alert_rules = [
-        {
-            'id': rule.id,
-            'item_key': rule.item_key,
-            'item_name': rule.item_name,
-            'source_label': next(
-                label for value, label in StockAlertRule.SOURCE_CHOICES if value == rule.source_type
-            ),
-            'threshold': rule.threshold,
-            'unit': rule.unit,
-            'current_total': stock_item_map[rule.item_key]['total_display']
-            if rule.item_key in stock_item_map else None,
-        }
-        for rule in rule_map.values()
-    ]
-    stock_alert_rules.sort(key=lambda rule: rule['item_name'].lower())
+    stock_alert_rules = build_stock_alert_rule_list(request.user, stock_items=stock_items)
 
     context = {
         'pending': pending,
         'completed': completed,
         'pending_count': pending.count(),
         'completed_count': completed.count(),
+        'attention_count': attention_count,
         'category_choices': Notification.CATEGORY_CHOICES,
         'stock_alerts': stock_alerts,
         'stock_alert_count': len(stock_alerts),

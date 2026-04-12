@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy as _
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, resolve_url
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
@@ -9,11 +9,20 @@ from datetime import date, timedelta
 from hashlib import md5
 from django.utils import timezone
 from django.db.models import Q
+from django.views.decorators.cache import never_cache
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from .models import Tool, ToolCategory, ToolItem
 from .forms import ToolForm
 from common.messages import add_crud_success_message
 from common.text import normalize_manual_label
+from common.view_cache import bust_dashboard_related_caches
+from common.zero_price_source import (
+    ZERO_PRICE_SOURCE_CHOICES,
+    get_zero_price_source_label,
+    is_blank_or_zero_price,
+    normalize_zero_price_source,
+)
 from common.category_order import (
     TOOL_CATEGORY_ORDER,
     TOOL_ITEM_ORDER,
@@ -24,8 +33,38 @@ from expenses.models import Expense, ExpenseSubCategory
 from incomes.models import Income
 
 TOOL_FORM_CATALOG_CACHE_KEY = "tools:form-catalog:v1"
-TOOL_FORM_CATALOG_TTL = 300
-TOOL_LIST_CACHE_TTL = 30
+TOOL_FORM_CATALOG_TTL = 3600
+TOOL_LIST_CACHE_TTL = 180
+TOOL_LIST_BUST_TTL = 60 * 60 * 24 * 30
+
+
+def _tool_list_bust_key(user_id: int) -> str:
+    return f"tools:list-bust:v1:{user_id}"
+
+
+def _tool_list_cache_bust_value(user_id: int) -> str:
+    return str(cache.get(_tool_list_bust_key(user_id), "0"))
+
+
+def _bust_tool_list_cache(user_id: int) -> None:
+    cache.set(_tool_list_bust_key(user_id), timezone.now().isoformat(), TOOL_LIST_BUST_TTL)
+    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
+    bust_dashboard_related_caches(user_id)
+
+
+def _list_query_signature(query_dict) -> str:
+    filtered = query_dict.copy()
+    filtered.pop("_ui", None)
+    return md5(filtered.urlencode().encode()).hexdigest()
+
+
+def _redirect_with_refresh(target) -> object:
+    url = resolve_url(target)
+    parsed = urlsplit(url)
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "_ui"]
+    query.append(("_ui", str(int(timezone.now().timestamp() * 1000))))
+    refreshed_url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
+    return redirect(refreshed_url)
 
 
 def _tool_stock_total(user, item, manual_name: str | None) -> int:
@@ -89,6 +128,7 @@ def _tool_form_context(tool):
         "alet": tool,
         "categories": catalog["categories"],
         "category_item_map": catalog["item_map"],
+        "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
     }
 
 
@@ -158,7 +198,7 @@ def _sync_tool_related_records(user, tool):
         linked_expense.delete()
 
 
-def _merge_manual_tool(user, manual_name, quantity_val, price, additional_info, entry_date):
+def _merge_manual_tool(user, manual_name, quantity_val, price, zero_price_source, additional_info, entry_date):
     existing = (
         Tool.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name)
@@ -180,6 +220,7 @@ def _merge_manual_tool(user, manual_name, quantity_val, price, additional_info, 
     existing.manual_name = manual_name
     existing.quantity = total_qty
     existing.price = price
+    existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
     existing.save()
@@ -187,8 +228,9 @@ def _merge_manual_tool(user, manual_name, quantity_val, price, additional_info, 
     return existing
 
 @login_required
+@never_cache
 def tool_list(request):
-    cache_key = f"tools:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cache_key = f"tools:list:v2:{request.user.pk}:{_tool_list_cache_bust_value(request.user.pk)}:{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
     cached_context = cache.get(cache_key)
     if cached_context is not None:
         return render(request, 'tools/tool_list.html', cached_context)
@@ -252,6 +294,7 @@ def tool_list(request):
     alets = list(alets_qs)
     for alet in alets:
         alet.icon_class = get_tool_icon_for_tool(alet)
+        alet.zero_price_source_label = get_zero_price_source_label(alet)
         try:
             alet.price_display = abs(float(alet.price))
         except Exception:
@@ -262,6 +305,7 @@ def tool_list(request):
         'alets': alets,
         'categories': form_catalog["categories"],
         'category_item_map': form_catalog["item_map"],
+        'zero_price_source_choices': ZERO_PRICE_SOURCE_CHOICES,
         'filter_items': filtered_items,
         'selected_category': category_id,
         'selected_item': item_id,
@@ -294,6 +338,7 @@ def tool_create(request):
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
         price = request.POST.get('price')
+        zero_price_source = normalize_zero_price_source(request.POST.get('zero_price_source'))
         manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
@@ -312,6 +357,11 @@ def tool_create(request):
         except (TypeError, ValueError):
             messages.error(request, _("Miqdar düzgün deyil."))
             return redirect(redirect_to)
+        if quantity_val > 0 and is_blank_or_zero_price(price) and not zero_price_source:
+            messages.error(request, _("Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin."))
+            return redirect(redirect_to)
+        if quantity_val <= 0 or not is_blank_or_zero_price(price):
+            zero_price_source = None
         
         try:
             item = None
@@ -332,19 +382,22 @@ def tool_create(request):
                     return redirect(redirect_to)
 
             manual_value = manual_name if (not item or item.name == "Digər") else None
-            merged = _merge_manual_tool(request.user, manual_value, quantity_val, price, additional_info, entry_date) if manual_value else None
+            merged = _merge_manual_tool(request.user, manual_value, quantity_val, price, zero_price_source, additional_info, entry_date) if manual_value else None
             if merged == "deleted":
+                _bust_tool_list_cache(request.user.pk)
                 add_crud_success_message(request, "Tool", "delete")
-                return redirect(redirect_to)
+                return _redirect_with_refresh(redirect_to)
             if merged:
+                _bust_tool_list_cache(request.user.pk)
                 add_crud_success_message(request, "Tool", "update")
-                return redirect(redirect_to)
+                return _redirect_with_refresh(redirect_to)
 
             tool = Tool.objects.create(
                 item=item,
                 manual_name=manual_value,
                 quantity=quantity,
                 price=price,
+                zero_price_source=zero_price_source,
                 additional_info=additional_info,
                 date=entry_date,
                 created_by=request.user
@@ -399,9 +452,10 @@ def tool_create(request):
         except ToolItem.DoesNotExist:
             messages.error(request, _("Seçilmiş alət növü tapılmadı."))
         else:
+            _bust_tool_list_cache(request.user.pk)
             add_crud_success_message(request, "Tool", "create")
 
-        return redirect(redirect_to)
+        return _redirect_with_refresh(redirect_to)
     
     return redirect(redirect_to)
 
@@ -412,6 +466,7 @@ def tool_update(request, pk):
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
         price = request.POST.get('price')
+        zero_price_source = normalize_zero_price_source(request.POST.get('zero_price_source'))
         manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
@@ -426,6 +481,9 @@ def tool_update(request, pk):
             quantity_val = int(quantity)
         except (TypeError, ValueError):
             messages.error(request, _("Miqdar düzgün deyil."))
+            return render(request, 'tools/tool_form.html', _tool_form_context(tool))
+        if quantity_val > 0 and is_blank_or_zero_price(price) and not zero_price_source:
+            messages.error(request, _("Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin."))
             return render(request, 'tools/tool_form.html', _tool_form_context(tool))
 
         prev_quantity = int(tool.quantity)
@@ -447,6 +505,7 @@ def tool_update(request, pk):
         
         # Handle empty price
         tool.price = price if price and price.strip() else 0
+        tool.zero_price_source = zero_price_source if quantity_val > 0 and is_blank_or_zero_price(tool.price) else None
         
         if item_id:
             tool.item = ToolItem.objects.get(id=item_id)
@@ -538,8 +597,9 @@ def tool_update(request, pk):
                     content_object=tool
                 )
 
+        _bust_tool_list_cache(request.user.pk)
         add_crud_success_message(request, "Tool", "update")
-        return redirect('tools:tool_list')
+        return _redirect_with_refresh('tools:tool_list')
     
     return render(request, 'tools/tool_form.html', _tool_form_context(tool))
 
@@ -552,6 +612,7 @@ def tool_delete(request, pk):
         Expense.objects.filter(content_type=tool_type, object_id=tool.id).delete()
         Income.objects.filter(content_type=tool_type, object_id=tool.id).delete()
         tool.delete()
+        _bust_tool_list_cache(request.user.pk)
         add_crud_success_message(request, "Tool", "delete")
-        return redirect('tools:tool_list')
+        return _redirect_with_refresh('tools:tool_list')
     return render(request, 'tools/tool_confirm_delete.html', {'alet': tool})
