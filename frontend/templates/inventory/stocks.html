@@ -16,10 +16,28 @@
     </header>
 
     <main class="main-content" style="position: relative; z-index: 10;">
+        <section class="stocks-guide-card">
+            <div class="stocks-guide-copy">
+                <p class="stocks-kicker">{% trans "Stoku izləyin" %}</p>
+                <h2>{% trans "Burada qalıq miqdarını görün və sayımı düzəldin." %}</h2>
+                <p>{% trans 'Filtrlə məhsulu tapın. Sayım fərqlidirsə, "Miqdarı düzəlt" düyməsini seçin.' %}</p>
+            </div>
+            <div class="stocks-guide-actions">
+                <a href="{% url 'inventory:add_placeholder' %}" class="stocks-quick-action">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>{% trans "Stok əlavə et" %}</span>
+                </a>
+                <a href="{% url 'inventory:add_placeholder' %}?form=income" class="stocks-quick-action stocks-quick-action--ghost">
+                    <i class="fa-solid fa-money-bill-trend-up"></i>
+                    <span>{% trans "Satış yaz" %}</span>
+                </a>
+            </div>
+        </section>
+
         <section class="stocks-toolbar">
             <div class="stocks-filter">
                 <div class="filter-field category-field">
-                    <label for="main-category-select">{% trans "Ana Kateqoriya" %}</label>
+                    <label for="main-category-select">{% trans "Bölmə" %}</label>
                     <div class="filter-input click-focus">
                         <select id="main-category-select">
                             <option value="all" selected>{% trans "Hamısı" %}</option>
@@ -32,7 +50,7 @@
                     </div>
                 </div>
                 <div class="filter-field category-field">
-                    <label for="subcategory-select">{% trans "Alt Kateqoriya" %}</label>
+                    <label for="subcategory-select">{% trans "Növ" %}</label>
                     <div class="filter-input click-focus">
                         <select id="subcategory-select">
                             <option value="all">{% trans "Hamısı" %}</option>
@@ -41,7 +59,7 @@
                     </div>
                 </div>
                 <div class="filter-field category-field">
-                    <label for="stocks-sort">{% trans "Sıralama" %}</label>
+                    <label for="stocks-sort">{% trans "Necə göstərilsin?" %}</label>
                     <div class="filter-input click-focus">
                         <select id="stocks-sort">
                             <option value="default">{% trans "Standart düzülüş" %}</option>
@@ -54,9 +72,9 @@
                     </div>
                 </div>
                 <div class="filter-field">
-                    <label for="stocks-search">{% trans "Axtarış" %}</label>
+                    <label for="stocks-search">{% trans "Məhsul axtar" %}</label>
                     <div class="filter-input click-focus search-field">
-                        <input id="stocks-search" type="text" placeholder="{% trans 'Axtar...' %}" autocomplete="off" />
+                        <input id="stocks-search" type="text" placeholder="{% trans 'Məhsul adını yazın' %}" autocomplete="off" />
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </div>
                 </div>
@@ -98,7 +116,7 @@
                     data-unit="{{ item.unit }}" data-step="{{ item.input_step|default:'0.01' }}"
                     data-display-unit="{% display_unit_for_user item.quantity_display item.unit request.user %}"
                     data-male="{{ item.male_display|default:'' }}" data-female="{{ item.female_display|default:'' }}">
-                    <i class="fa-solid fa-pen-to-square"></i> Yenilə
+                    <i class="fa-solid fa-pen-to-square"></i> {% trans "Miqdarı düzəlt" %}
                 </button>
                 {% endif %}
             </div>
@@ -119,6 +137,72 @@
         width: 100%;
         max-width: 100%;
         margin: 0;
+    }
+
+    .stocks-guide-card {
+        margin-bottom: 18px;
+        padding: 18px;
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 24%),
+            linear-gradient(180deg, #ffffff 0%, #f7fbf8 100%);
+        border: 1px solid #dbe8df;
+        box-shadow: 0 10px 24px rgba(17, 24, 39, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .stocks-kicker {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+
+    .stocks-guide-copy h2 {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.2;
+        color: #111827;
+    }
+
+    .stocks-guide-copy p:last-child {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: #4b5563;
+    }
+
+    .stocks-guide-actions {
+        display: grid;
+        gap: 10px;
+        min-width: 210px;
+    }
+
+    .stocks-quick-action {
+        border-radius: 16px;
+        padding: 14px 16px;
+        background: #2f7d32;
+        color: #fff;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 800;
+        box-shadow: 0 10px 22px rgba(47, 125, 50, 0.22);
+    }
+
+    .stocks-quick-action--ghost {
+        background: #ffffff;
+        color: #1f2937;
+        border: 1px solid #d1d5db;
+        box-shadow: none;
     }
 
     .stocks-toolbar {
@@ -453,6 +537,15 @@
     }
 
     @media (max-width: 860px) {
+        .stocks-guide-card {
+            flex-direction: column;
+        }
+
+        .stocks-guide-actions {
+            width: 100%;
+            min-width: 0;
+        }
+
         .stocks-toolbar {
             padding: 14px;
         }
@@ -485,6 +578,12 @@
             text-align: left;
         }
     }
+
+    @media (max-width: 560px) {
+        .stocks-guide-copy h2 {
+            font-size: 22px;
+        }
+    }
 </style>
 
 <div class="modal-backdrop" id="product-modal" aria-hidden="true">
@@ -496,18 +595,18 @@
             <input type="hidden" name="update_type" id="modal-update-type">
             <input type="hidden" name="update_id" id="modal-update-id">
             <div class="modal-row" id="modal-quantity-row">
-                <label for="modal-quantity">{% trans "Yeni miqdar" %}</label>
+                <label for="modal-quantity">{% trans "Sayımdan sonra qalan miqdar" %}</label>
                 <input type="number" name="target_quantity" id="modal-quantity" class="modal-input" step="0.01"
                     placeholder="0">
                 <div class="product-qty-unit" id="modal-unit" style="margin-top: 6px;"></div>
             </div>
             <div class="modal-row" id="modal-gender-row" style="display: none;">
-                <label>{% trans "Erkək / Dişi sayı" %}</label>
+                <label>{% trans "Sayımdan sonra erkək və dişi sayı" %}</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <input type="number" name="male_target" id="modal-male" class="modal-input" step="1"
-                        placeholder="{% trans 'Erkək' %}">
+                        placeholder="{% trans 'Erkək sayı' %}">
                     <input type="number" name="female_target" id="modal-female" class="modal-input" step="1"
-                        placeholder="{% trans 'Dişi' %}">
+                        placeholder="{% trans 'Dişi sayı' %}">
                 </div>
                 <div class="modal-total-box">
                     <span class="modal-total-label">{% trans "Ümumi" %}</span>
@@ -516,284 +615,13 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="modal-btn cancel" id="modal-cancel">{% trans "Ləğv et" %}</button>
-                <button type="submit" class="modal-btn save" id="modal-save">{% trans "Yadda saxla" %}</button>
+                <button type="submit" class="modal-btn save" id="modal-save">{% trans "Stoku yenilə" %}</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    const subcategoriesByMain = {
-        all: [
-            { value: "all", label: "Hamısı" },
-        ],
-        toxumlar: [
-            { value: "all", label: "Hamısı" },
-            {% for cat in seed_categories %}
-    { value: "seedcat-{{ cat.id }}", label: "{{ cat.name }}" },
-    {% endfor %}
-        ],
-    aletler: [
-        { value: "all", label: "Hamısı" },
-        {% for cat in tool_categories %}
-    { value: "toolcat-{{ cat.id }}", label: "{{ cat.name }}" },
-    {% endfor %}
-        ],
-    heyvanlar: [
-        { value: "all", label: "Hamısı" },
-        {% for cat in animal_categories %}
-    { value: "animalcat-{{ cat.id }}", label: "{{ cat.name }}" },
-    {% endfor %}
-        ],
-    teserrufat: [
-        { value: "all", label: "Hamısı" },
-        {% for cat in farm_product_categories %}
-    { value: "farmcat-{{ cat.id }}", label: "{{ cat.name }}" },
-    {% endfor %}
-        ],
-    };
-
-    const mainSelect = document.getElementById("main-category-select");
-    const subSelect = document.getElementById("subcategory-select");
-    const sortSelect = document.getElementById("stocks-sort");
-    const searchInput = document.getElementById("stocks-search");
-    const resetButton = document.getElementById("stocks-reset");
-    const grid = document.getElementById("stocks-grid");
-    const cards = Array.from(document.querySelectorAll(".product-card"));
-    const emptyState = document.getElementById("stocks-empty");
-    const modalBackdrop = document.getElementById("product-modal");
-    const modalForm = document.getElementById("product-modal-form");
-    const modalTitle = document.getElementById("modal-title");
-    const modalSubtitle = document.getElementById("modal-subtitle");
-    const modalQty = document.getElementById("modal-quantity");
-    const modalUnit = document.getElementById("modal-unit");
-    const modalUpdateType = document.getElementById("modal-update-type");
-    const modalUpdateId = document.getElementById("modal-update-id");
-    const modalQuantityRow = document.getElementById("modal-quantity-row");
-    const modalGenderRow = document.getElementById("modal-gender-row");
-    const modalMale = document.getElementById("modal-male");
-    const modalFemale = document.getElementById("modal-female");
-    const modalTotal = document.getElementById("modal-total");
-
-    const FILTER_KEY = "stocks_filters_session_v1";
-    const KEEP_KEY = "stocks_filters_keep_v1";
-
-    function saveFilters() {
-        const payload = {
-            main: mainSelect.value,
-            sub: subSelect.value,
-            sort: sortSelect.value,
-            search: searchInput.value || "",
-        };
-        sessionStorage.setItem(FILTER_KEY, JSON.stringify(payload));
-    }
-
-    function loadFilters() {
-        try {
-            return JSON.parse(sessionStorage.getItem(FILTER_KEY) || "{}");
-        } catch {
-            return {};
-        }
-    }
-
-    function resetFilters() {
-        mainSelect.value = "all";
-        buildSubOptions();
-        subSelect.value = "all";
-        sortSelect.value = "default";
-        searchInput.value = "";
-        applyFilters();
-    }
-
-    function buildSubOptions() {
-        const main = mainSelect.value;
-        const options = subcategoriesByMain[main] || [{ value: "all", label: "Hamısı" }];
-        subSelect.innerHTML = "";
-        options.forEach(opt => {
-            const option = document.createElement("option");
-            option.value = opt.value;
-            option.textContent = opt.label;
-            subSelect.appendChild(option);
-        });
-        subSelect.disabled = main === "all";
-    }
-
-    function normalizeSearch(value) {
-        return String(value || "").trim().toLocaleLowerCase("az");
-    }
-
-    function parseQuantity(card) {
-        const value = Number.parseFloat(card.dataset.quantity || "0");
-        return Number.isFinite(value) ? value : 0;
-    }
-
-    function sortCards() {
-        const mode = sortSelect.value;
-        const sortedCards = [...cards].sort((left, right) => {
-            const leftTitle = normalizeSearch(left.dataset.title || "");
-            const rightTitle = normalizeSearch(right.dataset.title || "");
-            const leftSubtitle = normalizeSearch(left.dataset.subtitle || "");
-            const rightSubtitle = normalizeSearch(right.dataset.subtitle || "");
-            const leftQty = parseQuantity(left);
-            const rightQty = parseQuantity(right);
-            const leftDefaultOrder = Number.parseInt(left.dataset.defaultOrder || "0", 10);
-            const rightDefaultOrder = Number.parseInt(right.dataset.defaultOrder || "0", 10);
-
-            if (mode === "default") {
-                return leftDefaultOrder - rightDefaultOrder;
-            }
-
-            if (mode === "title_desc") {
-                return rightTitle.localeCompare(leftTitle, "az");
-            }
-            if (mode === "qty_desc") {
-                return (rightQty - leftQty)
-                    || leftSubtitle.localeCompare(rightSubtitle, "az")
-                    || leftTitle.localeCompare(rightTitle, "az");
-            }
-            if (mode === "qty_asc") {
-                return (leftQty - rightQty)
-                    || leftSubtitle.localeCompare(rightSubtitle, "az")
-                    || leftTitle.localeCompare(rightTitle, "az");
-            }
-            return leftTitle.localeCompare(rightTitle, "az")
-                || leftSubtitle.localeCompare(rightSubtitle, "az");
-        });
-
-        sortedCards.forEach(card => grid.appendChild(card));
-    }
-
-    function applyFilters() {
-        sortCards();
-        const main = mainSelect.value;
-        const sub = subSelect.value;
-        const term = normalizeSearch(searchInput.value || "");
-        let visible = 0;
-        cards.forEach(card => {
-            const matchMain = main === "all" || card.dataset.main === main;
-            const matchSub = sub === "all" || card.dataset.sub === sub;
-            const title = normalizeSearch(card.querySelector(".product-title")?.textContent || "");
-            const subtitle = normalizeSearch(card.querySelector(".product-subtitle")?.textContent || "");
-            const matchSearch = !term || title.includes(term) || subtitle.includes(term);
-            const show = matchMain && matchSub && matchSearch;
-            card.style.display = show ? "" : "none";
-            if (show) {
-                visible += 1;
-            }
-        });
-        emptyState.style.display = visible === 0 ? "block" : "none";
-    }
-
-    mainSelect.addEventListener("change", () => {
-        buildSubOptions();
-        applyFilters();
-        saveFilters();
-    });
-    subSelect.addEventListener("change", () => {
-        applyFilters();
-        saveFilters();
-    });
-    sortSelect.addEventListener("change", () => {
-        applyFilters();
-        saveFilters();
-    });
-    searchInput.addEventListener("input", () => {
-        applyFilters();
-        saveFilters();
-    });
-    resetButton.addEventListener("click", () => {
-        resetFilters();
-        saveFilters();
-    });
-
-    const saved = loadFilters();
-    const keep = sessionStorage.getItem(KEEP_KEY) === "1";
-    if (keep && saved.main) {
-        mainSelect.value = saved.main;
-    }
-    buildSubOptions();
-    if (keep && saved.sub) {
-        subSelect.value = saved.sub;
-    }
-    if (keep && saved.sort) {
-        sortSelect.value = saved.sort;
-    }
-    if (keep && typeof saved.search === "string") {
-        searchInput.value = saved.search;
-    }
-    if (!keep) {
-        resetFilters();
-    } else {
-        applyFilters();
-    }
-    sessionStorage.removeItem(KEEP_KEY);
-
-    function openModal(button) {
-        modalTitle.textContent = button.dataset.title || "Məhsul";
-        modalSubtitle.textContent = button.dataset.subtitle || "";
-        modalQty.value = button.dataset.qty || "";
-        modalQty.step = button.dataset.step || "0.01";
-        modalUnit.textContent = button.dataset.displayUnit || "";
-        modalUpdateType.value = button.dataset.updateType || "";
-        modalUpdateId.value = button.dataset.updateId || "";
-        const updateType = button.dataset.updateType || "";
-        if (updateType === "animal_sub" || updateType === "animal_other") {
-            modalQuantityRow.style.display = "none";
-            modalGenderRow.style.display = "block";
-            modalMale.value = button.dataset.male || "0";
-            modalFemale.value = button.dataset.female || "0";
-            updateAnimalTotal();
-        } else {
-            modalQuantityRow.style.display = "block";
-            modalGenderRow.style.display = "none";
-        }
-        modalBackdrop.style.display = "flex";
-        if (updateType === "animal_sub" || updateType === "animal_other") {
-            modalMale.focus();
-        } else {
-            modalQty.focus();
-        }
-    }
-
-    function closeModal() {
-        modalBackdrop.style.display = "none";
-        modalForm.reset();
-    }
-
-    document.querySelectorAll(".product-update-btn").forEach(btn => {
-        btn.addEventListener("click", () => openModal(btn));
-    });
-
-    modalBackdrop.addEventListener("click", (event) => {
-        if (event.target === modalBackdrop) {
-            closeModal();
-        }
-    });
-
-    document.getElementById("modal-cancel").addEventListener("click", closeModal);
-
-    function updateAnimalTotal() {
-        const male = parseInt(modalMale.value || "0", 10);
-        const female = parseInt(modalFemale.value || "0", 10);
-        const total = (isNaN(male) ? 0 : male) + (isNaN(female) ? 0 : female);
-        modalTotal.textContent = total.toString();
-    }
-
-    modalMale.addEventListener("input", updateAnimalTotal);
-    modalFemale.addEventListener("input", updateAnimalTotal);
-
-    if (modalForm) {
-        modalForm.addEventListener("submit", () => {
-            sessionStorage.setItem(KEEP_KEY, "1");
-            saveFilters();
-            setTimeout(closeModal, 0);
-        });
-    }
-
-    window.addEventListener("pagehide", () => {
-        if (sessionStorage.getItem(KEEP_KEY) !== "1") {
-            sessionStorage.removeItem(FILTER_KEY);
-        }
-    });
+  {% include 'scripts/inventory/stocks.js' %}
 </script>
 {% endblock %}

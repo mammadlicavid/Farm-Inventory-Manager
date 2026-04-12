@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy as _
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, resolve_url
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db.models import Q, Sum
@@ -9,12 +9,15 @@ from datetime import timedelta
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+from django.views.decorators.cache import never_cache
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from .models import Expense, ExpenseCategory, ExpenseSubCategory
 from common.messages import add_crud_success_message
 from common.icons import get_expense_icon
 from common.formatting import format_currency
 from common.text import normalize_manual_label
+from common.view_cache import bust_dashboard_related_caches
 from animals.models import Animal
 from farm_products.models import FarmProduct
 from seeds.models import Seed
@@ -23,6 +26,36 @@ from tools.models import Tool
 EXPENSE_FORM_CATALOG_CACHE_KEY = "expenses:form-catalog:v1"
 EXPENSE_FORM_CATALOG_TTL = 300
 EXPENSE_LIST_CACHE_TTL = 30
+EXPENSE_LIST_BUST_TTL = 60 * 60 * 24 * 30
+
+
+def _expense_list_bust_key(user_id: int) -> str:
+    return f"expenses:list-bust:v1:{user_id}"
+
+
+def _expense_list_cache_bust_value(user_id: int) -> str:
+    return str(cache.get(_expense_list_bust_key(user_id), "0"))
+
+
+def _bust_expense_list_cache(user_id: int) -> None:
+    cache.set(_expense_list_bust_key(user_id), timezone.now().isoformat(), EXPENSE_LIST_BUST_TTL)
+    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
+    bust_dashboard_related_caches(user_id)
+
+
+def _redirect_with_refresh(target) -> object:
+    url = resolve_url(target)
+    parsed = urlsplit(url)
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "_ui"]
+    query.append(("_ui", str(int(timezone.now().timestamp() * 1000))))
+    refreshed_url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
+    return redirect(refreshed_url)
+
+
+def _list_query_signature(query_dict) -> str:
+    filtered = query_dict.copy()
+    filtered.pop("_ui", None)
+    return md5(filtered.urlencode().encode()).hexdigest()
 
 
 def _build_subcategory_data(categories):
@@ -152,8 +185,12 @@ def _merge_manual_expense(user, title, amount_val, additional_info):
     return existing
 
 @login_required
+@never_cache
 def expense_list(request):
-    cache_key = f"expenses:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cache_key = (
+        f"expenses:list:v2:{request.user.pk}:{_expense_list_cache_bust_value(request.user.pk)}:"
+        f"{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
+    )
     cached_context = cache.get(cache_key)
     if cached_context is not None:
         return render(request, 'expenses/expense_list.html', cached_context)
@@ -281,11 +318,13 @@ def add_expense(request):
         if not subcategory:
             merged = _merge_manual_expense(request.user, title, amount_val, additional_info)
             if merged == "deleted":
+                _bust_expense_list_cache(request.user.pk)
                 add_crud_success_message(request, "Expense", "delete")
-                return redirect(redirect_to)
+                return _redirect_with_refresh(redirect_to)
             if merged:
+                _bust_expense_list_cache(request.user.pk)
                 add_crud_success_message(request, "Expense", "update")
-                return redirect(redirect_to)
+                return _redirect_with_refresh(redirect_to)
 
         Expense.objects.create(
             title=title,
@@ -295,8 +334,9 @@ def add_expense(request):
             additional_info=additional_info,
             created_by=request.user
         )
+        _bust_expense_list_cache(request.user.pk)
         add_crud_success_message(request, "Expense", "create")
-        return redirect(redirect_to)
+        return _redirect_with_refresh(redirect_to)
     
     return redirect(redirect_to)
 
@@ -362,8 +402,9 @@ def edit_expense(request, pk):
             # But we should at least sync the price.
             item.save()
         
+        _bust_expense_list_cache(request.user.pk)
         add_crud_success_message(request, "Expense", "update")
-        return redirect('expenses:expense_list')
+        return _redirect_with_refresh('expenses:expense_list')
 
     # Initial GET render: compute display_additional_info for textarea
     expense.display_additional_info = _get_display_additional_info(expense)
@@ -383,5 +424,6 @@ def delete_expense(request, pk):
             expense.content_object.delete()
         
         expense.delete()
+        _bust_expense_list_cache(request.user.pk)
         add_crud_success_message(request, "Expense", "delete")
-    return redirect('expenses:expense_list')
+    return _redirect_with_refresh('expenses:expense_list')

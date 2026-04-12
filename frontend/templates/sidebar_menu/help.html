@@ -102,13 +102,6 @@
 </div>
 
 <style>
-  .page-container {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 16px 16px 100px;
-  }
-
   .faq-card {
     background: #fff;
     border-radius: 16px;
@@ -168,17 +161,6 @@
 </style>
 
 <script>
-  document.querySelectorAll('.faq-q').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const item   = btn.closest('.faq-item');
-      const isOpen = item.classList.contains('open');
-
-      // Close all
-      document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
-
-      // Open clicked if it was closed
-      if (!isOpen) item.classList.add('open');
-    });
-  });
+  {% include 'scripts/sidebar_menu/help.js' %}
 </script>
 {% endblock %}

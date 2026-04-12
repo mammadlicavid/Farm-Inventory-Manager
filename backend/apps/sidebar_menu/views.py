@@ -100,6 +100,8 @@ def setting_view(request):
             voice_language = 'system'
         settings_obj.save()
         request.session["django_language"] = settings_obj.language
+        request.session["user_language_pref"] = settings_obj.language
+        request.session["user_timezone_pref"] = settings_obj.timezone
         request.session["voice_input_language"] = voice_language
         translation.activate(settings_obj.language)
         messages.success(request, _('Parametrlər uğurla yadda saxlanıldı.'))

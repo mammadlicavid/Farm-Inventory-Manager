@@ -7,18 +7,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ferma idarəsi — Daxil ol</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    rel="preload"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    as="style"
-    onload="this.onload=null;this.rel='stylesheet'"
-  >
-  <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </noscript>
+  <title>{% trans "Ferma idarəsi — Daxil ol" %}</title>
 
   <style>
     :root{
@@ -28,7 +17,7 @@
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      margin:0; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
       background:var(--bg); color:var(--text);
       min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
       font-size:17px;
@@ -119,7 +108,7 @@
       </form>
 
       <div class="footer">
-        Hesabınız yoxdur?
+        {% trans "Hesabınız yoxdur?" %}
         <a href="{% url 'signup' %}">{% trans "Qeydiyyat" %}</a>
       </div>
     </section>
@@ -127,6 +116,6 @@
 </body>
 {% get_current_language as LANGUAGE_CODE %}
 {% if LANGUAGE_CODE != 'az' %}
-<script defer src="{% static 'js/runtime_i18n.js' %}"></script>
+<script src="{% static 'js/runtime_i18n.js' %}"></script>
 {% endif %}
 </html>

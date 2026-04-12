@@ -9,7 +9,7 @@
             <div class="header-top">
                 <a href="{% url 'incomes:income_list' %}" class="back-btn-box">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>{% trans "Tez Gəlir" %}</span>
+                    <span>{% trans "Məhsul Sat" %}</span>
                 </a>
             </div>
         </div>
@@ -17,17 +17,23 @@
 
     <main class="main-content">
         {% currency_symbol request.user as current_currency_symbol %}
+        <section class="sell-guide-card">
+            <p class="sell-guide-kicker">{% trans "Satış" %}</p>
+            <h2>{% trans "Məhsul satdıqca gəliri dərhal yazın" %}</h2>
+            <p>{% trans "Hazır seçimlərdən istifadə edin və ya məbləği özünüz daxil edin. Satış yazıldıqda gəlir görünəcək." %}</p>
+        </section>
+
         <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
             <div style="position: relative;" class="click-focus">
                 <i class="fa-solid fa-search"
                     style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
-                <input type="text" id="template-search" placeholder="{% trans 'Şablon axtar...' %}" autocomplete="off"
+                <input type="text" id="template-search" placeholder="{% trans 'Satış şablonu axtar...' %}" autocomplete="off"
                     style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 15px; border: none; outline: none; background: rgba(255,255,255,0.9);">
             </div>
         </form>
 
         <div class="quick-expense-section">
-            <h2 class="quick-expense-section-title">{% trans "Bir toxunuşla gəlir" %}</h2>
+            <h2 class="quick-expense-section-title">{% trans "Bir toxunuşla satış yaz" %}</h2>
             <div class="quick-tap-grid">
                 {% for item in quick_items %}
                 <form method="POST" action="" class="quick-tap-form" data-sync-entity="quick_income" data-sync-action="quick_add">
@@ -51,7 +57,7 @@
         </div>
 
         <div class="quick-expense-section">
-            <h2 class="quick-expense-section-title">{% trans "Xüsusi məbləğ" %}</h2>
+            <h2 class="quick-expense-section-title">{% trans "Məbləği özünüz yazın" %}</h2>
             <form method="POST" action="" class="custom-amount-row" data-sync-entity="quick_income" data-sync-action="custom_amount">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="custom_amount">
@@ -65,7 +71,7 @@
 
         <div class="quick-expense-section">
             <div class="templates-header">
-                <h2 class="quick-expense-section-title">{% trans "Şablonlar" %}</h2>
+                <h2 class="quick-expense-section-title">{% trans "Son istifadə olunan satışlar" %}</h2>
                 <span class="templates-new-badge">
                     <i class="fa-regular fa-star"></i> {% trans "Yeni" %}
                 </span>
@@ -103,6 +109,39 @@
         </div>
     </main>
 <style>
+    .sell-guide-card {
+        margin-bottom: 18px;
+        padding: 18px;
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 26%),
+            linear-gradient(180deg, #ffffff 0%, #fff8ee 100%);
+        border: 1px solid rgba(245, 158, 11, 0.18);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+    }
+
+    .sell-guide-kicker {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #9a3412;
+    }
+
+    .sell-guide-card h2 {
+        margin: 0;
+        font-size: 24px;
+        color: #111827;
+    }
+
+    .sell-guide-card p:last-child {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: #4b5563;
+    }
+
     .quick-expense-section .template-item {
         padding: 22px 22px;
     }
@@ -135,45 +174,6 @@
 </style>
 
 <script>
-    (function () {
-        const amountInput = document.getElementById('custom-amount-input');
-        if (!amountInput) return;
-
-        function applyCustomAmount(form) {
-            const hidden = form.querySelector('input[name="custom_amount"]');
-            if (!hidden) return;
-            hidden.value = amountInput.value || "";
-        }
-
-        document.querySelectorAll('.quick-tap-form, .template-item-form').forEach(form => {
-            form.addEventListener('submit', () => applyCustomAmount(form));
-        });
-    })();
-
-    (function () {
-        const searchInput = document.getElementById('template-search');
-        const items = Array.from(document.querySelectorAll('.template-item-form'));
-        if (!searchInput || items.length === 0) return;
-
-        function normalize(value) {
-            return (value || "").toLowerCase();
-        }
-
-        function matches(item, query) {
-            if (!query) return true;
-            const title = item.querySelector('.template-item-title')?.textContent || "";
-            const tags = Array.from(item.querySelectorAll('.template-tag')).map(tag => tag.textContent).join(" ");
-            return normalize(title + " " + tags).includes(query);
-        }
-
-        function applyFilter() {
-            const query = normalize(searchInput.value);
-            items.forEach(item => {
-                item.style.display = matches(item, query) ? "" : "none";
-            });
-        }
-
-        searchInput.addEventListener('input', applyFilter);
-    })();
+  {% include 'scripts/dashboard/quick_income.js' %}
 </script>
 {% endblock %}

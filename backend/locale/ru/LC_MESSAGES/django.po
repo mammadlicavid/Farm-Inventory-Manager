@@ -1,1939 +1,1792 @@
+#
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-02 10:37+0000\n"
+"POT-Creation-Date: 2026-04-12 12:58+0000\n"
 "Language: ru\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
-#: backend/apps/animals/forms.py:14
-#: frontend/templates/animals/animal_form.html:64
-#: frontend/templates/animals/animal_list.html:89
-#: frontend/templates/incomes/income_form.html:70
-#: frontend/templates/incomes/income_list.html:93
-#: frontend/templates/inventory/add_product.html:159
-#: frontend/templates/inventory/add_product.html:207
-#: frontend/templates/inventory/barcode_builder.html:61
-#: frontend/templates/inventory/barcode_builder.html:75
+#: apps/animals/forms.py:14
 msgid "İdentifikasiya No"
-msgstr ""
+msgstr "Идентификационный номер"
 
-#: backend/apps/animals/forms.py:15 backend/apps/farm_products/forms.py:32
-#: backend/apps/seeds/forms.py:30 backend/apps/tools/forms.py:28
-#: frontend/templates/inventory/add_product.html:112
-#: frontend/templates/inventory/add_product.html:174
-#: frontend/templates/inventory/add_product.html:235
-#: frontend/templates/inventory/add_product.html:287
-#: frontend/templates/inventory/add_product.html:329
-#: frontend/templates/inventory/add_product.html:386
-#, fuzzy
-#| msgid "Şəxsi məlumatlar"
+#: apps/animals/forms.py:15 apps/farm_products/forms.py:32
+#: apps/seeds/forms.py:30 apps/tools/forms.py:28
 msgid "Əlavə məlumat"
-msgstr "Личные данные"
+msgstr "Дополнительная информация"
 
-#: backend/apps/animals/forms.py:17
-#: frontend/templates/animals/animal_form.html:79
-#: frontend/templates/animals/animal_list.html:105
+#: apps/animals/forms.py:17
 msgid "Çəki (kq)"
-msgstr ""
+msgstr "Вес (кг)"
 
-#: backend/apps/animals/forms.py:18
+#: apps/animals/forms.py:18
 msgid "Qiymət (AZN)"
-msgstr ""
+msgstr "Цена (AZN)"
 
-#: backend/apps/animals/forms.py:19 backend/apps/farm_products/forms.py:27
-#: backend/apps/seeds/forms.py:26 backend/apps/tools/forms.py:26
-#: frontend/templates/inventory/add_product.html:141
-#: frontend/templates/inventory/add_product.html:203
-#: frontend/templates/inventory/add_product.html:264
-#: frontend/templates/inventory/add_product.html:316
-#: frontend/templates/inventory/add_product.html:358
-#: frontend/templates/inventory/barcode_builder.html:56
-#: frontend/templates/inventory/barcode_builder.html:74
-#: frontend/templates/inventory/barcode_builder.html:92
-#: frontend/templates/inventory/barcode_builder.html:106
-#: frontend/templates/inventory/barcode_builder.html:119
+#: apps/animals/forms.py:19 apps/farm_products/forms.py:27
+#: apps/reports/views.py:751 apps/reports/views.py:1057 apps/seeds/forms.py:26
+#: apps/tools/forms.py:26
 msgid "Miqdar"
-msgstr ""
+msgstr "Количество"
 
-#: backend/apps/animals/views.py:250 backend/apps/animals/views.py:365
-#: backend/apps/expenses/views.py:259 backend/apps/expenses/views.py:313
-#: backend/apps/farm_products/views.py:362
-#: backend/apps/farm_products/views.py:519 backend/apps/incomes/views.py:711
-#: backend/apps/incomes/views.py:869 backend/apps/seeds/views.py:404
-#: backend/apps/seeds/views.py:530 backend/apps/tools/views.py:302
-#: backend/apps/tools/views.py:420
+#: apps/animals/views.py:308 apps/animals/views.py:434
+#: apps/expenses/views.py:304 apps/expenses/views.py:361
+#: apps/farm_products/views.py:409 apps/farm_products/views.py:577
+#: apps/incomes/views.py:756 apps/incomes/views.py:915 apps/seeds/views.py:451
+#: apps/seeds/views.py:587 apps/tools/views.py:349 apps/tools/views.py:477
 msgid "Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."
-msgstr ""
+msgstr "Пожалуйста, заполните все обязательные поля (*)."
 
-#: backend/apps/animals/views.py:256 backend/apps/animals/views.py:377
-#: backend/apps/farm_products/views.py:369
-#: backend/apps/farm_products/views.py:530 backend/apps/incomes/views.py:716
-#: backend/apps/incomes/views.py:874 backend/apps/inventory/views.py:773
-#: backend/apps/seeds/views.py:413 backend/apps/seeds/views.py:536
-#: backend/apps/tools/views.py:311 backend/apps/tools/views.py:426
+#: apps/animals/views.py:314 apps/animals/views.py:440
+#: apps/farm_products/views.py:416 apps/farm_products/views.py:588
+#: apps/incomes/views.py:761 apps/incomes/views.py:920
+#: apps/inventory/views.py:818 apps/seeds/views.py:460 apps/seeds/views.py:593
+#: apps/tools/views.py:358 apps/tools/views.py:483
 msgid "Miqdar düzgün deyil."
-msgstr ""
+msgstr "Некорректное количество."
 
-#: backend/apps/animals/views.py:259 backend/apps/animals/views.py:386
+#: apps/animals/views.py:317 apps/animals/views.py:443
 msgid "Miqdar 0 ola bilməz."
-msgstr ""
+msgstr "Количество не может быть 0."
 
-#: backend/apps/animals/views.py:274 backend/apps/animals/views.py:416
-#: backend/apps/farm_products/views.py:393
-#: backend/apps/farm_products/views.py:564 backend/apps/incomes/views.py:728
-#: backend/apps/incomes/views.py:886 backend/apps/seeds/views.py:421
-#: backend/apps/seeds/views.py:552 backend/apps/tools/views.py:319
-#: backend/apps/tools/views.py:440
+#: apps/animals/views.py:324 apps/animals/views.py:471
+#: apps/farm_products/views.py:419 apps/farm_products/views.py:595
+#: apps/seeds/views.py:463 apps/seeds/views.py:596 apps/tools/views.py:361
+#: apps/tools/views.py:486
+msgid "Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin."
+msgstr "Выберите, откуда появился этот запас, если сумма равна 0."
+
+#: apps/animals/views.py:337 apps/animals/views.py:461
+#: apps/farm_products/views.py:445 apps/farm_products/views.py:630
+#: apps/incomes/views.py:773 apps/incomes/views.py:932 apps/seeds/views.py:473
+#: apps/seeds/views.py:612 apps/tools/views.py:371 apps/tools/views.py:500
 msgid "Zəhmət olmasa, Digər üçün ad daxil edin."
-msgstr ""
+msgstr "Введите название для варианта «Другое»."
 
-#: backend/apps/animals/views.py:281 backend/apps/animals/views.py:400
+#: apps/animals/views.py:344 apps/animals/views.py:451
 msgid "Bu identifikasiya nömrəsi artıq mövcuddur."
-msgstr ""
+msgstr "Этот идентификационный номер уже существует."
 
-#: backend/apps/animals/views.py:341
+#: apps/animals/views.py:408
 msgid "Seçilmiş alt kateqoriya tapılmadı."
-msgstr ""
+msgstr "Выбранная подкатегория не найдена."
 
-#: backend/apps/common/messages.py:4
+#: apps/common/messages.py:5
 msgid "Uğurla əlavə edildi."
-msgstr ""
+msgstr "Успешно добавлено."
 
-#: backend/apps/common/messages.py:5
-#, fuzzy
-#| msgid "Profil məlumatları uğurla yeniləndi."
+#: apps/common/messages.py:6
 msgid "Uğurla yeniləndi."
-msgstr "Данные профиля успешно обновлены."
+msgstr "Успешно обновлено."
 
-#: backend/apps/common/messages.py:6
+#: apps/common/messages.py:7
 msgid "Uğurla silindi."
-msgstr ""
+msgstr "Успешно удалено."
 
-#: backend/apps/dashboard/views.py:195 backend/apps/dashboard/views.py:479
-msgid "{name} — {format_currency(amount_val, 0)}₼ əlavə edildi"
-msgstr ""
+#: apps/common/zero_price_source.py:7
+msgid "Təsərrüfat daxilində yaranıb"
+msgstr "Произведено в хозяйстве"
 
-#: backend/apps/dashboard/views.py:213
-msgid "Xüsusi xərc — {format_currency(amount_val, 0)}₼ əlavə edildi"
-msgstr ""
+#: apps/common/zero_price_source.py:8
+msgid "Əvvəlcədən məndə var idi"
+msgstr "У меня уже было"
 
-#: backend/apps/dashboard/views.py:234
-msgid "{original.title} — {format_currency(amount_val, 0)}₼ əlavə edildi"
-msgstr ""
+#: apps/common/zero_price_source.py:9
+msgid "Pulsuz gəlib / hədiyyədir"
+msgstr "Получено бесплатно / в подарок"
 
-#: backend/apps/dashboard/views.py:499
-msgid "Xüsusi gəlir — {format_currency(amount_val, 0)}₼ əlavə edildi"
-msgstr ""
-
-#: backend/apps/dashboard/views.py:523
-msgid "{original.item_name} — {format_currency(amount_val, 0)}₼ əlavə edildi"
-msgstr ""
-
-#: backend/apps/expenses/views.py:267 backend/apps/expenses/views.py:326
-#: backend/apps/incomes/views.py:721 backend/apps/incomes/views.py:879
-msgid "Məbləğ düzgün deyil."
-msgstr ""
-
-#: backend/apps/farm_products/forms.py:17 backend/apps/seeds/forms.py:16
-#: frontend/templates/notifications/notifications.html:131
-msgid "Kateqoriya"
-msgstr ""
-
-#: backend/apps/farm_products/forms.py:29 backend/apps/seeds/forms.py:28
-#: backend/apps/tools/forms.py:27 frontend/templates/tools/tool_list.html:89
-msgid "Qiymət (₼)"
-msgstr ""
-
-#: backend/apps/farm_products/forms.py:30
-msgid "Məhsulun adı (Digər)"
-msgstr ""
-
-#: backend/apps/farm_products/views.py:399
-#: backend/apps/farm_products/views.py:572
-#: backend/apps/farm_products/views.py:581
-#: backend/apps/farm_products/views.py:595 backend/apps/incomes/views.py:759
-#: backend/apps/incomes/views.py:917
-msgid "Ölçü vahidi bu kateqoriya üçün uyğun deyil."
-msgstr ""
-
-#: backend/apps/farm_products/views.py:419
-#: backend/apps/farm_products/views.py:632 backend/apps/incomes/views.py:774
-#: backend/apps/incomes/views.py:938
-msgid "Stokda kifayət qədər məhsul yoxdur."
-msgstr ""
-
-#: backend/apps/farm_products/views.py:455 backend/apps/seeds/views.py:461
-#: backend/apps/tools/views.py:357
-msgid "Gəlir üçün məbləğ daxil edin."
-msgstr ""
-
-#: backend/apps/farm_products/views.py:496
-msgid "Seçilmiş məhsul tapılmadı."
-msgstr ""
-
-#: backend/apps/incomes/views.py:733 backend/apps/incomes/views.py:891
-msgid "Zəhmət olmasa, heyvanlar üçün cinsiyyət seçin."
-msgstr ""
-
-#: backend/apps/incomes/views.py:742 backend/apps/incomes/views.py:900
-#: backend/apps/inventory/views.py:952
-msgid "Heyvanlar üçün miqdar tam ədəd olmalıdır."
-msgstr ""
-
-#: backend/apps/incomes/views.py:745 backend/apps/incomes/views.py:903
-msgid "İdentifikasiya nömrəsi yalnız miqdar ±1 olduqda verilə bilər."
-msgstr ""
-
-#: backend/apps/incomes/views.py:767 backend/apps/incomes/views.py:929
-#: backend/apps/seeds/views.py:432 backend/apps/seeds/views.py:574
-msgid "Stokda kifayət qədər toxum yoxdur."
-msgstr ""
-
-#: backend/apps/incomes/views.py:804 backend/apps/incomes/views.py:975
-msgid "Bu identifikasiya nömrəsinə uyğun heyvan tapılmadı."
-msgstr ""
-
-#: backend/apps/incomes/views.py:809 backend/apps/incomes/views.py:814
-#: backend/apps/incomes/views.py:979 backend/apps/incomes/views.py:983
-msgid "Seçilmiş heyvan ID-si bu kateqoriyaya uyğun deyil."
-msgstr ""
-
-#: backend/apps/incomes/views.py:841
-msgid "Gəlir əlavə edildi."
-msgstr ""
-
-#: backend/apps/incomes/views.py:1008
-#, fuzzy
-#| msgid "Şifrəni yenilə"
-msgid "Gəlir yeniləndi."
-msgstr "Обновить пароль"
-
-#: backend/apps/incomes/views.py:1033
-msgid "Gəlir silindi."
-msgstr ""
-
-#: backend/apps/inventory/views.py:767 backend/apps/inventory/views.py:913
-#: backend/apps/inventory/views.py:945
-msgid "Məlumatlar natamamdır."
-msgstr ""
-
-#: backend/apps/inventory/views.py:837 backend/apps/inventory/views.py:858
-msgid "Alətlər üçün miqdar tam ədəd olmalıdır."
-msgstr ""
-
-#: backend/apps/inventory/views.py:885
-msgid "Məhsul tapılmadı."
-msgstr ""
-
-#: backend/apps/inventory/views.py:1039
-msgid "Bu kateqoriya üçün yeniləmə dəstəklənmir."
-msgstr ""
-
-#: backend/apps/notifications/views.py:45
-msgid "Başlıq və tarix tələb olunur."
-msgstr ""
-
-#: backend/apps/notifications/views.py:57
-msgid "Xatırlatma silindi."
-msgstr ""
-
-#: backend/apps/seeds/forms.py:29
-msgid "Toxumun adı (Digər)"
-msgstr ""
-
-#: backend/apps/seeds/views.py:507
-msgid "Seçilmiş toxum növü tapılmadı."
-msgstr ""
-
-#: backend/apps/sidebar_menu/views.py:20
-msgid "Profil məlumatları uğurla yeniləndi."
-msgstr "Данные профиля успешно обновлены."
-
-#: backend/apps/sidebar_menu/views.py:32
-msgid "Şifrəniz uğurla dəyişdirildi."
-msgstr "Ваш пароль успешно изменен."
-
-#: backend/apps/sidebar_menu/views.py:53
-msgid "Parametrlər uğurla yadda saxlanıldı."
-msgstr "Настройки успешно сохранены."
-
-#: backend/apps/suppliers/views.py:60 backend/apps/suppliers/views.py:108
-msgid "Kateqoriya seçin."
-msgstr ""
-
-#: backend/apps/suppliers/views.py:67 backend/apps/suppliers/views.py:115
-msgid "Zəhmət olmasa, Digər üçün kateqoriya adı daxil edin."
-msgstr ""
-
-#: backend/apps/suppliers/views.py:87
-#, python-brace-format
-msgid "{name} sistemə əlavə edildi."
-msgstr ""
-
-#: backend/apps/suppliers/views.py:126
-#, python-brace-format
-msgid "{supplier.name} yeniləndi."
-msgstr ""
-
-#: backend/apps/suppliers/views.py:141
-#, python-brace-format
-msgid "{supplier_name} silindi."
-msgstr ""
-
-#: backend/apps/tools/forms.py:16
-#: frontend/templates/inventory/add_product.html:86
-#: frontend/templates/inventory/add_product.html:124
-#: frontend/templates/inventory/add_product.html:186
-#: frontend/templates/inventory/add_product.html:247
-#: frontend/templates/inventory/add_product.html:299
-#: frontend/templates/inventory/add_product.html:341
-#: frontend/templates/inventory/barcode_builder.html:41
-#: frontend/templates/inventory/barcode_builder.html:51
-#: frontend/templates/inventory/barcode_builder.html:69
-#: frontend/templates/inventory/barcode_builder.html:87
-#: frontend/templates/inventory/barcode_builder.html:101
-#: frontend/templates/inventory/barcode_builder.html:114
-#: frontend/templates/inventory/stocks.html:21
-msgid "Ana Kateqoriya"
-msgstr ""
-
-#: backend/apps/tools/forms.py:29
-#: frontend/templates/inventory/add_product.html:311
-#: frontend/templates/inventory/barcode_builder.html:104
-msgid "Alət adı (Digər)"
-msgstr ""
-
-#: backend/apps/tools/views.py:329 backend/apps/tools/views.py:463
-msgid "Stokda kifayət qədər alət yoxdur."
-msgstr ""
-
-#: backend/apps/tools/views.py:398
-msgid "Seçilmiş alət növü tapılmadı."
-msgstr ""
-
-#: backend/apps/users/views.py:33
-msgid "İstifadəçi adı və ya şifrə səhvdir."
-msgstr ""
-
-#: frontend/templates/animals/animal_confirm_delete.html:11
-msgid "Silinməni Təsdiqlə"
-msgstr ""
-
-#: frontend/templates/animals/animal_confirm_delete.html:25
-#: frontend/templates/farm_products/farm_product_confirm_delete.html:26
-#: frontend/templates/seeds/seed_confirm_delete.html:25
-#: frontend/templates/tools/tool_confirm_delete.html:25
-msgid "Bəli, Sil"
-msgstr ""
-
-#: frontend/templates/animals/animal_confirm_delete.html:27
-#: frontend/templates/farm_products/farm_product_confirm_delete.html:28
-#: frontend/templates/seeds/seed_confirm_delete.html:27
-#: frontend/templates/tools/tool_confirm_delete.html:27
-msgid "Xeyr, Geri Qayıt"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:11
-msgid "Heyvanı Düzəlt"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:19
-msgid "Heyvan Məlumatlarını Yenilə"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:29
-#: frontend/templates/animals/animal_list.html:61
-#: frontend/templates/expenses/expense_form.html:27
-#: frontend/templates/expenses/expense_list.html:41
-#: frontend/templates/farm_products/farm_product_form.html:27
-#: frontend/templates/farm_products/farm_product_list.html:60
-#: frontend/templates/incomes/income_form.html:27
-#: frontend/templates/incomes/income_list.html:39
-#: frontend/templates/inventory/add_product.html:88
-#: frontend/templates/inventory/add_product.html:126
-#: frontend/templates/inventory/add_product.html:188
-#: frontend/templates/inventory/add_product.html:249
-#: frontend/templates/inventory/add_product.html:301
-#: frontend/templates/inventory/add_product.html:343
-#: frontend/templates/inventory/barcode_builder.html:41
-#: frontend/templates/inventory/barcode_builder.html:51
-#: frontend/templates/inventory/barcode_builder.html:69
-#: frontend/templates/inventory/barcode_builder.html:87
-#: frontend/templates/inventory/barcode_builder.html:101
-#: frontend/templates/inventory/barcode_builder.html:114
-#: frontend/templates/seeds/seed_form.html:27
-#: frontend/templates/seeds/seed_list.html:61
-#: frontend/templates/suppliers/suppliers_add.html:32
-#: frontend/templates/tools/tool_form.html:27
-msgid "Kateqoriya seçin"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:40
-#: frontend/templates/animals/animal_form.html:146
-#: frontend/templates/animals/animal_list.html:560
-#: frontend/templates/expenses/expense_form.html:37
-#: frontend/templates/expenses/expense_form.html:106
-#: frontend/templates/expenses/expense_list.html:336
-#: frontend/templates/inventory/add_product.html:94
-#: frontend/templates/inventory/add_product.html:194
-#: frontend/templates/inventory/barcode_builder.html:42
-#: frontend/templates/inventory/barcode_builder.html:70
-msgid "Alt kateqoriya seçin"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:52
-#: frontend/templates/animals/animal_list.html:78
-#: frontend/templates/inventory/add_product.html:199
-#: frontend/templates/inventory/barcode_builder.html:72
-msgid "Heyvanın növünü daxil edin"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:65
-#: frontend/templates/animals/animal_list.html:90
-#: frontend/templates/incomes/income_form.html:72
-#: frontend/templates/incomes/income_list.html:95
-#: frontend/templates/inventory/add_product.html:160
-#: frontend/templates/inventory/add_product.html:208
-#: frontend/templates/inventory/add_product.html:560
-#: frontend/templates/inventory/barcode_builder.html:61
-#: frontend/templates/inventory/barcode_builder.html:75
-msgid "Məsələn: AZ12345"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:74
-#: frontend/templates/animals/animal_list.html:100
-#: frontend/templates/incomes/income_form.html:64
-#: frontend/templates/incomes/income_list.html:87
-#: frontend/templates/inventory/add_product.html:154
-#: frontend/templates/inventory/add_product.html:215
-#: frontend/templates/inventory/barcode_builder.html:60
-#: frontend/templates/inventory/barcode_builder.html:78
-#: frontend/templates/inventory/stocks.html:506
-msgid "Erkək"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:75
-#: frontend/templates/animals/animal_list.html:101
-#: frontend/templates/incomes/income_form.html:65
-#: frontend/templates/incomes/income_list.html:88
-#: frontend/templates/inventory/add_product.html:155
-#: frontend/templates/inventory/add_product.html:216
-#: frontend/templates/inventory/barcode_builder.html:60
-#: frontend/templates/inventory/barcode_builder.html:78
-#: frontend/templates/inventory/stocks.html:508
-msgid "Dişi"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:87
-#: frontend/templates/animals/animal_list.html:113
-#: frontend/templates/dashboard/quick_expense.html:54
-#: frontend/templates/dashboard/quick_income.html:56
-#: frontend/templates/farm_products/farm_product_form.html:81
-#: frontend/templates/farm_products/farm_product_list.html:106
-#: frontend/templates/seeds/seed_form.html:73
-#: frontend/templates/seeds/seed_list.html:101
-msgid "Məbləğ (₼)"
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:99
-#: frontend/templates/animals/animal_list.html:124
-#: frontend/templates/expenses/expense_form.html:61
-#: frontend/templates/expenses/expense_list.html:77
-#: frontend/templates/farm_products/farm_product_form.html:93
-#: frontend/templates/farm_products/farm_product_list.html:117
-#: frontend/templates/incomes/income_form.html:91
-#: frontend/templates/incomes/income_list.html:114
-#: frontend/templates/seeds/seed_form.html:85
-#: frontend/templates/seeds/seed_list.html:112
-#: frontend/templates/suppliers/suppliers_add.html:79
-#: frontend/templates/tools/tool_form.html:74
-#: frontend/templates/tools/tool_list.html:100
-#, fuzzy
-#| msgid "Şəxsi məlumatlar"
-msgid "Əlavə Məlumat"
-msgstr "Личные данные"
-
-#: frontend/templates/animals/animal_form.html:100
-#: frontend/templates/animals/animal_list.html:126
-#: frontend/templates/inventory/add_product.html:236
-msgid "Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
-msgstr ""
-
-#: frontend/templates/animals/animal_form.html:106
-#: frontend/templates/expenses/expense_form.html:68
-#: frontend/templates/farm_products/farm_product_form.html:100
-#: frontend/templates/incomes/income_form.html:98
-#: frontend/templates/seeds/seed_form.html:92
-#: frontend/templates/tools/tool_form.html:81
-#, fuzzy
-#| msgid "Yadda saxla"
-msgid "Yadda Saxla"
-msgstr "Сохранить"
-
-#: frontend/templates/animals/animal_form.html:150
-#: frontend/templates/animals/animal_list.html:564
-#: frontend/templates/expenses/expense_form.html:110
-#: frontend/templates/farm_products/farm_product_form.html:226
-#: frontend/templates/farm_products/farm_product_list.html:603
-msgid "Alt kateqoriya yoxdur"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:11
-#: frontend/templates/dashboard/index.html:37
-#: frontend/templates/inventory/stocks.html:27
-msgid "Heyvanlar"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:21
-#: frontend/templates/expenses/expense_list.html:95
-#: frontend/templates/farm_products/farm_product_list.html:20
-#: frontend/templates/incomes/income_list.html:132
-#: frontend/templates/seeds/seed_list.html:20
-#: frontend/templates/suppliers/suppliers.html:30
-#: frontend/templates/tools/tool_list.html:20
-msgid "Bütün kateqoriyalar"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:27
-#: frontend/templates/animals/animal_list.html:407
-#: frontend/templates/animals/animal_list.html:444
-msgid "Bütün heyvan növləri"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:33
-#: frontend/templates/farm_products/farm_product_list.html:32
-#: frontend/templates/seeds/seed_list.html:32
-#: frontend/templates/tools/tool_list.html:32
-msgid "Artım və azalma"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:34
-#: frontend/templates/farm_products/farm_product_list.html:33
-#: frontend/templates/seeds/seed_list.html:33
-#: frontend/templates/tools/tool_list.html:33
-msgid "Artım"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:35
-#: frontend/templates/farm_products/farm_product_list.html:34
-#: frontend/templates/seeds/seed_list.html:34
-#: frontend/templates/tools/tool_list.html:34
-msgid "Azalma"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:46
-msgid "Axtar (ID, Məlumat, Növ)..."
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:48
-#: frontend/templates/expenses/expense_list.html:114
-#: frontend/templates/farm_products/farm_product_list.html:47
-#: frontend/templates/incomes/income_list.html:150
-#: frontend/templates/inventory/stocks.html:64
-#: frontend/templates/seeds/seed_list.html:47
-#: frontend/templates/tools/tool_list.html:47
-msgid "Sıfırla"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:54
-msgid "Yeni Heyvan Əlavə Et"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:71
-#: frontend/templates/expenses/expense_list.html:51
-msgid "Əvvəlcə ana kateqoriya seçin"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:141
-msgid "Heyvan Siyahısı"
-msgstr ""
-
-#: frontend/templates/animals/animal_list.html:220
-msgid "Heç bir heyvan tapılmadı"
-msgstr ""
-
-#: frontend/templates/base.html:8 frontend/templates/dashboard/index.html:8
-#: frontend/templates/dashboard/stock_warnings_placeholder.html:8
-msgid "Ferma İdarəsi"
-msgstr "Управление фермой"
-
-#: frontend/templates/base.html:112 frontend/templates/base.html:368
-msgid "Menyu"
-msgstr "Меню"
-
-#: frontend/templates/base.html:117
-#: frontend/templates/sidebar_menu/help.html:41
-#: frontend/templates/sidebar_menu/profile.html:3
-#: frontend/templates/sidebar_menu/profile.html:11
-msgid "Profil"
-msgstr "Профиль"
-
-#: frontend/templates/base.html:120
-#: frontend/templates/sidebar_menu/setting.html:3
-#: frontend/templates/sidebar_menu/setting.html:11
-msgid "Parametrlər"
-msgstr "Настройки"
-
-#: frontend/templates/base.html:123 frontend/templates/sidebar_menu/help.html:3
-#: frontend/templates/sidebar_menu/help.html:11
-msgid "Kömək"
-msgstr "Помощь"
-
-#: frontend/templates/base.html:126 frontend/templates/sync/sync_page.html:10
-msgid "Sinxronizasiya"
-msgstr "Синхронизация"
-
-#: frontend/templates/base.html:129
-msgid "Çıxış"
-msgstr "Выход"
-
-#: frontend/templates/base.html:285 frontend/templates/base.html:296
-#: frontend/templates/sync/sync_page.html:21
-#: frontend/templates/sync/sync_page.html:38
-msgid "Yoxlanır"
-msgstr ""
-
-#: frontend/templates/base.html:347
-msgid "Ana Səhifə"
-msgstr ""
-
-#: frontend/templates/base.html:353 frontend/templates/inventory/stocks.html:11
-msgid "Stok"
-msgstr ""
-
-#: frontend/templates/base.html:362
-#: frontend/templates/dashboard/quick_expense.html:11
-#: frontend/templates/expenses/expense_list.html:26
-#: frontend/templates/sidebar_menu/help.html:84
-msgid "Tez Xərc"
-msgstr "Быстрый расход"
-
-#: frontend/templates/common/placeholder.html:10
-msgid "Tеzliklə"
-msgstr ""
-
-#: frontend/templates/common/placeholder.html:18
-msgid "Tezliklə!"
-msgstr ""
-
-#: frontend/templates/common/placeholder.html:19
-msgid "Bu səhifə hazırda hazırlanma mərhələsindədir."
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:30
-#: frontend/templates/inventory/stocks.html:25
-#: frontend/templates/seeds/seed_list.html:10
-msgid "Toxumlar"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:44
-#: frontend/templates/inventory/stocks.html:26
-#: frontend/templates/tools/tool_list.html:10
-msgid "Alətlər"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:51
-#: frontend/templates/farm_products/farm_product_list.html:10
-#: frontend/templates/inventory/stocks.html:28
-msgid "Təsərrüfat Məhsulları"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:58
-#: frontend/templates/expenses/expense_list.html:11
-msgid "Xərclər"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:65
-#: frontend/templates/incomes/income_list.html:11
-msgid "Gəlirlər"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:72
-#: frontend/templates/reports/reports_form.html:8
-#: frontend/templates/sidebar_menu/help.html:63
-msgid "Hesabatlar"
-msgstr "Отчеты"
-
-#: frontend/templates/dashboard/index.html:79
-msgid "Bulud"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:86
-#: frontend/templates/suppliers/suppliers.html:11
-msgid "Təchizatçılar"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:240
-msgid "Ehtiyat Xəbərdarlığı"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:273
-msgid "Bu həftə"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:277
-msgid "Yeni məhsul"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:283
-msgid "Qazanc"
-msgstr ""
-
-#: frontend/templates/dashboard/index.html:287
-msgid "Heyvan"
-msgstr ""
-
-#: frontend/templates/dashboard/quick_expense.html:22
-#: frontend/templates/dashboard/quick_income.html:22
-msgid "Şablon axtar..."
-msgstr ""
-
-#: frontend/templates/dashboard/quick_expense.html:28
-msgid "Bir toxunuşla xərc"
-msgstr ""
-
-#: frontend/templates/dashboard/quick_expense.html:50
-#: frontend/templates/dashboard/quick_income.html:52
-msgid "Xüsusi məbləğ"
-msgstr ""
-
-#: frontend/templates/dashboard/quick_expense.html:65
-#: frontend/templates/dashboard/quick_income.html:66
-msgid "Şablonlar"
-msgstr ""
-
-#: frontend/templates/dashboard/quick_expense.html:88
-#: frontend/templates/dashboard/quick_expense.html:89
-#: frontend/templates/expenses/expense_list.html:99
+#: apps/common/zero_price_source.py:10 apps/reports/views.py:246
+#: apps/reports/views.py:518 apps/reports/views.py:565
 msgid "Digər"
-msgstr ""
+msgstr "Другое"
 
-#: frontend/templates/dashboard/quick_expense.html:101
-msgid "Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək."
-msgstr ""
+#: apps/dashboard/views.py:33
+msgid "B.e."
+msgstr "Пн"
 
-#: frontend/templates/dashboard/quick_income.html:11
-#: frontend/templates/incomes/income_list.html:25
-#, fuzzy
-#| msgid "Tez Xərc"
-msgid "Tez Gəlir"
-msgstr "Быстрый расход"
+#: apps/dashboard/views.py:34
+msgid "Ç.a."
+msgstr "Вт"
 
-#: frontend/templates/dashboard/quick_income.html:28
-msgid "Bir toxunuşla gəlir"
-msgstr ""
+#: apps/dashboard/views.py:35
+msgid "Ç."
+msgstr "Ср"
 
-#: frontend/templates/dashboard/quick_income.html:97
-msgid ""
-"Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək."
-msgstr ""
+#: apps/dashboard/views.py:36
+msgid "C.a."
+msgstr "Чт"
 
-#: frontend/templates/dashboard/stock_warnings_placeholder.html:15
-msgid "Ehtiyat Xəbərdarlığı (Tezliklə)"
-msgstr ""
+#: apps/dashboard/views.py:37
+msgid "C."
+msgstr "Пт"
 
-#: frontend/templates/dashboard/stock_warnings_placeholder.html:23
-msgid "Bu səhifə hələ hazırlanır..."
-msgstr ""
+#: apps/dashboard/views.py:38
+msgid "Ş."
+msgstr "Сб"
 
-#: frontend/templates/dashboard/stock_warnings_placeholder.html:24
-msgid "Ehtiyat xəbərdarlığı səhifəsi tezliklə istifadəyə veriləcək."
-msgstr ""
+#: apps/dashboard/views.py:39
+msgid "B."
+msgstr "Вс"
 
-#: frontend/templates/dashboard/stock_warnings_placeholder.html:25
-msgid "Ana Səhifəyə Qayıt"
-msgstr ""
+#: apps/dashboard/views.py:184 apps/dashboard/views.py:376
+msgid "Toxum"
+msgstr "Семена"
 
-#: frontend/templates/expenses/expense_form.html:9
-msgid "Xərci Düzəlt"
-msgstr ""
+#: apps/dashboard/views.py:185 apps/dashboard/views.py:435
+msgid "Heyvan"
+msgstr "Животное"
 
-#: frontend/templates/expenses/expense_form.html:17
-#, fuzzy
-#| msgid "Profil məlumatları uğurla yeniləndi."
-msgid "Xərc Məlumatlarını Yenilə"
-msgstr "Данные профиля успешно обновлены."
+#: apps/dashboard/views.py:186 apps/dashboard/views.py:486
+msgid "Alət"
+msgstr "Инструменты"
 
-#: frontend/templates/expenses/expense_form.html:48
-msgid "Xərcin növünü daxil edin"
-msgstr ""
-
-#: frontend/templates/expenses/expense_form.html:62
-msgid "Məsələn: Mağaza adı, qəbz nömrəsi və s."
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:21
-msgid "Bu həftə ümumi xərc"
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:34
-msgid "Yeni Xərc Əlavə Et"
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:58
-#: frontend/templates/inventory/add_product.html:99
-#: frontend/templates/inventory/barcode_builder.html:44
-msgid "Xərcin adını daxil edin"
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:78
-#: frontend/templates/inventory/add_product.html:113
-msgid "Məsələn: Əlavə qeydlər..."
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:84
-msgid "Xərc Əlavə Et"
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:102
-#: frontend/templates/expenses/expense_list.html:372
-#: frontend/templates/expenses/expense_list.html:449
-msgid "Bütün alt kateqoriyalar"
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:113
-#: frontend/templates/incomes/income_list.html:149
-msgid "Axtarış..."
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:118
-msgid "Son Xərclər"
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:179
-msgid "Hələ heç bir xərc qeydə alınmayıb"
-msgstr ""
-
-#: frontend/templates/expenses/expense_list.html:185
-msgid "Filterə uyğun xərc tapılmadı"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_confirm_delete.html:11
-#: frontend/templates/seeds/seed_confirm_delete.html:11
-#: frontend/templates/tools/tool_confirm_delete.html:11
-msgid "Silmək"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:9
-msgid "Məhsulu Düzəlt"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:17
-#, fuzzy
-#| msgid "Profil məlumatları uğurla yeniləndi."
-msgid "Məhsul Məlumatlarını Yenilə"
-msgstr "Данные профиля успешно обновлены."
-
-#: frontend/templates/farm_products/farm_product_form.html:37
-#: frontend/templates/farm_products/farm_product_form.html:201
-#: frontend/templates/farm_products/farm_product_list.html:578
-#: frontend/templates/inventory/add_product.html:132
-#: frontend/templates/inventory/add_product.html:349
-#: frontend/templates/inventory/barcode_builder.html:52
-#: frontend/templates/inventory/barcode_builder.html:115
-msgid "Məhsul seçin"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:52
-#: frontend/templates/farm_products/farm_product_list.html:77
-#: frontend/templates/incomes/income_form.html:41
-#: frontend/templates/incomes/income_list.html:56
-#: frontend/templates/inventory/add_product.html:137
-#: frontend/templates/inventory/add_product.html:354
-#: frontend/templates/inventory/barcode_builder.html:54
-#: frontend/templates/inventory/barcode_builder.html:117
-msgid "Məhsulun adını daxil edin"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:66
-#: frontend/templates/farm_products/farm_product_list.html:90
-#: frontend/templates/incomes/income_list.html:69
-#: frontend/templates/inventory/add_product.html:364
-#: frontend/templates/inventory/barcode_builder.html:120
-msgid "kq"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:67
-#: frontend/templates/farm_products/farm_product_list.html:91
-#: frontend/templates/incomes/income_list.html:70
-#: frontend/templates/inventory/add_product.html:272
-#: frontend/templates/inventory/add_product.html:366
-#: frontend/templates/inventory/barcode_builder.html:93
-#: frontend/templates/inventory/barcode_builder.html:120
-#: frontend/templates/seeds/seed_form.html:64
-#: frontend/templates/seeds/seed_list.html:92
-msgid "ton"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:68
-#: frontend/templates/farm_products/farm_product_list.html:92
-#: frontend/templates/incomes/income_list.html:71
-#: frontend/templates/inventory/add_product.html:271
-#: frontend/templates/inventory/add_product.html:365
-#: frontend/templates/inventory/barcode_builder.html:93
-#: frontend/templates/inventory/barcode_builder.html:120
-#: frontend/templates/seeds/seed_form.html:65
-#: frontend/templates/seeds/seed_list.html:93
-msgid "qram"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:69
-#: frontend/templates/farm_products/farm_product_list.html:93
-#: frontend/templates/incomes/income_list.html:72
-#: frontend/templates/inventory/add_product.html:367
-#: frontend/templates/inventory/barcode_builder.html:120
-#: frontend/templates/sidebar_menu/setting.html:69
-msgid "litr"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:70
-#: frontend/templates/farm_products/farm_product_list.html:94
-#: frontend/templates/inventory/add_product.html:368
-#: frontend/templates/inventory/barcode_builder.html:120
-msgid "millilitr"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:71
-#: frontend/templates/farm_products/farm_product_list.html:95
-#: frontend/templates/incomes/income_list.html:74
-#: frontend/templates/inventory/add_product.html:369
-#: frontend/templates/inventory/barcode_builder.html:120
-#: frontend/templates/seeds/seed_form.html:66
-msgid "ədəd"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:72
-#: frontend/templates/farm_products/farm_product_list.html:96
-#: frontend/templates/incomes/income_list.html:75
-#: frontend/templates/inventory/add_product.html:370
-#: frontend/templates/inventory/barcode_builder.html:120
-msgid "dəstə"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:73
-#: frontend/templates/farm_products/farm_product_list.html:97
-#: frontend/templates/incomes/income_list.html:76
-#: frontend/templates/inventory/add_product.html:371
-#: frontend/templates/inventory/barcode_builder.html:120
-msgid "bağlama"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_form.html:94
-#: frontend/templates/farm_products/farm_product_list.html:118
-#: frontend/templates/inventory/add_product.html:387
-msgid "Məsələn: Məhsulun vəziyyəti və s."
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_list.html:26
-#: frontend/templates/farm_products/farm_product_list.html:392
-#: frontend/templates/farm_products/farm_product_list.html:428
-msgid "Bütün məhsul növləri"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_list.html:45
-#: frontend/templates/seeds/seed_list.html:45
-#: frontend/templates/tools/tool_list.html:45
-msgid "Axtar (Ad, Kateqoriya)..."
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_list.html:53
-msgid "Yeni Məhsul Əlavə Et"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_list.html:70
-#: frontend/templates/incomes/income_form.html:212
-#: frontend/templates/incomes/income_list.html:49
-#: frontend/templates/incomes/income_list.html:469
-#: frontend/templates/seeds/seed_list.html:71
-msgid "Əvvəlcə kateqoriya seçin"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_list.html:132
-msgid "Təsərrüfat Məhsulları Siyahısı"
-msgstr ""
-
-#: frontend/templates/farm_products/farm_product_list.html:205
-msgid "Heç bir məhsul tapılmadı"
-msgstr ""
-
-#: frontend/templates/incomes/income_form.html:9
-msgid "Gəliri Düzəlt"
-msgstr ""
-
-#: frontend/templates/incomes/income_form.html:17
-#, fuzzy
-#| msgid "Profil məlumatları uğurla yeniləndi."
-msgid "Gəlir Məlumatlarını Yenilə"
-msgstr "Данные профиля успешно обновлены."
-
-#: frontend/templates/incomes/income_form.html:63
-#: frontend/templates/incomes/income_list.html:86
-msgid "Cinsiyyət seçin"
-msgstr ""
-
-#: frontend/templates/incomes/income_form.html:92
-#: frontend/templates/incomes/income_list.html:115
-#: frontend/templates/inventory/add_product.html:175
-msgid "Məsələn: satış yeri, qeyd və s."
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:20
-msgid "Bu həftə ümumi gəlir"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:32
-msgid "Yeni Gəlir Əlavə Et"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:73
-msgid "ml"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:121
-msgid "Gəlir Əlavə Et"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:138
-#: frontend/templates/incomes/income_list.html:506
-#: frontend/templates/incomes/income_list.html:608
-msgid "Bütün məhsullar"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:153
-msgid "Son Gəlirlər"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:215
-msgid "Hələ heç bir gəlir qeydə alınmayıb"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:221
-msgid "Filterə uyğun gəlir tapılmadı"
-msgstr ""
-
-#: frontend/templates/incomes/income_list.html:490
-msgid "Alt məhsul seçin"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:10
-#, fuzzy
-#| msgid "Şəxsi məlumatlar"
-msgid "Əlavə Et"
-msgstr "Личные данные"
-
-#: frontend/templates/inventory/add_product.html:21
-#: frontend/templates/inventory/add_product.html:543
-msgid "Barkod Skan Et"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:25
-msgid "Kodu Əllə Yaz"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:31
-#: frontend/templates/inventory/barcode_builder.html:46
-#: frontend/templates/inventory/barcode_builder.html:64
-#: frontend/templates/inventory/barcode_builder.html:82
-#: frontend/templates/inventory/barcode_builder.html:96
-#: frontend/templates/inventory/barcode_builder.html:109
-#: frontend/templates/inventory/barcode_builder.html:123
-msgid "Barkodu Göstər"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:35
-#: frontend/templates/inventory/add_product.html:605
-msgid "Səslə Əlavə Et"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:38
-msgid "Form yalnız barkod scan olunandan sonra görünəcək."
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:43
-msgid "Səs Yazılır"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:44
-msgid "Danışın, sistem səsi dinləyir."
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:68
-msgid "Kod / ID"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:69
-msgid "Barkod kodunu yazın"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:71
-msgid "Kodu Yoxla"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:77
-#: frontend/templates/inventory/barcode_builder.html:35
-msgid "Form"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:78
-msgid "Scan olunan barkoda uyğun form açıldı."
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:92
-#: frontend/templates/inventory/add_product.html:192
-#: frontend/templates/inventory/barcode_builder.html:42
-#: frontend/templates/inventory/barcode_builder.html:70
-#: frontend/templates/inventory/stocks.html:34
-msgid "Alt Kateqoriya"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:98
-#: frontend/templates/inventory/barcode_builder.html:44
-msgid "Xərc adı (Digər)"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:103
-#: frontend/templates/inventory/add_product.html:165
-#: frontend/templates/inventory/add_product.html:226
-#: frontend/templates/inventory/add_product.html:278
-#: frontend/templates/inventory/add_product.html:320
-#: frontend/templates/inventory/add_product.html:377
-#: frontend/templates/inventory/barcode_builder.html:45
-#: frontend/templates/inventory/barcode_builder.html:63
-#: frontend/templates/inventory/barcode_builder.html:81
-#: frontend/templates/inventory/barcode_builder.html:95
-#: frontend/templates/inventory/barcode_builder.html:107
-#: frontend/templates/inventory/barcode_builder.html:122
-msgid "Məbləğ"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:107
-#: frontend/templates/inventory/add_product.html:169
-#: frontend/templates/inventory/add_product.html:230
-#: frontend/templates/inventory/add_product.html:282
-#: frontend/templates/inventory/add_product.html:325
-#: frontend/templates/inventory/add_product.html:381
-#: frontend/templates/notifications/notifications.html:140
-msgid "Tarix"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:115
-msgid "Xərci Saxla"
-msgstr ""
-
-#: frontend/templates/inventory/add_product.html:130
-#: frontend/templates/inventory/barcode_builder.html:52
+#: apps/dashboard/views.py:187 apps/dashboard/views.py:538
+#: apps/reports/views.py:519 apps/reports/views.py:1057
 msgid "Məhsul"
-msgstr ""
+msgstr "Продукт"
 
-#: frontend/templates/inventory/add_product.html:136
-#: frontend/templates/inventory/add_product.html:353
-#: frontend/templates/inventory/barcode_builder.html:54
-#: frontend/templates/inventory/barcode_builder.html:117
-msgid "Məhsul adı (Digər)"
-msgstr ""
+#: apps/dashboard/views.py:308
+#, fuzzy, python-brace-format
+#| msgid "{count} əlavə"
+msgid "{} əlavə"
+msgstr "{count} добавлено"
 
-#: frontend/templates/inventory/add_product.html:145
-#: frontend/templates/inventory/add_product.html:268
-#: frontend/templates/inventory/add_product.html:362
-#: frontend/templates/inventory/barcode_builder.html:57
-#: frontend/templates/inventory/barcode_builder.html:93
-#: frontend/templates/inventory/barcode_builder.html:120
-#, fuzzy
-#| msgid "Ölçü Vahidləri"
-msgid "Ölçü vahidi"
-msgstr "Единицы измерения"
+#: apps/dashboard/views.py:310
+#, fuzzy, python-brace-format
+#| msgid "{count} satış"
+msgid "{} satış"
+msgstr "{count} продаж"
 
-#: frontend/templates/inventory/add_product.html:151
-#: frontend/templates/inventory/add_product.html:213
-#: frontend/templates/inventory/barcode_builder.html:60
-#: frontend/templates/inventory/barcode_builder.html:78
-msgid "Cinsiyyət"
-msgstr ""
+#: apps/dashboard/views.py:312
+#, fuzzy, python-brace-format
+#| msgid "{count} xərc"
+msgid "{} xərc"
+msgstr "{count} расходов"
 
-#: frontend/templates/inventory/add_product.html:153
-#: frontend/templates/inventory/barcode_builder.html:25
-#: frontend/templates/inventory/barcode_builder.html:60
-msgid "Seçin"
-msgstr ""
+#: apps/dashboard/views.py:314
+#, fuzzy, python-brace-format
+#| msgid "{count} azalma"
+msgid "{} azalma"
+msgstr "{count} уменьшений"
 
-#: frontend/templates/inventory/add_product.html:177
-msgid "Gəliri Saxla"
-msgstr ""
+#: apps/dashboard/views.py:378
+msgid "Toxumlar bölməsi"
+msgstr "Раздел семян"
 
-#: frontend/templates/inventory/add_product.html:198
-#: frontend/templates/inventory/barcode_builder.html:72
-msgid "Heyvan növü (Digər)"
-msgstr ""
+#: apps/dashboard/views.py:379 apps/dashboard/views.py:438
+#: apps/dashboard/views.py:489 apps/dashboard/views.py:541
+msgid "Stok hərəkəti"
+msgstr "Движение запаса"
 
-#: frontend/templates/inventory/add_product.html:220
-#: frontend/templates/inventory/barcode_builder.html:79
-msgid "Çəki"
-msgstr ""
+#: apps/dashboard/views.py:437
+msgid "Heyvanlar bölməsi"
+msgstr "Раздел животных"
 
-#: frontend/templates/inventory/add_product.html:238
-msgid "Heyvanı Saxla"
-msgstr ""
+#: apps/dashboard/views.py:488
+msgid "Alətlər bölməsi"
+msgstr "Раздел инструментов"
 
-#: frontend/templates/inventory/add_product.html:253
-#: frontend/templates/inventory/barcode_builder.html:88
-msgid "Toxum növü"
-msgstr ""
+#: apps/dashboard/views.py:540
+msgid "Hazır məhsullar bölməsi"
+msgstr "Раздел готовой продукции"
 
-#: frontend/templates/inventory/add_product.html:255
-#: frontend/templates/inventory/barcode_builder.html:88
-#: frontend/templates/seeds/seed_form.html:37
-#: frontend/templates/seeds/seed_form.html:107
-#: frontend/templates/seeds/seed_list.html:513
-msgid "Toxum seçin"
-msgstr ""
+#: apps/dashboard/views.py:575 apps/reports/views.py:563
+#: apps/reports/views.py:883 apps/reports/views.py:1057
+msgid "Gəlir"
+msgstr "Доход"
 
-#: frontend/templates/inventory/add_product.html:259
-#: frontend/templates/inventory/barcode_builder.html:90
-msgid "Toxum adı (Digər)"
-msgstr ""
+#: apps/dashboard/views.py:576
+msgid "Gəlir səhifəsi"
+msgstr "Страница доходов"
 
-#: frontend/templates/inventory/add_product.html:260
-#: frontend/templates/inventory/barcode_builder.html:90
-#: frontend/templates/seeds/seed_form.html:49
-#: frontend/templates/seeds/seed_list.html:78
-msgid "Toxumun adını daxil edin"
-msgstr ""
+#: apps/dashboard/views.py:577 apps/reports/views.py:564
+msgid "Satış"
+msgstr "Продажа"
 
-#: frontend/templates/inventory/add_product.html:270
-#: frontend/templates/inventory/barcode_builder.html:93
-#: frontend/templates/seeds/seed_form.html:63
-#: frontend/templates/seeds/seed_list.html:91
-#: frontend/templates/sidebar_menu/setting.html:68
-msgid "kg"
-msgstr ""
+#: apps/dashboard/views.py:605 apps/dashboard/views.py:609
+#: apps/reports/views.py:257 apps/reports/views.py:583
+#: apps/reports/views.py:908
+msgid "Xərc"
+msgstr "Расход"
 
-#: frontend/templates/inventory/add_product.html:288
-#: frontend/templates/seeds/seed_form.html:86
-#: frontend/templates/seeds/seed_list.html:113
-msgid "Məsələn: Toxumun vəziyyəti və s."
-msgstr ""
+#: apps/dashboard/views.py:619
+msgid "Xərc səhifəsi"
+msgstr "Страница расходов"
 
-#: frontend/templates/inventory/add_product.html:290
-msgid "Toxumu Saxla"
-msgstr ""
+#: apps/dashboard/views.py:908 apps/dashboard/views.py:1209
+#, python-brace-format
+msgid "{name} — {amount}₼ əlavə edildi"
+msgstr "{name} — добавлено ₼{amount}"
 
-#: frontend/templates/inventory/add_product.html:305
-#: frontend/templates/inventory/barcode_builder.html:102
-msgid "Alət növü"
-msgstr ""
+#: apps/dashboard/views.py:932
+#, python-brace-format
+msgid "Xüsusi xərc — {amount}₼ əlavə edildi"
+msgstr "Особый расход — добавлено ₼{amount}"
 
-#: frontend/templates/inventory/add_product.html:307
-#: frontend/templates/inventory/barcode_builder.html:102
-#: frontend/templates/tools/tool_form.html:37
-#: frontend/templates/tools/tool_form.html:96
-msgid "Alət seçin"
-msgstr ""
+#: apps/dashboard/views.py:958
+#, python-brace-format
+msgid "{title} — {amount}₼ əlavə edildi"
+msgstr "{title} — добавлено ₼{amount}"
 
-#: frontend/templates/inventory/add_product.html:312
-#: frontend/templates/inventory/barcode_builder.html:104
-#: frontend/templates/tools/tool_list.html:78
-msgid "Alət adını daxil edin"
-msgstr ""
+#: apps/dashboard/views.py:1235
+#, python-brace-format
+msgid "Xüsusi gəlir — {amount}₼ əlavə edildi"
+msgstr "Особый доход — добавлено ₼{amount}"
 
-#: frontend/templates/inventory/add_product.html:330
-#: frontend/templates/tools/tool_form.html:75
-#: frontend/templates/tools/tool_list.html:101
-msgid "Məsələn: Alətin vəziyyəti və s."
-msgstr ""
+#: apps/dashboard/views.py:1264
+#, python-brace-format
+msgid "{item_name} — {amount}₼ əlavə edildi"
+msgstr "{item_name} — добавлено ₼{amount}"
 
-#: frontend/templates/inventory/add_product.html:332
-msgid "Aləti Saxla"
-msgstr ""
+#: apps/expenses/views.py:312 apps/expenses/views.py:374
+#: apps/incomes/views.py:766 apps/incomes/views.py:925
+msgid "Məbləğ düzgün deyil."
+msgstr "Сумма указана неверно."
 
-#: frontend/templates/inventory/add_product.html:347
-#: frontend/templates/inventory/barcode_builder.html:115
-msgid "Məhsul növü"
-msgstr ""
+#: apps/farm_products/forms.py:17 apps/reports/views.py:749
+#: apps/reports/views.py:1057 apps/seeds/forms.py:16
+msgid "Kateqoriya"
+msgstr "Категория"
 
-#: frontend/templates/inventory/add_product.html:389
-msgid "Məhsulu Saxla"
-msgstr ""
+#: apps/farm_products/forms.py:29 apps/seeds/forms.py:28
+#: apps/tools/forms.py:27
+msgid "Qiymət (₼)"
+msgstr "Цена (₼)"
 
-#: frontend/templates/inventory/add_product.html:509
-msgid "Xərc formu"
-msgstr ""
+#: apps/farm_products/forms.py:30
+msgid "Məhsulun adı (Digər)"
+msgstr "Название продукта (Другое)"
 
-#: frontend/templates/inventory/add_product.html:509
-msgid "Gəlir formu"
-msgstr ""
+#: apps/farm_products/views.py:451 apps/farm_products/views.py:638
+#: apps/farm_products/views.py:647 apps/farm_products/views.py:661
+#: apps/incomes/views.py:804 apps/incomes/views.py:963
+msgid "Ölçü vahidi bu kateqoriya üçün uyğun deyil."
+msgstr "Единица измерения не подходит для этой категории."
 
-#: frontend/templates/inventory/add_product.html:509
-msgid "Heyvan formu"
-msgstr ""
+#: apps/farm_products/views.py:471 apps/farm_products/views.py:698
+#: apps/incomes/views.py:819 apps/incomes/views.py:984
+msgid "Stokda kifayət qədər məhsul yoxdur."
+msgstr "Недостаточно продукта на складе."
 
-#: frontend/templates/inventory/add_product.html:509
-msgid "Toxum formu"
-msgstr ""
+#: apps/farm_products/views.py:511 apps/seeds/views.py:516
+#: apps/tools/views.py:412
+msgid "Gəlir üçün məbləğ daxil edin."
+msgstr "Введите сумму для дохода."
 
-#: frontend/templates/inventory/add_product.html:509
-msgid "Alət formu"
-msgstr ""
+#: apps/farm_products/views.py:552 apps/notifications/views.py:84
+msgid "Seçilmiş məhsul tapılmadı."
+msgstr "Выбранный продукт не найден."
 
-#: frontend/templates/inventory/add_product.html:509
-msgid "Təsərrüfat formu"
-msgstr ""
+#: apps/incomes/views.py:778 apps/incomes/views.py:937
+msgid "Zəhmət olmasa, heyvanlar üçün cinsiyyət seçin."
+msgstr "Выберите пол для животных."
 
-#: frontend/templates/inventory/add_product.html:540
-msgid "Skanı Dayandır"
-msgstr ""
+#: apps/incomes/views.py:787 apps/incomes/views.py:946
+#: apps/inventory/views.py:997
+msgid "Heyvanlar üçün miqdar tam ədəd olmalıdır."
+msgstr "Количество животных должно быть целым числом."
 
-#: frontend/templates/inventory/add_product.html:556
-msgid "Miqdar ±1 olmadıqda ID yazılmır"
-msgstr ""
+#: apps/incomes/views.py:790 apps/incomes/views.py:949
+msgid "İdentifikasiya nömrəsi yalnız miqdar ±1 olduqda verilə bilər."
+msgstr "Идентификационный номер допустим только при количестве ±1."
 
-#: frontend/templates/inventory/add_product.html:588
-msgid "Deyilən:"
-msgstr ""
+#: apps/incomes/views.py:812 apps/incomes/views.py:975 apps/seeds/views.py:484
+#: apps/seeds/views.py:635
+msgid "Stokda kifayət qədər toxum yoxdur."
+msgstr "Недостаточно семян на складе."
 
-#: frontend/templates/inventory/add_product.html:591
-msgid "Təxmin edilən:"
-msgstr ""
+#: apps/incomes/views.py:849 apps/incomes/views.py:1021
+msgid "Bu identifikasiya nömrəsinə uyğun heyvan tapılmadı."
+msgstr "Животное с таким номером не найдено."
 
-#: frontend/templates/inventory/add_product.html:599
-msgid "Səs emal olunur..."
-msgstr ""
+#: apps/incomes/views.py:854 apps/incomes/views.py:859
+#: apps/incomes/views.py:1025 apps/incomes/views.py:1029
+msgid "Seçilmiş heyvan ID-si bu kateqoriyaya uyğun deyil."
+msgstr "Выбранный ID животного не соответствует категории."
 
-#: frontend/templates/inventory/add_product.html:602
-msgid "Yazını Bitir"
-msgstr ""
+#: apps/incomes/views.py:887
+msgid "Gəlir əlavə edildi."
+msgstr "Доход добавлен."
 
-#: frontend/templates/inventory/barcode_builder.html:10
-msgid "Barkod Yarat"
-msgstr ""
+#: apps/incomes/views.py:1055
+msgid "Gəlir yeniləndi."
+msgstr "Доход обновлен."
 
-#: frontend/templates/inventory/barcode_builder.html:19
-msgid "Barkod generatoru"
-msgstr ""
+#: apps/incomes/views.py:1081
+msgid "Gəlir silindi."
+msgstr "Доход удалён."
 
-#: frontend/templates/inventory/barcode_builder.html:20
+#: apps/inventory/views.py:812 apps/inventory/views.py:958
+#: apps/inventory/views.py:990
+msgid "Məlumatlar natamamdır."
+msgstr "Данные неполные."
+
+#: apps/inventory/views.py:882 apps/inventory/views.py:903
+msgid "Alətlər üçün miqdar tam ədəd olmalıdır."
+msgstr "Количество инструментов должно быть целым числом."
+
+#: apps/inventory/views.py:930
+msgid "Məhsul tapılmadı."
+msgstr "Продукт не найден."
+
+#: apps/inventory/views.py:1084
+msgid "Bu kateqoriya üçün yeniləmə dəstəklənmir."
+msgstr "Обновление для этой категории не поддерживается."
+
+#: apps/inventory/views.py:1158
+msgid "Audio göndərilməyib."
+msgstr "Аудиофайл не был отправлен."
+
+#: apps/inventory/views.py:1170
+msgid "Səsdən mətn çıxarmaq alınmadı."
+msgstr "Не удалось распознать текст из речи."
+
+#: apps/inventory/views.py:1176
+msgid "Səs emalı zamanı xəta baş verdi."
+msgstr "Произошла ошибка при обработке аудио."
+
+#: apps/notifications/views.py:58
+msgid "Başlıq və tarix tələb olunur."
+msgstr "Требуются заголовок и дата."
+
+#: apps/notifications/views.py:72
+msgid "Xatırlatma silindi."
+msgstr "Напоминание удалено."
+
+#: apps/notifications/views.py:86
+msgid "Xəbərdarlıq həddi tələb olunur."
+msgstr "Укажите порог предупреждения."
+
+#: apps/notifications/views.py:94
+msgid "Xəbərdarlıq həddi 0-dan böyük olmalıdır."
+msgstr "Порог должен быть больше 0."
+
+#: apps/notifications/views.py:110
+#, python-brace-format
+msgid "\"{name}\" üçün ehtiyat xəbərdarlığı yeniləndi."
+msgstr "Предупреждение о запасах для «{name}» обновлено."
+
+#: apps/notifications/views.py:120
+msgid "Ehtiyat xəbərdarlığı silindi."
+msgstr "Предупреждение о запасах"
+
+#: apps/reports/views.py:36
+msgid "Vergi hesabatı"
+msgstr "Налоговый отчёт"
+
+#: apps/reports/views.py:37
+msgid "Vergi və rəsmi təqdimat üçün xülasə"
+msgstr "Сводка для налоговой и официальной отчётности"
+
+#: apps/reports/views.py:38
 msgid ""
-"Kateqoriya seçin, formu doldurun, sonra `Barkodu Göstər` düyməsinə basın."
+"Gəlir, xərc və xalis nəticəni seçilmiş tarix aralığı üzrə toplu göstərir."
 msgstr ""
+"Показывает совокупный доход, расходы и чистый результат за выбранный период."
 
-#: frontend/templates/inventory/barcode_builder.html:23
-msgid "Form növü"
-msgstr ""
-
-#: frontend/templates/inventory/barcode_builder.html:36
-msgid "Bu formdakı bütün məlumat birlikdə barkoda daxil ediləcək."
-msgstr ""
-
-#: frontend/templates/inventory/barcode_builder.html:129
-msgid "Barkod"
-msgstr ""
-
-#: frontend/templates/inventory/barcode_builder.html:135
-msgid "Kopyala"
-msgstr ""
-
-#: frontend/templates/inventory/barcode_builder.html:137
-msgid "Download JPG"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:24
-#: frontend/templates/inventory/stocks.html:37
-msgid "Hamısı"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:43
-msgid "Sıralama"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:46
-msgid "Standart düzülüş"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:47
-msgid "Ada görə A-Z"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:48
-msgid "Ada görə Z-A"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:49
-msgid "Saya görə çox olan"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:50
-msgid "Saya görə az olan"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:56
-msgid "Axtarış"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:58
-msgid "Axtar..."
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:63
-msgid "&nbsp;"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:497
-#, fuzzy
-#| msgid "Yeni şifrə"
-msgid "Yeni miqdar"
-msgstr "Новый пароль"
-
-#: frontend/templates/inventory/stocks.html:503
-msgid "Erkək / Dişi sayı"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:511
-msgid "Ümumi"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:516
-msgid "Ləğv et"
-msgstr ""
-
-#: frontend/templates/inventory/stocks.html:517
-#: frontend/templates/sidebar_menu/help.html:42
-#: frontend/templates/sidebar_menu/profile.html:69
-#: frontend/templates/sidebar_menu/setting.html:127
-msgid "Yadda saxla"
-msgstr "Сохранить"
-
-#: frontend/templates/notifications/notifications.html:11
-msgid "Xatırlatmalar"
-msgstr ""
-
-#: frontend/templates/notifications/notifications.html:17
-msgid "Vaksinasiya, əkin, ödəniş xatırlatmaları"
-msgstr ""
-
-#: frontend/templates/notifications/notifications.html:116
-msgid "Yeni xatırlatma"
-msgstr ""
-
-#: frontend/templates/notifications/notifications.html:126
-msgid "Başlıq"
-msgstr ""
-
-#: frontend/templates/notifications/notifications.html:127
-msgid "Məs: Qoyunlara vaksinasiya"
-msgstr ""
-
-#: frontend/templates/registration/login.html:77
-#: frontend/templates/registration/signup.html:94
-#, fuzzy
-#| msgid "Ferma İdarəsi"
-msgid "🌿 Ferma idarəsi"
-msgstr "Управление фермой"
-
-#: frontend/templates/registration/login.html:78
-msgid "Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə."
-msgstr ""
-
-#: frontend/templates/registration/login.html:80
-#: frontend/templates/registration/signup.html:97
-msgid "🌱 Toxumlar"
-msgstr ""
-
-#: frontend/templates/registration/login.html:81
-#: frontend/templates/registration/signup.html:98
-msgid "🐄 Heyvanlar"
-msgstr ""
-
-#: frontend/templates/registration/login.html:82
-#: frontend/templates/registration/signup.html:99
-msgid "🔧 Alətlər"
-msgstr ""
-
-#: frontend/templates/registration/login.html:83
-#: frontend/templates/registration/signup.html:100
-msgid "💰 Xərclər"
-msgstr ""
-
-#: frontend/templates/registration/login.html:88
-#: frontend/templates/registration/login.html:110
-#: frontend/templates/registration/signup.html:125
-#: frontend/templates/sidebar_menu/help.html:31
-msgid "Daxil ol"
-msgstr "Войти"
-
-#: frontend/templates/registration/login.html:89
-msgid "Davam etmək üçün məlumatları daxil edin"
-msgstr ""
-
-#: frontend/templates/registration/login.html:103
-#: frontend/templates/sidebar_menu/profile.html:58
-msgid "İstifadəçi adı"
-msgstr "Имя пользователя"
-
-#: frontend/templates/registration/login.html:106
-#, fuzzy
-#| msgid "Cari şifrə"
-msgid "Şifrə"
-msgstr "Текущий пароль"
-
-#: frontend/templates/registration/login.html:115
-#: frontend/templates/registration/signup.html:105
-#: frontend/templates/sidebar_menu/profile.html:63
-msgid "Qeydiyyat"
-msgstr "Дата регистрации"
-
-#: frontend/templates/registration/signup.html:95
-msgid "Yeni hesab yaradın. Daha sonra admin təsdiqi ilə aktiv olacaq."
-msgstr ""
-
-#: frontend/templates/registration/signup.html:106
-msgid "Məlumatları doldurun"
-msgstr ""
-
-#: frontend/templates/registration/signup.html:120
-#, fuzzy
-#| msgid "Hesabatı yarat"
-msgid "Hesab yarat"
-msgstr "Создать отчет"
-
-#: frontend/templates/reports/reports_form.html:14
-msgid "Maliyyə və statistik məlumatlar"
-msgstr ""
-
-#: frontend/templates/reports/reports_form.html:21
-msgid "Ümumi Xərc"
-msgstr ""
-
-#: frontend/templates/reports/reports_form.html:27
-msgid "Aylıq Hesabat"
-msgstr ""
-
-#: frontend/templates/reports/reports_form.html:52
-msgid "+ Yeni Hesabat Əlavə Et"
-msgstr ""
-
-#: frontend/templates/reports/reports_list.html:12
-#, fuzzy
-#| msgid "Hesabatlar"
-msgid "Maliyyə Hesabatları"
-msgstr "Отчеты"
-
-#: frontend/templates/reports/reports_list.html:53
-msgid "⬇ Hesabat Yüklə (PDF)"
-msgstr ""
-
-#: frontend/templates/seeds/seed_form.html:9
-msgid "Toxumu Düzəlt"
-msgstr ""
-
-#: frontend/templates/seeds/seed_form.html:17
-#, fuzzy
-#| msgid "Profil məlumatları uğurla yeniləndi."
-msgid "Toxum Məlumatlarını Yenilə"
-msgstr "Данные профиля успешно обновлены."
-
-#: frontend/templates/seeds/seed_list.html:26
-#: frontend/templates/seeds/seed_list.html:411
-#: frontend/templates/seeds/seed_list.html:447
-msgid "Bütün toxum növləri"
-msgstr ""
-
-#: frontend/templates/seeds/seed_list.html:54
-msgid "Yeni Toxum Əlavə Et"
-msgstr ""
-
-#: frontend/templates/seeds/seed_list.html:128
-msgid "Toxum Siyahısı"
-msgstr ""
-
-#: frontend/templates/seeds/seed_list.html:203
-msgid "Hələ heç bir toxum qeydə alınmayıb"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/help.html:20
-msgid "Tez-tez verilən suallar"
-msgstr "Часто задаваемые вопросы"
-
-#: frontend/templates/sidebar_menu/help.html:26
-msgid "Sistemə necə daxil olunur?"
-msgstr "Как войти в систему?"
-
-#: frontend/templates/sidebar_menu/help.html:30
-msgid "Giriş səhifəsindəki istifadəçi adı və şifrə sahələrini doldurun, sonra"
-msgstr "Заполните поля имени пользователя и пароля на странице входа, затем"
-
-#: frontend/templates/sidebar_menu/help.html:31
-#: frontend/templates/sidebar_menu/help.html:42
-#: frontend/templates/sidebar_menu/help.html:64
-msgid "düyməsinə klikləyin."
-msgstr "нажмите кнопку."
-
-#: frontend/templates/sidebar_menu/help.html:37
-msgid "Profil məlumatlarımı necə yeniləyə bilərəm?"
-msgstr "Как обновить данные профиля?"
-
-#: frontend/templates/sidebar_menu/help.html:41
-msgid "Aşağıdakı menyudan"
-msgstr "В нижнем меню"
-
-#: frontend/templates/sidebar_menu/help.html:41
-msgid "seçin, lazımi məlumatları dəyişdirin və"
-msgstr "выберите раздел, измените нужные данные и"
-
-#: frontend/templates/sidebar_menu/help.html:48
-msgid "Şifrəmi necə dəyişə bilərəm?"
-msgstr "Как изменить пароль?"
-
-#: frontend/templates/sidebar_menu/help.html:52
-msgid "Profil səhifəsinin alt hissəsindəki"
-msgstr "В нижней части страницы профиля"
-
-#: frontend/templates/sidebar_menu/help.html:52
-#: frontend/templates/sidebar_menu/profile.html:80
-msgid "Şifrəni dəyiş"
-msgstr "Сменить пароль"
-
-#: frontend/templates/sidebar_menu/help.html:53
-msgid "bölməsindən cari və yeni şifrənizi daxil edib təsdiqləyin."
-msgstr "введите текущий и новый пароль и подтвердите."
-
-#: frontend/templates/sidebar_menu/help.html:59
-msgid "Hesabat necə yaradılır?"
-msgstr "Как создать отчет?"
-
-#: frontend/templates/sidebar_menu/help.html:63
-msgid "Alt menyudan"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/help.html:63
-msgid "bölməsinə keçin, hesabat növünü seçin, tarix aralığını təyin edin və"
-msgstr "перейдите в раздел, выберите тип отчета, укажите период и"
-
-#: frontend/templates/sidebar_menu/help.html:64
-msgid "Hesabatı yarat"
-msgstr "Создать отчет"
-
-#: frontend/templates/sidebar_menu/help.html:70
-msgid "Stoka yeni məhsul necə əlavə edilir?"
-msgstr "Как добавить новый товар на склад?"
-
-#: frontend/templates/sidebar_menu/help.html:74
-msgid "Alt naviqasiyada mərkəzdəki"
-msgstr "В нижней навигации нажмите центральную"
-
-#: frontend/templates/sidebar_menu/help.html:74
+#: apps/reports/views.py:42
+msgid "Kredit hesabatı"
+msgstr "Кредитный отчёт"
+
+#: apps/reports/views.py:43
+msgid "Kredit müraciəti üçün maliyyə görünüşü"
+msgstr "Финансовый обзор для кредитной заявки"
+
+#: apps/reports/views.py:44
+msgid "Dövri gəlir, xalis qazanc və satış sabitliyini göstərir."
+msgstr "Показывает регулярный доход, чистую прибыль и стабильность продаж."
+
+#: apps/reports/views.py:50
+msgid "Avtomatik"
+msgstr "Автоматически"
+
+#: apps/reports/views.py:51
+msgid "Günlük"
+msgstr "Ежедневно"
+
+#: apps/reports/views.py:52
+msgid "Həftəlik"
+msgstr "На этой неделе"
+
+#: apps/reports/views.py:53
+msgid "Aylıq"
+msgstr "Ежемесячный отчет"
+
+#: apps/reports/views.py:57
+msgid "Yanvar"
+msgstr "Январь"
+
+#: apps/reports/views.py:58
+msgid "Fevral"
+msgstr "Февраль"
+
+#: apps/reports/views.py:59
+msgid "Mart"
+msgstr "Март"
+
+#: apps/reports/views.py:60
+msgid "Aprel"
+msgstr "Апрель"
+
+#: apps/reports/views.py:61
+msgid "May"
+msgstr "Май"
+
+#: apps/reports/views.py:62
+msgid "İyun"
+msgstr "Июнь"
+
+#: apps/reports/views.py:63
+msgid "İyul"
+msgstr "Июль"
+
+#: apps/reports/views.py:64
+msgid "Avqust"
+msgstr "Август"
+
+#: apps/reports/views.py:65
+msgid "Sentyabr"
+msgstr "Сентябрь"
+
+#: apps/reports/views.py:66
+msgid "Oktyabr"
+msgstr "Октябрь"
+
+#: apps/reports/views.py:67
+msgid "Noyabr"
+msgstr "Ноябрь"
+
+#: apps/reports/views.py:68
+msgid "Dekabr"
+msgstr "Декабрь"
+
+#: apps/reports/views.py:309
+msgid "Aqrar güzəşt"
+msgstr "Сельскохозяйственная льгота"
+
+#: apps/reports/views.py:312
 msgid ""
-"düyməsinə klikləyin, məhsul növünü seçin və lazımi məlumatları daxil edin."
-msgstr "кнопку, выберите тип продукта и введите необходимые данные."
-
-#: frontend/templates/sidebar_menu/help.html:80
-msgid "Tez xərc nədir?"
-msgstr "Что такое быстрый расход?"
-
-#: frontend/templates/sidebar_menu/help.html:84
-msgid ""
-"bölməsi gündəlik xərclərinizi sürətli şəkildə qeydə almağa imkan verir. "
-"Kateqoriya seçib məbləği daxil etmək kifayətdir."
+"İlkin formada təqdim edilən kənd təsərrüfatı məhsulu və ya diri heyvan "
+"satışı 1 Yanvar 2027-dək vergidən azaddır."
 msgstr ""
-"раздел позволяет быстро фиксировать ежедневные расходы. Достаточно выбрать "
-"категорию и ввести сумму."
+"Реализация сельхозпродукции или живых животных в первичной форме освобождена"
+" от налога до 1 января 2027 г."
 
-#: frontend/templates/sidebar_menu/help.html:90
-msgid "Məlumatlarım avtomatik saxlanılırmı?"
-msgstr "Мои данные сохраняются автоматически?"
+#: apps/reports/views.py:322 apps/reports/views.py:812
+#: apps/reports/views.py:1033
+msgid "Standart ƏDV arayışı"
+msgstr "Стандартный ориентир НДС"
 
-#: frontend/templates/sidebar_menu/help.html:94
+#: apps/reports/views.py:324
 msgid ""
-"Bəli, bütün əməliyyatlar real vaxt rejimində verilənlər bazasına yazılır. "
-"Əlavə olaraq"
+"Bu satış ilkin kənd təsərrüfatı məhsulu sayılmadığı üçün standart ƏDV "
+"arayışı tətbiq edilib."
 msgstr ""
-"Да, все операции сохраняются в базе данных в реальном времени. Кроме того,"
+"Поскольку продажа не считается первичной сельхозпродукцией, применена "
+"стандартная справка по НДС."
 
-#: frontend/templates/sidebar_menu/help.html:95
-msgid "Sync"
-msgstr "Синхронизация"
+#: apps/reports/views.py:594
+msgid "Yoxdur"
+msgstr "Нет"
 
-#: frontend/templates/sidebar_menu/help.html:95
-msgid "bölməsindən manual sinxronizasiya da edə bilərsiniz."
-msgstr "вы можете выполнить ручную синхронизацию из этого раздела."
+#: apps/reports/views.py:609
+msgid "Kənd təsərrüfatı satış güzəşti"
+msgstr "Льгота на сельхозпродажи"
 
-#: frontend/templates/sidebar_menu/profile.html:35
-#, fuzzy
-#| msgid "Şəxsi məlumatlar"
-msgid "Şəxsi məlumatlar"
-msgstr "Личные данные"
+#: apps/reports/views.py:610
+msgid "1 Yanvar 2014 - 1 Yanvar 2027"
+msgstr "1 января 2014 г. – 1 января 2027 г."
 
-#: frontend/templates/sidebar_menu/profile.html:38
+#: apps/reports/views.py:613
+msgid ""
+"İlkin formada olan kənd təsərrüfatı satışları üçün 0 vergi, digər satışlar "
+"üçün standart ƏDV arayışı hesablanır."
+msgstr ""
+"Нулевой налог для первичных сельхозпродаж; стандартная справка по НДС для "
+"остальных."
+
+#: apps/reports/views.py:616
+msgid ""
+"Torpaq vergisi və ƏDV qeydiyyatı həddi bu hesabatda ayrıca hesablanmır."
+msgstr ""
+"Земельный налог и порог обязательной регистрации по НДС в этом отчете "
+"отдельно не рассчитываются."
+
+#: apps/reports/views.py:618
+msgid ""
+"Dövlət Vergi Xidmətinin sual-cavab izahı və güzəşt məlumatları əsasında "
+"hazırlanmış arayış hesabıdır."
+msgstr "Справочный расчёт на основе разъяснений ГНС и данных о льготах."
+
+#: apps/reports/views.py:626
+msgid "Seçilmiş dövr üzrə ümumi gəlir və xərc ayrıca göstərilir."
+msgstr "Общий доход и расходы показаны отдельно за выбранный период."
+
+#: apps/reports/views.py:627
+msgid ""
+"Vergi blokunda satış üzrə ödəniləcək məbləğ və güzəşt ayrıca göstərilir."
+msgstr ""
+"В налоговом блоке отдельно показаны суммы к уплате и льготы по продажам."
+
+#: apps/reports/views.py:628
+msgid ""
+"CSV və PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda "
+"hazırlanır."
+msgstr ""
+"Экспорт CSV и PDF подготовлен в более аккуратном формате для презентаций и "
+"обмена."
+
+#: apps/reports/views.py:632
+msgid "Gəlirin sabitliyi və xalis qazanc kredit təqdimatı üçün önə çıxarılıb."
+msgstr "Стабильность дохода и чистая прибыль выделены для кредитного пакета."
+
+#: apps/reports/views.py:633
+msgid ""
+"Tarix üzrə sütun qrafiki gəlir, xərc və xalis qazancı rahat müqayisə etməyə "
+"imkan verir."
+msgstr ""
+"Столбчатая диаграмма по датам позволяет удобно сравнивать доход, расход и "
+"чистую прибыль."
+
+#: apps/reports/views.py:634
+msgid "Vergi və məhsul müqayisəsi paneli maliyyə şəklini daha aydın göstərir."
+msgstr ""
+"Панель налога и сравнения продуктов яснее показывает финансовую картину."
+
+#: apps/reports/views.py:639
+msgid "Son 30 gün"
+msgstr "Последние 30 дней"
+
+#: apps/reports/views.py:643
+msgid "Son 90 gün"
+msgstr "Последние 90 дней"
+
+#: apps/reports/views.py:647
+msgid "Bu il"
+msgstr "В этом году"
+
+#: apps/reports/views.py:741 apps/reports/views.py:1087
+msgid "Bölmə"
+msgstr "Раздел"
+
+#: apps/reports/views.py:742
+msgid "Hesabat növü"
+msgstr "Тип отчета"
+
+#: apps/reports/views.py:743
+msgid "Başlanğıc tarix"
+msgstr "Дата начала"
+
+#: apps/reports/views.py:744
+msgid "Bitmə tarix"
+msgstr "Дата окончания"
+
+#: apps/reports/views.py:745
+msgid "Qruplaşdırma"
+msgstr "Группировка"
+
+#: apps/reports/views.py:746 apps/reports/views.py:851
+msgid "Period"
+msgstr "Период"
+
+#: apps/reports/views.py:747 apps/reports/views.py:1087
+msgid "Tarix"
+msgstr "Дата"
+
+#: apps/reports/views.py:748
+msgid "Əməliyyat növü"
+msgstr "Тип инструмента"
+
+#: apps/reports/views.py:750 apps/users/forms.py:10
 msgid "Ad"
 msgstr "Имя"
 
-#: frontend/templates/sidebar_menu/profile.html:40
-msgid "Adınız"
-msgstr "Ваше имя"
-
-#: frontend/templates/sidebar_menu/profile.html:44
-msgid "Soyad"
-msgstr "Фамилия"
-
-#: frontend/templates/sidebar_menu/profile.html:46
-msgid "Soyadınız"
-msgstr "Ваша фамилия"
-
-#: frontend/templates/sidebar_menu/profile.html:50
-#: frontend/templates/sidebar_menu/profile.html:52
-msgid "E-poçt"
-msgstr "Email"
-
-#: frontend/templates/sidebar_menu/profile.html:55
-msgid "Sistem"
-msgstr "Система"
-
-#: frontend/templates/sidebar_menu/profile.html:83
-msgid "Cari şifrə"
-msgstr "Текущий пароль"
-
-#: frontend/templates/sidebar_menu/profile.html:88
-msgid "Yeni şifrə"
-msgstr "Новый пароль"
-
-#: frontend/templates/sidebar_menu/profile.html:93
-msgid "Təsdiq"
-msgstr "Подтверждение"
-
-#: frontend/templates/sidebar_menu/profile.html:99
-msgid "Şifrəni yenilə"
-msgstr "Обновить пароль"
-
-#: frontend/templates/sidebar_menu/setting.html:24
-msgid "Dil və Bölgə"
-msgstr "Язык и регион"
-
-#: frontend/templates/sidebar_menu/setting.html:30
-msgid "Dil"
-msgstr "Язык"
-
-#: frontend/templates/sidebar_menu/setting.html:31
-msgid "İnterfeys dili"
-msgstr "Язык интерфейса"
-
-#: frontend/templates/sidebar_menu/setting.html:35
-msgid "AZ"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/setting.html:36
-msgid "EN"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/setting.html:37
-msgid "RU"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/setting.html:45
-msgid "Vaxt zonası"
-msgstr "Часовой пояс"
-
-#: frontend/templates/sidebar_menu/setting.html:46
-msgid "Sistem saatı"
-msgstr "Системное время"
-
-#: frontend/templates/sidebar_menu/setting.html:50
-msgid "UTC+4 Bakı"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/setting.html:51
-msgid "UTC+0 London"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/setting.html:52
-msgid "UTC+3 Moskva"
-msgstr ""
-
-#: frontend/templates/sidebar_menu/setting.html:57
-msgid "Ölçü Vahidləri"
-msgstr "Единицы измерения"
-
-#: frontend/templates/sidebar_menu/setting.html:63
+#: apps/reports/views.py:752
 msgid "Vahid"
 msgstr "Единица"
 
-#: frontend/templates/sidebar_menu/setting.html:64
-msgid "Çəki / Həcm ölçüsü"
-msgstr "Единица веса / объема"
+#: apps/reports/views.py:753
+msgid "Gəlir AZN"
+msgstr "Форма дохода"
 
-#: frontend/templates/sidebar_menu/setting.html:70
-msgid "baş"
-msgstr ""
+#: apps/reports/views.py:754
+msgid "Xərc AZN"
+msgstr "Форма расхода"
 
-#: frontend/templates/sidebar_menu/setting.html:75
-msgid "Maliyyə"
-msgstr "Финансы"
+#: apps/reports/views.py:755
+msgid "Net AZN"
+msgstr "Чистыми AZN"
 
-#: frontend/templates/sidebar_menu/setting.html:81
-msgid "Valyuta"
-msgstr "Валюта"
+#: apps/reports/views.py:756
+msgid "Vergi dərəcəsi %"
+msgstr "Налоговая ставка %"
 
-#: frontend/templates/sidebar_menu/setting.html:82
-msgid "Əsas valyuta"
-msgstr "Основная валюта"
+#: apps/reports/views.py:757
+msgid "Vergi AZN"
+msgstr "Налог AZN"
 
-#: frontend/templates/sidebar_menu/setting.html:86
-msgid "AZN ₼"
-msgstr ""
+#: apps/reports/views.py:758
+msgid "Pay %"
+msgstr "Доля %"
 
-#: frontend/templates/sidebar_menu/setting.html:87
-msgid "EUR €"
-msgstr ""
+#: apps/reports/views.py:759
+msgid "Qeyd"
+msgstr "Дата регистрации"
 
-#: frontend/templates/sidebar_menu/setting.html:88
-msgid "USD $"
-msgstr ""
+#: apps/reports/views.py:771 apps/reports/views.py:1005
+msgid "Ümumi gəlir"
+msgstr "Общий доход"
 
-#: frontend/templates/sidebar_menu/setting.html:93
-msgid "Bildirişlər"
-msgstr "Уведомления"
+#: apps/reports/views.py:772 apps/reports/views.py:1006
+msgid "Ümumi xərc"
+msgstr "Общий расход"
 
-#: frontend/templates/sidebar_menu/setting.html:99
-msgid "E-poçt bildirişləri"
-msgstr "Email-уведомления"
+#: apps/reports/views.py:773 apps/reports/views.py:1007
+msgid "Xalis qazanc"
+msgstr "Чистая прибыль"
 
-#: frontend/templates/sidebar_menu/setting.html:100
-msgid "Yeniləmələri e-poçtla al"
-msgstr "Получать обновления по email"
+#: apps/reports/views.py:774 apps/reports/views.py:1008
+msgid "Hesablanan vergi"
+msgstr "Рассчитанный налог"
 
-#: frontend/templates/sidebar_menu/setting.html:114
-msgid "Sistem bildirişləri"
-msgstr "Системные уведомления"
+#: apps/reports/views.py:779
+msgid "Xülasə"
+msgstr "Сводка"
 
-#: frontend/templates/sidebar_menu/setting.html:115
-msgid "Tətbiq daxili bildirişlər"
-msgstr "Уведомления внутри приложения"
+#: apps/reports/views.py:803 apps/reports/views.py:826
+#: apps/reports/views.py:1057 apps/reports/views.py:1087
+msgid "Vergi"
+msgstr "Налог"
 
-#: frontend/templates/suppliers/suppliers.html:38
-msgid "Təchizatçı axtar..."
-msgstr ""
+#: apps/reports/views.py:835 apps/reports/views.py:1031
+msgid "Vergi qaydası"
+msgstr "Налоговое правило"
 
-#: frontend/templates/suppliers/suppliers.html:169
-msgid "Nəticə tapılmadı"
-msgstr ""
+#: apps/reports/views.py:860
+msgid "Dövr yekunu"
+msgstr "Итог периода"
 
-#: frontend/templates/suppliers/suppliers.html:172
-msgid "Axtarışa uyğun təchizatçı tapılmadı."
-msgstr ""
+#: apps/reports/views.py:876
+msgid "Məhsul müqayisəsi"
+msgstr "Сравнение продуктов"
 
-#: frontend/templates/suppliers/suppliers_add.html:25
-msgid "Məsələn: Əhməd Toxumçuluq"
-msgstr ""
+#: apps/reports/views.py:901
+msgid "Xərc müqayisəsi"
+msgstr "Сравнение расходов"
 
-#: frontend/templates/suppliers/suppliers_add.html:42
-msgid "Kateqoriya Adı (Digər)"
-msgstr ""
+#: apps/reports/views.py:926
+msgid "Əməliyyat"
+msgstr "Операция"
 
-#: frontend/templates/suppliers/suppliers_add.html:43
-msgid "Kateqoriya adını daxil edin"
-msgstr ""
+#: apps/reports/views.py:997
+msgid "Ferma Hesabatı"
+msgstr "Отчет по ферме"
 
-#: frontend/templates/suppliers/suppliers_add.html:48
-msgid "Ünvan"
-msgstr ""
+#: apps/reports/views.py:1009
+msgid "Aktiv gün"
+msgstr "Активные дни"
 
-#: frontend/templates/suppliers/suppliers_add.html:49
-msgid "Məsələn: Gəncə"
-msgstr ""
+#: apps/reports/views.py:1028
+msgid "Vergi görünüşü"
+msgstr "Налоговый вид"
 
-#: frontend/templates/suppliers/suppliers_add.html:68
-msgid "Telefon Nömrəsi"
-msgstr ""
+#: apps/reports/views.py:1032
+msgid "Vergi dövrü"
+msgstr "Налоговый период"
 
-#: frontend/templates/suppliers/suppliers_add.html:69
-msgid "Məsələn: +994 50 123 45 67"
-msgstr ""
+#: apps/reports/views.py:1034
+msgid "Güzəşt olmasaydı ƏDV"
+msgstr "НДС без льготы"
 
-#: frontend/templates/suppliers/suppliers_add.html:73
-msgid "Son Sifariş Tarixi"
-msgstr ""
+#: apps/reports/views.py:1056
+msgid "Məhsul növlərinə görə müqayisə"
+msgstr "Сравнение по типам продукции"
 
-#: frontend/templates/suppliers/suppliers_add.html:80
-msgid ""
-"Məsələn: Sifarişdən əvvəl zəng edin, çatdırılma edir, qiymətləri münasibdir"
-msgstr ""
+#: apps/reports/views.py:1070 apps/reports/views.py:1099
+msgid "Məlumat yoxdur"
+msgstr "Заполните данные"
 
-#: frontend/templates/sync/sync_page.html:20
-msgid "Bağlantı"
-msgstr ""
+#: apps/reports/views.py:1086
+msgid "Əməliyyat jurnalı"
+msgstr "Журнал операций"
 
-#: frontend/templates/sync/sync_page.html:25
-msgid "Gözləyən qeyd"
-msgstr ""
+#: apps/reports/views.py:1087
+msgid "Növ"
+msgstr "Тип"
 
-#: frontend/templates/sync/sync_page.html:30
-msgid "Son uğurlu sync"
-msgstr ""
+#: apps/reports/views.py:1087
+msgid "Məbləğ"
+msgstr "Сумма"
 
-#: frontend/templates/sync/sync_page.html:31
-msgid "Heç vaxt"
-msgstr ""
+#: apps/seeds/forms.py:29
+msgid "Toxumun adı (Digər)"
+msgstr "Название семян (Другое)"
 
-#: frontend/templates/sync/sync_page.html:37
-msgid "Uzaq dəyişikliklər"
-msgstr ""
+#: apps/seeds/views.py:562
+msgid "Seçilmiş toxum növü tapılmadı."
+msgstr "Выбранный тип семян не найден."
 
-#: frontend/templates/sync/sync_page.html:42
-msgid "Son xəta"
-msgstr ""
+#: apps/sidebar_menu/views.py:34
+msgid "İstifadəçi adı boş ola bilməz."
+msgstr "Имя пользователя"
 
-#: frontend/templates/sync/sync_page.html:52
-msgid "Gözləyən əməliyyatlar"
-msgstr ""
+#: apps/sidebar_menu/views.py:38
+msgid "Ad boş ola bilməz."
+msgstr "Количество не может быть 0."
 
-#: frontend/templates/sync/sync_page.html:59
-#, fuzzy
-#| msgid "Sinxronizasiya"
-msgid "Sinxronizasiya tarixçəsi"
-msgstr "Синхронизация"
+#: apps/sidebar_menu/views.py:42
+msgid "E-poçt boş ola bilməz."
+msgstr "Количество не может быть 0."
 
-#: frontend/templates/tools/tool_form.html:9
-msgid "Aləti Düzəlt"
-msgstr ""
+#: apps/sidebar_menu/views.py:46
+msgid "Doğum günü boş ola bilməz."
+msgstr "Дата рождения не может быть пустой."
 
-#: frontend/templates/tools/tool_form.html:17
-#, fuzzy
-#| msgid "Profil məlumatları uğurla yeniləndi."
-msgid "Alət Məlumatlarını Yenilə"
+#: apps/sidebar_menu/views.py:50
+msgid "Bu istifadəçi adı artıq mövcuddur."
+msgstr "Этот идентификационный номер уже существует."
+
+#: apps/sidebar_menu/views.py:54 apps/users/forms.py:42
+msgid "Bu e-poçt artıq istifadə olunur."
+msgstr "Этот адрес электронной почты уже используется."
+
+#: apps/sidebar_menu/views.py:64
+msgid "Profil məlumatları uğurla yeniləndi."
 msgstr "Данные профиля успешно обновлены."
 
-#: frontend/templates/tools/tool_form.html:49
-msgid "Alətin adını daxil edin"
-msgstr ""
+#: apps/sidebar_menu/views.py:76
+msgid "Şifrəniz uğurla dəyişdirildi."
+msgstr "Ваш пароль успешно изменен."
 
-#: frontend/templates/tools/tool_form.html:61
-msgid "Cəmi Məbləğ (₼)"
-msgstr ""
+#: apps/sidebar_menu/views.py:107
+msgid "Parametrlər uğurla yadda saxlanıldı."
+msgstr "Настройки успешно сохранены."
 
-#: frontend/templates/tools/tool_list.html:26
-#: frontend/templates/tools/tool_list.html:378
-#: frontend/templates/tools/tool_list.html:414
-msgid "Bütün alət növləri"
-msgstr ""
+#: apps/suppliers/views.py:60 apps/suppliers/views.py:108
+msgid "Kateqoriya seçin."
+msgstr "Выберите категорию."
 
-#: frontend/templates/tools/tool_list.html:54
-msgid "Yeni Alət Əlavə Et"
-msgstr ""
+#: apps/suppliers/views.py:67 apps/suppliers/views.py:115
+msgid "Zəhmət olmasa, Digər üçün kateqoriya adı daxil edin."
+msgstr "Введите название категории для «Другое»."
 
-#: frontend/templates/tools/tool_list.html:61
-msgid "Kateqoriya seçin..."
-msgstr ""
+#: apps/suppliers/views.py:87
+#, python-brace-format
+msgid "{name} sistemə əlavə edildi."
+msgstr "{name} добавлено в систему."
 
-#: frontend/templates/tools/tool_list.html:71
-#: frontend/templates/tools/tool_list.html:514
-msgid "Əvvəlcə kateqoriya seçin..."
-msgstr ""
+#: apps/suppliers/views.py:126
+#, python-brace-format
+msgid "{name} yeniləndi."
+msgstr "{name} обновлено."
 
-#: frontend/templates/tools/tool_list.html:116
-msgid "Mövcud Alətlər"
-msgstr ""
+#: apps/suppliers/views.py:141
+#, python-brace-format
+msgid "{supplier_name} silindi."
+msgstr "{supplier_name} удалено."
 
-#: frontend/templates/tools/tool_list.html:191
-msgid "Heç bir alət tapılmadı"
-msgstr ""
+#: apps/tools/forms.py:16
+msgid "Ana Kateqoriya"
+msgstr "Основная категория"
 
-#: frontend/templates/tools/tool_list.html:477
-msgid "Seçin..."
-msgstr ""
+#: apps/tools/forms.py:29
+msgid "Alət adı (Digər)"
+msgstr "Название инструмента (Другое)"
+
+#: apps/tools/views.py:381 apps/tools/views.py:524
+msgid "Stokda kifayət qədər alət yoxdur."
+msgstr "Недостаточно инструментов на складе."
+
+#: apps/tools/views.py:453
+msgid "Seçilmiş alət növü tapılmadı."
+msgstr "Выбранный тип инструмента не найден."
+
+#: apps/users/forms.py:11
+msgid "Soyad"
+msgstr "Фамилия"
+
+#: apps/users/forms.py:14 apps/users/models.py:13
+msgid "Doğum günü"
+msgstr "Дата рождения"
+
+#: apps/users/forms.py:26
+msgid "Adınızı yazın"
+msgstr "Ваше имя"
+
+#: apps/users/forms.py:27
+msgid "Soyadınızı yazın"
+msgstr "Ваша фамилия"
+
+#: apps/users/forms.py:28
+msgid "Doğum gününü seçin"
+msgstr "Выберите дату рождения"
+
+#: apps/users/forms.py:29
+msgid "İstifadəçi adı"
+msgstr "Имя пользователя"
+
+#: apps/users/forms.py:30
+msgid "E-poçt ünvanı"
+msgstr "Email"
+
+#: apps/users/forms.py:31
+msgid "Şifrə"
+msgstr "Пароль"
+
+#: apps/users/forms.py:32
+msgid "Şifrəni təkrarlayın"
+msgstr "Сменить пароль"
+
+#: apps/users/models.py:18
+msgid "İstifadəçi profili"
+msgstr "Имя пользователя"
+
+#: apps/users/models.py:19
+msgid "İstifadəçi profilləri"
+msgstr "Имя пользователя"
+
+#: apps/users/models.py:29
+msgid "Qeydiyyat"
+msgstr "Регистрация"
+
+#: apps/users/models.py:30
+msgid "Profil e-poçtu"
+msgstr "Электронная почта профиля"
+
+#: apps/users/models.py:40
+msgid "E-poçt"
+msgstr "Email"
+
+#: apps/users/models.py:41
+msgid "Təyinat"
+msgstr "Назначение"
+
+#: apps/users/models.py:42
+msgid "Kod"
+msgstr "Код"
+
+#: apps/users/models.py:43
+msgid "Bitmə vaxtı"
+msgstr "Время истечения"
+
+#: apps/users/models.py:44
+msgid "Təsdiq vaxtı"
+msgstr "Время подтверждения"
+
+#: apps/users/models.py:53
+msgid "E-poçt təsdiqi"
+msgstr "Подтверждение e-mail"
+
+#: apps/users/models.py:54
+msgid "E-poçt təsdiqləri"
+msgstr "Подтверждения e-mail"
+
+#: apps/users/services.py:62
+msgid "Aktiv təsdiq sorğusu tapılmadı."
+msgstr "Активный запрос на подтверждение не найден."
+
+#: apps/users/services.py:64
+msgid "Təsdiq kodunun vaxtı bitib."
+msgstr "Срок действия кода подтверждения истёк."
+
+#: apps/users/services.py:66
+msgid "Təsdiq kodu yanlışdır."
+msgstr "Код подтверждения неверен."
+
+#: apps/users/views.py:34
+msgid "İstifadəçi adı və ya şifrə səhvdir."
+msgstr "Неверное имя пользователя или пароль."
+
+#~ msgid "Təsərrüfat məhsulu"
+#~ msgstr "Продукция фермы"
+
+#~ msgid "Xüsusi"
+#~ msgstr "Особый"
+
+#~ msgid "Kritik"
+#~ msgstr "Критично"
+
+#~ msgid "Az qalıb"
+#~ msgstr "Заканчивается"
+
+#, python-brace-format
+#~ msgid "{name} ehtiyatı kritik həddə düşüb"
+#~ msgstr "Запас «{name}» упал до критического уровня"
+
+#, python-brace-format
+#~ msgid "{n} gün əvvəl"
+#~ msgstr "{n} дн. назад"
+
+#~ msgid "Bu gün"
+#~ msgstr "Сегодня"
+
+#~ msgid "Sabah"
+#~ msgstr "Завтра"
+
+#, python-brace-format
+#~ msgid "{n} gün sonra"
+#~ msgstr "через {n} дн."
+
+#, python-brace-format
+#~ msgid "\"{title}\" xatırlatması əlavə edildi."
+#~ msgstr "Напоминание «{title}» добавлено."
+
+#~ msgid "Silinməni Təsdiqlə"
+#~ msgstr "Подтвердите удаление"
+
+#~ msgid "Bəli, Sil"
+#~ msgstr "Да, удалить"
+
+#~ msgid "Xeyr, Geri Qayıt"
+#~ msgstr "Нет, назад"
+
+#~ msgid "Heyvanı Düzəlt"
+#~ msgstr "Редактировать животное"
+
+#~ msgid "Heyvan Məlumatlarını Yenilə"
+#~ msgstr "Обновить данные животного"
+
+#~ msgid "Kateqoriya seçin"
+#~ msgstr "Выберите категорию"
+
+#~ msgid "Alt kateqoriya seçin"
+#~ msgstr "Выберите подкатегорию"
+
+#~ msgid "Heyvanın növünü daxil edin"
+#~ msgstr "Введите тип животного"
+
+#~ msgid "Məsələn: AZ12345"
+#~ msgstr "Например: AZ12345"
+
+#~ msgid "Erkək"
+#~ msgstr "Самец"
+
+#~ msgid "Dişi"
+#~ msgstr "Самка"
+
+#~ msgid "Məbləğ (₼)"
+#~ msgstr "Сумма (₼)"
+
+#, fuzzy
+#~ msgid "Əlavə Məlumat"
+#~ msgstr "Личные данные"
+
+#~ msgid "Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
+#~ msgstr "Например: состояние животного, вакцинация и т.д."
+
+#, fuzzy
+#~ msgid "Yadda Saxla"
+#~ msgstr "Сохранить"
+
+#~ msgid "Alt kateqoriya yoxdur"
+#~ msgstr "Нет подкатегории"
+
+#~ msgid "Bütün kateqoriyalar"
+#~ msgstr "Все категории"
+
+#~ msgid "Bütün heyvan növləri"
+#~ msgstr "Все виды животных"
+
+#~ msgid "Artım və azalma"
+#~ msgstr "Рост и уменьшение"
+
+#~ msgid "Artım"
+#~ msgstr "Рост"
+
+#~ msgid "Axtar (ID, Məlumat, Növ)..."
+#~ msgstr "Поиск (ID, информация, тип)..."
+
+#~ msgid "Sıfırla"
+#~ msgstr "Сбросить"
+
+#~ msgid "Yeni Heyvan Əlavə Et"
+#~ msgstr "Добавить новое животное"
+
+#~ msgid "Əvvəlcə ana kateqoriya seçin"
+#~ msgstr "Сначала выберите основную категорию"
+
+#~ msgid "Heyvan Siyahısı"
+#~ msgstr "Список животных"
+
+#~ msgid "Heç bir heyvan tapılmadı"
+#~ msgstr "Животные не найдены"
+
+#~ msgid "Ferma İdarəsi"
+#~ msgstr "Управление фермой"
+
+#~ msgid "Menyu"
+#~ msgstr "Меню"
+
+#~ msgid "Profil"
+#~ msgstr "Профиль"
+
+#~ msgid "Parametrlər"
+#~ msgstr "Настройки"
+
+#~ msgid "Kömək"
+#~ msgstr "Помощь"
+
+#~ msgid "Sinxronizasiya"
+#~ msgstr "Синхронизация"
+
+#~ msgid "Çıxış"
+#~ msgstr "Выход"
+
+#~ msgid "Yoxlanır"
+#~ msgstr "Проверяется"
+
+#~ msgid "Ana Səhifə"
+#~ msgstr "Главная"
+
+#~ msgid "Stok"
+#~ msgstr "Склад"
+
+#~ msgid "Tеzliklə"
+#~ msgstr "Скоро"
+
+#~ msgid "Tezliklə!"
+#~ msgstr "Скоро!"
+
+#~ msgid "Bu səhifə hazırda hazırlanma mərhələsindədir."
+#~ msgstr "Эта страница находится в разработке."
+
+#~ msgid "Xərclər"
+#~ msgstr "Расходы"
+
+#~ msgid "Bulud"
+#~ msgstr "Облако"
+
+#~ msgid "Təchizatçılar"
+#~ msgstr "Поставщики"
+
+#~ msgid "Yeni məhsul"
+#~ msgstr "Новый продукт"
+
+#~ msgid "Qazanc"
+#~ msgstr "Прибыль"
+
+#~ msgid "Şablon axtar..."
+#~ msgstr "Поиск шаблона..."
+
+#~ msgid "Bir toxunuşla xərc"
+#~ msgstr "Расход в одно касание"
+
+#~ msgid "Xüsusi məbləğ"
+#~ msgstr "Своя сумма"
+
+#~ msgid "Şablonlar"
+#~ msgstr "Шаблоны"
+
+#~ msgid "Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək."
+#~ msgstr "Шаблонов пока нет. Они появятся после добавления расхода."
+
+#, fuzzy
+#~ msgid "Tez Gəlir"
+#~ msgstr "Быстрый расход"
+
+#~ msgid "Bir toxunuşla gəlir"
+#~ msgstr "Доход в одно касание"
+
+#~ msgid ""
+#~ "Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək."
+#~ msgstr "Шаблонов дохода пока нет. Они появятся после добавления дохода."
+
+#~ msgid "Bu səhifə hələ hazırlanır..."
+#~ msgstr "Страница ещё готовится..."
+
+#~ msgid "Ehtiyat xəbərdarlığı səhifəsi tezliklə istifadəyə veriləcək."
+#~ msgstr "Страница предупреждений о запасах скоро будет доступна."
+
+#~ msgid "Ana Səhifəyə Qayıt"
+#~ msgstr "На главную"
+
+#, fuzzy
+#~ msgid "Xərc Məlumatlarını Yenilə"
+#~ msgstr "Данные профиля успешно обновлены."
+
+#~ msgid "Xərcin növünü daxil edin"
+#~ msgstr "Введите тип расхода"
+
+#~ msgid "Məsələn: Mağaza adı, qəbz nömrəsi və s."
+#~ msgstr "Например: название магазина, номер чека и т.п."
+
+#~ msgid "Bu həftə ümumi xərc"
+#~ msgstr "Общий расход за эту неделю"
+
+#~ msgid "Yeni Xərc Əlavə Et"
+#~ msgstr "Добавить новый расход"
+
+#~ msgid "Xərcin adını daxil edin"
+#~ msgstr "Введите название расхода"
+
+#~ msgid "Məsələn: Əlavə qeydlər..."
+#~ msgstr "Например: дополнительные заметки..."
+
+#~ msgid "Xərc Əlavə Et"
+#~ msgstr "Добавить расход"
+
+#~ msgid "Bütün alt kateqoriyalar"
+#~ msgstr "Все подкатегории"
+
+#~ msgid "Axtarış..."
+#~ msgstr "Поиск..."
+
+#~ msgid "Son Xərclər"
+#~ msgstr "Последние расходы"
+
+#~ msgid "Hələ heç bir xərc qeydə alınmayıb"
+#~ msgstr "Расходы еще не записаны"
+
+#~ msgid "Filterə uyğun xərc tapılmadı"
+#~ msgstr "Расходов для этого фильтра не найдено"
+
+#~ msgid "Silmək"
+#~ msgstr "Удалить"
+
+#, fuzzy
+#~ msgid "Məhsul Məlumatlarını Yenilə"
+#~ msgstr "Данные профиля успешно обновлены."
+
+#~ msgid "Məhsul seçin"
+#~ msgstr "Выберите продукт"
+
+#~ msgid "Məhsulun adını daxil edin"
+#~ msgstr "Введите название продукта"
+
+#~ msgid "kq"
+#~ msgstr "кг"
+
+#~ msgid "ton"
+#~ msgstr "тонна"
+
+#~ msgid "qram"
+#~ msgstr "грамм"
+
+#~ msgid "litr"
+#~ msgstr "литр"
+
+#~ msgid "millilitr"
+#~ msgstr "миллилитр"
+
+#~ msgid "ədəd"
+#~ msgstr "штука"
+
+#~ msgid "dəstə"
+#~ msgstr "связка"
+
+#~ msgid "bağlama"
+#~ msgstr "упаковка"
+
+#~ msgid "Məsələn: Məhsulun vəziyyəti və s."
+#~ msgstr "Например: состояние продукта и т.д."
+
+#~ msgid "Bütün məhsul növləri"
+#~ msgstr "Все типы продуктов"
+
+#~ msgid "Axtar (Ad, Kateqoriya)..."
+#~ msgstr "Поиск (имя, категория)..."
+
+#~ msgid "Yeni Məhsul Əlavə Et"
+#~ msgstr "Добавить новый продукт"
+
+#~ msgid "Əvvəlcə kateqoriya seçin"
+#~ msgstr "Сначала выберите категорию"
+
+#~ msgid "Təsərrüfat Məhsulları Siyahısı"
+#~ msgstr "Список фермерской продукции"
+
+#~ msgid "Heç bir məhsul tapılmadı"
+#~ msgstr "Продукты не найдены"
+
+#~ msgid "Gəliri Düzəlt"
+#~ msgstr "Редактировать доход"
+
+#, fuzzy
+#~ msgid "Gəlir Məlumatlarını Yenilə"
+#~ msgstr "Данные профиля успешно обновлены."
+
+#~ msgid "Cinsiyyət seçin"
+#~ msgstr "Выберите пол"
+
+#~ msgid "Məsələn: satış yeri, qeyd və s."
+#~ msgstr "Например: место продажи, примечание и т.д."
+
+#~ msgid "Bu həftə ümumi gəlir"
+#~ msgstr "Общий доход за эту неделю"
+
+#~ msgid "Yeni Gəlir Əlavə Et"
+#~ msgstr "Добавить новый доход"
+
+#~ msgid "ml"
+#~ msgstr "мл"
+
+#~ msgid "Gəlir Əlavə Et"
+#~ msgstr "Добавить доход"
+
+#~ msgid "Bütün məhsullar"
+#~ msgstr "Все продукты"
+
+#~ msgid "Son Gəlirlər"
+#~ msgstr "Последние доходы"
+
+#~ msgid "Hələ heç bir gəlir qeydə alınmayıb"
+#~ msgstr "Доходы еще не записаны"
+
+#~ msgid "Filterə uyğun gəlir tapılmadı"
+#~ msgstr "Доходов для этого фильтра не найдено"
+
+#~ msgid "Alt məhsul seçin"
+#~ msgstr "Выберите подпродукт"
+
+#, fuzzy
+#~ msgid "Əlavə Et"
+#~ msgstr "Личные данные"
+
+#~ msgid "Barkod Skan Et"
+#~ msgstr "Сканировать штрихкод"
+
+#~ msgid "Kodu Əllə Yaz"
+#~ msgstr "Ввести код вручную"
+
+#~ msgid "Barkodu Göstər"
+#~ msgstr "Показать штрихкод"
+
+#~ msgid "Səslə Əlavə Et"
+#~ msgstr "Добавить голосом"
+
+#~ msgid "Form yalnız barkod scan olunandan sonra görünəcək."
+#~ msgstr "Форма появится только после сканирования штрихкода."
+
+#~ msgid "Səs Yazılır"
+#~ msgstr "Идет запись"
+
+#~ msgid "Danışın, sistem səsi dinləyir."
+#~ msgstr "Говорите, система слушает."
+
+#~ msgid "Kod / ID"
+#~ msgstr "Код / ID"
+
+#~ msgid "Barkod kodunu yazın"
+#~ msgstr "Введите штрихкод"
+
+#~ msgid "Kodu Yoxla"
+#~ msgstr "Проверить код"
+
+#~ msgid "Form"
+#~ msgstr "Форма"
+
+#~ msgid "Scan olunan barkoda uyğun form açıldı."
+#~ msgstr "Открыта форма для отсканированного штрихкода."
+
+#~ msgid "Alt Kateqoriya"
+#~ msgstr "Подкатегория"
+
+#~ msgid "Xərc adı (Digər)"
+#~ msgstr "Название расхода (Другое)"
+
+#~ msgid "Xərci Saxla"
+#~ msgstr "Сохранить расход"
+
+#~ msgid "Məhsul adı (Digər)"
+#~ msgstr "Название продукта (Другое)"
+
+#, fuzzy
+#~ msgid "Ölçü vahidi"
+#~ msgstr "Единицы измерения"
+
+#~ msgid "Cinsiyyət"
+#~ msgstr "Пол"
+
+#~ msgid "Seçin"
+#~ msgstr "Выберите"
+
+#~ msgid "Gəliri Saxla"
+#~ msgstr "Сохранить доход"
+
+#~ msgid "Heyvan növü (Digər)"
+#~ msgstr "Тип животного (Другое)"
+
+#~ msgid "Çəki"
+#~ msgstr "Вес"
+
+#~ msgid "Heyvanı Saxla"
+#~ msgstr "Сохранить животное"
+
+#~ msgid "Toxum növü"
+#~ msgstr "Тип семян"
+
+#~ msgid "Toxum seçin"
+#~ msgstr "Выберите семена"
+
+#~ msgid "Toxum adı (Digər)"
+#~ msgstr "Название семян (Другое)"
+
+#~ msgid "Toxumun adını daxil edin"
+#~ msgstr "Введите название семян"
+
+#~ msgid "kg"
+#~ msgstr "кг"
+
+#~ msgid "Məsələn: Toxumun vəziyyəti və s."
+#~ msgstr "Например: состояние семян и т.д."
+
+#~ msgid "Toxumu Saxla"
+#~ msgstr "Сохранить семена"
+
+#~ msgid "Alət seçin"
+#~ msgstr "Выберите инструмент"
+
+#~ msgid "Alət adını daxil edin"
+#~ msgstr "Введите название инструмента"
+
+#~ msgid "Məsələn: Alətin vəziyyəti və s."
+#~ msgstr "Например: состояние инструмента и т.д."
+
+#~ msgid "Aləti Saxla"
+#~ msgstr "Сохранить инструмент"
+
+#~ msgid "Məhsul növü"
+#~ msgstr "Тип продукта"
+
+#~ msgid "Məhsulu Saxla"
+#~ msgstr "Сохранить продукт"
+
+#~ msgid "Heyvan formu"
+#~ msgstr "Форма животного"
+
+#~ msgid "Toxum formu"
+#~ msgstr "Форма семян"
+
+#~ msgid "Alət formu"
+#~ msgstr "Форма инструмента"
+
+#~ msgid "Təsərrüfat formu"
+#~ msgstr "Форма фермы"
+
+#~ msgid "Skanı Dayandır"
+#~ msgstr "Остановить сканирование"
+
+#~ msgid "Miqdar ±1 olmadıqda ID yazılmır"
+#~ msgstr "ID не вводится, если количество не ±1"
+
+#~ msgid "Deyilən:"
+#~ msgstr "Сказано:"
+
+#~ msgid "Təxmin edilən:"
+#~ msgstr "Определено:"
+
+#~ msgid "Səs emal olunur..."
+#~ msgstr "Аудио обрабатывается..."
+
+#~ msgid "Yazını Bitir"
+#~ msgstr "Остановить запись"
+
+#~ msgid "Barkod Yarat"
+#~ msgstr "Создать штрихкод"
+
+#~ msgid "Barkod generatoru"
+#~ msgstr "Генератор штрихкодов"
+
+#~ msgid ""
+#~ "Kateqoriya seçin, formu doldurun, sonra `Barkodu Göstər` düyməsinə basın."
+#~ msgstr ""
+#~ "Выберите категорию, заполните форму, затем нажмите кнопку «Показать "
+#~ "штрихкод»."
+
+#~ msgid "Form növü"
+#~ msgstr "Тип формы"
+
+#~ msgid "Bu formdakı bütün məlumat birlikdə barkoda daxil ediləcək."
+#~ msgstr "Все данные этой формы будут закодированы в одном штрихкоде."
+
+#~ msgid "Barkod"
+#~ msgstr "Штрихкод"
+
+#~ msgid "Kopyala"
+#~ msgstr "Копировать"
+
+#~ msgid "Download JPG"
+#~ msgstr "Скачать JPG"
+
+#~ msgid "Hamısı"
+#~ msgstr "Все"
+
+#~ msgid "Sıralama"
+#~ msgstr "Сортировка"
+
+#~ msgid "Standart düzülüş"
+#~ msgstr "Стандартный порядок"
+
+#~ msgid "Ada görə A-Z"
+#~ msgstr "По имени А-Я"
+
+#~ msgid "Ada görə Z-A"
+#~ msgstr "По имени Я-А"
+
+#~ msgid "Saya görə çox olan"
+#~ msgstr "С наибольшим количеством"
+
+#~ msgid "Saya görə az olan"
+#~ msgstr "С наименьшим количеством"
+
+#~ msgid "Axtarış"
+#~ msgstr "Поиск"
+
+#~ msgid "Axtar..."
+#~ msgstr "Поиск..."
+
+#~ msgid "&nbsp;"
+#~ msgstr "&nbsp;"
+
+#, fuzzy
+#~ msgid "Yeni miqdar"
+#~ msgstr "Новый пароль"
+
+#~ msgid "Erkək / Dişi sayı"
+#~ msgstr "Количество самцов / самок"
+
+#~ msgid "Ümumi"
+#~ msgstr "Итого"
+
+#~ msgid "Ləğv et"
+#~ msgstr "Отмена"
+
+#~ msgid "Yadda saxla"
+#~ msgstr "Сохранить"
+
+#~ msgid "Xatırlatmalar"
+#~ msgstr "Напоминания"
+
+#~ msgid "Vaksinasiya, əkin, ödəniş xatırlatmaları"
+#~ msgstr "Напоминания о вакцинации, посеве и оплате"
+
+#~ msgid "Yeni xatırlatma"
+#~ msgstr "Новое напоминание"
+
+#~ msgid "Başlıq"
+#~ msgstr "Заголовок"
+
+#~ msgid "Məs: Qoyunlara vaksinasiya"
+#~ msgstr "Напр.: вакцинация овец"
+
+#, fuzzy
+#~ msgid "🌿 Ferma idarəsi"
+#~ msgstr "Управление фермой"
+
+#~ msgid "Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə."
+#~ msgstr "Семена, животные, инструменты и расходы — всё в одном месте."
+
+#~ msgid "🌱 Toxumlar"
+#~ msgstr "🌱 Семена"
+
+#~ msgid "🐄 Heyvanlar"
+#~ msgstr "🐄 Животные"
+
+#~ msgid "🔧 Alətlər"
+#~ msgstr "🔧 Инструменты"
+
+#~ msgid "💰 Xərclər"
+#~ msgstr "💰 Расходы"
+
+#~ msgid "Daxil ol"
+#~ msgstr "Войти"
+
+#~ msgid "Davam etmək üçün məlumatları daxil edin"
+#~ msgstr "Введите данные, чтобы продолжить"
+
+#~ msgid "Yeni hesab yaradın. Daha sonra admin təsdiqi ilə aktiv olacaq."
+#~ msgstr ""
+#~ "Создайте аккаунт. Он будет активирован после подтверждения администратором."
+
+#, fuzzy
+#~ msgid "Hesab yarat"
+#~ msgstr "Создать отчет"
+
+#~ msgid "Maliyyə və statistik məlumatlar"
+#~ msgstr "Финансовая и статистическая информация"
+
+#~ msgid "+ Yeni Hesabat Əlavə Et"
+#~ msgstr "+ Добавить отчёт"
+
+#~ msgid "⬇ Hesabat Yüklə (PDF)"
+#~ msgstr "⬇ Скачать отчёт (PDF)"
+
+#~ msgid "Toxumu Düzəlt"
+#~ msgstr "Редактировать семена"
+
+#, fuzzy
+#~ msgid "Toxum Məlumatlarını Yenilə"
+#~ msgstr "Данные профиля успешно обновлены."
+
+#~ msgid "Bütün toxum növləri"
+#~ msgstr "Все типы семян"
+
+#~ msgid "Yeni Toxum Əlavə Et"
+#~ msgstr "Добавить новые семена"
+
+#~ msgid "Toxum Siyahısı"
+#~ msgstr "Список семян"
+
+#~ msgid "Hələ heç bir toxum qeydə alınmayıb"
+#~ msgstr "Семена ещё не записаны"
+
+#~ msgid "Tez-tez verilən suallar"
+#~ msgstr "Часто задаваемые вопросы"
+
+#~ msgid "Sistemə necə daxil olunur?"
+#~ msgstr "Как войти в систему?"
+
+#~ msgid "Giriş səhifəsindəki istifadəçi adı və şifrə sahələrini doldurun, sonra"
+#~ msgstr "Заполните поля имени пользователя и пароля на странице входа, затем"
+
+#~ msgid "düyməsinə klikləyin."
+#~ msgstr "нажмите кнопку."
+
+#~ msgid "Profil məlumatlarımı necə yeniləyə bilərəm?"
+#~ msgstr "Как обновить данные профиля?"
+
+#~ msgid "Aşağıdakı menyudan"
+#~ msgstr "В нижнем меню"
+
+#~ msgid "seçin, lazımi məlumatları dəyişdirin və"
+#~ msgstr "выберите раздел, измените нужные данные и"
+
+#~ msgid "Şifrəmi necə dəyişə bilərəm?"
+#~ msgstr "Как изменить пароль?"
+
+#~ msgid "Profil səhifəsinin alt hissəsindəki"
+#~ msgstr "В нижней части страницы профиля"
+
+#~ msgid "bölməsindən cari və yeni şifrənizi daxil edib təsdiqləyin."
+#~ msgstr "введите текущий и новый пароль и подтвердите."
+
+#~ msgid "Hesabat necə yaradılır?"
+#~ msgstr "Как создать отчет?"
+
+#~ msgid "Alt menyudan"
+#~ msgstr "Из нижнего меню"
+
+#~ msgid "bölməsinə keçin, hesabat növünü seçin, tarix aralığını təyin edin və"
+#~ msgstr "перейдите в раздел, выберите тип отчета, укажите период и"
+
+#~ msgid "Hesabatı yarat"
+#~ msgstr "Создать отчет"
+
+#~ msgid "Stoka yeni məhsul necə əlavə edilir?"
+#~ msgstr "Как добавить новый товар на склад?"
+
+#~ msgid "Alt naviqasiyada mərkəzdəki"
+#~ msgstr "В нижней навигации нажмите центральную"
+
+#~ msgid ""
+#~ "düyməsinə klikləyin, məhsul növünü seçin və lazımi məlumatları daxil edin."
+#~ msgstr "кнопку, выберите тип продукта и введите необходимые данные."
+
+#~ msgid "Tez xərc nədir?"
+#~ msgstr "Что такое быстрый расход?"
+
+#~ msgid ""
+#~ "bölməsi gündəlik xərclərinizi sürətli şəkildə qeydə almağa imkan verir. "
+#~ "Kateqoriya seçib məbləği daxil etmək kifayətdir."
+#~ msgstr ""
+#~ "раздел позволяет быстро фиксировать ежедневные расходы. Достаточно выбрать "
+#~ "категорию и ввести сумму."
+
+#~ msgid "Məlumatlarım avtomatik saxlanılırmı?"
+#~ msgstr "Мои данные сохраняются автоматически?"
+
+#~ msgid ""
+#~ "Bəli, bütün əməliyyatlar real vaxt rejimində verilənlər bazasına yazılır. "
+#~ "Əlavə olaraq"
+#~ msgstr ""
+#~ "Да, все операции сохраняются в базе данных в реальном времени. Кроме того,"
+
+#~ msgid "Sync"
+#~ msgstr "Синхронизация"
+
+#~ msgid "bölməsindən manual sinxronizasiya da edə bilərsiniz."
+#~ msgstr "вы можете выполнить ручную синхронизацию из этого раздела."
+
+#, fuzzy
+#~ msgid "Şəxsi məlumatlar"
+#~ msgstr "Личные данные"
+
+#~ msgid "Sistem"
+#~ msgstr "Система"
+
+#~ msgid "Cari şifrə"
+#~ msgstr "Текущий пароль"
+
+#~ msgid "Yeni şifrə"
+#~ msgstr "Новый пароль"
+
+#~ msgid "Şifrəni yenilə"
+#~ msgstr "Обновить пароль"
+
+#~ msgid "Dil və Bölgə"
+#~ msgstr "Язык и регион"
+
+#~ msgid "Dil"
+#~ msgstr "Язык"
+
+#~ msgid "İnterfeys dili"
+#~ msgstr "Язык интерфейса"
+
+#~ msgid "AZ"
+#~ msgstr "AZ"
+
+#~ msgid "EN"
+#~ msgstr "EN"
+
+#~ msgid "RU"
+#~ msgstr "RU"
+
+#~ msgid "Vaxt zonası"
+#~ msgstr "Часовой пояс"
+
+#~ msgid "Sistem saatı"
+#~ msgstr "Системное время"
+
+#~ msgid "UTC+4 Bakı"
+#~ msgstr "UTC+4 Баку"
+
+#~ msgid "UTC+0 London"
+#~ msgstr "UTC+0 Лондон"
+
+#~ msgid "UTC+3 Moskva"
+#~ msgstr "UTC+3 Москва"
+
+#~ msgid "Ölçü Vahidləri"
+#~ msgstr "Единицы измерения"
+
+#~ msgid "Çəki / Həcm ölçüsü"
+#~ msgstr "Единица веса / объема"
+
+#~ msgid "baş"
+#~ msgstr "главная"
+
+#~ msgid "Maliyyə"
+#~ msgstr "Финансы"
+
+#~ msgid "Valyuta"
+#~ msgstr "Валюта"
+
+#~ msgid "Əsas valyuta"
+#~ msgstr "Основная валюта"
+
+#~ msgid "AZN ₼"
+#~ msgstr "AZN ₼"
+
+#~ msgid "EUR €"
+#~ msgstr "EUR €"
+
+#~ msgid "USD $"
+#~ msgstr "USD $"
+
+#~ msgid "Bildirişlər"
+#~ msgstr "Уведомления"
+
+#~ msgid "Yeniləmələri e-poçtla al"
+#~ msgstr "Получать обновления по email"
+
+#~ msgid "Sistem bildirişləri"
+#~ msgstr "Системные уведомления"
+
+#~ msgid "Tətbiq daxili bildirişlər"
+#~ msgstr "Уведомления внутри приложения"
+
+#~ msgid "Təchizatçı axtar..."
+#~ msgstr "Поиск поставщика..."
+
+#~ msgid "Nəticə tapılmadı"
+#~ msgstr "Ничего не найдено"
+
+#~ msgid "Axtarışa uyğun təchizatçı tapılmadı."
+#~ msgstr "Поставщик по запросу не найден."
+
+#~ msgid "Məsələn: Əhməd Toxumçuluq"
+#~ msgstr "Например: Ahmad Seeds"
+
+#~ msgid "Kateqoriya Adı (Digər)"
+#~ msgstr "Название категории (Другое)"
+
+#~ msgid "Kateqoriya adını daxil edin"
+#~ msgstr "Введите название категории"
+
+#~ msgid "Ünvan"
+#~ msgstr "Адрес"
+
+#~ msgid "Məsələn: Gəncə"
+#~ msgstr "Например: Гянджа"
+
+#~ msgid "Telefon Nömrəsi"
+#~ msgstr "Номер телефона"
+
+#~ msgid "Məsələn: +994 50 123 45 67"
+#~ msgstr "Например: +994 50 123 45 67"
+
+#~ msgid "Son Sifariş Tarixi"
+#~ msgstr "Дата последнего заказа"
+
+#~ msgid ""
+#~ "Məsələn: Sifarişdən əvvəl zəng edin, çatdırılma edir, qiymətləri münasibdir"
+#~ msgstr "Например: звоните перед заказом, есть доставка, цены приемлемые"
+
+#~ msgid "Bağlantı"
+#~ msgstr "Подключение"
+
+#~ msgid "Gözləyən qeyd"
+#~ msgstr "Ожидающие записи"
+
+#~ msgid "Son uğurlu sync"
+#~ msgstr "Последняя успешная синхронизация"
+
+#~ msgid "Heç vaxt"
+#~ msgstr "Никогда"
+
+#~ msgid "Uzaq dəyişikliklər"
+#~ msgstr "Удаленные изменения"
+
+#~ msgid "Son xəta"
+#~ msgstr "Последняя ошибка"
+
+#~ msgid "Gözləyən əməliyyatlar"
+#~ msgstr "Ожидающие операции"
+
+#, fuzzy
+#~ msgid "Sinxronizasiya tarixçəsi"
+#~ msgstr "Синхронизация"
+
+#~ msgid "Aləti Düzəlt"
+#~ msgstr "Редактировать инструмент"
+
+#, fuzzy
+#~ msgid "Alət Məlumatlarını Yenilə"
+#~ msgstr "Данные профиля успешно обновлены."
+
+#~ msgid "Alətin adını daxil edin"
+#~ msgstr "Введите название инструмента"
+
+#~ msgid "Cəmi Məbləğ (₼)"
+#~ msgstr "Общая сумма (₼)"
+
+#~ msgid "Bütün alət növləri"
+#~ msgstr "Все типы инструментов"
+
+#~ msgid "Yeni Alət Əlavə Et"
+#~ msgstr "Добавить новый инструмент"
+
+#~ msgid "Kateqoriya seçin..."
+#~ msgstr "Выберите категорию..."
+
+#~ msgid "Əvvəlcə kateqoriya seçin..."
+#~ msgstr "Сначала выберите категорию..."
+
+#~ msgid "Mövcud Alətlər"
+#~ msgstr "Доступные инструменты"
+
+#~ msgid "Heç bir alət tapılmadı"
+#~ msgstr "Инструменты не найдены"
+
+#~ msgid "Seçin..."
+#~ msgstr "Выберите..."

@@ -17,7 +17,9 @@
 
   let dbPromise = null
   let syncInProgress = false
+  let pendingSyncRequested = false
   let indicatorCache = null
+  const pendingOperationEffects = new Map()
 
   const I18N = {
     en: {
@@ -508,6 +510,53 @@
     window.setTimeout(callback, timeout)
   }
 
+  function registerPendingOperationEffect(operationId, effect) {
+    if (!operationId) return
+    pendingOperationEffects.set(operationId, {
+      successRedirect: '',
+      reloadOnSuccess: true,
+      successMessage: '',
+      failureMessage: 'Məlumat yoxlamadan keçmədi.',
+      ...effect,
+    })
+  }
+
+  function resolvePendingOperationEffects({ syncedIds = [], failedIds = [] } = {}) {
+    let handledFailure = false
+    let handledSuccess = false
+
+    for (const operationId of failedIds) {
+      const effect = pendingOperationEffects.get(operationId)
+      if (!effect) continue
+      pendingOperationEffects.delete(operationId)
+      handledFailure = true
+      showToast(effect.failureMessage || 'Məlumat yoxlamadan keçmədi.', 'error')
+    }
+
+    for (const operationId of syncedIds) {
+      const effect = pendingOperationEffects.get(operationId)
+      if (!effect) continue
+      pendingOperationEffects.delete(operationId)
+      handledSuccess = true
+
+      if (effect.successRedirect) {
+        queueToast(effect.successMessage || 'Uğurla əlavə edildi.', 'success')
+        window.location.assign(effect.successRedirect)
+        return { navigated: true, handledFailure, handledSuccess }
+      }
+
+      if (effect.reloadOnSuccess) {
+        queueToast(effect.successMessage || 'Uğurla əlavə edildi.', 'success')
+        window.location.reload()
+        return { navigated: true, handledFailure, handledSuccess }
+      }
+
+      showToast(effect.successMessage || 'Uğurla əlavə edildi.', 'success')
+    }
+
+    return { navigated: false, handledFailure, handledSuccess }
+  }
+
   function serializeForm(form) {
     const formData = new FormData(form)
     const data = {}
@@ -627,6 +676,9 @@
 
   async function syncPendingOperations(options = {}) {
     if (syncInProgress || !navigator.onLine) {
+      if (syncInProgress && navigator.onLine) {
+        pendingSyncRequested = true
+      }
       return { syncedIds: [], failedIds: [] }
     }
 
@@ -687,6 +739,11 @@
         setLastSync(payload.last_sync)
       }
 
+      const effectResolution = resolvePendingOperationEffects({ syncedIds, failedIds })
+      if (effectResolution.navigated) {
+        return { syncedIds, failedIds }
+      }
+
       const shouldReload =
         options.reloadOnOperationId &&
         syncedIds.includes(options.reloadOnOperationId) &&
@@ -707,9 +764,9 @@
         await emitStatus({ lastError: firstError, remoteChanges })
       }
 
-      if (failedIds.length) {
+      if (failedIds.length && !effectResolution.handledFailure) {
         showToast(firstError || 'Bəzi qeydlər sync olmadı.', 'warning')
-      } else if (syncedIds.length && !options.silentSuccess) {
+      } else if (syncedIds.length && !options.silentSuccess && !effectResolution.handledSuccess) {
         showToast('Məlumat buluda göndərildi.', 'info')
       }
 
@@ -719,12 +776,22 @@
       return { syncedIds: [], failedIds: [] }
     } finally {
       syncInProgress = false
+      if (pendingSyncRequested && navigator.onLine) {
+        pendingSyncRequested = false
+        scheduleBackgroundTask(() => {
+          syncPendingOperations({ silentSuccess: true, skipRemoteStatusRefresh: true })
+        }, 60)
+      }
     }
   }
 
   async function handleSyncFormSubmit(event) {
     const form = event.target
     if (!(form instanceof HTMLFormElement) || !form.matches('form[data-sync-entity]')) {
+      return
+    }
+
+    if (form.dataset.syncDirectOnline === 'true' && navigator.onLine) {
       return
     }
 
@@ -775,25 +842,15 @@
         return
       }
 
+      registerPendingOperationEffect(operationId, {
+        successRedirect: form.dataset.syncSuccessRedirect || '',
+        reloadOnSuccess: !Boolean(form.dataset.syncSuccessRedirect),
+        successMessage: successMessageForAction(operation.action),
+      })
+
       syncPendingOperations({
-        reloadOnOperationId: operationId,
-        skipReloadOnSuccess: Boolean(form.dataset.syncSuccessRedirect),
         silentSuccess: true,
         skipRemoteStatusRefresh: true,
-        successMessage: successMessageForAction(operation.action),
-      }).then((result) => {
-        if (result.failedIds.includes(operationId)) {
-          showToast('Məlumat yoxlamadan keçmədi.', 'error')
-          return
-        }
-        if (result.syncedIds.includes(operationId) && form.dataset.syncSuccessRedirect) {
-          queueToast(successMessageForAction(operation.action), 'success')
-          window.location.assign(form.dataset.syncSuccessRedirect)
-          return
-        }
-        if (result.syncedIds.includes(operationId)) {
-          showToast(successMessageForAction(operation.action), 'success')
-        }
       }).catch(() => {
         showToast('Şəbəkə problemi var. Məlumat lokal saxlanıldı.', 'warning')
       })

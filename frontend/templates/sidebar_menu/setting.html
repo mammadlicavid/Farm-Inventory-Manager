@@ -76,13 +76,13 @@
         <div class="param-info">
           <i class="fa-solid fa-weight-hanging param-icon"></i>
           <div>
-            <span class="param-title">Çəki vahidi</span>
-            <span class="param-sub">Çəkini necə göstərək</span>
+            <span class="param-title">{% trans "Çəki vahidi" %}</span>
+            <span class="param-sub">{% trans "Çəkini necə göstərək" %}</span>
           </div>
         </div>
         <select name="weight_unit" class="param-select">
-          <option value="kg" {% if weight_unit_value == 'kg' %}selected{% endif %}>kq</option>
-          <option value="lb" {% if weight_unit_value == 'lb' %}selected{% endif %}>pound</option>
+          <option value="kg" {% if weight_unit_value == 'kg' %}selected{% endif %}>{% trans "kq" %}</option>
+          <option value="lb" {% if weight_unit_value == 'lb' %}selected{% endif %}>{% trans "pound" %}</option>
         </select>
       </div>
 
@@ -90,13 +90,13 @@
         <div class="param-info">
           <i class="fa-solid fa-glass-water param-icon"></i>
           <div>
-            <span class="param-title">Həcm vahidi</span>
-            <span class="param-sub">Mayeni necə göstərək</span>
+            <span class="param-title">{% trans "Həcm vahidi" %}</span>
+            <span class="param-sub">{% trans "Mayeni necə göstərək" %}</span>
           </div>
         </div>
         <select name="volume_unit" class="param-select">
-          <option value="litr" {% if volume_unit_value == 'litr' %}selected{% endif %}>litr</option>
-          <option value="gallon" {% if volume_unit_value == 'gallon' %}selected{% endif %}>gallon</option>
+          <option value="litr" {% if volume_unit_value == 'litr' %}selected{% endif %}>{% trans "litr" %}</option>
+          <option value="gallon" {% if volume_unit_value == 'gallon' %}selected{% endif %}>{% trans "gallon" %}</option>
         </select>
       </div>
 
@@ -162,12 +162,6 @@
 </div>
 
 <style>
-  .page-container {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 16px 16px 100px;
-  }
   .form-card {
     background: #fff;
     border-radius: 16px;
@@ -288,25 +282,6 @@
 </style>
 
 <script>
-  ;(function () {
-    const form = document.getElementById('settings-form')
-    if (!form) return
-
-    let submitting = false
-    let submitTimer = null
-
-    function submitSettings() {
-      if (submitting) return
-      submitting = true
-      form.requestSubmit()
-    }
-
-    form.querySelectorAll('select, input[type="checkbox"]').forEach((control) => {
-      control.addEventListener('change', () => {
-        if (submitTimer) window.clearTimeout(submitTimer)
-        submitTimer = window.setTimeout(submitSettings, 120)
-      })
-    })
-  })()
+  {% include 'scripts/sidebar_menu/setting.js' %}
 </script>
 {% endblock %}

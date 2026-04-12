@@ -3,6 +3,8 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES
+
 class ToolCategory(models.Model):
     name = models.CharField(max_length=100, verbose_name="Kateqoriya Adı")
 
@@ -29,7 +31,14 @@ class Tool(models.Model):
     manual_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Xüsusi Ad")
     quantity = models.IntegerField(verbose_name="Miqdar")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Qiymət", default=0, null=True, blank=True)
-    
+    zero_price_source = models.CharField(
+        max_length=20,
+        choices=ZERO_PRICE_SOURCE_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name="0 məbləğ mənbəyi",
+    )
+
     additional_info = models.TextField(blank=True, null=True, verbose_name="Əlavə məlumat")
     date = models.DateField(default=timezone.now, verbose_name="Tarix")
     

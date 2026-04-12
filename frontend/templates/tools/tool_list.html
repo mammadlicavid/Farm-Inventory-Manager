@@ -53,7 +53,7 @@
             <!-- Add Tool Form -->
             <div class="form-container-white">
                 <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Yeni Alət Əlavə Et" %}</h3>
-                <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form" data-sync-entity="tool" data-sync-action="create" data-sync-keep-key="tool_form_keep_v1">
+                <form action="{% url 'tools:tool_create' %}" method="POST" id="tool-form" data-sync-entity="tool" data-sync-action="create" data-sync-keep-key="tool_form_keep_v1" data-sync-direct-online="true">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
@@ -95,6 +95,17 @@
                                 <input type="date" name="date" required value="{{ today|date:'Y-m-d' }}"
                                     class="custom-input">
                             </div>
+                        </div>
+
+                        <div class="form-group form-full-width" id="tool-zero-price-source-group" style="display: none;">
+                            <label>{% trans "Bu stok haradan gəlib?" %} <span class="required-star">*</span></label>
+                            <select name="zero_price_source" id="tool-zero-price-source" class="custom-input">
+                                <option value="">{% trans "Seçin" %}</option>
+                                {% for value, label in zero_price_source_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="zero-price-source-note">{% trans "Məbləğ 0 olduqda mənbəni seçin." %}</div>
                         </div>
 
                         <div class="form-group form-full-width">
@@ -146,25 +157,35 @@
                             {{ alet.manual_name }}
                             {% endif %}
                         </h4>
-                        <span>
-                            Miqdar: {{ alet.quantity }} ədəd •
-                            {% if alet.date == today %}
-                            Bu gün
-                            {% elif alet.date == yesterday %}
-                            Dünən
-                            {% else %}
-                            {{ alet.date|date:"d.m.Y" }}
-                            {% endif %}
-                            {% if alet.additional_info %}
-                            {% if alet.additional_info == "Stok səhifəsindən düzəliş" %}
-                            <br>{{ alet.additional_info }}
-                            {% else %}
-                            • {{ alet.additional_info }}
-                            {% endif %}
-                            {% endif %}
-                        </span>
+                        <div class="item-meta-stack">
+                            <div class="item-meta-row">
+                                <span class="item-meta-label">{% trans "Miqdar" %}:</span>
+                                <span class="item-meta-value">{{ alet.quantity }} {% trans "ədəd" %}</span>
+                            </div>
+                            <div class="item-meta-row">
+                                <span class="item-meta-label">{% trans "Tarix" %}:</span>
+                                <span class="item-meta-value">
+                                    {% if alet.date == today %}
+                                    {% trans "Bu gün" %}
+                                    {% elif alet.date == yesterday %}
+                                    {% trans "Dünən" %}
+                                    {% else %}
+                                    {{ alet.date|date:"d.m.Y" }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% if alet.additional_info %}
+                        <div class="item-meta-row item-meta-extra">
+                            <span class="item-meta-label">{% trans "Əlavə məlumat" %}:</span>
+                            <span class="item-meta-value">{{ alet.additional_info }}</span>
+                        </div>
+                        {% endif %}
                     </div>
-                    <div style="text-align: right;">
+                    <div class="expense-item-side">
+                        {% if alet.zero_price_source_label %}
+                        <div class="stock-source-badge">{{ alet.zero_price_source_label }}</div>
+                        {% else %}
                         <div class="expense-item-amount" style="{% if alet.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
                             {% if alet.quantity < 0 %}
                             {% money alet.price_display request.user "+" %}
@@ -172,14 +193,14 @@
                             {% money alet.price_display request.user "-" %}
                             {% endif %}
                         </div>
-                        <div
-                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                        {% endif %}
+                        <div class="expense-item-actions">
                             <a href="{% url 'tools:tool_update' alet.pk %}"
                                 style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
                                 <i class="fa-solid fa-pen-to-square"></i> Düzəliş
                             </a>
                             <form action="{% url 'tools:tool_delete' alet.pk %}" method="POST"
-                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;" data-sync-entity="tool" data-sync-action="delete" data-sync-reset="false">
+                                style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;" data-sync-entity="tool" data-sync-action="delete" data-sync-reset="false" data-sync-direct-online="true">
                                 {% csrf_token %}
                                 <input type="hidden" name="record_id" value="{{ alet.pk }}">
                                 <input type="hidden" name="record_version" value="{{ alet.updated_at|date:'c' }}">
@@ -326,256 +347,7 @@
 </style>
 {{ category_item_map|json_script:"tool-category-item-map" }}
 <script>
-    const toolCategoryItemMap = JSON.parse(document.getElementById("tool-category-item-map")?.textContent || "{}");
-    const toolFilterForm = document.getElementById("tool-filter-form");
-    const toolFilterCategory = document.getElementById("tool-filter-category");
-    const toolFilterItem = document.getElementById("tool-filter-item");
-    const selectedToolFilterItem = "{{ selected_item|default:''|escapejs }}";
-    const toolFilterSearch = toolFilterForm?.querySelector('input[name="q"]');
-    const toolFilterReset = document.getElementById("tool-filter-reset");
-    const toolCards = Array.from(document.querySelectorAll("#tool-list .expense-item-card"));
-    const toolListController = window.createProgressiveListController({ items: toolCards, batchSize: 100 });
-    const toolListEmpty = document.getElementById("tool-list-empty");
-    const toolCrudWrapper = document.querySelector(".crud-desktop-wrapper");
-    const toolListColumn = document.querySelector(".crud-list-column");
-    const toolFilterPlaceholder = document.createComment("tool-filter-placeholder");
-    let toolFilterTimer = null;
-
-    toolFilterForm?.parentNode?.insertBefore(toolFilterPlaceholder, toolFilterForm);
-
-    toolFilterForm?.addEventListener("submit", (event) => event.preventDefault());
-
-    function normalizeToolText(value) {
-        return String(value || "").trim().toLocaleLowerCase("az");
-    }
-
-    function applyToolFilters() {
-        const category = toolFilterCategory?.value || "";
-        const item = toolFilterItem?.value || "";
-        const movement = toolFilterForm?.querySelector('select[name="movement"]')?.value || "";
-        const dateFrom = toolFilterForm?.querySelector('input[name="date_from"]')?.value || "";
-        const dateTo = toolFilterForm?.querySelector('input[name="date_to"]')?.value || "";
-        const term = normalizeToolText(toolFilterSearch?.value || "");
-        let visibleCount = 0;
-
-        toolCards.forEach((card) => {
-            const matchCategory = !category || (card.dataset.category || "") === category;
-            const matchItem = !item || (card.dataset.item || "") === item;
-            const matchMovement = !movement || (card.dataset.movement || "") === movement;
-            const cardDate = card.dataset.date || "";
-            const matchDateFrom = !dateFrom || (cardDate && cardDate >= dateFrom);
-            const matchDateTo = !dateTo || (cardDate && cardDate <= dateTo);
-            const matchSearch = !term || normalizeToolText(card.dataset.search).includes(term);
-            const show = matchCategory && matchItem && matchMovement && matchDateFrom && matchDateTo && matchSearch;
-            card.dataset.filterMatch = show ? "1" : "0";
-            if (show) visibleCount += 1;
-        });
-
-        toolListController.refresh(true);
-
-        if (toolListEmpty) {
-            toolListEmpty.style.display = visibleCount === 0 ? "flex" : "none";
-        }
-    }
-
-    function updateToolFilterItems(categoryId, selectedItemId = "") {
-        if (!toolFilterItem) return;
-        toolFilterItem.innerHTML = '<option value="">{% trans "Bütün alət növləri" %}</option>';
-        if (!categoryId) return;
-        const items = toolCategoryItemMap[String(categoryId)] || [];
-        items.forEach((item) => {
-            const option = document.createElement("option");
-            option.value = String(item.id);
-            option.textContent = item.name;
-            if (String(item.id) === String(selectedItemId)) {
-                option.selected = true;
-            }
-            toolFilterItem.appendChild(option);
-        });
-    }
-
-    if (toolFilterCategory) {
-        toolFilterCategory.addEventListener("change", () => {
-            updateToolFilterItems(toolFilterCategory.value);
-            applyToolFilters();
-        });
-        if (toolFilterCategory.value) {
-            updateToolFilterItems(toolFilterCategory.value, selectedToolFilterItem);
-        }
-    }
-
-    toolFilterForm?.querySelectorAll('select[name="item"], select[name="movement"], input[name="date_from"], input[name="date_to"]').forEach((control) => {
-        control.addEventListener("change", applyToolFilters);
-    });
-
-    toolFilterSearch?.addEventListener("input", () => {
-        clearTimeout(toolFilterTimer);
-        toolFilterTimer = setTimeout(applyToolFilters, 300);
-    });
-
-    toolFilterReset?.addEventListener("click", () => {
-        if (toolFilterCategory) toolFilterCategory.value = "";
-        if (toolFilterItem) {
-            toolFilterItem.innerHTML = '<option value="">{% trans "Bütün alət növləri" %}</option>';
-            toolFilterItem.value = "";
-        }
-        const movementInput = toolFilterForm?.querySelector('select[name="movement"]');
-        const dateFromInput = toolFilterForm?.querySelector('input[name="date_from"]');
-        const dateToInput = toolFilterForm?.querySelector('input[name="date_to"]');
-        if (movementInput) movementInput.value = "";
-        if (dateFromInput) dateFromInput.value = "";
-        if (dateToInput) dateToInput.value = "";
-        if (toolFilterSearch) toolFilterSearch.value = "";
-        applyToolFilters();
-    });
-
-    function repositionToolFilter() {
-        if (!toolFilterForm || !toolListColumn || !toolFilterPlaceholder) return;
-        if (window.innerWidth < 1024) {
-            toolCrudWrapper?.insertBefore(toolFilterForm, toolListColumn);
-        } else if (toolFilterPlaceholder.parentNode) {
-            toolFilterPlaceholder.parentNode.insertBefore(toolFilterForm, toolFilterPlaceholder.nextSibling);
-        }
-    }
-
-    window.addEventListener("resize", repositionToolFilter);
-    repositionToolFilter();
-    applyToolFilters();
-
-    const TOOL_STATE_KEY = "tool_form_state_session_v1";
-    const TOOL_KEEP_KEY = "tool_form_keep_v1";
-
-    function saveToolState(categoryId, itemId) {
-        sessionStorage.setItem(TOOL_STATE_KEY, JSON.stringify({ categoryId, itemId }));
-    }
-
-    function loadToolState() {
-        try {
-            return JSON.parse(sessionStorage.getItem(TOOL_STATE_KEY) || "{}");
-        } catch {
-            return {};
-        }
-    }
-
-    function clearToolState() {
-        sessionStorage.removeItem(TOOL_STATE_KEY);
-        sessionStorage.removeItem(TOOL_KEEP_KEY);
-    }
-
-    function resetToolOtherFields() {
-        const manualInput = document.getElementById("manual-name-input");
-        if (manualInput) manualInput.value = "";
-        const qty = document.querySelector('input[name="quantity"]');
-        if (qty) qty.value = "";
-        const price = document.querySelector('input[name="price"]');
-        if (price) price.value = "";
-        const info = document.querySelector('textarea[name="additional_info"]');
-        if (info) info.value = "";
-    }
-
-    let pendingToolItemId = null;
-
-    function populateToolItems(categoryId, selectedItemId = "") {
-        const itemSelect = document.getElementById('id_item');
-        if (!itemSelect) return;
-        const items = toolCategoryItemMap[String(categoryId)] || [];
-        let html = '<option value="">{% trans "Seçin..." %}</option>';
-        items.forEach((item) => {
-            const selectedAttr = String(item.id) === String(selectedItemId) ? ' selected' : '';
-            html += `<option value="${item.id}"${selectedAttr}>${item.name}</option>`;
-        });
-        itemSelect.innerHTML = html;
-        itemSelect.disabled = false;
-    }
-
-    document.getElementById('id_category').addEventListener('change', function () {
-        const categoryId = this.value;
-        const categoryText = this.options[this.selectedIndex].text;
-        const itemSelect = document.getElementById('id_item');
-        const itemGroup = document.getElementById('item-field-group');
-        const manualGroup = document.getElementById('manual-name-group');
-        const manualInput = document.getElementById('manual-name-input');
-
-        if (categoryText === "Digər") {
-            itemGroup.style.display = 'none';
-            itemSelect.required = false;
-            itemSelect.disabled = true;
-            saveToolState(categoryId, "");
-            resetToolOtherFields();
-            sessionStorage.removeItem(TOOL_KEEP_KEY);
-
-            manualGroup.style.display = 'block';
-            manualInput.required = true;
-        } else {
-            manualGroup.style.display = 'none';
-            manualInput.required = false;
-            manualInput.value = '';
-
-            itemGroup.style.display = 'block';
-            itemSelect.required = true;
-
-            if (!categoryId) {
-                itemSelect.disabled = true;
-                itemSelect.innerHTML = '<option value="">{% trans "Əvvəlcə kateqoriya seçin..." %}</option>';
-                return;
-            }
-            populateToolItems(categoryId, pendingToolItemId);
-            pendingToolItemId = null;
-            resetToolOtherFields();
-            saveToolState(categoryId, itemSelect.value || "");
-            handleToolItemSelection();
-        }
-    });
-
-    function handleToolItemSelection() {
-        const selected = document.getElementById('id_item').options[document.getElementById('id_item').selectedIndex];
-        const isOther = (selected?.textContent || "").trim() === "Digər";
-        const manualGroup = document.getElementById('manual-name-group');
-        const manualInput = document.getElementById('manual-name-input');
-        if (isOther) {
-            manualGroup.style.display = 'block';
-            manualInput.required = true;
-        } else if (manualGroup) {
-            manualGroup.style.display = 'none';
-            manualInput.required = false;
-            manualInput.value = '';
-        }
-    }
-
-    document.getElementById('id_item').addEventListener('change', function () {
-        const categoryId = document.getElementById('id_category').value;
-        saveToolState(categoryId, this.value);
-        handleToolItemSelection();
-    });
-
-    const toolForm = document.getElementById('tool-form');
-    if (toolForm) {
-        toolForm.addEventListener('submit', () => {
-            sessionStorage.setItem(TOOL_KEEP_KEY, "1");
-            const categoryId = document.getElementById('id_category').value;
-            const itemId = document.getElementById('id_item')?.value || "";
-            saveToolState(categoryId, itemId);
-        });
-    }
-
-    (function restoreToolState() {
-        const saved = loadToolState();
-        if (sessionStorage.getItem(TOOL_KEEP_KEY) !== "1" || !saved.categoryId) {
-            clearToolState();
-            return;
-        }
-        pendingToolItemId = saved.itemId || null;
-        const categorySelect = document.getElementById('id_category');
-        categorySelect.value = saved.categoryId;
-        categorySelect.dispatchEvent(new Event('change'));
-        sessionStorage.removeItem(TOOL_KEEP_KEY);
-    })();
-
-    window.addEventListener("pagehide", () => {
-        if (sessionStorage.getItem(TOOL_KEEP_KEY) !== "1") {
-            clearToolState();
-        }
-    });
+  {% include 'scripts/tools/tool_list.js' %}
 </script>
 
 <style>
