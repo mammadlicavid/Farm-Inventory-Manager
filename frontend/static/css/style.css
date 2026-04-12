@@ -15,6 +15,11 @@
     --form-bg: #F8F8F8;
     --expense-red: #E74C3C;
     --dark-forest: #1D5C32;
+    --ui-tint: rgba(46, 139, 87, 0.055);
+    --ui-border: rgba(46, 139, 87, 0.14);
+    --ui-focus-ring: rgba(46, 139, 87, 0.12);
+    --ui-input-bg: rgba(226, 232, 240, 0.72);
+    --ui-input-bg-hover: rgba(226, 232, 240, 0.85);
     --app-header-min-height: 124px;
     --app-header-padding-x: 20px;
     --app-header-padding-top: 20px;
@@ -1085,12 +1090,25 @@ button.reports-pdf-btn:focus,
 }
 
 .form-container-white {
-    background-color: white;
+    background: linear-gradient(180deg, var(--ui-tint), rgba(255, 255, 255, 0.96) 42%);
     border-radius: 35px;
     padding: 30px;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--ui-border);
     margin-bottom: 30px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 14px 30px rgba(36, 64, 45, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-container-white::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(46, 139, 87, 0.16);
+    pointer-events: none;
 }
 
 .form-group {
@@ -1109,11 +1127,19 @@ button.reports-pdf-btn:focus,
     width: 100%;
     padding: 16px;
     border-radius: 18px;
-    border: 1.5px solid #E5E7EB;
-    background-color: var(--form-bg);
+    border: 1.5px solid rgba(46, 139, 87, 0.24);
+    background: var(--ui-input-bg);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.65);
     font-size: 16px;
     outline: none;
     color: #333;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.custom-input:hover {
+    border-color: rgba(46, 139, 87, 0.34);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    background: var(--ui-input-bg-hover);
 }
 
 textarea.custom-input {
@@ -1130,7 +1156,18 @@ select.custom-input {
 }
 
 .custom-input:focus {
-    border-color: var(--primary-green);
+    border-color: rgba(46, 139, 87, 0.55);
+    box-shadow: 0 0 0 4px var(--ui-focus-ring), 0 12px 26px rgba(15, 23, 42, 0.08);
+    background: #ffffff;
+}
+
+.custom-input:disabled {
+    opacity: 1;
+    color: rgba(30, 41, 59, 0.75);
+    border-color: rgba(46, 139, 87, 0.18);
+    background: rgba(203, 213, 225, 0.65);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    cursor: not-allowed;
 }
 
 /* Clickable filter/search wrappers */

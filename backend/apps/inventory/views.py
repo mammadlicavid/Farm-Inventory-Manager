@@ -5,16 +5,17 @@ import tempfile
 from datetime import timedelta
 from decimal import Decimal
 
+from openai import OpenAI
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.http import JsonResponse
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db.models import Case, DecimalField, F, IntegerField, Q, Sum, Value, When
-from django.views.decorators.http import require_POST
-from django.utils.translation import gettext_lazy as _
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 
 from expenses.models import Expense, ExpenseCategory
 from incomes.models import Income
@@ -36,15 +37,26 @@ from common.category_order import (
     TOOL_ITEM_ORDER,
     order_queryset_by_name_list,
 )
-from animals.models import Animal, AnimalCategory, AnimalSubCategory
+from common.icons import (
+    get_animal_icon_by_name,
+    get_farm_product_icon_by_name,
+    get_seed_icon_by_name,
+    get_tool_icon_by_name,
+)
+from common.messages import add_crud_success_message
+from expenses.models import ExpenseCategory
 from farm_products.models import FarmProduct, FarmProductCategory, FarmProductItem
+from incomes.views import _build_category_payload
 from seeds.models import Seed, SeedCategory, SeedItem
 from tools.models import Tool, ToolCategory, ToolItem
+
+from .models import ScanItem, UserBarcode
 
 ADD_PAGE_CATALOG_CACHE_KEY = "inventory:add-page-catalog:v1"
 ADD_PAGE_CATALOG_CACHE_TTL = 300
 STOCKS_PAGE_CACHE_TTL = 20
-VOICE_MODEL_CACHE = {"model": None, "model_name": None}
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def _is_forage_item(name: str) -> bool:
@@ -64,7 +76,11 @@ def _normalized_metadata(value):
             if _normalized_metadata(val) not in ("", None, [], {})
         }
     if isinstance(value, list):
-        return [_normalized_metadata(item) for item in value if _normalized_metadata(item) not in ("", None, [], {})]
+        return [
+            _normalized_metadata(item)
+            for item in value
+            if _normalized_metadata(item) not in ("", None, [], {})
+        ]
     if isinstance(value, str):
         return _normalized_text(value)
     return value
@@ -146,7 +162,9 @@ def _build_add_page_catalog():
     expense_categories = _unique_rows(expense_categories)
 
     animal_categories = []
-    for category in order_queryset_by_name_list(AnimalCategory.objects.all(), ANIMAL_CATEGORY_ORDER).prefetch_related("subcategories"):
+    for category in order_queryset_by_name_list(
+        AnimalCategory.objects.all(), ANIMAL_CATEGORY_ORDER
+    ).prefetch_related("subcategories"):
         ordered_subcategories = order_queryset_by_name_list(
             category.subcategories.all(),
             ANIMAL_SUBCATEGORY_ORDER.get(category.name, []),
@@ -164,7 +182,9 @@ def _build_add_page_catalog():
     animal_categories = _unique_rows(animal_categories)
 
     seed_categories = []
-    for category in order_queryset_by_name_list(SeedCategory.objects.all(), SEED_CATEGORY_ORDER).prefetch_related("items"):
+    for category in order_queryset_by_name_list(
+        SeedCategory.objects.all(), SEED_CATEGORY_ORDER
+    ).prefetch_related("items"):
         ordered_items = order_queryset_by_name_list(
             category.items.all(),
             SEED_ITEM_ORDER.get(category.name, []),
@@ -182,7 +202,9 @@ def _build_add_page_catalog():
     seed_categories = _unique_rows(seed_categories)
 
     tool_categories = []
-    for category in order_queryset_by_name_list(ToolCategory.objects.all(), TOOL_CATEGORY_ORDER).prefetch_related("items"):
+    for category in order_queryset_by_name_list(
+        ToolCategory.objects.all(), TOOL_CATEGORY_ORDER
+    ).prefetch_related("items"):
         ordered_items = order_queryset_by_name_list(
             category.items.all(),
             TOOL_ITEM_ORDER.get(category.name, []),
@@ -200,7 +222,9 @@ def _build_add_page_catalog():
     tool_categories = _unique_rows(tool_categories)
 
     farm_categories = []
-    for category in order_queryset_by_name_list(FarmProductCategory.objects.all(), FARM_PRODUCT_CATEGORY_ORDER).prefetch_related("items"):
+    for category in order_queryset_by_name_list(
+        FarmProductCategory.objects.all(), FARM_PRODUCT_CATEGORY_ORDER
+    ).prefetch_related("items"):
         ordered_items = order_queryset_by_name_list(
             category.items.all(),
             FARM_PRODUCT_ITEM_ORDER.get(category.name, []),
@@ -220,6 +244,7 @@ def _build_add_page_catalog():
     income_categories, income_category_data = _build_category_payload()
     income_categories = _unique_rows([{"name": name} for name in income_categories])
     income_categories = [row["name"] for row in income_categories]
+
     form_types = [
         {"key": "seed", "label": "Toxum"},
         {"key": "animal", "label": "Heyvan"},
@@ -282,49 +307,23 @@ def _build_add_page_context(request=None):
     }
 
 
-def _get_whisper_model():
-    model_name = os.getenv("FASTER_WHISPER_MODEL", "small")
-    if VOICE_MODEL_CACHE["model"] is not None and VOICE_MODEL_CACHE["model_name"] == model_name:
-        return VOICE_MODEL_CACHE["model"]
-
-    try:
-        from faster_whisper import WhisperModel
-    except ImportError as exc:
-        raise RuntimeError("`faster-whisper` quraşdırılmayıb.") from exc
-
-    compute_type = os.getenv("FASTER_WHISPER_COMPUTE_TYPE", "int8")
-    device = os.getenv("FASTER_WHISPER_DEVICE", "cpu")
-    model = WhisperModel(model_name, device=device, compute_type=compute_type)
-    VOICE_MODEL_CACHE["model"] = model
-    VOICE_MODEL_CACHE["model_name"] = model_name
-    return model
-
-
 def _resolve_voice_language(request, explicit_language: str | None = None):
     allowed = {"az", "en", "ru"}
     candidate = (explicit_language or "").strip().lower()
     if candidate == "system":
         candidate = ""
     if not candidate:
-        candidate = (request.session.get("voice_input_language") or request.COOKIES.get("voice_input_language") or "").strip().lower()
+        candidate = (
+            request.session.get("voice_input_language")
+            or request.COOKIES.get("voice_input_language")
+            or ""
+        ).strip().lower()
     if candidate == "system":
         candidate = ""
     if not candidate:
         candidate = (getattr(request, "LANGUAGE_CODE", "") or "").split("-")[0].lower()
-    return candidate if candidate in allowed else os.getenv("FASTER_WHISPER_LANGUAGE", "az")
+    return candidate if candidate in allowed else "az"
 
-
-def _transcribe_audio_file(audio_path: str, language: str | None = None):
-    model = _get_whisper_model()
-    language = (language or os.getenv("FASTER_WHISPER_LANGUAGE", "az")).strip().lower()
-    beam_size = int(os.getenv("FASTER_WHISPER_BEAM_SIZE", "3"))
-    segments, info = model.transcribe(audio_path, language=language, vad_filter=True, beam_size=beam_size)
-    transcript = " ".join((segment.text or "").strip() for segment in segments).strip()
-    return {
-        "transcript": transcript,
-        "language": getattr(info, "language", language),
-        "language_probability": getattr(info, "language_probability", None),
-    }
 
 def home(request):
     return HttpResponse("Home page")
@@ -343,9 +342,11 @@ def _convert_farm_qty(value: Decimal, unit: str, base_unit: str) -> Decimal:
         return value
     return value
 
+
 @login_required
 def dashboard(request):
     return HttpResponse("Dashboard ✅ You are logged in.")
+
 
 @login_required
 def stocks_placeholder(request):
@@ -365,7 +366,6 @@ def stocks_placeholder(request):
 
     items = []
 
-    # Seeds (only item-based, not manual "Digər")
     seed_total_expr = Sum(
         Case(
             When(unit="kg", then=F("quantity")),
@@ -419,7 +419,6 @@ def stocks_placeholder(request):
             }
         )
 
-    # Tools (only item-based, not manual "Digər")
     tool_totals = {
         row["item_id"]: {
             "name": row["item__name"],
@@ -465,7 +464,6 @@ def stocks_placeholder(request):
             }
         )
 
-    # Animals (sum quantity by subcategory)
     animal_totals = {
         row["subcategory_id"]: {
             "name": row["subcategory__name"],
@@ -534,8 +532,6 @@ def stocks_placeholder(request):
             }
         )
 
-    # Digər (manual entries)
-    # Seeds manual
     seed_other_totals = {
         (row["manual_name"] or "").strip(): {
             "name": (row["manual_name"] or "").strip(),
@@ -570,7 +566,6 @@ def stocks_placeholder(request):
             }
         )
 
-    # Tools manual
     tool_other_totals = {
         (row["manual_name"] or "").strip(): {
             "name": (row["manual_name"] or "").strip(),
@@ -605,7 +600,6 @@ def stocks_placeholder(request):
             }
         )
 
-    # Animals manual
     animal_other_totals = {
         (row["manual_name"] or "").strip(): {
             "name": (row["manual_name"] or "").strip(),
@@ -663,7 +657,6 @@ def stocks_placeholder(request):
             }
         )
 
-    # Farm products (item-based)
     farm_totals = {}
     farm_rows = (
         FarmProduct.objects.filter(created_by=user, item__isnull=False)
@@ -704,7 +697,9 @@ def stocks_placeholder(request):
                 "base_unit": base_unit,
             },
         )
-        payload["total_qty"] += _convert_farm_qty(Decimal(row["total_qty"] or 0), stock_unit, payload["base_unit"])
+        payload["total_qty"] += _convert_farm_qty(
+            Decimal(row["total_qty"] or 0), stock_unit, payload["base_unit"]
+        )
 
     farm_items = FarmProductItem.objects.select_related("category").only(
         "id", "name", "unit", "category_id", "category__name"
@@ -740,7 +735,6 @@ def stocks_placeholder(request):
             }
         )
 
-    # Farm products manual (Digər)
     farm_other_totals = {
         f"{(row['manual_name'] or '').strip()}||{row['unit'] or ''}": {
             "name": (row["manual_name"] or "").strip(),
@@ -930,7 +924,6 @@ def update_stock_quantity(request):
             messages.error(request, _("Məhsul tapılmadı."))
             return redirect("inventory:stocks")
 
-        is_forage = _is_forage_item(item.name)
         base_unit = item.unit or "kq"
         if unit_key:
             product_qs = product_qs.filter(unit=unit_key)
@@ -1084,14 +1077,19 @@ def update_stock_quantity(request):
     messages.error(request, _("Bu kateqoriya üçün yeniləmə dəstəklənmir."))
     return redirect("inventory:stocks")
 
+
 @login_required
 def add_product(request):
-    return render(request, "inventory/add_product.html", _build_add_page_context(request))
+    context = _build_add_page_context(request)
+    mode = (request.GET.get("mode") or "").strip().lower()
+    context["combined_mode"] = mode == "combined"
+    return render(request, "inventory/add_product.html", context)
 
 
 @login_required
 def barcode_builder(request):
     return render(request, "inventory/barcode_builder.html", _build_add_page_context(request))
+
 
 @login_required
 def lookup_scan_code(request):
@@ -1154,26 +1152,42 @@ def lookup_scan_code(request):
 @require_POST
 def transcribe_voice_input(request):
     audio_file = request.FILES.get("audio")
-    if not audio_file:
-        return JsonResponse({"success": False, "message": _("Audio göndərilməyib.")}, status=400)
 
-    suffix = os.path.splitext(audio_file.name or "")[1] or ".webm"
+    if not audio_file:
+        return JsonResponse({"success": False, "message": "Audio göndərilməyib."}, status=400)
+
     temp_path = None
     try:
+        suffix = os.path.splitext(audio_file.name or "")[1] or ".webm"
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
             for chunk in audio_file.chunks():
                 temp_file.write(chunk)
             temp_path = temp_file.name
 
-        result = _transcribe_audio_file(temp_path, _resolve_voice_language(request, request.POST.get("language")))
-        if not result["transcript"]:
-            return JsonResponse({"success": False, "message": _("Səsdən mətn çıxarmaq alınmadı.")}, status=422)
+        with open(temp_path, "rb") as file_obj:
+            transcript = client.audio.transcriptions.create(
+                model="gpt-4o-mini-transcribe",
+                file=file_obj,
+                language=_resolve_voice_language(request, request.POST.get("language")),
+            )
 
-        return JsonResponse({"success": True, **result})
-    except RuntimeError as exc:
-        return JsonResponse({"success": False, "message": str(exc)}, status=503)
-    except Exception:
-        return JsonResponse({"success": False, "message": _("Səs emalı zamanı xəta baş verdi.")}, status=500)
+        text = (transcript.text or "").strip()
+
+        if not text:
+            return JsonResponse({"success": False, "message": "Səs tanınmadı"}, status=422)
+
+        return JsonResponse({
+            "success": True,
+            "transcript": text,
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": str(e),
+        }, status=500)
+
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
