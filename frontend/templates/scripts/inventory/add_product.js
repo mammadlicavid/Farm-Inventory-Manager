@@ -93,6 +93,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const currentMonth = Number("{{ today|date:'m' }}");
     const voiceInputLanguage = "{{ voice_input_language|default:'system'|escapejs }}";
     const activeVoiceLanguage = voiceInputLanguage === "system" ? "{{ request.LANGUAGE_CODE|default:'az'|escapejs }}".split("-")[0] : voiceInputLanguage;
+    const voiceResultLabelMap = {
+        az: { heard: "Deyilən:", detected: "Təxmin edilən:" },
+        en: { heard: "Heard:", detected: "Detected:" },
+        ru: { heard: "Сказано:", detected: "Определено:" },
+    };
     const voiceLanguagePhraseMap = {
         en: {
             "add income": "gelir elave et",
@@ -824,20 +829,30 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/>/g, "&gt;");
 
         const lines = safeMessage.split("\n").filter(Boolean);
+        const voiceResultLabels = voiceResultLabelMap[activeVoiceLanguage] || voiceResultLabelMap.az;
+        const heardPrefix = voiceResultLabels.heard;
+        const detectedPrefix = voiceResultLabels.detected;
         voiceResult.innerHTML = lines.map((line) => {
-            const lineClass = line.startsWith("Deyilən:")
+            const lineClass = line.startsWith(heardPrefix)
                 ? "voice-result-line voice-result-line-heard"
-                : (line.startsWith("Təxmin edilən:")
+                : (line.startsWith(detectedPrefix)
                     ? "voice-result-line voice-result-line-guess"
                     : "voice-result-line");
-            if (line.startsWith("Deyilən:")) {
-                return `<div class="${lineClass}"><span class="voice-result-label">{% trans "Deyilən:" %}</span>${line.slice("Deyilən:".length)}</div>`;
+            if (line.startsWith(heardPrefix)) {
+                return `<div class="${lineClass}"><span class="voice-result-label">${heardPrefix}</span>${line.slice(heardPrefix.length)}</div>`;
             }
-            if (line.startsWith("Təxmin edilən:")) {
-                return `<div class="${lineClass}"><span class="voice-result-label">{% trans "Təxmin edilən:" %}</span>${line.slice("Təxmin edilən:".length)}</div>`;
+            if (line.startsWith(detectedPrefix)) {
+                return `<div class="${lineClass}"><span class="voice-result-label">${detectedPrefix}</span>${line.slice(detectedPrefix.length)}</div>`;
             }
             return `<div class="${lineClass}">${line}</div>`;
         }).join("");
+    }
+
+    function formatVoiceResultMessage(transcript, prettyGuess = "") {
+        const voiceResultLabels = voiceResultLabelMap[activeVoiceLanguage] || voiceResultLabelMap.az;
+        const lines = [`${voiceResultLabels.heard} ${transcript}`];
+        if (prettyGuess) lines.push(`${voiceResultLabels.detected} ${prettyGuess}`);
+        return lines.join("\n");
     }
 
     function syncVoiceButtonLabel() {
@@ -3159,9 +3174,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const prettyGuess = buildPrettyVoiceSummary(draft, transcript);
         if (prettyGuess) {
-            setVoiceResult(`Deyilən: ${transcript}\nTəxmin edilən: ${prettyGuess}`);
+            setVoiceResult(formatVoiceResultMessage(transcript, prettyGuess));
         } else {
-            setVoiceResult(`Deyilən: ${transcript}`);
+            setVoiceResult(formatVoiceResultMessage(transcript));
         }
         setResultMessage(voiceAcceptedMessages[draft.formType] || "{% trans 'Səs qəbul olundu və form dolduruldu.' %}");
     }
@@ -3251,7 +3266,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const mimeType = mediaRecorder?.mimeType || "audio/webm";
             const audioBlob = new Blob(voiceChunks, { type: mimeType });
             const payload = await sendVoiceForTranscription(audioBlob);
-            setVoiceResult(`Deyilən: ${payload.transcript}`);
+            setVoiceResult(formatVoiceResultMessage(payload.transcript));
             handleVoiceTranscript(payload.transcript);
         } catch (error) {
             setActionState(null);
