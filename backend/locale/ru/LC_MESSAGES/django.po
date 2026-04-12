@@ -897,896 +897,1717 @@ msgstr "Код подтверждения неверен."
 msgid "İstifadəçi adı və ya şifrə səhvdir."
 msgstr "Неверное имя пользователя или пароль."
 
-#~ msgid "Təsərrüfat məhsulu"
-#~ msgstr "Продукция фермы"
+msgid "Toxumlar"
+msgstr "Семена"
 
-#~ msgid "Xüsusi"
-#~ msgstr "Особый"
+msgid "Heyvanlar"
+msgstr "Животные"
 
-#~ msgid "Kritik"
-#~ msgstr "Критично"
+msgid "Alətlər"
+msgstr "Инструменты"
 
-#~ msgid "Az qalıb"
-#~ msgstr "Заканчивается"
+msgid "Təsərrüfat Məhsulları"
+msgstr "Фермерские продукты"
+
+msgid "diger"
+msgstr "другое"
+
+msgid "İnək"
+msgstr "Корова"
+
+msgid "Qoyun"
+msgstr "Овца"
+
+msgid "Keçi"
+msgstr "Коза"
+
+msgid "At"
+msgstr "Лошадь"
+
+msgid "Toyuq"
+msgstr "Курица"
+
+msgid "Ördək"
+msgstr "Утка"
+
+msgid "Qaz"
+msgstr "Гусь"
+
+msgid "Hindüşka"
+msgstr "Индюк"
+
+msgid "Dəvəquşu"
+msgstr "Страус"
+
+msgid "Dovşan"
+msgstr "Кролик"
+
+msgid "Donuz"
+msgstr "Свинья"
+
+msgid "Qaramal / İri Buynuzlu"
+msgstr "Крупный рогатый скот"
+
+msgid "Xırdabuynuzlu"
+msgstr "Мелкий рогатый скот"
+
+msgid "Quş"
+msgstr "Птица"
+
+msgid "Digər Heyvan"
+msgstr "Другое животное"
+
+msgid "Dənli bitkilər"
+msgstr "Зерновые культуры"
+
+msgid "Yem bitkiləri"
+msgstr "Кормовые культуры"
+
+msgid "Tərəvəz"
+msgstr "Овощи"
+
+msgid "Meyvə"
+msgstr "Фрукты"
+
+msgid "Texniki bitkilər"
+msgstr "Технические культуры"
+
+msgid "Buğda"
+msgstr "Пшеница"
+
+msgid "Arpa"
+msgstr "Ячмень"
+
+msgid "Qarğıdalı"
+msgstr "Кукуруза"
+
+msgid "Yonca"
+msgstr "Клевер"
+
+msgid "Xaç yoncası"
+msgstr "Люцерна"
+
+msgid "Baxar"
+msgstr "Бахар"
+
+msgid "Koronilla"
+msgstr "Вязель"
+
+msgid "Seradella"
+msgstr "Сераделла"
+
+msgid "Lüpin"
+msgstr "Люпин"
+
+msgid "Kartof"
+msgstr "Картофель"
+
+msgid "Pomidor"
+msgstr "Помидор"
+
+msgid "Xiyar"
+msgstr "Огурец"
+
+msgid "Pambıq"
+msgstr "Хлопок"
+
+msgid "Tütün"
+msgstr "Табак"
+
+msgid "Bağban alətləri"
+msgstr "Садовые инструменты"
+
+msgid "Ağır texnika"
+msgstr "Тяжелая техника"
+
+msgid "Təmizlik vasitələri"
+msgstr "Чистящие средства"
+
+msgid "Motorlu / Elektrikli"
+msgstr "Моторизованные / Электрические"
+
+msgid "Qoruyucu Geyim / Ləvazimat"
+msgstr "Защитное снаряжение / Экипировка"
+
+msgid "Digər Alət"
+msgstr "Другой инструмент"
+
+msgid "Traktor"
+msgstr "Трактор"
+
+msgid "Beli"
+msgstr "Лопата"
+
+msgid "Kürək"
+msgstr "Совок"
+
+msgid "Dırmıq"
+msgstr "Грабли"
+
+msgid "Dərman"
+msgstr "Лекарство"
+
+msgid "Maaş"
+msgstr "Зарплата"
+
+msgid "Alış"
+msgstr "Покупка"
+
+msgid "Süd"
+msgstr "Молоко"
+
+msgid "Yumurta"
+msgstr "Яйцо"
+
+msgid "Yun"
+msgstr "Шерсть"
+
+msgid "Dəri"
+msgstr "Кожа"
+
+msgid "Ət"
+msgstr "Мясо"
+
+msgid "təsərrüfat"
+msgstr "ферма"
+
+msgid "Təsərrüfat"
+msgstr "Ферма"
+
+msgid "toxumlar"
+msgstr "семена"
+
+msgid "heyvanlar"
+msgstr "животные"
+
+msgid "aletler"
+msgstr "инструменты"
+
+msgid "Bu gün nə etmək istəyirsiniz?"
+msgstr "Что вы хотите сделать сегодня?"
+
+msgid ""
+"Salam, {{ name }}. Buradan stok əlavə edə, qalığa baxa, satış yaza və "
+"xərcləri qeyd edə bilərsiniz."
+msgstr ""
+"Здравствуйте, %(name)s. Отсюда вы можете добавить запасы, посмотреть "
+"остаток, записать продажи и отметить расходы."
+
+msgid ""
+"Salam, %(name)s. Buradan stok əlavə edə, qalığa baxa, satış yaza və xərcləri"
+" qeyd edə bilərsiniz."
+msgstr ""
+"Здравствуйте, %(name)s. Отсюда вы можете добавить запасы, посмотреть "
+"остаток, записать продажи и отметить расходы."
+
+msgid "Diqqət tələb edən {{ count }} xəbərdarlıq və xatırlatma var."
+msgstr "Есть %(count)s предупреждений и напоминаний, требующих внимания."
+
+msgid "Diqqət tələb edən %(count)s xəbərdarlıq və xatırlatma var."
+msgstr "Есть %(count)s предупреждений и напоминаний, требующих внимания."
+
+msgid "Əsas hərəkətlər"
+msgstr "Основные действия"
+
+msgid "Bu səhifədə nə edə bilərsiniz?"
+msgstr "Что вы можете сделать на этой странице?"
+
+msgid "Ən vacib işlər birbaşa açılır. Kateqoriya axtarmağa ehtiyac yoxdur."
+msgstr ""
+"Самые важные задачи открываются напрямую. Нет необходимости искать "
+"категорию."
+
+msgid "Stok əlavə et"
+msgstr "Добавить сток"
+
+msgid "Heyvan, toxum, alət və ya məhsul daxil edin."
+msgstr "Введите животное, семя, инструмент или продукт."
+
+msgid "Stoka bax"
+msgstr "Смотреть сток"
+
+msgid "Qalıq miqdarını görün və sayımı düzəldin."
+msgstr "Посмотрите остаток и скорректируйте количество."
+
+msgid "Məhsul sat"
+msgstr "Продать продукт"
+
+msgid "Satışdan gələn məbləği və miqdarı yazın."
+msgstr "Укажите сумму и количество от продажи."
+
+msgid "Xərc yaz"
+msgstr "Записать расход"
+
+msgid "Yem, yanacaq, gübrə və digər xərcləri qeyd edin."
+msgstr "Запишите расходы на корм, топливо, удобрения и другие."
+
+msgid "Maliyyə və tərəfdaşlar"
+msgstr "Финансы и партнеры"
+
+msgid "Əlavə iş bölmələri"
+msgstr "Дополнительные рабочие разделы"
+
+msgid ""
+"Hesabat hazırlamaq və təchizatçı siyahısını idarə etmək üçün bu bölmələri "
+"açın."
+msgstr ""
+"Откройте эти разделы для подготовки отчетов и управления списком "
+"поставщиков."
+
+msgid "Hesabatlar"
+msgstr "Отчеты"
+
+msgid "Gəlir, xərc, vergi və yüklənə bilən hesabatları açın."
+msgstr "Откройте отчеты по доходам, расходам, налогам и загружаемые отчеты."
+
+msgid "Əlaqə məlumatı və alış etdiyiniz tərəfdaş siyahısını görün."
+msgstr ""
+"Посмотрите контактную информацию и список партнеров, у которых вы совершали "
+"покупки."
+
+msgid "Bu həftə yeni əlavə"
+msgstr "Новые поступления на этой неделе"
+
+msgid "Bu həftə əlavə olunan yeni stok qeydləri"
+msgstr "Новые записи запасов, добавленные на этой неделе"
+
+msgid "Bu həftə gəlir"
+msgstr "Доход на этой неделе"
+
+msgid "Satış və digər gəlirlər"
+msgstr "Продажи и прочие доходы"
+
+msgid "Bu həftə xərc"
+msgstr "Расход на этой неделе"
+
+msgid "Alışlar və gündəlik xərclər"
+msgstr "Покупки и ежедневные расходы"
+
+msgid "Həftəlik balans"
+msgstr "Недельный баланс"
+
+msgid "Gəlir və xərc fərqi"
+msgstr "Разница между доходом и расходом"
+
+msgid "Başlamaq üçün"
+msgstr "Для начала"
+
+msgid "İş axını"
+msgstr "Рабочий процесс"
+
+msgid "Dashboard → Əlavə et → İzləyin → Satın"
+msgstr "Приборная панель → Добавить → Отслеживать → Продать"
+
+msgid ""
+"İlk dəfə istifadə edirsinizsə, aşağıdakı addımlar proqramı ilk 10 saniyədə "
+"başa düşməyə kömək edəcək."
+msgstr ""
+"Если вы используете его впервые, следующие шаги помогут вам понять "
+"программу."
+
+msgid ""
+"Hər gün eyni axınla işləyin: əvvəl əlavə edin, sonra izləyin, sonda satış və"
+" xərci yazın."
+msgstr ""
+"Каждый день работайте по одной и той же схеме: сначала добавьте, затем "
+"отследите, в конце запишите продажи и расходы."
+
+msgid "Əvvəl stok əlavə edin"
+msgstr "Сначала добавьте запасы"
+
+msgid "Yeni heyvanı, toxumu, aləti və ya hazır məhsulu yazın."
+msgstr "Запишите новое животное, семя, инструмент или готовый продукт."
+
+msgid "Sonra qalığa baxın"
+msgstr "Затем проверьте остаток"
+
+msgid "Stok səhifəsində hansı məhsuldan nə qədər qaldığını görün."
+msgstr "Посмотрите, сколько каждого продукта осталось на странице запасов."
+
+msgid "Satışı yazın"
+msgstr "Записать продажу"
+
+msgid ""
+"Məhsul satanda gəliri dərhal qeyd edin ki, stok azalsın və qazanc görünsün."
+msgstr ""
+"При продаже продукта сразу запишите доход, чтобы запасы уменьшились, и "
+"отобразилась прибыль."
+
+msgid "Azalan stoklar"
+msgstr "Уменьшающиеся запасы"
+
+msgid "Kritik səviyyəyə düşən məhsul sayı: {{ count }}"
+msgstr "Количество продуктов, упавших до критического уровня: %(count)s"
+
+msgid "Kritik səviyyəyə düşən məhsul sayı: %(count)s"
+msgstr "Количество продуктов, упавших до критического уровня: %(count)s"
+
+msgid "Limit"
+msgstr "Лимит"
+
+msgid "Minimum limit"
+msgstr "Минимальный лимит"
+
+msgid "Hazırda kritik stok xəbərdarlığı yoxdur"
+msgstr "В настоящее время нет критического предупреждения о запасах"
+
+msgid "Qalıq minimum limitdən aşağı düşəndə burada avtomatik görünəcək."
+msgstr ""
+"Оно автоматически появится здесь, когда остаток опустится ниже минимального "
+"предела."
+
+msgid "Ətraflı bölmələr"
+msgstr "Подробные разделы"
+
+msgid "Bölmələr üzrə işləyin"
+msgstr "Работа по разделам"
+
+msgid "Ayrı-ayrı inventar və maliyyə səhifələrinə birbaşa keçin."
+msgstr "Перейдите прямо на отдельные страницы инвентаря и финансов."
+
+msgid "Alış, satış və say dəyişimini izləyin."
+msgstr "Отслеживайте покупки, продажи и изменения количества."
+
+msgid "Toxum ehtiyatını və əlavə qeydləri açın."
+msgstr "Откройте запасы семян и дополнительные заметки."
+
+msgid "İş alətlərinin sayını və vəziyyətini görün."
+msgstr "Посмотрите количество и состояние инструментов."
+
+msgid "Hazır məhsullar"
+msgstr "Готовые продукты"
+
+msgid "Süd, yumurta, tərəvəz və digər məhsulları açın."
+msgstr "Откройте молоко, яйца, овощи и другие продукты."
+
+msgid "Gəlirlər"
+msgstr "Доходы"
+
+msgid "Bütün satış və gəlir qeydlərini görün."
+msgstr "Посмотреть все записи о продажах и доходах."
+
+msgid "Yem, yanacaq və digər xərcləri yoxlayın."
+msgstr "Проверьте расходы на корм, топливо и другие."
+
+msgid "Hazırda"
+msgstr "В настоящее время"
+
+msgid "Xatırlatmalar və ehtiyat xəbərdarlıqları"
+msgstr "Напоминания и предупреждения о запасах"
+
+msgid "Ümumi diqqət"
+msgstr "Общее внимание"
+
+msgid "Dashboard-da görünən ümumi say"
+msgstr "Общее количество, отображаемое на приборной панели"
+
+msgid "Ehtiyat xəbərdarlığı"
+msgstr "Предупреждение о запасах"
+
+msgid "Kritik və azalan stoklar"
+msgstr "Критичные и уменьшающиеся запасы"
+
+msgid "Xatırlatma"
+msgstr "Напоминание"
+
+msgid "Əl ilə əlavə etdiyiniz gözləyən qeydlər"
+msgstr "Ожидающие записи, которые вы добавили вручную"
+
+msgid "Ehtiyat xəbərdarlıqları ({{ count }})"
+msgstr "Предупреждения о запасах (%(count)s)"
+
+msgid "Ehtiyat xəbərdarlıqları (%(count)s)"
+msgstr "Предупреждения о запасах (%(count)s)"
+
+msgid "Fərdi limit"
+msgstr "Пользовательский предел"
+
+msgid "Hazırda aktiv ehtiyat xəbərdarlığı yoxdur."
+msgstr "В настоящее время нет активного предупреждения о запасах."
+
+msgid "Limit qur"
+msgstr "Установить лимит"
+
+msgid "Ana kateqoriya"
+msgstr "Главная категория"
+
+msgid "Ana kateqoriya seçin"
+msgstr "Выберите главную категорию"
+
+msgid "Alt kateqoriya"
+msgstr "Подкатегория"
+
+msgid "Məhsul növü seçin"
+msgstr "Выберите тип продукта"
+
+msgid "Xəbərdarlıq həddi"
+msgstr "Порог предупреждения"
+
+msgid "Məs: 20"
+msgstr "Например: 20"
+
+msgid "Əvvəlcə anbara məhsul əlavə edin, sonra limit qura biləcəksiniz."
+msgstr "Сначала добавьте продукт на склад, затем вы сможете установить лимит."
+
+msgid "Limitləri göstər"
+msgstr "Показать лимиты"
+
+msgid "Düzəliş et"
+msgstr "Изменить"
+
+msgid "Hələ əlavə edilmiş limit yoxdur."
+msgstr "Предел пока не добавлен."
+
+msgid "Xatırlatmalar ({{ count }})"
+msgstr "Напоминания (%(count)s)"
+
+msgid "Xatırlatmalar (%(count)s)"
+msgstr "Напоминания (%(count)s)"
+
+msgid "Yeni xatırlatma əlavə et"
+msgstr "Добавить новое напоминание"
+
+msgid "Vaksinasiya"
+msgstr "Вакцинация"
+
+msgid "Ödəniş"
+msgstr "Оплата"
+
+msgid "Əkin"
+msgstr "Посадка"
+
+msgid "Ehtiyat"
+msgstr "Запас"
+
+msgid "Gözləyən xatırlatma yoxdur."
+msgstr "Нет ожидающих напоминаний."
+
+msgid "Tamamlanmış ({{ count }})"
+msgstr "Завершено (%(count)s)"
+
+msgid "Tamamlanmış (%(count)s)"
+msgstr "Завершено (%(count)s)"
+
+msgid "Tamamlanmış xatırlatma yoxdur."
+msgstr "Нет завершенных напоминаний."
+
+msgid "Əlavə et"
+msgstr "Добавить"
+
+msgid "Limiti düzəlt"
+msgstr "Изменить предел"
+
+msgid "Yenilə"
+msgstr "Обновить"
+
+msgid "Ferma idarəsi"
+msgstr "Управление фермой"
+
+msgid "Nə əlavə etmək istəyirsiniz?"
+msgstr "Что вы хотите добавить?"
+
+msgid ""
+"Əvvəl növü seçin. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin."
+msgstr ""
+"Сначала выберите тип. Затем введите информацию вручную, голосом или "
+"штрихкодом."
+
+msgid "Süd, yumurta, tərəvəz və digər hazır məhsulu əlavə edin."
+msgstr "Добавьте молоко, яйца, овощи и другие готовые продукты."
+
+msgid "Ən sadə yol: yuxarıdan növü seçin. Form aşağıda dərhal açılacaq."
+msgstr "Самый простой способ: выберите тип выше. Форма откроется сразу ниже."
+
+msgid "Daxiletmə üsulu"
+msgstr "Метод ввода"
+
+msgid "Məlumatı necə daxil etmək istəyirsiniz?"
+msgstr "Как вы хотите ввести информацию?"
+
+msgid "Əl ilə forma yazın və ya barkod, kod, səs ilə sürətli doldurun."
+msgstr ""
+"Заполните форму вручную или используйте штрих-код, код или голос для "
+"быстрого ввода."
+
+msgid "Kodu Əl İlə Daxil Et"
+msgstr "Введите код вручную"
+
+msgid "Toxum miqdarı, vahidi və qiyməti daxil edin."
+msgstr "Введите количество семян, единицу измерения и цену."
+
+msgid "Yeni heyvan alışını və ya əlavə olunmasını yazın."
+msgstr "Запишите покупку или добавление нового животного."
+
+msgid "Ferma üçün alınan və ya əlavə olunan aləti yazın."
+msgstr "Запишите инструменты, купленные или добавленные для фермы."
+
+msgid "Taxıl toxumları"
+msgstr "Семена зерновых"
+
+msgid "Paxlalı toxumları"
+msgstr "Семена бобовых"
+
+msgid "Yağlı bitki toxumları"
+msgstr "Семена масличных культур"
+
+msgid "Yem bitki toxumları"
+msgstr "Семена кормовых культур"
+
+msgid "Tərəvəz toxumları"
+msgstr "Семена овощей"
+
+msgid "Bostan toxumları"
+msgstr "Семена бахчевых"
+
+msgid "Meyvə toxumları"
+msgstr "Семена фруктов"
+
+msgid "İribuynuzlular"
+msgstr "Крупный рогатый скот"
+
+msgid "Xırdabuynuzlular"
+msgstr "Мелкий рогатый скот"
+
+msgid "Quşlar"
+msgstr "Птицы"
+
+msgid "Təkdırnaqlılar"
+msgstr "Однокопытные"
+
+msgid "Süd və Süd Məhsulları"
+msgstr "Молоко и молочные продукты"
+
+msgid "Ət Məhsulları"
+msgstr "Мясные продукты"
+
+msgid "Göyərti"
+msgstr "Зелень"
+
+msgid "Taxıl Məhsulları"
+msgstr "Зерновые продукты"
+
+msgid "Yem Bitkiləri"
+msgstr "Кормовые культуры"
+
+msgid "Bostan Məhsulları"
+msgstr "Бахчевые продукты"
+
+msgid "Bal və Arıçılıq"
+msgstr "Мед и пчеловодство"
+
+msgid "Gübrələr"
+msgstr "Удобрения"
+
+msgid "Əl Alətləri"
+msgstr "Ручные инструменты"
+
+msgid "Suvarma Alətləri"
+msgstr "Инструменты для полива"
+
+msgid "Kənd Texnikası"
+msgstr "Сельхозтехника"
+
+msgid "Baxım və Təmir"
+msgstr "Обслуживание и ремонт"
+
+msgid "Buğda toxumu"
+msgstr "Семена пшеницы"
+
+msgid "Arpa toxumu"
+msgstr "Семена ячменя"
+
+msgid "Çovdar toxumu"
+msgstr "Семена ржи"
+
+msgid "Vələmir toxumu"
+msgstr "Семена овса"
+
+msgid "Qarğıdalı toxumu"
+msgstr "Семена кукурузы"
+
+msgid "Çəltik toxumu"
+msgstr "Семена риса"
+
+msgid "Lobya toxumu"
+msgstr "Семена фасоли"
+
+msgid "Noxud toxumu"
+msgstr "Семена гороха"
+
+msgid "Mərcimək toxumu"
+msgstr "Семена чечевицы"
+
+msgid "Günəbaxan toxumu"
+msgstr "Семена подсолнечника"
+
+msgid "Pambıq toxumu"
+msgstr "Семена хлопка"
+
+msgid "Soya toxumu"
+msgstr "Семена сои"
+
+msgid "Şəkər çuğunduru toxumu"
+msgstr "Семена сахарной свеклы"
+
+msgid "Yonca toxumu"
+msgstr "Семена люцерны"
+
+msgid "Koronilla toxumu"
+msgstr "Семена корониллы"
+
+msgid "Seradella toxumu"
+msgstr "Семена сераделлы"
+
+msgid "Pomidor toxumu"
+msgstr "Семена томата"
+
+msgid "Xiyar toxumu"
+msgstr "Семена огурца"
+
+msgid "Bibər toxumu"
+msgstr "Семена перца"
+
+msgid "Badımcan toxumu"
+msgstr "Семена баклажана"
+
+msgid "Kahı toxumu"
+msgstr "Семена салата"
+
+msgid "İspanaq toxumu"
+msgstr "Семена шпината"
+
+msgid "Qarpız toxumu"
+msgstr "Семена арбуза"
+
+msgid "Yemiş toxumu"
+msgstr "Семена дыни"
+
+msgid "Boranı toxumu"
+msgstr "Семена тыквы"
+
+msgid "Alma toxumu"
+msgstr "Семена яблони"
+
+msgid "Armud toxumu"
+msgstr "Семена груши"
+
+msgid "Şaftalı toxumu"
+msgstr "Семена персика"
+
+msgid "Ərik toxumu"
+msgstr "Семена абрикоса"
+
+msgid "Albalı toxumu"
+msgstr "Семена вишни"
+
+msgid "Gilas toxumu"
+msgstr "Семена черешни"
+
+msgid "Nar toxumu"
+msgstr "Семена граната"
+
+msgid "Üzüm toxumu"
+msgstr "Семена винограда"
+
+msgid "Gavalı toxumu"
+msgstr "Семена сливы"
+
+msgid "Heyva toxumu"
+msgstr "Семена айвы"
+
+msgid "Dana"
+msgstr "Теленок"
+
+msgid "Camış"
+msgstr "Буйвол"
+
+msgid "Hinduşka"
+msgstr "Индейка"
+
+msgid "Bildircin"
+msgstr "Перепел"
+
+msgid "Eşşək"
+msgstr "Осел"
+
+msgid "Qatır"
+msgstr "Мул"
+
+msgid "Bel"
+msgstr "Лопата"
+
+msgid "Balta"
+msgstr "Топор"
+
+msgid "Bıçaq"
+msgstr "Нож"
+
+msgid "Mala"
+msgstr "Мастерок"
+
+msgid "Şlanq"
+msgstr "Шланг"
+
+msgid "Püskürdücü"
+msgstr "Распылитель"
+
+msgid "Nasos"
+msgstr "Насос"
+
+msgid "Vedrə"
+msgstr "Ведро"
+
+msgid "Kultivator"
+msgstr "Культиватор"
+
+msgid "Kotan"
+msgstr "Плуг"
+
+msgid "Səpən"
+msgstr "Сеялка"
+
+msgid "Açar dəsti"
+msgstr "Набор ключей"
+
+msgid "Drel"
+msgstr "Дрель"
+
+msgid "Çəkic"
+msgstr "Молоток"
+
+msgid "Lir"
+msgstr "Лира"
+
+msgid "Təsərrüfat məhsulu"
+msgstr "Продукция фермы"
+
+msgid "Xüsusi"
+msgstr "Особый"
+
+msgid "Kritik"
+msgstr "Критично"
+
+msgid "Az qalıb"
+msgstr "Заканчивается"
 
 #, python-brace-format
-#~ msgid "{name} ehtiyatı kritik həddə düşüb"
-#~ msgstr "Запас «{name}» упал до критического уровня"
+msgid "{name} ehtiyatı kritik həddə düşüb"
+msgstr "Запас «{name}» упал до критического уровня"
 
 #, python-brace-format
-#~ msgid "{n} gün əvvəl"
-#~ msgstr "{n} дн. назад"
+msgid "{n} gün əvvəl"
+msgstr "{n} дн. назад"
 
-#~ msgid "Bu gün"
-#~ msgstr "Сегодня"
+msgid "Bu gün"
+msgstr "Сегодня"
 
-#~ msgid "Sabah"
-#~ msgstr "Завтра"
-
-#, python-brace-format
-#~ msgid "{n} gün sonra"
-#~ msgstr "через {n} дн."
+msgid "Sabah"
+msgstr "Завтра"
 
 #, python-brace-format
-#~ msgid "\"{title}\" xatırlatması əlavə edildi."
-#~ msgstr "Напоминание «{title}» добавлено."
+msgid "{n} gün sonra"
+msgstr "через {n} дн."
 
-#~ msgid "Silinməni Təsdiqlə"
-#~ msgstr "Подтвердите удаление"
+#, python-brace-format
+msgid "\"{title}\" xatırlatması əlavə edildi."
+msgstr "Напоминание «{title}» добавлено."
 
-#~ msgid "Bəli, Sil"
-#~ msgstr "Да, удалить"
+msgid "Silinməni Təsdiqlə"
+msgstr "Подтвердите удаление"
 
-#~ msgid "Xeyr, Geri Qayıt"
-#~ msgstr "Нет, назад"
+msgid "Bəli, Sil"
+msgstr "Да, удалить"
 
-#~ msgid "Heyvanı Düzəlt"
-#~ msgstr "Редактировать животное"
+msgid "Xeyr, Geri Qayıt"
+msgstr "Нет, назад"
 
-#~ msgid "Heyvan Məlumatlarını Yenilə"
-#~ msgstr "Обновить данные животного"
+msgid "Heyvanı Düzəlt"
+msgstr "Редактировать животное"
 
-#~ msgid "Kateqoriya seçin"
-#~ msgstr "Выберите категорию"
+msgid "Heyvan Məlumatlarını Yenilə"
+msgstr "Обновить данные животного"
 
-#~ msgid "Alt kateqoriya seçin"
-#~ msgstr "Выберите подкатегорию"
+msgid "Kateqoriya seçin"
+msgstr "Выберите категорию"
 
-#~ msgid "Heyvanın növünü daxil edin"
-#~ msgstr "Введите тип животного"
+msgid "Alt kateqoriya seçin"
+msgstr "Выберите подкатегорию"
 
-#~ msgid "Məsələn: AZ12345"
-#~ msgstr "Например: AZ12345"
+msgid "Heyvanın növünü daxil edin"
+msgstr "Введите тип животного"
 
-#~ msgid "Erkək"
-#~ msgstr "Самец"
+msgid "Məsələn: AZ12345"
+msgstr "Например: AZ12345"
 
-#~ msgid "Dişi"
-#~ msgstr "Самка"
+msgid "Erkək"
+msgstr "Самец"
 
-#~ msgid "Məbləğ (₼)"
-#~ msgstr "Сумма (₼)"
+msgid "Dişi"
+msgstr "Самка"
 
-#, fuzzy
-#~ msgid "Əlavə Məlumat"
-#~ msgstr "Личные данные"
-
-#~ msgid "Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
-#~ msgstr "Например: состояние животного, вакцинация и т.д."
+msgid "Məbləğ (₼)"
+msgstr "Сумма (₼)"
 
 #, fuzzy
-#~ msgid "Yadda Saxla"
-#~ msgstr "Сохранить"
+msgid "Əlavə Məlumat"
+msgstr "Личные данные"
 
-#~ msgid "Alt kateqoriya yoxdur"
-#~ msgstr "Нет подкатегории"
-
-#~ msgid "Bütün kateqoriyalar"
-#~ msgstr "Все категории"
-
-#~ msgid "Bütün heyvan növləri"
-#~ msgstr "Все виды животных"
-
-#~ msgid "Artım və azalma"
-#~ msgstr "Рост и уменьшение"
-
-#~ msgid "Artım"
-#~ msgstr "Рост"
-
-#~ msgid "Axtar (ID, Məlumat, Növ)..."
-#~ msgstr "Поиск (ID, информация, тип)..."
-
-#~ msgid "Sıfırla"
-#~ msgstr "Сбросить"
-
-#~ msgid "Yeni Heyvan Əlavə Et"
-#~ msgstr "Добавить новое животное"
-
-#~ msgid "Əvvəlcə ana kateqoriya seçin"
-#~ msgstr "Сначала выберите основную категорию"
-
-#~ msgid "Heyvan Siyahısı"
-#~ msgstr "Список животных"
-
-#~ msgid "Heç bir heyvan tapılmadı"
-#~ msgstr "Животные не найдены"
-
-#~ msgid "Ferma İdarəsi"
-#~ msgstr "Управление фермой"
-
-#~ msgid "Menyu"
-#~ msgstr "Меню"
-
-#~ msgid "Profil"
-#~ msgstr "Профиль"
-
-#~ msgid "Parametrlər"
-#~ msgstr "Настройки"
-
-#~ msgid "Kömək"
-#~ msgstr "Помощь"
-
-#~ msgid "Sinxronizasiya"
-#~ msgstr "Синхронизация"
-
-#~ msgid "Çıxış"
-#~ msgstr "Выход"
-
-#~ msgid "Yoxlanır"
-#~ msgstr "Проверяется"
-
-#~ msgid "Ana Səhifə"
-#~ msgstr "Главная"
-
-#~ msgid "Stok"
-#~ msgstr "Склад"
-
-#~ msgid "Tеzliklə"
-#~ msgstr "Скоро"
-
-#~ msgid "Tezliklə!"
-#~ msgstr "Скоро!"
-
-#~ msgid "Bu səhifə hazırda hazırlanma mərhələsindədir."
-#~ msgstr "Эта страница находится в разработке."
-
-#~ msgid "Xərclər"
-#~ msgstr "Расходы"
-
-#~ msgid "Bulud"
-#~ msgstr "Облако"
-
-#~ msgid "Təchizatçılar"
-#~ msgstr "Поставщики"
-
-#~ msgid "Yeni məhsul"
-#~ msgstr "Новый продукт"
-
-#~ msgid "Qazanc"
-#~ msgstr "Прибыль"
-
-#~ msgid "Şablon axtar..."
-#~ msgstr "Поиск шаблона..."
-
-#~ msgid "Bir toxunuşla xərc"
-#~ msgstr "Расход в одно касание"
-
-#~ msgid "Xüsusi məbləğ"
-#~ msgstr "Своя сумма"
-
-#~ msgid "Şablonlar"
-#~ msgstr "Шаблоны"
-
-#~ msgid "Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək."
-#~ msgstr "Шаблонов пока нет. Они появятся после добавления расхода."
+msgid "Məsələn: Heyvanın vəziyyəti, vaksinasiya və s."
+msgstr "Например: состояние животного, вакцинация и т.д."
 
 #, fuzzy
-#~ msgid "Tez Gəlir"
-#~ msgstr "Быстрый расход"
+msgid "Yadda Saxla"
+msgstr "Сохранить"
 
-#~ msgid "Bir toxunuşla gəlir"
-#~ msgstr "Доход в одно касание"
+msgid "Alt kateqoriya yoxdur"
+msgstr "Нет подкатегории"
 
-#~ msgid ""
-#~ "Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək."
-#~ msgstr "Шаблонов дохода пока нет. Они появятся после добавления дохода."
+msgid "Bütün kateqoriyalar"
+msgstr "Все категории"
 
-#~ msgid "Bu səhifə hələ hazırlanır..."
-#~ msgstr "Страница ещё готовится..."
+msgid "Bütün heyvan növləri"
+msgstr "Все виды животных"
 
-#~ msgid "Ehtiyat xəbərdarlığı səhifəsi tezliklə istifadəyə veriləcək."
-#~ msgstr "Страница предупреждений о запасах скоро будет доступна."
+msgid "Artım və azalma"
+msgstr "Рост и уменьшение"
 
-#~ msgid "Ana Səhifəyə Qayıt"
-#~ msgstr "На главную"
+msgid "Artım"
+msgstr "Рост"
 
-#, fuzzy
-#~ msgid "Xərc Məlumatlarını Yenilə"
-#~ msgstr "Данные профиля успешно обновлены."
+msgid "Axtar (ID, Məlumat, Növ)..."
+msgstr "Поиск (ID, информация, тип)..."
 
-#~ msgid "Xərcin növünü daxil edin"
-#~ msgstr "Введите тип расхода"
+msgid "Sıfırla"
+msgstr "Сбросить"
 
-#~ msgid "Məsələn: Mağaza adı, qəbz nömrəsi və s."
-#~ msgstr "Например: название магазина, номер чека и т.п."
+msgid "Yeni Heyvan Əlavə Et"
+msgstr "Добавить новое животное"
 
-#~ msgid "Bu həftə ümumi xərc"
-#~ msgstr "Общий расход за эту неделю"
+msgid "Əvvəlcə ana kateqoriya seçin"
+msgstr "Сначала выберите основную категорию"
 
-#~ msgid "Yeni Xərc Əlavə Et"
-#~ msgstr "Добавить новый расход"
+msgid "Heyvan Siyahısı"
+msgstr "Список животных"
 
-#~ msgid "Xərcin adını daxil edin"
-#~ msgstr "Введите название расхода"
+msgid "Heç bir heyvan tapılmadı"
+msgstr "Животные не найдены"
 
-#~ msgid "Məsələn: Əlavə qeydlər..."
-#~ msgstr "Например: дополнительные заметки..."
+msgid "Ferma İdarəsi"
+msgstr "Управление фермой"
 
-#~ msgid "Xərc Əlavə Et"
-#~ msgstr "Добавить расход"
+msgid "Menyu"
+msgstr "Меню"
 
-#~ msgid "Bütün alt kateqoriyalar"
-#~ msgstr "Все подкатегории"
+msgid "Profil"
+msgstr "Профиль"
 
-#~ msgid "Axtarış..."
-#~ msgstr "Поиск..."
+msgid "Parametrlər"
+msgstr "Настройки"
 
-#~ msgid "Son Xərclər"
-#~ msgstr "Последние расходы"
+msgid "Kömək"
+msgstr "Помощь"
 
-#~ msgid "Hələ heç bir xərc qeydə alınmayıb"
-#~ msgstr "Расходы еще не записаны"
+msgid "Sinxronizasiya"
+msgstr "Синхронизация"
 
-#~ msgid "Filterə uyğun xərc tapılmadı"
-#~ msgstr "Расходов для этого фильтра не найдено"
+msgid "Çıxış"
+msgstr "Выход"
 
-#~ msgid "Silmək"
-#~ msgstr "Удалить"
+msgid "Yoxlanır"
+msgstr "Проверяется"
 
-#, fuzzy
-#~ msgid "Məhsul Məlumatlarını Yenilə"
-#~ msgstr "Данные профиля успешно обновлены."
+msgid "Ana Səhifə"
+msgstr "Главная"
 
-#~ msgid "Məhsul seçin"
-#~ msgstr "Выберите продукт"
+msgid "Stok"
+msgstr "Склад"
 
-#~ msgid "Məhsulun adını daxil edin"
-#~ msgstr "Введите название продукта"
+msgid "Tеzliklə"
+msgstr "Скоро"
 
-#~ msgid "kq"
-#~ msgstr "кг"
+msgid "Tezliklə!"
+msgstr "Скоро!"
 
-#~ msgid "ton"
-#~ msgstr "тонна"
+msgid "Bu səhifə hazırda hazırlanma mərhələsindədir."
+msgstr "Эта страница находится в разработке."
 
-#~ msgid "qram"
-#~ msgstr "грамм"
+msgid "Xərclər"
+msgstr "Расходы"
 
-#~ msgid "litr"
-#~ msgstr "литр"
+msgid "Bulud"
+msgstr "Облако"
 
-#~ msgid "millilitr"
-#~ msgstr "миллилитр"
+msgid "Təchizatçılar"
+msgstr "Поставщики"
 
-#~ msgid "ədəd"
-#~ msgstr "штука"
+msgid "Yeni məhsul"
+msgstr "Новый продукт"
 
-#~ msgid "dəstə"
-#~ msgstr "связка"
+msgid "Qazanc"
+msgstr "Прибыль"
 
-#~ msgid "bağlama"
-#~ msgstr "упаковка"
+msgid "Şablon axtar..."
+msgstr "Поиск шаблона..."
 
-#~ msgid "Məsələn: Məhsulun vəziyyəti və s."
-#~ msgstr "Например: состояние продукта и т.д."
+msgid "Bir toxunuşla xərc"
+msgstr "Расход в одно касание"
 
-#~ msgid "Bütün məhsul növləri"
-#~ msgstr "Все типы продуктов"
+msgid "Xüsusi məbləğ"
+msgstr "Своя сумма"
 
-#~ msgid "Axtar (Ad, Kateqoriya)..."
-#~ msgstr "Поиск (имя, категория)..."
+msgid "Şablonlar"
+msgstr "Шаблоны"
 
-#~ msgid "Yeni Məhsul Əlavə Et"
-#~ msgstr "Добавить новый продукт"
-
-#~ msgid "Əvvəlcə kateqoriya seçin"
-#~ msgstr "Сначала выберите категорию"
-
-#~ msgid "Təsərrüfat Məhsulları Siyahısı"
-#~ msgstr "Список фермерской продукции"
-
-#~ msgid "Heç bir məhsul tapılmadı"
-#~ msgstr "Продукты не найдены"
-
-#~ msgid "Gəliri Düzəlt"
-#~ msgstr "Редактировать доход"
+msgid "Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək."
+msgstr "Шаблонов пока нет. Они появятся после добавления расхода."
 
 #, fuzzy
-#~ msgid "Gəlir Məlumatlarını Yenilə"
-#~ msgstr "Данные профиля успешно обновлены."
+msgid "Tez Gəlir"
+msgstr "Быстрый расход"
 
-#~ msgid "Cinsiyyət seçin"
-#~ msgstr "Выберите пол"
+msgid "Bir toxunuşla gəlir"
+msgstr "Доход в одно касание"
 
-#~ msgid "Məsələn: satış yeri, qeyd və s."
-#~ msgstr "Например: место продажи, примечание и т.д."
+msgid ""
+"Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək."
+msgstr "Шаблонов дохода пока нет. Они появятся после добавления дохода."
 
-#~ msgid "Bu həftə ümumi gəlir"
-#~ msgstr "Общий доход за эту неделю"
+msgid "Bu səhifə hələ hazırlanır..."
+msgstr "Страница ещё готовится..."
 
-#~ msgid "Yeni Gəlir Əlavə Et"
-#~ msgstr "Добавить новый доход"
+msgid "Ehtiyat xəbərdarlığı səhifəsi tezliklə istifadəyə veriləcək."
+msgstr "Страница предупреждений о запасах скоро будет доступна."
 
-#~ msgid "ml"
-#~ msgstr "мл"
-
-#~ msgid "Gəlir Əlavə Et"
-#~ msgstr "Добавить доход"
-
-#~ msgid "Bütün məhsullar"
-#~ msgstr "Все продукты"
-
-#~ msgid "Son Gəlirlər"
-#~ msgstr "Последние доходы"
-
-#~ msgid "Hələ heç bir gəlir qeydə alınmayıb"
-#~ msgstr "Доходы еще не записаны"
-
-#~ msgid "Filterə uyğun gəlir tapılmadı"
-#~ msgstr "Доходов для этого фильтра не найдено"
-
-#~ msgid "Alt məhsul seçin"
-#~ msgstr "Выберите подпродукт"
+msgid "Ana Səhifəyə Qayıt"
+msgstr "На главную"
 
 #, fuzzy
-#~ msgid "Əlavə Et"
-#~ msgstr "Личные данные"
+msgid "Xərc Məlumatlarını Yenilə"
+msgstr "Данные профиля успешно обновлены."
 
-#~ msgid "Barkod Skan Et"
-#~ msgstr "Сканировать штрихкод"
+msgid "Xərcin növünü daxil edin"
+msgstr "Введите тип расхода"
 
-#~ msgid "Kodu Əllə Yaz"
-#~ msgstr "Ввести код вручную"
+msgid "Məsələn: Mağaza adı, qəbz nömrəsi və s."
+msgstr "Например: название магазина, номер чека и т.п."
 
-#~ msgid "Barkodu Göstər"
-#~ msgstr "Показать штрихкод"
+msgid "Bu həftə ümumi xərc"
+msgstr "Общий расход за эту неделю"
 
-#~ msgid "Səslə Əlavə Et"
-#~ msgstr "Добавить голосом"
+msgid "Yeni Xərc Əlavə Et"
+msgstr "Добавить новый расход"
 
-#~ msgid "Form yalnız barkod scan olunandan sonra görünəcək."
-#~ msgstr "Форма появится только после сканирования штрихкода."
+msgid "Xərcin adını daxil edin"
+msgstr "Введите название расхода"
 
-#~ msgid "Səs Yazılır"
-#~ msgstr "Идет запись"
+msgid "Məsələn: Əlavə qeydlər..."
+msgstr "Например: дополнительные заметки..."
 
-#~ msgid "Danışın, sistem səsi dinləyir."
-#~ msgstr "Говорите, система слушает."
+msgid "Xərc Əlavə Et"
+msgstr "Добавить расход"
 
-#~ msgid "Kod / ID"
-#~ msgstr "Код / ID"
+msgid "Bütün alt kateqoriyalar"
+msgstr "Все подкатегории"
 
-#~ msgid "Barkod kodunu yazın"
-#~ msgstr "Введите штрихкод"
+msgid "Axtarış..."
+msgstr "Поиск..."
 
-#~ msgid "Kodu Yoxla"
-#~ msgstr "Проверить код"
+msgid "Son Xərclər"
+msgstr "Последние расходы"
 
-#~ msgid "Form"
-#~ msgstr "Форма"
+msgid "Hələ heç bir xərc qeydə alınmayıb"
+msgstr "Расходы еще не записаны"
 
-#~ msgid "Scan olunan barkoda uyğun form açıldı."
-#~ msgstr "Открыта форма для отсканированного штрихкода."
+msgid "Filterə uyğun xərc tapılmadı"
+msgstr "Расходов для этого фильтра не найдено"
 
-#~ msgid "Alt Kateqoriya"
-#~ msgstr "Подкатегория"
-
-#~ msgid "Xərc adı (Digər)"
-#~ msgstr "Название расхода (Другое)"
-
-#~ msgid "Xərci Saxla"
-#~ msgstr "Сохранить расход"
-
-#~ msgid "Məhsul adı (Digər)"
-#~ msgstr "Название продукта (Другое)"
+msgid "Silmək"
+msgstr "Удалить"
 
 #, fuzzy
-#~ msgid "Ölçü vahidi"
-#~ msgstr "Единицы измерения"
+msgid "Məhsul Məlumatlarını Yenilə"
+msgstr "Данные профиля успешно обновлены."
 
-#~ msgid "Cinsiyyət"
-#~ msgstr "Пол"
+msgid "Məhsul seçin"
+msgstr "Выберите продукт"
 
-#~ msgid "Seçin"
-#~ msgstr "Выберите"
+msgid "Məhsulun adını daxil edin"
+msgstr "Введите название продукта"
 
-#~ msgid "Gəliri Saxla"
-#~ msgstr "Сохранить доход"
+msgid "kq"
+msgstr "кг"
 
-#~ msgid "Heyvan növü (Digər)"
-#~ msgstr "Тип животного (Другое)"
+msgid "ton"
+msgstr "тонна"
 
-#~ msgid "Çəki"
-#~ msgstr "Вес"
+msgid "qram"
+msgstr "грамм"
 
-#~ msgid "Heyvanı Saxla"
-#~ msgstr "Сохранить животное"
+msgid "litr"
+msgstr "литр"
 
-#~ msgid "Toxum növü"
-#~ msgstr "Тип семян"
+msgid "millilitr"
+msgstr "миллилитр"
 
-#~ msgid "Toxum seçin"
-#~ msgstr "Выберите семена"
+msgid "ədəd"
+msgstr "штука"
 
-#~ msgid "Toxum adı (Digər)"
-#~ msgstr "Название семян (Другое)"
+msgid "dəstə"
+msgstr "связка"
 
-#~ msgid "Toxumun adını daxil edin"
-#~ msgstr "Введите название семян"
+msgid "bağlama"
+msgstr "упаковка"
 
-#~ msgid "kg"
-#~ msgstr "кг"
+msgid "Məsələn: Məhsulun vəziyyəti və s."
+msgstr "Например: состояние продукта и т.д."
 
-#~ msgid "Məsələn: Toxumun vəziyyəti və s."
-#~ msgstr "Например: состояние семян и т.д."
+msgid "Bütün məhsul növləri"
+msgstr "Все типы продуктов"
 
-#~ msgid "Toxumu Saxla"
-#~ msgstr "Сохранить семена"
+msgid "Axtar (Ad, Kateqoriya)..."
+msgstr "Поиск (имя, категория)..."
 
-#~ msgid "Alət seçin"
-#~ msgstr "Выберите инструмент"
+msgid "Yeni Məhsul Əlavə Et"
+msgstr "Добавить новый продукт"
 
-#~ msgid "Alət adını daxil edin"
-#~ msgstr "Введите название инструмента"
+msgid "Əvvəlcə kateqoriya seçin"
+msgstr "Сначала выберите категорию"
 
-#~ msgid "Məsələn: Alətin vəziyyəti və s."
-#~ msgstr "Например: состояние инструмента и т.д."
+msgid "Təsərrüfat Məhsulları Siyahısı"
+msgstr "Список фермерской продукции"
 
-#~ msgid "Aləti Saxla"
-#~ msgstr "Сохранить инструмент"
+msgid "Heç bir məhsul tapılmadı"
+msgstr "Продукты не найдены"
 
-#~ msgid "Məhsul növü"
-#~ msgstr "Тип продукта"
-
-#~ msgid "Məhsulu Saxla"
-#~ msgstr "Сохранить продукт"
-
-#~ msgid "Heyvan formu"
-#~ msgstr "Форма животного"
-
-#~ msgid "Toxum formu"
-#~ msgstr "Форма семян"
-
-#~ msgid "Alət formu"
-#~ msgstr "Форма инструмента"
-
-#~ msgid "Təsərrüfat formu"
-#~ msgstr "Форма фермы"
-
-#~ msgid "Skanı Dayandır"
-#~ msgstr "Остановить сканирование"
-
-#~ msgid "Miqdar ±1 olmadıqda ID yazılmır"
-#~ msgstr "ID не вводится, если количество не ±1"
-
-#~ msgid "Deyilən:"
-#~ msgstr "Сказано:"
-
-#~ msgid "Təxmin edilən:"
-#~ msgstr "Определено:"
-
-#~ msgid "Səs emal olunur..."
-#~ msgstr "Аудио обрабатывается..."
-
-#~ msgid "Yazını Bitir"
-#~ msgstr "Остановить запись"
-
-#~ msgid "Barkod Yarat"
-#~ msgstr "Создать штрихкод"
-
-#~ msgid "Barkod generatoru"
-#~ msgstr "Генератор штрихкодов"
-
-#~ msgid ""
-#~ "Kateqoriya seçin, formu doldurun, sonra `Barkodu Göstər` düyməsinə basın."
-#~ msgstr ""
-#~ "Выберите категорию, заполните форму, затем нажмите кнопку «Показать "
-#~ "штрихкод»."
-
-#~ msgid "Form növü"
-#~ msgstr "Тип формы"
-
-#~ msgid "Bu formdakı bütün məlumat birlikdə barkoda daxil ediləcək."
-#~ msgstr "Все данные этой формы будут закодированы в одном штрихкоде."
-
-#~ msgid "Barkod"
-#~ msgstr "Штрихкод"
-
-#~ msgid "Kopyala"
-#~ msgstr "Копировать"
-
-#~ msgid "Download JPG"
-#~ msgstr "Скачать JPG"
-
-#~ msgid "Hamısı"
-#~ msgstr "Все"
-
-#~ msgid "Sıralama"
-#~ msgstr "Сортировка"
-
-#~ msgid "Standart düzülüş"
-#~ msgstr "Стандартный порядок"
-
-#~ msgid "Ada görə A-Z"
-#~ msgstr "По имени А-Я"
-
-#~ msgid "Ada görə Z-A"
-#~ msgstr "По имени Я-А"
-
-#~ msgid "Saya görə çox olan"
-#~ msgstr "С наибольшим количеством"
-
-#~ msgid "Saya görə az olan"
-#~ msgstr "С наименьшим количеством"
-
-#~ msgid "Axtarış"
-#~ msgstr "Поиск"
-
-#~ msgid "Axtar..."
-#~ msgstr "Поиск..."
-
-#~ msgid "&nbsp;"
-#~ msgstr "&nbsp;"
+msgid "Gəliri Düzəlt"
+msgstr "Редактировать доход"
 
 #, fuzzy
-#~ msgid "Yeni miqdar"
-#~ msgstr "Новый пароль"
+msgid "Gəlir Məlumatlarını Yenilə"
+msgstr "Данные профиля успешно обновлены."
 
-#~ msgid "Erkək / Dişi sayı"
-#~ msgstr "Количество самцов / самок"
+msgid "Cinsiyyət seçin"
+msgstr "Выберите пол"
 
-#~ msgid "Ümumi"
-#~ msgstr "Итого"
+msgid "Məsələn: satış yeri, qeyd və s."
+msgstr "Например: место продажи, примечание и т.д."
 
-#~ msgid "Ləğv et"
-#~ msgstr "Отмена"
+msgid "Bu həftə ümumi gəlir"
+msgstr "Общий доход за эту неделю"
 
-#~ msgid "Yadda saxla"
-#~ msgstr "Сохранить"
+msgid "Yeni Gəlir Əlavə Et"
+msgstr "Добавить новый доход"
 
-#~ msgid "Xatırlatmalar"
-#~ msgstr "Напоминания"
+msgid "ml"
+msgstr "мл"
 
-#~ msgid "Vaksinasiya, əkin, ödəniş xatırlatmaları"
-#~ msgstr "Напоминания о вакцинации, посеве и оплате"
+msgid "Gəlir Əlavə Et"
+msgstr "Добавить доход"
 
-#~ msgid "Yeni xatırlatma"
-#~ msgstr "Новое напоминание"
+msgid "Bütün məhsullar"
+msgstr "Все продукты"
 
-#~ msgid "Başlıq"
-#~ msgstr "Заголовок"
+msgid "Son Gəlirlər"
+msgstr "Последние доходы"
 
-#~ msgid "Məs: Qoyunlara vaksinasiya"
-#~ msgstr "Напр.: вакцинация овец"
+msgid "Hələ heç bir gəlir qeydə alınmayıb"
+msgstr "Доходы еще не записаны"
 
-#, fuzzy
-#~ msgid "🌿 Ferma idarəsi"
-#~ msgstr "Управление фермой"
+msgid "Filterə uyğun gəlir tapılmadı"
+msgstr "Доходов для этого фильтра не найдено"
 
-#~ msgid "Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə."
-#~ msgstr "Семена, животные, инструменты и расходы — всё в одном месте."
-
-#~ msgid "🌱 Toxumlar"
-#~ msgstr "🌱 Семена"
-
-#~ msgid "🐄 Heyvanlar"
-#~ msgstr "🐄 Животные"
-
-#~ msgid "🔧 Alətlər"
-#~ msgstr "🔧 Инструменты"
-
-#~ msgid "💰 Xərclər"
-#~ msgstr "💰 Расходы"
-
-#~ msgid "Daxil ol"
-#~ msgstr "Войти"
-
-#~ msgid "Davam etmək üçün məlumatları daxil edin"
-#~ msgstr "Введите данные, чтобы продолжить"
-
-#~ msgid "Yeni hesab yaradın. Daha sonra admin təsdiqi ilə aktiv olacaq."
-#~ msgstr ""
-#~ "Создайте аккаунт. Он будет активирован после подтверждения администратором."
+msgid "Alt məhsul seçin"
+msgstr "Выберите подпродукт"
 
 #, fuzzy
-#~ msgid "Hesab yarat"
-#~ msgstr "Создать отчет"
+msgid "Əlavə Et"
+msgstr "Личные данные"
 
-#~ msgid "Maliyyə və statistik məlumatlar"
-#~ msgstr "Финансовая и статистическая информация"
+msgid "Barkod Skan Et"
+msgstr "Сканировать штрихкод"
 
-#~ msgid "+ Yeni Hesabat Əlavə Et"
-#~ msgstr "+ Добавить отчёт"
+msgid "Kodu Əllə Yaz"
+msgstr "Ввести код вручную"
 
-#~ msgid "⬇ Hesabat Yüklə (PDF)"
-#~ msgstr "⬇ Скачать отчёт (PDF)"
+msgid "Barkodu Göstər"
+msgstr "Показать штрихкод"
 
-#~ msgid "Toxumu Düzəlt"
-#~ msgstr "Редактировать семена"
+msgid "Səslə Əlavə Et"
+msgstr "Добавить голосом"
 
-#, fuzzy
-#~ msgid "Toxum Məlumatlarını Yenilə"
-#~ msgstr "Данные профиля успешно обновлены."
+msgid "Form yalnız barkod scan olunandan sonra görünəcək."
+msgstr "Форма появится только после сканирования штрихкода."
 
-#~ msgid "Bütün toxum növləri"
-#~ msgstr "Все типы семян"
+msgid "Səs Yazılır"
+msgstr "Идет запись"
 
-#~ msgid "Yeni Toxum Əlavə Et"
-#~ msgstr "Добавить новые семена"
+msgid "Danışın, sistem səsi dinləyir."
+msgstr "Говорите, система слушает."
 
-#~ msgid "Toxum Siyahısı"
-#~ msgstr "Список семян"
+msgid "Kod / ID"
+msgstr "Код / ID"
 
-#~ msgid "Hələ heç bir toxum qeydə alınmayıb"
-#~ msgstr "Семена ещё не записаны"
+msgid "Barkod kodunu yazın"
+msgstr "Введите штрихкод"
 
-#~ msgid "Tez-tez verilən suallar"
-#~ msgstr "Часто задаваемые вопросы"
+msgid "Kodu Yoxla"
+msgstr "Проверить код"
 
-#~ msgid "Sistemə necə daxil olunur?"
-#~ msgstr "Как войти в систему?"
+msgid "Form"
+msgstr "Форма"
 
-#~ msgid "Giriş səhifəsindəki istifadəçi adı və şifrə sahələrini doldurun, sonra"
-#~ msgstr "Заполните поля имени пользователя и пароля на странице входа, затем"
+msgid "Scan olunan barkoda uyğun form açıldı."
+msgstr "Открыта форма для отсканированного штрихкода."
 
-#~ msgid "düyməsinə klikləyin."
-#~ msgstr "нажмите кнопку."
+msgid "Alt Kateqoriya"
+msgstr "Подкатегория"
 
-#~ msgid "Profil məlumatlarımı necə yeniləyə bilərəm?"
-#~ msgstr "Как обновить данные профиля?"
+msgid "Xərc adı (Digər)"
+msgstr "Название расхода (Другое)"
 
-#~ msgid "Aşağıdakı menyudan"
-#~ msgstr "В нижнем меню"
+msgid "Xərci Saxla"
+msgstr "Сохранить расход"
 
-#~ msgid "seçin, lazımi məlumatları dəyişdirin və"
-#~ msgstr "выберите раздел, измените нужные данные и"
-
-#~ msgid "Şifrəmi necə dəyişə bilərəm?"
-#~ msgstr "Как изменить пароль?"
-
-#~ msgid "Profil səhifəsinin alt hissəsindəki"
-#~ msgstr "В нижней части страницы профиля"
-
-#~ msgid "bölməsindən cari və yeni şifrənizi daxil edib təsdiqləyin."
-#~ msgstr "введите текущий и новый пароль и подтвердите."
-
-#~ msgid "Hesabat necə yaradılır?"
-#~ msgstr "Как создать отчет?"
-
-#~ msgid "Alt menyudan"
-#~ msgstr "Из нижнего меню"
-
-#~ msgid "bölməsinə keçin, hesabat növünü seçin, tarix aralığını təyin edin və"
-#~ msgstr "перейдите в раздел, выберите тип отчета, укажите период и"
-
-#~ msgid "Hesabatı yarat"
-#~ msgstr "Создать отчет"
-
-#~ msgid "Stoka yeni məhsul necə əlavə edilir?"
-#~ msgstr "Как добавить новый товар на склад?"
-
-#~ msgid "Alt naviqasiyada mərkəzdəki"
-#~ msgstr "В нижней навигации нажмите центральную"
-
-#~ msgid ""
-#~ "düyməsinə klikləyin, məhsul növünü seçin və lazımi məlumatları daxil edin."
-#~ msgstr "кнопку, выберите тип продукта и введите необходимые данные."
-
-#~ msgid "Tez xərc nədir?"
-#~ msgstr "Что такое быстрый расход?"
-
-#~ msgid ""
-#~ "bölməsi gündəlik xərclərinizi sürətli şəkildə qeydə almağa imkan verir. "
-#~ "Kateqoriya seçib məbləği daxil etmək kifayətdir."
-#~ msgstr ""
-#~ "раздел позволяет быстро фиксировать ежедневные расходы. Достаточно выбрать "
-#~ "категорию и ввести сумму."
-
-#~ msgid "Məlumatlarım avtomatik saxlanılırmı?"
-#~ msgstr "Мои данные сохраняются автоматически?"
-
-#~ msgid ""
-#~ "Bəli, bütün əməliyyatlar real vaxt rejimində verilənlər bazasına yazılır. "
-#~ "Əlavə olaraq"
-#~ msgstr ""
-#~ "Да, все операции сохраняются в базе данных в реальном времени. Кроме того,"
-
-#~ msgid "Sync"
-#~ msgstr "Синхронизация"
-
-#~ msgid "bölməsindən manual sinxronizasiya da edə bilərsiniz."
-#~ msgstr "вы можете выполнить ручную синхронизацию из этого раздела."
+msgid "Məhsul adı (Digər)"
+msgstr "Название продукта (Другое)"
 
 #, fuzzy
-#~ msgid "Şəxsi məlumatlar"
-#~ msgstr "Личные данные"
+msgid "Ölçü vahidi"
+msgstr "Единицы измерения"
 
-#~ msgid "Sistem"
-#~ msgstr "Система"
+msgid "Cinsiyyət"
+msgstr "Пол"
 
-#~ msgid "Cari şifrə"
-#~ msgstr "Текущий пароль"
+msgid "Seçin"
+msgstr "Выберите"
 
-#~ msgid "Yeni şifrə"
-#~ msgstr "Новый пароль"
+msgid "Gəliri Saxla"
+msgstr "Сохранить доход"
 
-#~ msgid "Şifrəni yenilə"
-#~ msgstr "Обновить пароль"
+msgid "Heyvan növü (Digər)"
+msgstr "Тип животного (Другое)"
 
-#~ msgid "Dil və Bölgə"
-#~ msgstr "Язык и регион"
+msgid "Çəki"
+msgstr "Вес"
 
-#~ msgid "Dil"
-#~ msgstr "Язык"
+msgid "Heyvanı Saxla"
+msgstr "Сохранить животное"
 
-#~ msgid "İnterfeys dili"
-#~ msgstr "Язык интерфейса"
+msgid "Toxum növü"
+msgstr "Тип семян"
 
-#~ msgid "AZ"
-#~ msgstr "AZ"
+msgid "Toxum seçin"
+msgstr "Выберите семена"
 
-#~ msgid "EN"
-#~ msgstr "EN"
+msgid "Toxum adı (Digər)"
+msgstr "Название семян (Другое)"
 
-#~ msgid "RU"
-#~ msgstr "RU"
+msgid "Toxumun adını daxil edin"
+msgstr "Введите название семян"
 
-#~ msgid "Vaxt zonası"
-#~ msgstr "Часовой пояс"
+msgid "kg"
+msgstr "кг"
 
-#~ msgid "Sistem saatı"
-#~ msgstr "Системное время"
+msgid "Məsələn: Toxumun vəziyyəti və s."
+msgstr "Например: состояние семян и т.д."
 
-#~ msgid "UTC+4 Bakı"
-#~ msgstr "UTC+4 Баку"
+msgid "Toxumu Saxla"
+msgstr "Сохранить семена"
 
-#~ msgid "UTC+0 London"
-#~ msgstr "UTC+0 Лондон"
+msgid "Alət seçin"
+msgstr "Выберите инструмент"
 
-#~ msgid "UTC+3 Moskva"
-#~ msgstr "UTC+3 Москва"
+msgid "Alət adını daxil edin"
+msgstr "Введите название инструмента"
 
-#~ msgid "Ölçü Vahidləri"
-#~ msgstr "Единицы измерения"
+msgid "Məsələn: Alətin vəziyyəti və s."
+msgstr "Например: состояние инструмента и т.д."
 
-#~ msgid "Çəki / Həcm ölçüsü"
-#~ msgstr "Единица веса / объема"
+msgid "Aləti Saxla"
+msgstr "Сохранить инструмент"
 
-#~ msgid "baş"
-#~ msgstr "главная"
+msgid "Məhsul növü"
+msgstr "Тип продукта"
 
-#~ msgid "Maliyyə"
-#~ msgstr "Финансы"
+msgid "Məhsulu Saxla"
+msgstr "Сохранить продукт"
 
-#~ msgid "Valyuta"
-#~ msgstr "Валюта"
+msgid "Heyvan formu"
+msgstr "Форма животного"
 
-#~ msgid "Əsas valyuta"
-#~ msgstr "Основная валюта"
+msgid "Toxum formu"
+msgstr "Форма семян"
 
-#~ msgid "AZN ₼"
-#~ msgstr "AZN ₼"
+msgid "Alət formu"
+msgstr "Форма инструмента"
 
-#~ msgid "EUR €"
-#~ msgstr "EUR €"
+msgid "Təsərrüfat formu"
+msgstr "Форма фермы"
 
-#~ msgid "USD $"
-#~ msgstr "USD $"
+msgid "Skanı Dayandır"
+msgstr "Остановить сканирование"
 
-#~ msgid "Bildirişlər"
-#~ msgstr "Уведомления"
+msgid "Miqdar ±1 olmadıqda ID yazılmır"
+msgstr "ID не вводится, если количество не ±1"
 
-#~ msgid "Yeniləmələri e-poçtla al"
-#~ msgstr "Получать обновления по email"
+msgid "Deyilən:"
+msgstr "Сказано:"
 
-#~ msgid "Sistem bildirişləri"
-#~ msgstr "Системные уведомления"
+msgid "Təxmin edilən:"
+msgstr "Определено:"
 
-#~ msgid "Tətbiq daxili bildirişlər"
-#~ msgstr "Уведомления внутри приложения"
+msgid "Səs emal olunur..."
+msgstr "Аудио обрабатывается..."
 
-#~ msgid "Təchizatçı axtar..."
-#~ msgstr "Поиск поставщика..."
+msgid "Yazını Bitir"
+msgstr "Остановить запись"
 
-#~ msgid "Nəticə tapılmadı"
-#~ msgstr "Ничего не найдено"
+msgid "Barkod Yarat"
+msgstr "Создать штрихкод"
 
-#~ msgid "Axtarışa uyğun təchizatçı tapılmadı."
-#~ msgstr "Поставщик по запросу не найден."
+msgid "Barkod generatoru"
+msgstr "Генератор штрихкодов"
 
-#~ msgid "Məsələn: Əhməd Toxumçuluq"
-#~ msgstr "Например: Ahmad Seeds"
+msgid ""
+"Kateqoriya seçin, formu doldurun, sonra `Barkodu Göstər` düyməsinə basın."
+msgstr ""
+"Выберите категорию, заполните форму, затем нажмите кнопку «Показать "
+"штрихкод»."
 
-#~ msgid "Kateqoriya Adı (Digər)"
-#~ msgstr "Название категории (Другое)"
+msgid "Form növü"
+msgstr "Тип формы"
 
-#~ msgid "Kateqoriya adını daxil edin"
-#~ msgstr "Введите название категории"
+msgid "Bu formdakı bütün məlumat birlikdə barkoda daxil ediləcək."
+msgstr "Все данные этой формы будут закодированы в одном штрихкоде."
 
-#~ msgid "Ünvan"
-#~ msgstr "Адрес"
+msgid "Barkod"
+msgstr "Штрихкод"
 
-#~ msgid "Məsələn: Gəncə"
-#~ msgstr "Например: Гянджа"
+msgid "Kopyala"
+msgstr "Копировать"
 
-#~ msgid "Telefon Nömrəsi"
-#~ msgstr "Номер телефона"
+msgid "Download JPG"
+msgstr "Скачать JPG"
 
-#~ msgid "Məsələn: +994 50 123 45 67"
-#~ msgstr "Например: +994 50 123 45 67"
+msgid "Hamısı"
+msgstr "Все"
 
-#~ msgid "Son Sifariş Tarixi"
-#~ msgstr "Дата последнего заказа"
+msgid "Sıralama"
+msgstr "Сортировка"
 
-#~ msgid ""
-#~ "Məsələn: Sifarişdən əvvəl zəng edin, çatdırılma edir, qiymətləri münasibdir"
-#~ msgstr "Например: звоните перед заказом, есть доставка, цены приемлемые"
+msgid "Standart düzülüş"
+msgstr "Стандартный порядок"
 
-#~ msgid "Bağlantı"
-#~ msgstr "Подключение"
+msgid "Ada görə A-Z"
+msgstr "По имени А-Я"
 
-#~ msgid "Gözləyən qeyd"
-#~ msgstr "Ожидающие записи"
+msgid "Ada görə Z-A"
+msgstr "По имени Я-А"
 
-#~ msgid "Son uğurlu sync"
-#~ msgstr "Последняя успешная синхронизация"
+msgid "Saya görə çox olan"
+msgstr "С наибольшим количеством"
 
-#~ msgid "Heç vaxt"
-#~ msgstr "Никогда"
+msgid "Saya görə az olan"
+msgstr "С наименьшим количеством"
 
-#~ msgid "Uzaq dəyişikliklər"
-#~ msgstr "Удаленные изменения"
+msgid "Axtarış"
+msgstr "Поиск"
 
-#~ msgid "Son xəta"
-#~ msgstr "Последняя ошибка"
+msgid "Axtar..."
+msgstr "Поиск..."
 
-#~ msgid "Gözləyən əməliyyatlar"
-#~ msgstr "Ожидающие операции"
-
-#, fuzzy
-#~ msgid "Sinxronizasiya tarixçəsi"
-#~ msgstr "Синхронизация"
-
-#~ msgid "Aləti Düzəlt"
-#~ msgstr "Редактировать инструмент"
+msgid "&nbsp;"
+msgstr "&nbsp;"
 
 #, fuzzy
-#~ msgid "Alət Məlumatlarını Yenilə"
-#~ msgstr "Данные профиля успешно обновлены."
+msgid "Yeni miqdar"
+msgstr "Новый пароль"
 
-#~ msgid "Alətin adını daxil edin"
-#~ msgstr "Введите название инструмента"
+msgid "Erkək / Dişi sayı"
+msgstr "Количество самцов / самок"
 
-#~ msgid "Cəmi Məbləğ (₼)"
-#~ msgstr "Общая сумма (₼)"
+msgid "Ümumi"
+msgstr "Итого"
 
-#~ msgid "Bütün alət növləri"
-#~ msgstr "Все типы инструментов"
+msgid "Ləğv et"
+msgstr "Отмена"
 
-#~ msgid "Yeni Alət Əlavə Et"
-#~ msgstr "Добавить новый инструмент"
+msgid "Yadda saxla"
+msgstr "Сохранить"
 
-#~ msgid "Kateqoriya seçin..."
-#~ msgstr "Выберите категорию..."
+msgid "Xatırlatmalar"
+msgstr "Напоминания"
 
-#~ msgid "Əvvəlcə kateqoriya seçin..."
-#~ msgstr "Сначала выберите категорию..."
+msgid "Vaksinasiya, əkin, ödəniş xatırlatmaları"
+msgstr "Напоминания о вакцинации, посеве и оплате"
 
-#~ msgid "Mövcud Alətlər"
-#~ msgstr "Доступные инструменты"
+msgid "Yeni xatırlatma"
+msgstr "Новое напоминание"
 
-#~ msgid "Heç bir alət tapılmadı"
-#~ msgstr "Инструменты не найдены"
+msgid "Başlıq"
+msgstr "Заголовок"
 
-#~ msgid "Seçin..."
-#~ msgstr "Выберите..."
+msgid "Məs: Qoyunlara vaksinasiya"
+msgstr "Напр.: вакцинация овец"
+
+#, fuzzy
+msgid "🌿 Ferma idarəsi"
+msgstr "Управление фермой"
+
+msgid "Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə."
+msgstr "Семена, животные, инструменты и расходы — всё в одном месте."
+
+msgid "🌱 Toxumlar"
+msgstr "🌱 Семена"
+
+msgid "🐄 Heyvanlar"
+msgstr "🐄 Животные"
+
+msgid "🔧 Alətlər"
+msgstr "🔧 Инструменты"
+
+msgid "💰 Xərclər"
+msgstr "💰 Расходы"
+
+msgid "Daxil ol"
+msgstr "Войти"
+
+msgid "Davam etmək üçün məlumatları daxil edin"
+msgstr "Введите данные, чтобы продолжить"
+
+msgid "Yeni hesab yaradın. Daha sonra admin təsdiqi ilə aktiv olacaq."
+msgstr ""
+"Создайте аккаунт. Он будет активирован после подтверждения администратором."
+
+#, fuzzy
+msgid "Hesab yarat"
+msgstr "Создать отчет"
+
+msgid "Maliyyə və statistik məlumatlar"
+msgstr "Финансовая и статистическая информация"
+
+msgid "+ Yeni Hesabat Əlavə Et"
+msgstr "+ Добавить отчёт"
+
+msgid "⬇ Hesabat Yüklə (PDF)"
+msgstr "⬇ Скачать отчёт (PDF)"
+
+msgid "Toxumu Düzəlt"
+msgstr "Редактировать семена"
+
+#, fuzzy
+msgid "Toxum Məlumatlarını Yenilə"
+msgstr "Данные профиля успешно обновлены."
+
+msgid "Bütün toxum növləri"
+msgstr "Все типы семян"
+
+msgid "Yeni Toxum Əlavə Et"
+msgstr "Добавить новые семена"
+
+msgid "Toxum Siyahısı"
+msgstr "Список семян"
+
+msgid "Hələ heç bir toxum qeydə alınmayıb"
+msgstr "Семена ещё не записаны"
+
+msgid "Tez-tez verilən suallar"
+msgstr "Часто задаваемые вопросы"
+
+msgid "Sistemə necə daxil olunur?"
+msgstr "Как войти в систему?"
+
+msgid "Giriş səhifəsindəki istifadəçi adı və şifrə sahələrini doldurun, sonra"
+msgstr "Заполните поля имени пользователя и пароля на странице входа, затем"
+
+msgid "düyməsinə klikləyin."
+msgstr "нажмите кнопку."
+
+msgid "Profil məlumatlarımı necə yeniləyə bilərəm?"
+msgstr "Как обновить данные профиля?"
+
+msgid "Aşağıdakı menyudan"
+msgstr "В нижнем меню"
+
+msgid "seçin, lazımi məlumatları dəyişdirin və"
+msgstr "выберите раздел, измените нужные данные и"
+
+msgid "Şifrəmi necə dəyişə bilərəm?"
+msgstr "Как изменить пароль?"
+
+msgid "Profil səhifəsinin alt hissəsindəki"
+msgstr "В нижней части страницы профиля"
+
+msgid "bölməsindən cari və yeni şifrənizi daxil edib təsdiqləyin."
+msgstr "введите текущий и новый пароль и подтвердите."
+
+msgid "Hesabat necə yaradılır?"
+msgstr "Как создать отчет?"
+
+msgid "Alt menyudan"
+msgstr "Из нижнего меню"
+
+msgid "bölməsinə keçin, hesabat növünü seçin, tarix aralığını təyin edin və"
+msgstr "перейдите в раздел, выберите тип отчета, укажите период и"
+
+msgid "Hesabatı yarat"
+msgstr "Создать отчет"
+
+msgid "Stoka yeni məhsul necə əlavə edilir?"
+msgstr "Как добавить новый товар на склад?"
+
+msgid "Alt naviqasiyada mərkəzdəki"
+msgstr "В нижней навигации нажмите центральную"
+
+msgid ""
+"düyməsinə klikləyin, məhsul növünü seçin və lazımi məlumatları daxil edin."
+msgstr "кнопку, выберите тип продукта и введите необходимые данные."
+
+msgid "Tez xərc nədir?"
+msgstr "Что такое быстрый расход?"
+
+msgid ""
+"bölməsi gündəlik xərclərinizi sürətli şəkildə qeydə almağa imkan verir. "
+"Kateqoriya seçib məbləği daxil etmək kifayətdir."
+msgstr ""
+"раздел позволяет быстро фиксировать ежедневные расходы. Достаточно выбрать "
+"категорию и ввести сумму."
+
+msgid "Məlumatlarım avtomatik saxlanılırmı?"
+msgstr "Мои данные сохраняются автоматически?"
+
+msgid ""
+"Bəli, bütün əməliyyatlar real vaxt rejimində verilənlər bazasına yazılır. "
+"Əlavə olaraq"
+msgstr ""
+"Да, все операции сохраняются в базе данных в реальном времени. Кроме того,"
+
+msgid "Sync"
+msgstr "Синхронизация"
+
+msgid "bölməsindən manual sinxronizasiya da edə bilərsiniz."
+msgstr "вы можете выполнить ручную синхронизацию из этого раздела."
+
+#, fuzzy
+msgid "Şəxsi məlumatlar"
+msgstr "Личные данные"
+
+msgid "Sistem"
+msgstr "Система"
+
+msgid "Cari şifrə"
+msgstr "Текущий пароль"
+
+msgid "Yeni şifrə"
+msgstr "Новый пароль"
+
+msgid "Şifrəni yenilə"
+msgstr "Обновить пароль"
+
+msgid "Dil və Bölgə"
+msgstr "Язык и регион"
+
+msgid "Dil"
+msgstr "Язык"
+
+msgid "İnterfeys dili"
+msgstr "Язык интерфейса"
+
+msgid "AZ"
+msgstr "AZ"
+
+msgid "EN"
+msgstr "EN"
+
+msgid "RU"
+msgstr "RU"
+
+msgid "Vaxt zonası"
+msgstr "Часовой пояс"
+
+msgid "Sistem saatı"
+msgstr "Системное время"
+
+msgid "UTC+4 Bakı"
+msgstr "UTC+4 Баку"
+
+msgid "UTC+0 London"
+msgstr "UTC+0 Лондон"
+
+msgid "UTC+3 Moskva"
+msgstr "UTC+3 Москва"
+
+msgid "Ölçü Vahidləri"
+msgstr "Единицы измерения"
+
+msgid "Çəki / Həcm ölçüsü"
+msgstr "Единица веса / объема"
+
+msgid "baş"
+msgstr "главная"
+
+msgid "Maliyyə"
+msgstr "Финансы"
+
+msgid "Valyuta"
+msgstr "Валюта"
+
+msgid "Əsas valyuta"
+msgstr "Основная валюта"
+
+msgid "AZN ₼"
+msgstr "AZN ₼"
+
+msgid "EUR €"
+msgstr "EUR €"
+
+msgid "USD $"
+msgstr "USD $"
+
+msgid "Bildirişlər"
+msgstr "Уведомления"
+
+msgid "Yeniləmələri e-poçtla al"
+msgstr "Получать обновления по email"
+
+msgid "Sistem bildirişləri"
+msgstr "Системные уведомления"
+
+msgid "Tətbiq daxili bildirişlər"
+msgstr "Уведомления внутри приложения"
+
+msgid "Təchizatçı axtar..."
+msgstr "Поиск поставщика..."
+
+msgid "Nəticə tapılmadı"
+msgstr "Ничего не найдено"
+
+msgid "Axtarışa uyğun təchizatçı tapılmadı."
+msgstr "Поставщик по запросу не найден."
+
+msgid "Məsələn: Əhməd Toxumçuluq"
+msgstr "Например: Ahmad Seeds"
+
+msgid "Kateqoriya Adı (Digər)"
+msgstr "Название категории (Другое)"
+
+msgid "Kateqoriya adını daxil edin"
+msgstr "Введите название категории"
+
+msgid "Ünvan"
+msgstr "Адрес"
+
+msgid "Məsələn: Gəncə"
+msgstr "Например: Гянджа"
+
+msgid "Telefon Nömrəsi"
+msgstr "Номер телефона"
+
+msgid "Məsələn: +994 50 123 45 67"
+msgstr "Например: +994 50 123 45 67"
+
+msgid "Son Sifariş Tarixi"
+msgstr "Дата последнего заказа"
+
+msgid ""
+"Məsələn: Sifarişdən əvvəl zəng edin, çatdırılma edir, qiymətləri münasibdir"
+msgstr "Например: звоните перед заказом, есть доставка, цены приемлемые"
+
+msgid "Bağlantı"
+msgstr "Подключение"
+
+msgid "Gözləyən qeyd"
+msgstr "Ожидающие записи"
+
+msgid "Son uğurlu sync"
+msgstr "Последняя успешная синхронизация"
+
+msgid "Heç vaxt"
+msgstr "Никогда"
+
+msgid "Uzaq dəyişikliklər"
+msgstr "Удаленные изменения"
+
+msgid "Son xəta"
+msgstr "Последняя ошибка"
+
+msgid "Gözləyən əməliyyatlar"
+msgstr "Ожидающие операции"
+
+#, fuzzy
+msgid "Sinxronizasiya tarixçəsi"
+msgstr "Синхронизация"
+
+msgid "Aləti Düzəlt"
+msgstr "Редактировать инструмент"
+
+#, fuzzy
+msgid "Alət Məlumatlarını Yenilə"
+msgstr "Данные профиля успешно обновлены."
+
+msgid "Alətin adını daxil edin"
+msgstr "Введите название инструмента"
+
+msgid "Cəmi Məbləğ (₼)"
+msgstr "Общая сумма (₼)"
+
+msgid "Bütün alət növləri"
+msgstr "Все типы инструментов"
+
+msgid "Yeni Alət Əlavə Et"
+msgstr "Добавить новый инструмент"
+
+msgid "Kateqoriya seçin..."
+msgstr "Выберите категорию..."
+
+msgid "Əvvəlcə kateqoriya seçin..."
+msgstr "Сначала выберите категорию..."
+
+msgid "Mövcud Alətlər"
+msgstr "Доступные инструменты"
+
+msgid "Heç bir alət tapılmadı"
+msgstr "Инструменты не найдены"
+
+msgid "Seçin..."
+msgstr "Выберите..."
+
+msgid "Hazır məhsul"
+msgstr "Готовая продукция"
+
+msgid "Xərc formu"
+msgstr "Форма расхода"
+
+msgid "Xərc formu açıldı."
+msgstr "Форма расхода открыта."
+
+msgid "Satış formu"
+msgstr "Форма продажи"
+
+msgid "Satış formu açıldı."
+msgstr "Форма продажи открыта."
+
+msgid "Tez sat"
+msgstr "Быстрая продажа"
+
+msgid "Xərci necə daxil etmək istəyirsiniz?"
+msgstr "Как вы хотите ввести расход?"
+
+msgid "Xərci əl ilə yazın və ya barkod, kod, səs ilə sürətli doldurun."
+msgstr ""
+"Введите расход вручную или используйте штрих-код, код или голос для быстрого"
+" ввода."
+
+msgid "Satışı necə daxil etmək istəyirsiniz?"
+msgstr "Как вы хотите ввести продажу?"
+
+msgid "Satışı əl ilə yazın və ya barkod, kod, səs ilə sürətli doldurun."
+msgstr ""
+"Введите продажу вручную или используйте штрих-код, код или голос для "
+"быстрого ввода."
+
+msgid "Nə əlavə edirsiniz?"
+msgstr "Что вы добавляете?"
+
+msgid "Satışı Saxla"
+msgstr "Сохранить продажу"

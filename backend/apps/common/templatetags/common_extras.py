@@ -166,6 +166,15 @@ def _convert_measure(quantity, unit, user=None):
     return _format_decimal(amount), display_unit(unit_key)
 
 
+from django.utils.translation import gettext as _T
+
+@register.filter
+def t_var(value):
+    if isinstance(value, str):
+        return _T(value)
+    return value
+
+
 @register.filter
 def display_unit(value):
     unit = str(value or "").strip()

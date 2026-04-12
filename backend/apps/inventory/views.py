@@ -5,8 +5,6 @@ import tempfile
 from datetime import timedelta
 from decimal import Decimal
 
-from openai import OpenAI
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
@@ -57,7 +55,14 @@ ADD_PAGE_CATALOG_CACHE_KEY = "inventory:add-page-catalog:v1"
 ADD_PAGE_CATALOG_CACHE_TTL = 300
 STOCKS_PAGE_CACHE_TTL = 20
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_whisper_model = None
+
+def _get_whisper_model():
+    global _whisper_model
+    if _whisper_model is None:
+        from faster_whisper import WhisperModel
+        _whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
+    return _whisper_model
 
 
 def _is_forage_item(name: str) -> bool:
@@ -143,8 +148,9 @@ def _unique_rows(rows, key_name="name"):
     return result
 
 
-def _build_add_page_catalog():
-    cached = cache.get(ADD_PAGE_CATALOG_CACHE_KEY)
+def _build_add_page_catalog(lang_code="az"):
+    cache_key = f"{ADD_PAGE_CATALOG_CACHE_KEY}:{lang_code}"
+    cached = cache.get(cache_key)
     if cached is not None:
         return cached
 
@@ -153,9 +159,9 @@ def _build_add_page_catalog():
         expense_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "subcategories": _unique_rows([
-                    {"id": sub.id, "name": sub.name}
+                    {"id": sub.id, "name": _(sub.name)}
                     for sub in category.subcategories.all()
                 ]),
             }
@@ -173,9 +179,9 @@ def _build_add_page_catalog():
         animal_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "subcategories": _unique_rows([
-                    {"id": sub.id, "name": sub.name}
+                    {"id": sub.id, "name": _(sub.name)}
                     for sub in ordered_subcategories
                 ]),
             }
@@ -193,9 +199,9 @@ def _build_add_page_catalog():
         seed_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "items": _unique_rows([
-                    {"id": item.id, "name": item.name}
+                    {"id": item.id, "name": _(item.name)}
                     for item in ordered_items
                 ]),
             }
@@ -213,9 +219,9 @@ def _build_add_page_catalog():
         tool_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "items": _unique_rows([
-                    {"id": item.id, "name": item.name}
+                    {"id": item.id, "name": _(item.name)}
                     for item in ordered_items
                 ]),
             }
@@ -233,26 +239,26 @@ def _build_add_page_catalog():
         farm_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "items": _unique_rows([
-                    {"id": item.id, "name": item.name, "unit": item.unit or ""}
+                    {"id": item.id, "name": _(item.name), "unit": item.unit or ""}
                     for item in ordered_items
                 ]),
             }
         )
     farm_categories = _unique_rows(farm_categories)
 
-    income_categories, income_category_data = _build_category_payload()
+    income_categories, income_category_data = _build_category_payload(lang_code)
     income_categories = _unique_rows([{"name": name} for name in income_categories])
     income_categories = [row["name"] for row in income_categories]
 
     form_types = [
-        {"key": "seed", "label": "Toxum"},
-        {"key": "animal", "label": "Heyvan"},
-        {"key": "tool", "label": "Alət"},
-        {"key": "farm", "label": "Təsərrüfat Məhsulları"},
-        {"key": "expense", "label": "Xərclər"},
-        {"key": "income", "label": "Gəlirlər"},
+        {"key": "seed", "label": _("Toxum")},
+        {"key": "animal", "label": _("Heyvan")},
+        {"key": "tool", "label": _("Alət")},
+        {"key": "farm", "label": _("Hazır məhsul")},
+        {"key": "expense", "label": _("Xərclər")},
+        {"key": "income", "label": _("Gəlirlər")},
     ]
     payload = {
         "form_types": form_types,
@@ -264,7 +270,7 @@ def _build_add_page_catalog():
         "income_categories": income_categories,
         "income_category_data": income_category_data,
     }
-    cache.set(ADD_PAGE_CATALOG_CACHE_KEY, payload, ADD_PAGE_CATALOG_CACHE_TTL)
+    cache.set(cache_key, payload, ADD_PAGE_CATALOG_CACHE_TTL)
     return payload
 
 
@@ -304,7 +310,7 @@ def _build_add_page_context(request=None):
         "initial_form": initial_form,
         "add_page_weekly_total": add_page_weekly_total,
         "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
-        **_build_add_page_catalog(),
+        **_build_add_page_catalog(request.LANGUAGE_CODE if request else "az"),
     }
 
 
@@ -1166,14 +1172,13 @@ def transcribe_voice_input(request):
                 temp_file.write(chunk)
             temp_path = temp_file.name
 
-        with open(temp_path, "rb") as file_obj:
-            transcript = client.audio.transcriptions.create(
-                model="gpt-4o-mini-transcribe",
-                file=file_obj,
-                language=_resolve_voice_language(request, request.POST.get("language")),
-            )
+        lang = _resolve_voice_language(request, request.POST.get("language"))
+        if lang not in {"az", "en", "ru"}:
+            lang = None
 
-        text = (transcript.text or "").strip()
+        model = _get_whisper_model()
+        segments, info = model.transcribe(temp_path, language=lang, beam_size=5)
+        text = " ".join([segment.text for segment in segments]).strip()
 
         if not text:
             return JsonResponse({"success": False, "message": "Səs tanınmadı"}, status=422)

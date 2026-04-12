@@ -334,8 +334,9 @@ def _allowed_units_for_farm(item_name: str, unit_lookup: Dict[str, str | None]) 
     return [base_unit]
 
 
-def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
-    cached = cache.get(INCOME_CATEGORY_PAYLOAD_CACHE_KEY)
+def _build_category_payload(lang_code="az") -> Tuple[List[str], Dict[str, dict]]:
+    cache_key = f"{INCOME_CATEGORY_PAYLOAD_CACHE_KEY}:{lang_code}"
+    cached = cache.get(cache_key)
     if cached is not None:
         return cached
 
@@ -346,7 +347,8 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
     type_map = _category_type_map()
 
     def add_category(name: str, items: List[str]):
-        categories.append(name)
+        translated_name = str(_(name))
+        categories.append(translated_name)
         sorted_items = _sorted_items(items)
         ctype = type_map.get(name, "other")
         item_rows = []
@@ -358,8 +360,8 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
                 unit = "ədəd"
             elif ctype == "seed":
                 unit = "kq"
-            item_rows.append({"name": item, "unit": unit})
-        payload[name] = {"type": ctype, "items": item_rows}
+            item_rows.append({"name": str(_(item)), "unit": unit})
+        payload[translated_name] = {"type": ctype, "items": item_rows}
 
     for name, items in FARM_PRODUCT_CATEGORIES:
         add_category(name, items)
@@ -369,7 +371,7 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
     add_category(OTHER_CATEGORY[0], OTHER_CATEGORY[1])
 
     result = (categories, payload)
-    cache.set(INCOME_CATEGORY_PAYLOAD_CACHE_KEY, result, INCOME_CATEGORY_PAYLOAD_TTL)
+    cache.set(cache_key, result, INCOME_CATEGORY_PAYLOAD_TTL)
     return result
 
 
@@ -718,7 +720,8 @@ def income_list(request):
         income.icon_class = _get_income_icon(income.category, income.item_name)
         income.amount_display = format_currency(income.amount, 2)
 
-    categories, category_data = _build_category_payload()
+    lang_code = (getattr(request, "LANGUAGE_CODE", "") or "az").split("-")[0]
+    categories, category_data = _build_category_payload(lang_code)
 
     context = {
         "incomes": incomes,
@@ -1055,7 +1058,8 @@ def edit_income(request, pk: int):
         messages.success(request, _("Gəlir yeniləndi."))
         return _redirect_with_refresh("incomes:income_list")
 
-    categories, category_data = _build_category_payload()
+    lang_code = (getattr(request, "LANGUAGE_CODE", "") or "az").split("-")[0]
+    categories, category_data = _build_category_payload(lang_code)
     context = {
         "income": income,
         "categories": categories,
