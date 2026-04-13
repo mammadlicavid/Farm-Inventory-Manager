@@ -53,7 +53,7 @@
         <div class="crud-form-column">
             <div class="form-container-white">
                 <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Yeni Məhsul Əlavə Et" %}</h3>
-                <form action="{% url 'farm_products:product_create' %}" method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="create" data-sync-keep-key="farm_product_form_keep_v1">
+                <form action="{% url 'farm_products:product_create' %}" method="POST" id="farm-product-form" data-sync-entity="farm_product" data-sync-action="create" data-sync-keep-key="farm_product_form_keep_v1" data-sync-direct-online="true">
                     {% csrf_token %}
                     <div class="desktop-form-grid">
                         <div class="form-group">
@@ -108,6 +108,17 @@
                             </div>
                         </div>
 
+                        <div class="form-group form-full-width" id="farm-zero-price-source-group" style="display: none;">
+                            <label>{% trans "Bu stok haradan gəlib?" %} <span class="required-star">*</span></label>
+                            <select name="zero_price_source" id="farm-zero-price-source" class="custom-input">
+                                <option value="">{% trans "Seçin" %}</option>
+                                {% for value, label in zero_price_source_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="zero-price-source-note">{% trans "Məbləğ 0 olduqda mənbəni seçin." %}</div>
+                        </div>
+
                         <div class="form-group form-full-width">
                             <label>{% trans "Əlavə Məlumat" %}</label>
                             <textarea name="additional_info" placeholder="{% trans 'Məsələn: Məhsulun vəziyyəti və s.' %}"
@@ -156,30 +167,40 @@
                             {{ product.manual_name }}
                             {% endif %}
                         </h4>
-                        <span>
-                            {% display_measure product.quantity product.unit request.user %} •
-                            {% if product.date == today %}
-                            Bu gün
-                            {% elif product.date == yesterday %}
-                            Dünən
-                            {% else %}
-                            {{ product.date|date:"d.m.Y" }}
-                            {% endif %}
-                            {% if product.additional_info %}
-                            • {{ product.additional_info }}
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div class="expense-item-amount" style="{% if product.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
-                            {% if product.quantity < 0 %}
-                            {% money product.price_display request.user "+" %}
-                            {% else %}
-                            {% money product.price_display request.user "-" %}
-                            {% endif %}
+                        <div class="item-meta-stack">
+                            <div class="item-meta-row">
+                                <span class="item-meta-label">{% trans "Miqdar" %}:</span>
+                                <span class="item-meta-value">{% display_measure product.quantity product.unit request.user %}</span>
+                            </div>
+                            <div class="item-meta-row">
+                                <span class="item-meta-label">{% trans "Tarix" %}:</span>
+                                <span class="item-meta-value">
+                                    {% if product.date == today %}
+                                    {% trans "Bu gün" %}
+                                    {% elif product.date == yesterday %}
+                                    {% trans "Dünən" %}
+                                    {% else %}
+                                    {{ product.date|date:"d.m.Y" }}
+                                    {% endif %}
+                                </span>
+                            </div>
                         </div>
-                        <div
-                            style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
+                        {% if product.additional_info %}
+                        <div class="item-meta-row item-meta-extra">
+                            <span class="item-meta-label">{% trans "Əlavə məlumat" %}:</span>
+                            <span class="item-meta-value">{{ product.additional_info }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="expense-item-side">
+                        {% if product.zero_price_source_label %}
+                        <div class="stock-source-badge">{{ product.zero_price_source_label }}</div>
+                        {% else %}
+                        <div class="expense-item-amount" style="{% if product.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
+                            {% money product.price_display request.user %}
+                        </div>
+                        {% endif %}
+                        <div class="expense-item-actions">
                             <a href="{% url 'farm_products:product_update' product.pk %}"
                                 style="text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 4px; height: 24px; line-height: 1;">
                                 <i class="fa-solid fa-pen-to-square"></i> Düzəliş
@@ -187,6 +208,7 @@
                             <form action="{% url 'farm_products:product_delete' product.pk %}" method="POST"
                                 style="display: flex; align-items: center; margin: 0; padding: 0; height: 24px;"
                                 data-sync-entity="farm_product" data-sync-action="delete" data-sync-reset="false"
+                                data-sync-direct-online="true"
                                 onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
                                 {% csrf_token %}
                                 <input type="hidden" name="record_id" value="{{ product.pk }}">
@@ -334,368 +356,6 @@
 </style>
 {{ category_item_map|json_script:"farm-category-item-map" }}
 <script>
-    const farmCategoryItemMap = JSON.parse(document.getElementById("farm-category-item-map")?.textContent || "{}");
-    const farmFilterForm = document.getElementById("farm-filter-form");
-    const farmFilterCategory = document.getElementById("farm-filter-category");
-    const farmFilterItem = document.getElementById("farm-filter-item");
-    const selectedFarmFilterItem = "{{ selected_item|default:''|escapejs }}";
-    const farmFilterSearch = farmFilterForm?.querySelector('input[name="q"]');
-    const farmFilterReset = document.getElementById("farm-filter-reset");
-    const farmCards = Array.from(document.querySelectorAll("#farm-list .expense-item-card"));
-    const farmListController = window.createProgressiveListController({ items: farmCards, batchSize: 100 });
-    const farmListEmpty = document.getElementById("farm-list-empty");
-    const farmCrudWrapper = document.querySelector(".crud-desktop-wrapper");
-    const farmListColumn = document.querySelector(".crud-list-column");
-    const farmFilterPlaceholder = document.createComment("farm-filter-placeholder");
-    let farmFilterTimer = null;
-
-    farmFilterForm?.parentNode?.insertBefore(farmFilterPlaceholder, farmFilterForm);
-
-    farmFilterForm?.addEventListener("submit", (event) => event.preventDefault());
-
-    function normalizeFarmText(value) {
-        return String(value || "").trim().toLocaleLowerCase("az");
-    }
-
-    function applyFarmFilters() {
-        const category = farmFilterCategory?.value || "";
-        const item = farmFilterItem?.value || "";
-        const movement = farmFilterForm?.querySelector('select[name="movement"]')?.value || "";
-        const dateFrom = farmFilterForm?.querySelector('input[name="date_from"]')?.value || "";
-        const dateTo = farmFilterForm?.querySelector('input[name="date_to"]')?.value || "";
-        const term = normalizeFarmText(farmFilterSearch?.value || "");
-        let visibleCount = 0;
-
-        farmCards.forEach((card) => {
-            const matchCategory = !category || (card.dataset.category || "") === category;
-            const matchItem = !item || (card.dataset.item || "") === item;
-            const matchMovement = !movement || (card.dataset.movement || "") === movement;
-            const cardDate = card.dataset.date || "";
-            const matchDateFrom = !dateFrom || (cardDate && cardDate >= dateFrom);
-            const matchDateTo = !dateTo || (cardDate && cardDate <= dateTo);
-            const matchSearch = !term || normalizeFarmText(card.dataset.search).includes(term);
-            const show = matchCategory && matchItem && matchMovement && matchDateFrom && matchDateTo && matchSearch;
-            card.dataset.filterMatch = show ? "1" : "0";
-            if (show) visibleCount += 1;
-        });
-
-        farmListController.refresh(true);
-
-        if (farmListEmpty) {
-            farmListEmpty.style.display = visibleCount === 0 ? "flex" : "none";
-        }
-    }
-
-    function updateFarmFilterItems(categoryId, selectedItemId = "") {
-        if (!farmFilterItem) return;
-        farmFilterItem.innerHTML = '<option value="">{% trans "Bütün məhsul növləri" %}</option>';
-        if (!categoryId) return;
-        const items = farmCategoryItemMap[String(categoryId)] || [];
-        items.forEach((item) => {
-            const option = document.createElement("option");
-            option.value = String(item.id);
-            option.textContent = item.name;
-            if (String(item.id) === String(selectedItemId)) {
-                option.selected = true;
-            }
-            farmFilterItem.appendChild(option);
-        });
-    }
-
-    if (farmFilterCategory) {
-        farmFilterCategory.addEventListener("change", () => {
-            updateFarmFilterItems(farmFilterCategory.value);
-            applyFarmFilters();
-        });
-        if (farmFilterCategory.value) {
-            updateFarmFilterItems(farmFilterCategory.value, selectedFarmFilterItem);
-        }
-    }
-
-    farmFilterForm?.querySelectorAll('select[name="item"], select[name="movement"], input[name="date_from"], input[name="date_to"]').forEach((control) => {
-        control.addEventListener("change", applyFarmFilters);
-    });
-
-    farmFilterSearch?.addEventListener("input", () => {
-        clearTimeout(farmFilterTimer);
-        farmFilterTimer = setTimeout(applyFarmFilters, 300);
-    });
-
-    farmFilterReset?.addEventListener("click", () => {
-        if (farmFilterCategory) farmFilterCategory.value = "";
-        if (farmFilterItem) {
-            farmFilterItem.innerHTML = '<option value="">{% trans "Bütün məhsul növləri" %}</option>';
-            farmFilterItem.value = "";
-        }
-        const movementInput = farmFilterForm?.querySelector('select[name="movement"]');
-        const dateFromInput = farmFilterForm?.querySelector('input[name="date_from"]');
-        const dateToInput = farmFilterForm?.querySelector('input[name="date_to"]');
-        if (movementInput) movementInput.value = "";
-        if (dateFromInput) dateFromInput.value = "";
-        if (dateToInput) dateToInput.value = "";
-        if (farmFilterSearch) farmFilterSearch.value = "";
-        applyFarmFilters();
-    });
-
-    function repositionFarmFilter() {
-        if (!farmFilterForm || !farmListColumn || !farmFilterPlaceholder) return;
-        if (window.innerWidth < 1024) {
-            farmCrudWrapper?.insertBefore(farmFilterForm, farmListColumn);
-        } else if (farmFilterPlaceholder.parentNode) {
-            farmFilterPlaceholder.parentNode.insertBefore(farmFilterForm, farmFilterPlaceholder.nextSibling);
-        }
-    }
-
-    window.addEventListener("resize", repositionFarmFilter);
-    repositionFarmFilter();
-    applyFarmFilters();
-
-    const FARM_PRODUCT_STATE_KEY = "farm_product_form_state_session_v1";
-    const FARM_PRODUCT_KEEP_KEY = "farm_product_form_keep_v1";
-    const unitSelect = document.getElementById("unit-select");
-    const manualGroup = document.getElementById("manual-name-group");
-    const manualInput = document.getElementById("manual-name-input");
-    const unitHidden = document.getElementById("unit-hidden");
-
-    function saveFarmProductState(categoryId, itemId) {
-        sessionStorage.setItem(FARM_PRODUCT_STATE_KEY, JSON.stringify({ categoryId, itemId }));
-    }
-
-    function loadFarmProductState() {
-        try {
-            return JSON.parse(sessionStorage.getItem(FARM_PRODUCT_STATE_KEY) || "{}");
-        } catch {
-            return {};
-        }
-    }
-
-    function clearFarmProductState() {
-        sessionStorage.removeItem(FARM_PRODUCT_STATE_KEY);
-        sessionStorage.removeItem(FARM_PRODUCT_KEEP_KEY);
-    }
-
-    function resetFarmProductOtherFields() {
-        if (manualInput) manualInput.value = "";
-        const qty = document.querySelector('input[name="quantity"]');
-        if (qty) qty.value = "";
-        const price = document.querySelector('input[name="price"]');
-        if (price) price.value = "";
-        const info = document.querySelector('textarea[name="additional_info"]');
-        if (info) info.value = "";
-    }
-
-    const weightUnitSystem = "{% unit_system request.user %}";
-    const volumeUnitSystem = "{% volume_system request.user %}";
-    const WEIGHT_UNITS = weightUnitSystem === "lb" ? ["kq", "qram"] : ["kq", "qram", "ton"];
-    const VOLUME_UNITS = volumeUnitSystem === "gallon" ? ["litr"] : ["litr", "ml"];
-    const ALL_UNITS = [...WEIGHT_UNITS, ...VOLUME_UNITS, "ədəd", "dəstə", "bağlama"];
-    const KG_PER_POUND = 0.45359237;
-    const GRAMS_PER_OUNCE = 28.349523125;
-    const LITERS_PER_GALLON = 3.785411784;
-    const UNIT_LABELS = {
-        kq: weightUnitSystem === "lb" ? "pound" : "kq",
-        ton: "ton",
-        qram: weightUnitSystem === "lb" ? "ounce" : "qram",
-        litr: volumeUnitSystem === "gallon" ? "gallon" : "litr",
-        ml: "millilitr",
-        "ədəd": "ədəd",
-        "dəstə": "dəstə",
-        "bağlama": "bağlama",
-    };
-
-    function applyUnitOptions(allowed, defaultValue) {
-        if (!unitSelect) return;
-        unitSelect.innerHTML = "";
-        allowed.forEach(value => {
-            const option = document.createElement("option");
-            option.value = value;
-            option.textContent = UNIT_LABELS[value] || value;
-            unitSelect.appendChild(option);
-        });
-        if (defaultValue && allowed.includes(defaultValue)) {
-            unitSelect.value = defaultValue;
-        } else if (allowed.length) {
-            unitSelect.value = allowed[0];
-        }
-    }
-
-    function resetUnitSelect(message) {
-        if (!unitSelect) return;
-        unitSelect.innerHTML = "";
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = message;
-        option.selected = true;
-        unitSelect.appendChild(option);
-        unitSelect.disabled = true;
-        unitSelect.name = "unit_disabled";
-        if (unitHidden) {
-            unitHidden.name = "unit_disabled";
-            unitHidden.value = "";
-        }
-    }
-
-    function setUnitForItem(unitValue, isLocked, allowedUnits) {
-        if (!unitSelect) return;
-        if (allowedUnits && allowedUnits.length) {
-            applyUnitOptions(allowedUnits, unitValue);
-        } else if (unitValue) {
-            unitSelect.value = unitValue;
-        }
-        unitSelect.disabled = isLocked;
-        if (unitHidden) {
-            if (isLocked) {
-                unitSelect.name = "unit_disabled";
-                unitHidden.name = "unit";
-                unitHidden.value = unitSelect.value || unitValue || "";
-            } else {
-                unitSelect.name = "unit";
-                unitHidden.name = "unit_disabled";
-                unitHidden.value = "";
-            }
-        }
-        if (!unitSelect.options.length && allowedUnits && allowedUnits.length) {
-            applyUnitOptions(allowedUnits, unitValue);
-        }
-    }
-
-    function handleItemSelection(option) {
-        const itemName = option?.dataset?.name || "";
-        const itemUnit = option?.dataset?.unit || "";
-        const isOther = itemName === "Digər" || !itemUnit;
-        let allowed = ALL_UNITS;
-        let lockUnit = false;
-
-        const isForage = ["yonca", "koronilla", "seradella"].includes(itemName.toLowerCase());
-        if (isForage) {
-            allowed = ["kq", "bağlama"];
-        } else if (itemUnit === "kq") {
-            allowed = [...WEIGHT_UNITS];
-        } else if (itemUnit === "litr") {
-            allowed = [...VOLUME_UNITS];
-        } else if (itemUnit) {
-            allowed = [itemUnit];
-            lockUnit = true;
-        }
-
-        if (isOther) {
-            manualGroup.style.display = "block";
-            manualInput.required = true;
-            setUnitForItem("kq", false, ALL_UNITS);
-        } else {
-            manualGroup.style.display = "none";
-            manualInput.required = false;
-            manualInput.value = "";
-            setUnitForItem(itemUnit, lockUnit, allowed);
-        }
-    }
-
-    let pendingItemId = null;
-
-    function populateFarmItems(categoryId, selectedItemId = "") {
-        const itemSelect = document.getElementById("item-select");
-        if (!itemSelect) return;
-        const items = farmCategoryItemMap[String(categoryId)] || [];
-        itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Məhsul seçin" %}</option>';
-        items.forEach((item) => {
-            const option = document.createElement("option");
-            option.value = String(item.id);
-            option.textContent = item.name;
-            option.dataset.name = item.name;
-            option.dataset.unit = item.unit || "";
-            if (String(item.id) === String(selectedItemId)) {
-                option.selected = true;
-            }
-            itemSelect.appendChild(option);
-        });
-        itemSelect.disabled = false;
-    }
-
-    document.getElementById("category-select").addEventListener("change", function () {
-        const categoryId = this.value;
-        const categoryText = this.options[this.selectedIndex]?.text || "";
-        const itemSelect = document.getElementById("item-select");
-        const itemGroup = document.getElementById("item-field-group");
-
-        if (categoryText.startsWith("Digər")) {
-            itemGroup.style.display = "none";
-            itemSelect.required = false;
-            itemSelect.disabled = true;
-            itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Alt kateqoriya yoxdur" %}</option>';
-            manualGroup.style.display = "block";
-            manualInput.required = true;
-            resetFarmProductOtherFields();
-            setUnitForItem("kq", false, ALL_UNITS);
-            saveFarmProductState(categoryId, "");
-            return;
-        }
-
-        itemGroup.style.display = "block";
-        itemSelect.required = true;
-        populateFarmItems(categoryId, pendingItemId);
-        pendingItemId = null;
-        resetFarmProductOtherFields();
-        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-        if (selectedOption && selectedOption.value) {
-            handleItemSelection(selectedOption);
-        } else {
-            manualGroup.style.display = "none";
-            manualInput.required = false;
-            resetUnitSelect('{% trans "Əvvəlcə məhsul seçin" %}');
-        }
-        saveFarmProductState(categoryId, itemSelect.value || "");
-    });
-
-    document.getElementById("item-select").addEventListener("change", function () {
-        const categoryId = document.getElementById("category-select").value;
-        saveFarmProductState(categoryId, this.value);
-        const selectedOption = this.options[this.selectedIndex];
-        handleItemSelection(selectedOption);
-    });
-
-    const farmProductForm = document.getElementById("farm-product-form");
-    if (farmProductForm) {
-        farmProductForm.addEventListener("submit", () => {
-            const quantityInput = document.querySelector('input[name="quantity"]');
-            if (quantityInput && unitSelect && !unitSelect.disabled) {
-                const value = parseFloat(quantityInput.value || "");
-                if (Number.isFinite(value)) {
-                    if (weightUnitSystem === "lb") {
-                        if (unitSelect.value === "kq") {
-                            quantityInput.value = String(Number((value * KG_PER_POUND).toFixed(4)));
-                        } else if (unitSelect.value === "qram") {
-                            quantityInput.value = String(Number((value * GRAMS_PER_OUNCE).toFixed(4)));
-                        }
-                    }
-                    if (volumeUnitSystem === "gallon" && unitSelect.value === "litr") {
-                        quantityInput.value = String(Number((parseFloat(quantityInput.value || "0") * LITERS_PER_GALLON).toFixed(4)));
-                    }
-                }
-            }
-            sessionStorage.setItem(FARM_PRODUCT_KEEP_KEY, "1");
-            const categoryId = document.getElementById("category-select").value;
-            const itemId = document.getElementById("item-select")?.value || "";
-            saveFarmProductState(categoryId, itemId);
-        });
-    }
-
-    (function restoreFarmProductState() {
-        const saved = loadFarmProductState();
-        if (sessionStorage.getItem(FARM_PRODUCT_KEEP_KEY) !== "1" || !saved.categoryId) {
-            clearFarmProductState();
-            return;
-        }
-        pendingItemId = saved.itemId || null;
-        const categorySelect = document.getElementById("category-select");
-        categorySelect.value = saved.categoryId;
-        categorySelect.dispatchEvent(new Event("change"));
-        sessionStorage.removeItem(FARM_PRODUCT_KEEP_KEY);
-    })();
-
-    window.addEventListener("pagehide", () => {
-        if (sessionStorage.getItem(FARM_PRODUCT_KEEP_KEY) !== "1") {
-            clearFarmProductState();
-        }
-    });
+  {% include 'scripts/farm_products/farm_product_list.js' %}
 </script>
 {% endblock %}

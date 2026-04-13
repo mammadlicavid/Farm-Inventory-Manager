@@ -10,6 +10,7 @@
       "Profile": "Profile",
       "Profilee": "Profile",
       "Parametrlər": "Settings",
+      "Dil": "Language",
       "Səs dili": "Voice language",
       "Sistem dili": "System language",
       "Voice input dili": "Voice input language",
@@ -22,6 +23,7 @@
       "Bulud": "Cloud",
       "Dashboard": "Dashboard",
       "Ana Səhifə": "Home",
+      "Təqvim": "Calendar",
       "Stok": "Stock",
       "Əlavə Et": "Add",
       "Barkod Skan Et": "Scan Barcode",
@@ -76,15 +78,52 @@
       "Gözləyən əməliyyat yoxdur.": "No pending operations.",
       "Hələ sinxronizasiya tarixçəsi yoxdur.": "No sync history yet.",
       "Hesabatlar": "Reports",
+      "Maliyyə və tərəfdaşlar": "Finance and partners",
+      "Əlavə iş bölmələri": "Additional work areas",
+      "Hesabat hazırlamaq və təchizatçı siyahısını idarə etmək üçün bu bölmələri açın.": "Open these sections to prepare reports and manage your supplier list.",
       "Bu həftə ümumi gəlir": "Total income this week",
       "Bu həftə ümumi xərc": "Total expense this week",
       "Bu həftə": "This week",
       "Yeni məhsul": "New product",
       "Qazanc": "Profit",
       "Maliyyə Hesabatları": "Financial Reports",
+      "Ferma maliyyəsi": "Farm finance",
       "Maliyyə və statistik məlumatlar": "Financial and statistical information",
+      "PDF yüklə": "Download PDF",
+      "Hesabat növü": "Report type",
+      "Başlanğıc tarix": "Start date",
+      "Bitmə tarix": "End date",
+      "Hesabatı yenilə": "Refresh report",
+      "Hazır xülasə": "Quick summary",
+      "Bu hesabat nə deyir?": "What does this report say?",
       "Ehtiyat Xəbərdarlığı": "Stock Alert",
+      "Ümumi diqqət": "Total attention",
+      "Dashboard-da görünən ümumi say": "Total shown on the dashboard",
+      "Kritik və azalan stoklar": "Critical and low stock",
+      "Əl ilə əlavə etdiyiniz gözləyən qeydlər": "Pending records you added manually",
+      "Xatırlatmalar və ehtiyat xəbərdarlıqları": "Reminders and stock alerts",
       "Ümumi Xərc": "Total Expense",
+      "Ümumi gəlir": "Total income",
+      "Ümumi xərc": "Total expense",
+      "Xalis qazanc": "Net profit",
+      "Hesablanan vergi": "Calculated tax",
+      "Aktiv gün": "Active days",
+      "Müsbət period": "Positive periods",
+      "Ödəniş gücü": "Coverage ratio",
+      "Vergi qənaəti": "Tax savings",
+      "Vergi bloku": "Tax section",
+      "Satış üzrə vergi görünüşü": "Tax view for sales",
+      "Standart ƏDV arayışı": "Standard VAT reference",
+      "Güzəşt olmasaydı satışa tətbiq edilən ümumi dərəcə": "Overall rate that would apply to sales without the exemption",
+      "Güzəşt olmasaydı ƏDV": "VAT without exemption",
+      "Yalnız müqayisə üçün arayış məbləği": "Reference amount for comparison only",
+      "Vergi qaydası": "Tax rule",
+      "Torpaq vergisi": "Land tax",
+      "Ayrı hesablanır": "Calculated separately",
+      "Məhsul müqayisəsi": "Product comparison",
+      "Məhsul növlərinə görə gəlir": "Income by product type",
+      "Müqayisə qrafiki": "Comparison chart",
+      "Tarix üzrə gəlir, xərc və qazanc": "Income, expense and profit by date",
       "Aylıq Xərc": "Monthly Expense",
       "Xərclərin Bölgüsü": "Expense Distribution",
       "Aylıq Tendensiya": "Monthly Trend",
@@ -134,24 +173,53 @@
       "Yeni Xərc Əlavə Et": "Add New Expense",
       "Son Xərclər": "Recent Expenses",
       "Xərc Əlavə Et": "Add Expense",
+      "Xərci Düzəlt": "Edit Expense",
+      "Xərc Məlumatlarını Yenilə": "Update Expense Information",
+      "Xərcin Adı (Digər)": "Expense name (Other)",
+      "Xərc adı (Digər)": "Expense name (Other)",
+      "Xərcin Növü (Digər)": "Expense type (Other)",
+      "Xərcin adını daxil edin": "Enter the expense name",
+      "Xərcin növünü daxil edin": "Enter the expense type",
+      "Hələ heç bir xərc qeydə alınmayıb": "No expense has been recorded yet",
+      "Filterə uyğun xərc tapılmadı": "No expense found for this filter",
+      "Hələ heç bir gəlir qeydə alınmayıb": "No income has been recorded yet",
+      "Filterə uyğun gəlir tapılmadı": "No income found for this filter",
       "Tez Xərc": "Quick Expense",
       "Tez Gəlir": "Quick Income",
+      "Məhsul Sat": "Sell Product",
       "Bir toxunuşla xərc": "One-tap expense",
       "Bir toxunuşla gəlir": "One-tap income",
+      "Bir toxunuşla satış yaz": "Add sale in one tap",
       "Xüsusi məbləğ": "Custom amount",
+      "Məbləği özünüz yazın": "Enter amount manually",
       "Yeni": "New",
       "Şablonlar": "Templates",
       "Şablon axtar...": "Search template...",
+      "Satış şablonu axtar...": "Search sale template...",
+      "Son istifadə olunan satışlar": "Recently used sales",
+      "Bal satışı": "Honey sale",
+      "Yumurta satışı": "Egg sale",
+      "Süd satışı": "Milk sale",
+      "İnək südü": "Cow milk",
+      "Toyuq yumurtası": "Chicken eggs",
+      "Bal": "Honey",
+      "Kartof": "Potato",
+      "Xüsusi gəlir": "Custom income",
       "Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək.": "No templates yet. They will appear here after you add an expense.",
       "Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək.": "No income templates yet. They will appear here after you add income.",
       "Daxil ol": "Sign in",
       "Qeydiyyat": "Registration",
       "Hesab yarat": "Create account",
+      "Hesabınız yoxdur?": "Don't have an account?",
+      "Artıq hesabınız var?": "Already have an account?",
       "İstifadəçi adı": "Username",
       "Şifrə": "Password",
       "Ferma idarəsi — Daxil ol": "Farm Management — Sign in",
       "Ferma idarəsi — Qeydiyyat": "Farm Management — Sign up",
+      "Ferma idarəsi - Qeydiyyat": "Farm Management — Sign up",
       "Toxumlar, heyvanlar, alətlər və xərclər — hamısı bir yerdə.": "Seeds, animals, tools and expenses — all in one place.",
+      "Yeni hesabınızı bir neçə dəqiqəyə tamamlayın": "Complete your new account in a few minutes",
+      "Soyaddan başqa bütün sahələr məcburidir.": "All fields except surname are required.",
       "Yeni hesab yaradın. Daha sonra admin təsdiqi ilə aktiv olacaq.": "Create a new account. It will be activated after admin approval.",
       "Davam etmək üçün məlumatları daxil edin": "Enter your details to continue",
       "Məlumatları doldurun": "Fill in the information",
@@ -159,8 +227,10 @@
       "Alt Kateqoriya": "Subcategory",
       "Heyvan Növü": "Animal Type",
       "Kateqoriya seçin": "Select category",
+      "Ana kateqoriya seçin": "Select main category",
       "Alt kateqoriya seçin": "Select subcategory",
       "Heyvan növünü seçin": "Select animal type",
+      "Məhsul növü seçin": "Select product type",
       "Əvvəlcə ana kateqoriya seçin": "Select the main category first",
       "Əvvəlcə kateqoriya seçin": "Select a category first",
       "Çəki vahidi": "Weight unit",
@@ -202,6 +272,12 @@
       "Ölçü Vahidi": "Unit",
       "Məbləğ": "Amount",
       "Məbləğ (₼)": "Amount (₼)",
+      "Bu stok haradan gəlib?": "Where did this stock come from?",
+      "Məbləğ 0 olduqda mənbəni seçin.": "Select the source when the amount is 0.",
+      "Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin.": "Select where this stock came from when the amount is 0.",
+      "Təsərrüfat daxilində yaranıb": "Produced on the farm",
+      "Əvvəlcədən məndə var idi": "I already had it",
+      "Pulsuz gəlib / hədiyyədir": "Received for free / gift",
       "Cəmi Məbləğ (₼)": "Total Amount (₼)",
       "Çəki": "Weight",
       "Çəki (kq)": "Weight (kg)",
@@ -578,6 +654,65 @@
       "Bu gün": "Today",
       "Sabah": "Tomorrow",
       "Dünən": "Yesterday",
+      "Gündəlik iş axını": "Daily workflow",
+      "Hansı gün nə etdiyinizi bir ekranda görün: stok əlavələri, azalmalar, satışlar və xərclər hər gün üzrə toplanır.": "See what you did on each day on one screen: stock additions, reductions, sales and expenses are grouped by day.",
+      "Ümumi qeyd": "Total records",
+      "Bu ay gəlir": "Income this month",
+      "Bu ay xərc": "Expense this month",
+      "Bu ay qeydi olan günlərin sayı": "Number of days with records this month",
+      "Stok, satış və xərc hərəkətləri": "Stock, sales and expense movements",
+      "Satış və digər gəlirlər": "Sales and other income",
+      "Alışlar və gündəlik xərclər": "Purchases and daily expenses",
+      "Aylıq görünüş": "Monthly view",
+      "Hər gün üzrə nə etdiyiniz görünür": "What you did each day is shown",
+      "Ay və il seçin": "Select month and year",
+      "Keç": "Go",
+      "Əvvəlki ay": "Previous month",
+      "Növbəti ay": "Next month",
+      "Stok əlavə": "Stock added",
+      "Qeyd yoxdur": "No record",
+      "Seçilmiş gün": "Selected day",
+      "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək.": "Today's work is collected here. New records you add will appear in this list.",
+      "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür.": "All stock, sales and expense movements for this day are shown here.",
+      "Qeyd sayı": "Record count",
+      "Əməliyyat": "Operation",
+      "Bölmə": "Section",
+      "Bu gün üçün qeyd yoxdur": "There is no record for this day",
+      "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin.": "Choose another day from the calendar or add a new stock, sale or expense.",
+      "daha": "more",
+      "Toxumlar bölməsi": "Seeds section",
+      "Heyvanlar bölməsi": "Animals section",
+      "Alətlər bölməsi": "Tools section",
+      "Hazır məhsullar bölməsi": "Finished products section",
+      "Gəlir səhifəsi": "Income page",
+      "Xərc səhifəsi": "Expense page",
+      "Stok hərəkəti": "Stock movement",
+      "Yanvar": "January",
+      "Fevral": "February",
+      "Mart": "March",
+      "Aprel": "April",
+      "May": "May",
+      "İyun": "June",
+      "İyul": "July",
+      "Avqust": "August",
+      "Sentyabr": "September",
+      "Oktyabr": "October",
+      "Noyabr": "November",
+      "Dekabr": "December",
+      "Bazar ertəsi": "Monday",
+      "Çərşənbə axşamı": "Tuesday",
+      "Çərşənbə": "Wednesday",
+      "Cümə axşamı": "Thursday",
+      "Cümə": "Friday",
+      "Şənbə": "Saturday",
+      "Bazar": "Sunday",
+      "B.e.": "Mon",
+      "Ç.a.": "Tue",
+      "Ç.": "Wed",
+      "C.a.": "Thu",
+      "C.": "Fri",
+      "Ş.": "Sat",
+      "B.": "Sun",
       "Az qalıb": "Running low",
       "Kritik": "Critical"
     },
@@ -586,6 +721,7 @@
       "Menyu": "Меню",
       "Profil": "Профиль",
       "Parametrlər": "Настройки",
+      "Dil": "Язык",
       "Səs dili": "Язык голоса",
       "Sistem dili": "Системный язык",
       "Voice input dili": "Язык голосового ввода",
@@ -597,6 +733,7 @@
       "Aktiv": "Активно",
       "Bulud": "Облако",
       "Ana Səhifə": "Главная",
+      "Təqvim": "Календарь",
       "Stok": "Склад",
       "Əlavə Et": "Добавить",
       "Barkod Skan Et": "Сканировать штрихкод",
@@ -651,13 +788,50 @@
       "Gözləyən əməliyyat yoxdur.": "Нет ожидающих операций.",
       "Hələ sinxronizasiya tarixçəsi yoxdur.": "История синхронизации пока отсутствует.",
       "Hesabatlar": "Отчеты",
+      "Maliyyə və tərəfdaşlar": "Финансы и партнеры",
+      "Əlavə iş bölmələri": "Дополнительные разделы",
+      "Hesabat hazırlamaq və təchizatçı siyahısını idarə etmək üçün bu bölmələri açın.": "Откройте эти разделы для подготовки отчетов и управления списком поставщиков.",
       "Bu həftə ümumi gəlir": "Общий доход за эту неделю",
       "Bu həftə ümumi xərc": "Общий расход за эту неделю",
       "Bu həftə": "На этой неделе",
       "Yeni məhsul": "Новый продукт",
       "Qazanc": "Прибыль",
       "Maliyyə Hesabatları": "Финансовые отчеты",
+      "Ferma maliyyəsi": "Финансы фермы",
       "Ehtiyat Xəbərdarlığı": "Предупреждение о запасах",
+      "PDF yüklə": "Скачать PDF",
+      "Hesabat növü": "Тип отчета",
+      "Başlanğıc tarix": "Дата начала",
+      "Bitmə tarix": "Дата окончания",
+      "Hesabatı yenilə": "Обновить отчет",
+      "Hazır xülasə": "Краткая сводка",
+      "Bu hesabat nə deyir?": "Что показывает этот отчет?",
+      "Ümumi diqqət": "Всего требует внимания",
+      "Dashboard-da görünən ümumi say": "Общее число на главной странице",
+      "Kritik və azalan stoklar": "Критические и снижающиеся остатки",
+      "Əl ilə əlavə etdiyiniz gözləyən qeydlər": "Ожидающие записи, добавленные вручную",
+      "Xatırlatmalar və ehtiyat xəbərdarlıqları": "Напоминания и предупреждения о запасах",
+      "Ümumi gəlir": "Общий доход",
+      "Ümumi xərc": "Общий расход",
+      "Xalis qazanc": "Чистая прибыль",
+      "Hesablanan vergi": "Рассчитанный налог",
+      "Aktiv gün": "Активные дни",
+      "Müsbət period": "Положительные периоды",
+      "Ödəniş gücü": "Коэффициент покрытия",
+      "Vergi qənaəti": "Налоговая экономия",
+      "Vergi bloku": "Налоговый блок",
+      "Satış üzrə vergi görünüşü": "Налоговый вид по продажам",
+      "Standart ƏDV arayışı": "Стандартный ориентир НДС",
+      "Güzəşt olmasaydı satışa tətbiq edilən ümumi dərəcə": "Общая ставка, которая применялась бы к продажам без льготы",
+      "Güzəşt olmasaydı ƏDV": "НДС без льготы",
+      "Yalnız müqayisə üçün arayış məbləği": "Справочная сумма только для сравнения",
+      "Vergi qaydası": "Налоговое правило",
+      "Torpaq vergisi": "Земельный налог",
+      "Ayrı hesablanır": "Рассчитывается отдельно",
+      "Məhsul müqayisəsi": "Сравнение продуктов",
+      "Məhsul növlərinə görə gəlir": "Доход по видам продуктов",
+      "Müqayisə qrafiki": "Сравнительный график",
+      "Tarix üzrə gəlir, xərc və qazanc": "Доход, расход и прибыль по дате",
       "Ümumi Xərc": "Общий расход",
       "Aylıq Xərc": "Месячный расход",
       "Xərclərin Bölgüsü": "Распределение расходов",
@@ -703,25 +877,58 @@
       "Yeni Xərc Əlavə Et": "Добавить новый расход",
       "Son Xərclər": "Последние расходы",
       "Xərc Əlavə Et": "Добавить расход",
+      "Xərci Düzəlt": "Редактировать расход",
+      "Xərc Məlumatlarını Yenilə": "Обновить данные расхода",
+      "Xərcin Adı (Digər)": "Название расхода (Другое)",
+      "Xərc adı (Digər)": "Название расхода (Другое)",
+      "Xərcin Növü (Digər)": "Тип расхода (Другое)",
+      "Xərcin adını daxil edin": "Введите название расхода",
+      "Xərcin növünü daxil edin": "Введите тип расхода",
+      "Hələ heç bir xərc qeydə alınmayıb": "Расходы еще не записаны",
+      "Filterə uyğun xərc tapılmadı": "Расходов для этого фильтра не найдено",
+      "Hələ heç bir gəlir qeydə alınmayıb": "Доходы еще не записаны",
+      "Filterə uyğun gəlir tapılmadı": "Доходов для этого фильтра не найдено",
       "Tez Xərc": "Быстрый расход",
       "Tez Gəlir": "Быстрый доход",
+      "Məhsul Sat": "Продать товар",
       "Bir toxunuşla xərc": "Расход в одно касание",
       "Bir toxunuşla gəlir": "Доход в одно касание",
+      "Bir toxunuşla satış yaz": "Продажа в одно касание",
       "Xüsusi məbləğ": "Своя сумма",
+      "Məbləği özünüz yazın": "Введите сумму вручную",
       "Yeni": "Новый",
       "Şablonlar": "Шаблоны",
       "Şablon axtar...": "Поиск шаблона...",
+      "Satış şablonu axtar...": "Поиск шаблона продажи...",
+      "Son istifadə olunan satışlar": "Недавно использованные продажи",
+      "Bal satışı": "Продажа меда",
+      "Yumurta satışı": "Продажа яиц",
+      "Süd satışı": "Продажа молока",
+      "İnək südü": "Коровье молоко",
+      "Toyuq yumurtası": "Куриные яйца",
+      "Bal": "Мед",
+      "Kartof": "Картофель",
+      "Xüsusi gəlir": "Специальный доход",
       "Daxil ol": "Войти",
       "Qeydiyyat": "Регистрация",
       "Hesab yarat": "Создать аккаунт",
+      "Hesabınız yoxdur?": "Нет аккаунта?",
+      "Artıq hesabınız var?": "У вас уже есть аккаунт?",
       "İstifadəçi adı": "Имя пользователя",
       "Şifrə": "Пароль",
+      "Ferma idarəsi — Daxil ol": "Управление фермой — Вход",
+      "Ferma idarəsi — Qeydiyyat": "Управление фермой — Регистрация",
+      "Ferma idarəsi - Qeydiyyat": "Управление фермой — Регистрация",
+      "Yeni hesabınızı bir neçə dəqiqəyə tamamlayın": "Завершите создание нового аккаунта за несколько минут",
+      "Soyaddan başqa bütün sahələr məcburidir.": "Все поля, кроме фамилии, обязательны.",
       "Ana Kateqoriya": "Основная категория",
       "Alt Kateqoriya": "Подкатегория",
       "Heyvan Növü": "Тип животного",
       "Kateqoriya seçin": "Выберите категорию",
+      "Ana kateqoriya seçin": "Выберите основную категорию",
       "Alt kateqoriya seçin": "Выберите подкатегорию",
       "Heyvan növünü seçin": "Выберите вид животного",
+      "Məhsul növü seçin": "Выберите тип продукта",
       "Əvvəlcə kateqoriya seçin": "Сначала выберите категорию",
       "Çəki vahidi": "Единица веса",
       "Çəkini necə göstərək": "Как показывать вес",
@@ -757,6 +964,12 @@
       "Ölçü Vahidi": "Единица",
       "Məbləğ": "Сумма",
       "Məbləğ (₼)": "Сумма (₼)",
+      "Bu stok haradan gəlib?": "Откуда появился этот запас?",
+      "Məbləğ 0 olduqda mənbəni seçin.": "Выберите источник, если сумма равна 0.",
+      "Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin.": "Выберите, откуда появился этот запас, если сумма равна 0.",
+      "Təsərrüfat daxilində yaranıb": "Произведено в хозяйстве",
+      "Əvvəlcədən məndə var idi": "У меня уже было",
+      "Pulsuz gəlib / hədiyyədir": "Получено бесплатно / в подарок",
       "Tarix": "Дата",
       "Çəki": "Вес",
       "Çəki (kq)": "Вес (кг)",
@@ -1079,6 +1292,65 @@
       "Bu gün": "Сегодня",
       "Sabah": "Завтра",
       "Dünən": "Вчера",
+      "Gündəlik iş axını": "Ежедневный рабочий поток",
+      "Hansı gün nə etdiyinizi bir ekranda görün: stok əlavələri, azalmalar, satışlar və xərclər hər gün üzrə toplanır.": "Смотрите на одном экране, что вы делали в каждый день: пополнения, уменьшения, продажи и расходы собраны по дням.",
+      "Ümumi qeyd": "Всего записей",
+      "Bu ay gəlir": "Доход за месяц",
+      "Bu ay xərc": "Расход за месяц",
+      "Bu ay qeydi olan günlərin sayı": "Количество дней с записями в этом месяце",
+      "Stok, satış və xərc hərəkətləri": "Движения запасов, продаж и расходов",
+      "Satış və digər gəlirlər": "Продажи и другие доходы",
+      "Alışlar və gündəlik xərclər": "Покупки и ежедневные расходы",
+      "Aylıq görünüş": "Вид за месяц",
+      "Hər gün üzrə nə etdiyiniz görünür": "Показано, что вы сделали по дням",
+      "Ay və il seçin": "Выберите месяц и год",
+      "Keç": "Перейти",
+      "Əvvəlki ay": "Предыдущий месяц",
+      "Növbəti ay": "Следующий месяц",
+      "Stok əlavə": "Добавление запаса",
+      "Qeyd yoxdur": "Нет записи",
+      "Seçilmiş gün": "Выбранный день",
+      "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək.": "Сегодняшние дела собраны здесь. Новые записи будут появляться в этом списке.",
+      "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür.": "Здесь показаны все движения запасов, продаж и расходов за этот день.",
+      "Qeyd sayı": "Количество записей",
+      "Əməliyyat": "Операция",
+      "Bölmə": "Раздел",
+      "Bu gün üçün qeyd yoxdur": "На этот день записей нет",
+      "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin.": "Выберите другой день в календаре или добавьте новый запас, продажу или расход.",
+      "daha": "еще",
+      "Toxumlar bölməsi": "Раздел семян",
+      "Heyvanlar bölməsi": "Раздел животных",
+      "Alətlər bölməsi": "Раздел инструментов",
+      "Hazır məhsullar bölməsi": "Раздел готовой продукции",
+      "Gəlir səhifəsi": "Страница доходов",
+      "Xərc səhifəsi": "Страница расходов",
+      "Stok hərəkəti": "Движение запаса",
+      "Yanvar": "Январь",
+      "Fevral": "Февраль",
+      "Mart": "Март",
+      "Aprel": "Апрель",
+      "May": "Май",
+      "İyun": "Июнь",
+      "İyul": "Июль",
+      "Avqust": "Август",
+      "Sentyabr": "Сентябрь",
+      "Oktyabr": "Октябрь",
+      "Noyabr": "Ноябрь",
+      "Dekabr": "Декабрь",
+      "Bazar ertəsi": "Понедельник",
+      "Çərşənbə axşamı": "Вторник",
+      "Çərşənbə": "Среда",
+      "Cümə axşamı": "Четверг",
+      "Cümə": "Пятница",
+      "Şənbə": "Суббота",
+      "Bazar": "Воскресенье",
+      "B.e.": "Пн",
+      "Ç.a.": "Вт",
+      "Ç.": "Ср",
+      "C.a.": "Чт",
+      "C.": "Пт",
+      "Ş.": "Сб",
+      "B.": "Вс",
       "Az qalıb": "Заканчивается",
       "Kritik": "Критично"
     }
@@ -1091,6 +1363,10 @@
       [/^Tamamlanmış \((\d+)\)$/, "Completed ($1)"],
       [/^Məsələn: (.+)$/, "Example: $1"],
       [/^Miqdar \((.+)\)$/, "Quantity ($1)"],
+      [/^(\d+) əlavə$/, "$1 added"],
+      [/^(\d+) satış$/, "$1 sales"],
+      [/^(\d+) xərc$/, "$1 expenses"],
+      [/^(\d+) azalma$/, "$1 reductions"],
       [/^Xoş gəlmisiniz, (.+)!$/, "Welcome, $1!"],
       [/^(\d+) məhsul kritik səviyyədə!$/, "$1 products are at a critical level!"],
       [/^(\d+) dəq əvvəl$/, "$1 min ago"],
@@ -1112,6 +1388,10 @@
       [/^Tamamlanmış \((\d+)\)$/, "Завершенные ($1)"],
       [/^Məsələn: (.+)$/, "Например: $1"],
       [/^Miqdar \((.+)\)$/, "Количество ($1)"],
+      [/^(\d+) əlavə$/, "$1 добавлено"],
+      [/^(\d+) satış$/, "$1 продаж"],
+      [/^(\d+) xərc$/, "$1 расходов"],
+      [/^(\d+) azalma$/, "$1 уменьшений"],
       [/^Xoş gəlmisiniz, (.+)!$/, "Добро пожаловать, $1!"],
       [/^(\d+) məhsul kritik səviyyədə!$/, "$1 товаров на критическом уровне!"],
       [/^(\d+) dəq əvvəl$/, "$1 мин назад"],
@@ -1138,6 +1418,10 @@
   const sortedExactEntries = exactEntries
     .filter(([source]) => source && source.length >= 3)
     .sort((left, right) => right[0].length - left[0].length);
+  const inlineReplaceEntries = sortedExactEntries.map(([source, target]) => ({
+    regex: buildInlineReplaceRegex(source),
+    target,
+  }));
   const valueCache = new Map();
   const inlineValueCache = new Map();
 
@@ -1161,16 +1445,35 @@
     return new RegExp(escaped, "giu");
   }
 
+  function translateWithDjangoCatalog(value) {
+    if (!value || typeof window.gettext !== "function") return value;
+    try {
+      const translated = window.gettext(value);
+      return translated || value;
+    } catch (error) {
+      return value;
+    }
+  }
+
   function translateValue(value) {
     if (!value) return value;
     if (valueCache.has(value)) return valueCache.get(value);
     let translated = value;
-    if (activeExact[value]) return activeExact[value];
+    if (activeExact[value]) {
+      translated = activeExact[value];
+      valueCache.set(value, translated);
+      return translated;
+    }
     const normalizedValue = normalizeLookupValue(value);
     if (normalizedExact.has(normalizedValue)) {
       translated = normalizedExact.get(normalizedValue);
       valueCache.set(value, translated);
       return translated;
+    }
+    const catalogTranslated = translateWithDjangoCatalog(value);
+    if (catalogTranslated && catalogTranslated !== value) {
+      valueCache.set(value, catalogTranslated);
+      return catalogTranslated;
     }
     for (const [pattern, replacement] of activePatterns) {
       if (pattern.test(value)) {
@@ -1183,20 +1486,25 @@
     return translated;
   }
 
+  function shouldAttemptInlineTranslation(value) {
+    if (!value) return false;
+    return /[\d:(),/%+|/-]/.test(value) || value.includes("•") || value.includes("—");
+  }
+
   function translateInlineValue(value) {
     if (!value) return value;
     if (inlineValueCache.has(value)) return inlineValueCache.get(value);
     const direct = translateValue(value);
-    const hasExactMatch = normalizedExact.has(normalizeLookupValue(value));
-    if (hasExactMatch || direct !== value) {
+    const normalizedValue = normalizeLookupValue(value);
+    const hasExactMatch = normalizedExact.has(normalizedValue);
+    if (hasExactMatch || direct !== value || !shouldAttemptInlineTranslation(value)) {
       inlineValueCache.set(value, direct);
       return direct;
     }
 
     let result = value;
 
-    sortedExactEntries.forEach(([source, target]) => {
-      const regex = buildInlineReplaceRegex(source);
+    inlineReplaceEntries.forEach(({ regex, target }) => {
       result = result.replace(regex, (match, prefix, token) => {
         if (typeof token === "string") return `${prefix || ""}${target}`;
         return target;
@@ -1247,6 +1555,8 @@
     if (translated && translated !== value) option.textContent = translated;
   }
 
+  const ATTRIBUTE_TRANSLATION_SELECTOR = "[placeholder],[title],[aria-label],input[type='submit'],input[type='button'],option";
+
   function translateTree(root) {
     if (!root) return;
     if (root.nodeType === Node.ELEMENT_NODE) {
@@ -1267,8 +1577,10 @@
     const textNodes = [];
     while (walker.nextNode()) textNodes.push(walker.currentNode);
     textNodes.forEach(translateTextNode);
-    root.querySelectorAll?.("*").forEach(translateAttributes);
-    root.querySelectorAll?.("option").forEach(translateOptionElement);
+    root.querySelectorAll?.(ATTRIBUTE_TRANSLATION_SELECTOR).forEach((element) => {
+      translateAttributes(element);
+      if (element.tagName === "OPTION") translateOptionElement(element);
+    });
   }
 
   function boot() {
@@ -1276,10 +1588,35 @@
     translateTree(document.body);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
+  let observerStarted = false;
+
+  function startObserver() {
+    if (observerStarted || !document.body) return;
+    observerStarted = true;
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["placeholder", "title", "aria-label", "value"],
+    });
+  }
+
+  function initializeRuntimeI18n() {
+    if (!document.body) return;
     boot();
+    startObserver();
+    if (window.__releaseI18nPending) {
+      window.__releaseI18nPending();
+    } else {
+      document.documentElement.removeAttribute("data-i18n-pending");
+    }
+  }
+
+  if (document.body) {
+    initializeRuntimeI18n();
+  } else {
+    document.addEventListener("DOMContentLoaded", initializeRuntimeI18n, { once: true });
   }
 
   const pendingElements = new Set();
@@ -1319,7 +1656,4 @@
     scheduleTranslationFlush();
   });
 
-  document.addEventListener("DOMContentLoaded", () => {
-    if (document.body) observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "aria-label", "value"] });
-  });
 })();

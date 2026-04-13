@@ -2,9 +2,8 @@ import hashlib
 import json
 import os
 import tempfile
+from datetime import timedelta
 from decimal import Decimal
-
-from openai import OpenAI
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -16,6 +15,15 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from expenses.models import Expense, ExpenseCategory
+from incomes.models import Income
+from incomes.views import _build_category_payload
+
+from .models import ScanItem, UserBarcode
+
+from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name, get_farm_product_icon_by_name
+from common.messages import add_crud_success_message
+from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES
 from animals.models import Animal, AnimalCategory, AnimalSubCategory
 from common.category_order import (
     ANIMAL_CATEGORY_ORDER,
@@ -47,7 +55,14 @@ ADD_PAGE_CATALOG_CACHE_KEY = "inventory:add-page-catalog:v1"
 ADD_PAGE_CATALOG_CACHE_TTL = 300
 STOCKS_PAGE_CACHE_TTL = 20
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_whisper_model = None
+
+def _get_whisper_model():
+    global _whisper_model
+    if _whisper_model is None:
+        from faster_whisper import WhisperModel
+        _whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
+    return _whisper_model
 
 
 def _is_forage_item(name: str) -> bool:
@@ -133,8 +148,9 @@ def _unique_rows(rows, key_name="name"):
     return result
 
 
-def _build_add_page_catalog():
-    cached = cache.get(ADD_PAGE_CATALOG_CACHE_KEY)
+def _build_add_page_catalog(lang_code="az"):
+    cache_key = f"{ADD_PAGE_CATALOG_CACHE_KEY}:{lang_code}"
+    cached = cache.get(cache_key)
     if cached is not None:
         return cached
 
@@ -143,9 +159,9 @@ def _build_add_page_catalog():
         expense_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "subcategories": _unique_rows([
-                    {"id": sub.id, "name": sub.name}
+                    {"id": sub.id, "name": _(sub.name)}
                     for sub in category.subcategories.all()
                 ]),
             }
@@ -163,9 +179,9 @@ def _build_add_page_catalog():
         animal_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "subcategories": _unique_rows([
-                    {"id": sub.id, "name": sub.name}
+                    {"id": sub.id, "name": _(sub.name)}
                     for sub in ordered_subcategories
                 ]),
             }
@@ -183,9 +199,9 @@ def _build_add_page_catalog():
         seed_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "items": _unique_rows([
-                    {"id": item.id, "name": item.name}
+                    {"id": item.id, "name": _(item.name)}
                     for item in ordered_items
                 ]),
             }
@@ -203,9 +219,9 @@ def _build_add_page_catalog():
         tool_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "items": _unique_rows([
-                    {"id": item.id, "name": item.name}
+                    {"id": item.id, "name": _(item.name)}
                     for item in ordered_items
                 ]),
             }
@@ -223,26 +239,26 @@ def _build_add_page_catalog():
         farm_categories.append(
             {
                 "id": category.id,
-                "name": category.name,
+                "name": _(category.name),
                 "items": _unique_rows([
-                    {"id": item.id, "name": item.name, "unit": item.unit or ""}
+                    {"id": item.id, "name": _(item.name), "unit": item.unit or ""}
                     for item in ordered_items
                 ]),
             }
         )
     farm_categories = _unique_rows(farm_categories)
 
-    income_categories, income_category_data = _build_category_payload()
+    income_categories, income_category_data = _build_category_payload(lang_code)
     income_categories = _unique_rows([{"name": name} for name in income_categories])
     income_categories = [row["name"] for row in income_categories]
 
     form_types = [
-        {"key": "seed", "label": "Toxum"},
-        {"key": "animal", "label": "Heyvan"},
-        {"key": "tool", "label": "Alət"},
-        {"key": "farm", "label": "Təsərrüfat Məhsulları"},
-        {"key": "expense", "label": "Xərclər"},
-        {"key": "income", "label": "Gəlirlər"},
+        {"key": "seed", "label": _("Toxum")},
+        {"key": "animal", "label": _("Heyvan")},
+        {"key": "tool", "label": _("Alət")},
+        {"key": "farm", "label": _("Hazır məhsul")},
+        {"key": "expense", "label": _("Xərclər")},
+        {"key": "income", "label": _("Gəlirlər")},
     ]
     payload = {
         "form_types": form_types,
@@ -254,22 +270,47 @@ def _build_add_page_catalog():
         "income_categories": income_categories,
         "income_category_data": income_category_data,
     }
-    cache.set(ADD_PAGE_CATALOG_CACHE_KEY, payload, ADD_PAGE_CATALOG_CACHE_TTL)
+    cache.set(cache_key, payload, ADD_PAGE_CATALOG_CACHE_TTL)
     return payload
 
 
 def _build_add_page_context(request=None):
     voice_input_language = "system"
+    add_page_mode = "stock"
+    initial_form = ""
+    add_page_weekly_total = Decimal("0")
     if request is not None:
-        voice_input_language = (
-            request.session.get("voice_input_language")
-            or request.COOKIES.get("voice_input_language")
-            or "system"
-        ).strip().lower()
+        voice_input_language = (request.session.get("voice_input_language") or request.COOKIES.get("voice_input_language") or "system").strip().lower()
+        requested_form = (request.GET.get("form") or "").strip().lower()
+        if requested_form in {"income", "expense"}:
+            add_page_mode = requested_form
+            initial_form = requested_form
+        elif requested_form in {"animal", "seed", "tool", "farm"}:
+            initial_form = requested_form
+        if getattr(request, "user", None) and request.user.is_authenticated and add_page_mode in {"income", "expense"}:
+            week_start = timezone.localdate() - timedelta(days=7)
+            if add_page_mode == "income":
+                add_page_weekly_total = (
+                    Income.objects.filter(created_by=request.user, date__gte=week_start)
+                    .aggregate(total=Sum("amount"))
+                    .get("total")
+                    or Decimal("0")
+                )
+            else:
+                add_page_weekly_total = (
+                    Expense.objects.filter(created_by=request.user, date__gte=week_start)
+                    .aggregate(total=Sum("amount"))
+                    .get("total")
+                    or Decimal("0")
+                )
     return {
         "today": timezone.localdate(),
         "voice_input_language": voice_input_language,
-        **_build_add_page_catalog(),
+        "add_page_mode": add_page_mode,
+        "initial_form": initial_form,
+        "add_page_weekly_total": add_page_weekly_total,
+        "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
+        **_build_add_page_catalog(request.LANGUAGE_CODE if request else "az"),
     }
 
 
@@ -737,20 +778,22 @@ def stocks_placeholder(request):
             }
         )
 
+    sorted_items = sorted(
+        items,
+        key=lambda item: (
+            1 if Decimal(str(item["quantity"])) == 0 else 0,
+            {"toxumlar": 0, "aletler": 1, "heyvanlar": 2, "teserrufat": 3, "diger": 4}.get(item["main"], 9),
+            (item.get("subtitle") or "").lower(),
+            (item.get("title") or "").lower(),
+        ),
+    )
+
     context = {
         "seed_categories": seed_categories,
         "tool_categories": tool_categories,
         "animal_categories": animal_categories,
         "farm_product_categories": farm_product_categories,
-        "items": sorted(
-            items,
-            key=lambda item: (
-                1 if Decimal(str(item["quantity"])) == 0 else 0,
-                {"toxumlar": 0, "aletler": 1, "heyvanlar": 2, "teserrufat": 3, "diger": 4}.get(item["main"], 9),
-                (item.get("subtitle") or "").lower(),
-                (item.get("title") or "").lower(),
-            ),
-        ),
+        "items": sorted_items,
     }
     cache.set(cache_key, context, STOCKS_PAGE_CACHE_TTL)
     return render(request, "inventory/stocks.html", context)
@@ -1129,14 +1172,13 @@ def transcribe_voice_input(request):
                 temp_file.write(chunk)
             temp_path = temp_file.name
 
-        with open(temp_path, "rb") as file_obj:
-            transcript = client.audio.transcriptions.create(
-                model="gpt-4o-mini-transcribe",
-                file=file_obj,
-                language=_resolve_voice_language(request, request.POST.get("language")),
-            )
+        lang = _resolve_voice_language(request, request.POST.get("language"))
+        if lang not in {"az", "en", "ru"}:
+            lang = None
 
-        text = (transcript.text or "").strip()
+        model = _get_whisper_model()
+        segments, info = model.transcribe(temp_path, language=lang, beam_size=5)
+        text = " ".join([segment.text for segment in segments]).strip()
 
         if not text:
             return JsonResponse({"success": False, "message": "Səs tanınmadı"}, status=422)

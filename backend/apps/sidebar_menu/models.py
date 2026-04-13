@@ -3,6 +3,51 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+TIMEZONE_GROUPS = [
+    (
+        _("Qafqaz və yaxın region"),
+        [
+            ("Asia/Baku", _("Bakı")),
+            ("Asia/Tbilisi", _("Tbilisi")),
+            ("Europe/Moscow", _("Moskva")),
+            ("Europe/Istanbul", _("İstanbul")),
+            ("Asia/Dubai", _("Dubay")),
+        ],
+    ),
+    (
+        _("Avropa"),
+        [
+            ("Europe/London", _("London")),
+            ("Europe/Berlin", _("Berlin")),
+            ("Europe/Paris", _("Paris")),
+            ("Europe/Rome", _("Roma")),
+            ("Europe/Madrid", _("Madrid")),
+            ("Europe/Kyiv", _("Kiyev")),
+        ],
+    ),
+    (
+        _("Asiya"),
+        [
+            ("Asia/Almaty", _("Almatı")),
+            ("Asia/Tashkent", _("Daşkənd")),
+            ("Asia/Karachi", _("Kəraçi")),
+            ("Asia/Kolkata", _("Delhi / Kolkata")),
+            ("Asia/Shanghai", _("Şanxay")),
+            ("Asia/Tokyo", _("Tokio")),
+        ],
+    ),
+    (
+        _("Amerika"),
+        [
+            ("America/New_York", _("New York")),
+            ("America/Chicago", _("Chicago")),
+            ("America/Denver", _("Denver")),
+            ("America/Los_Angeles", _("Los Angeles")),
+        ],
+    ),
+]
+
+
 class UserSettings(models.Model):
     LANGUAGE_CHOICES = [
         ('az', 'Azərbaycan dili'),
@@ -10,9 +55,9 @@ class UserSettings(models.Model):
         ('ru', 'Русский'),
     ]
     TIMEZONE_CHOICES = [
-        ('Asia/Baku',     'Bakı (UTC+4)'),
-        ('Europe/London', 'London (UTC+0)'),
-        ('Europe/Moscow', 'Moskva (UTC+3)'),
+        (zone_name, city_label)
+        for _, zone_entries in TIMEZONE_GROUPS
+        for zone_name, city_label in zone_entries
     ]
     UNIT_CHOICES = [
         ('kg_litr', 'kq / litr'),

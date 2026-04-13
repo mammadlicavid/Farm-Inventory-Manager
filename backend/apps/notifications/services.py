@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.db.models import Sum
 from django.utils import timezone
 
@@ -46,6 +47,8 @@ IMPORTANT_FARM_PRODUCT_KEYWORDS = (
     "derman",
 )
 
+HEADER_NOTIFICATION_COUNT_CACHE_TTL = 30
+
 SOURCE_LABELS = {
     StockAlertRule.SOURCE_SEED: "Toxum",
     StockAlertRule.SOURCE_TOOL: "Alət",
@@ -59,6 +62,30 @@ SOURCE_ICONS = {
     StockAlertRule.SOURCE_FARM: "fa-box",
     StockAlertRule.SOURCE_ANIMAL: "fa-cow",
 }
+
+
+def _header_notification_count_cache_key(user_id: int) -> str:
+    return f"notifications:header-count:v1:{user_id}"
+
+
+def invalidate_notification_header_count_cache(user_id: int) -> None:
+    cache.delete(_header_notification_count_cache_key(user_id))
+
+
+def set_cached_header_notification_count(user_id: int, count: int) -> None:
+    cache.set(_header_notification_count_cache_key(user_id), int(count), HEADER_NOTIFICATION_COUNT_CACHE_TTL)
+
+
+def get_header_notification_count(user) -> int:
+    if not getattr(user, "is_authenticated", False):
+        return 0
+
+    cached_count = cache.get(_header_notification_count_cache_key(user.pk))
+    if cached_count is not None:
+        return int(cached_count)
+
+    _alerts, count = sync_stock_alert_notifications(user)
+    return count
 
 
 def _normalize_decimal(value):
@@ -231,48 +258,41 @@ def get_stock_items_for_user(user):
         stock_item["category_name"] = row.get("item__category__name") or _manual_category_label()
         stock_items[item_key] = stock_item
 
-    important_seed_items = SeedItem.objects.filter(
-        name__in=IMPORTANT_SEED_NAMES
-    ).select_related("category")
-    for item in important_seed_items:
-        if not _is_important_seed(item.name):
-            continue
+    seed_catalog_items = SeedItem.objects.select_related("category")
+    for item in seed_catalog_items:
         item_key = f"seed:{item.id}:kg"
         stock_items.setdefault(
             item_key,
             {
                 **_serialize_stock_item(
-                source_type=StockAlertRule.SOURCE_SEED,
-                item_key=item_key,
-                item_name=item.name,
-                unit="kg",
-                total=Decimal("0"),
-                is_important=True,
+                    source_type=StockAlertRule.SOURCE_SEED,
+                    item_key=item_key,
+                    item_name=item.name,
+                    unit="kg",
+                    total=Decimal("0"),
+                    is_important=_is_important_seed(item.name),
                 ),
                 "category_name": item.category.name if item.category else _manual_category_label(),
             },
         )
 
-    important_farm_items = FarmProductItem.objects.filter(
-        name__in=IMPORTANT_FARM_PRODUCT_NAMES
-    ).select_related("category")
-    for item in important_farm_items:
-        if not _is_important_farm_product(item.name, item.category.name):
-            continue
+    farm_catalog_items = FarmProductItem.objects.select_related("category")
+    for item in farm_catalog_items:
+        category_name = item.category.name if item.category else _manual_category_label()
         unit = item.unit or "kq"
         item_key = f"farm:{item.id}:{unit}"
         stock_items.setdefault(
             item_key,
             {
                 **_serialize_stock_item(
-                source_type=StockAlertRule.SOURCE_FARM,
-                item_key=item_key,
-                item_name=item.name,
-                unit=unit,
-                total=Decimal("0"),
-                is_important=True,
+                    source_type=StockAlertRule.SOURCE_FARM,
+                    item_key=item_key,
+                    item_name=item.name,
+                    unit=unit,
+                    total=Decimal("0"),
+                    is_important=_is_important_farm_product(item.name, category_name),
                 ),
-                "category_name": item.category.name if item.category else _manual_category_label(),
+                "category_name": category_name,
             },
         )
 
@@ -323,23 +343,99 @@ def build_stock_rule_catalog(stock_items):
     return sources
 
 
+def get_default_threshold_for_item(stock_item):
+    return _default_threshold(
+        stock_item["source_type"],
+        stock_item["unit"],
+    )
+
+
+def _partition_stock_rules(user):
+    active_rules = {}
+    disabled_rule_keys = set()
+
+    for rule in StockAlertRule.objects.filter(created_by=user):
+        if rule.is_active:
+            active_rules[rule.item_key] = rule
+        else:
+            disabled_rule_keys.add(rule.item_key)
+
+    return active_rules, disabled_rule_keys
+
+
+def build_stock_alert_rule_list(user, stock_items=None):
+    stock_items = stock_items or get_stock_items_for_user(user)
+    stock_item_map = {item["item_key"]: item for item in stock_items}
+    active_rule_map, disabled_rule_keys = _partition_stock_rules(user)
+    effective_rules = []
+    seen_keys = set()
+
+    for item_key, rule in active_rule_map.items():
+        stock_item = stock_item_map.get(item_key)
+        effective_rules.append(
+            {
+                "id": rule.id,
+                "item_key": rule.item_key,
+                "item_name": rule.item_name,
+                "source_type": rule.source_type,
+                "category_name": stock_item.get("category_name") if stock_item else "",
+                "source_label": SOURCE_LABELS.get(rule.source_type, rule.get_source_type_display()),
+                "threshold": rule.threshold,
+                "unit": rule.unit,
+                "current_total": stock_item["total_display"] if stock_item else None,
+                "is_system_generated": False,
+            }
+        )
+        seen_keys.add(item_key)
+
+    for stock_item in stock_items:
+        item_key = stock_item["item_key"]
+        if (
+            not stock_item["is_important"]
+            or item_key in seen_keys
+            or item_key in disabled_rule_keys
+        ):
+            continue
+
+        effective_rules.append(
+            {
+                "id": None,
+                "item_key": item_key,
+                "item_name": stock_item["item_name"],
+                "source_type": stock_item["source_type"],
+                "category_name": stock_item.get("category_name") or "",
+                "source_label": stock_item["source_label"],
+                "threshold": get_default_threshold_for_item(stock_item),
+                "unit": stock_item["unit"],
+                "current_total": stock_item["total_display"],
+                "is_system_generated": True,
+            }
+        )
+
+    effective_rules.sort(
+        key=lambda rule: (
+            rule["source_label"].lower(),
+            (rule.get("category_name") or "").lower(),
+            rule["item_name"].lower(),
+        )
+    )
+    return effective_rules
+
+
 def build_stock_alerts(user):
     stock_items = get_stock_items_for_user(user)
-    rule_map = {
-        rule.item_key: rule
-        for rule in StockAlertRule.objects.filter(created_by=user, is_active=True)
-    }
+    rule_map, disabled_rule_keys = _partition_stock_rules(user)
     alerts = []
 
     for stock_item in stock_items:
+        if stock_item["item_key"] in disabled_rule_keys:
+            continue
+
         rule = rule_map.get(stock_item["item_key"])
         if rule is None and not stock_item["is_important"]:
             continue
 
-        threshold = rule.threshold if rule else _default_threshold(
-            stock_item["source_type"],
-            stock_item["unit"],
-        )
+        threshold = rule.threshold if rule else get_default_threshold_for_item(stock_item)
         total = stock_item["total"]
         if total > threshold:
             continue
@@ -406,9 +502,14 @@ def sync_stock_alert_notifications(user):
         stale_notifications = stale_notifications.exclude(source_key__in=active_keys)
     stale_notifications.delete()
 
-    pending_count = Notification.objects.filter(
+    pending_manual_count = Notification.objects.filter(
         created_by=user,
         is_completed=False,
+    ).exclude(
+        is_system_generated=True,
+        category="ehtiyat",
     ).count()
 
-    return alerts, pending_count
+    count = len(alerts) + pending_manual_count
+    set_cached_header_notification_count(user.pk, count)
+    return alerts, count

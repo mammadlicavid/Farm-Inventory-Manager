@@ -4,18 +4,21 @@ from datetime import timedelta, date
 from decimal import Decimal, InvalidOperation
 from hashlib import md5
 from typing import Dict, List, Tuple
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db.models import Q, Sum
 from django.utils.translation import gettext_lazy as _
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 
 from common.formatting import format_currency
 from common.category_order import ensure_diger_last
 from common.text import normalize_manual_label
+from common.view_cache import bust_dashboard_related_caches
 from common.icons import (
     get_animal_icon_by_name,
     get_farm_product_icon_by_name,
@@ -255,6 +258,36 @@ FORAGE_ITEMS = {"yonca", "koronilla", "seradella"}
 INCOME_CATEGORY_PAYLOAD_CACHE_KEY = "incomes:category-payload:v1"
 INCOME_CATEGORY_PAYLOAD_TTL = 300
 INCOME_LIST_CACHE_TTL = 30
+INCOME_LIST_BUST_TTL = 60 * 60 * 24 * 30
+
+
+def _income_list_bust_key(user_id: int) -> str:
+    return f"incomes:list-bust:v1:{user_id}"
+
+
+def _income_list_cache_bust_value(user_id: int) -> str:
+    return str(cache.get(_income_list_bust_key(user_id), "0"))
+
+
+def _bust_income_list_cache(user_id: int) -> None:
+    cache.set(_income_list_bust_key(user_id), timezone.now().isoformat(), INCOME_LIST_BUST_TTL)
+    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
+    bust_dashboard_related_caches(user_id)
+
+
+def _redirect_with_refresh(target) -> object:
+    url = resolve_url(target)
+    parsed = urlsplit(url)
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "_ui"]
+    query.append(("_ui", str(int(timezone.now().timestamp() * 1000))))
+    refreshed_url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
+    return redirect(refreshed_url)
+
+
+def _list_query_signature(query_dict) -> str:
+    filtered = query_dict.copy()
+    filtered.pop("_ui", None)
+    return md5(filtered.urlencode().encode()).hexdigest()
 
 
 def _sorted_items(items: List[str]) -> List[str]:
@@ -301,8 +334,9 @@ def _allowed_units_for_farm(item_name: str, unit_lookup: Dict[str, str | None]) 
     return [base_unit]
 
 
-def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
-    cached = cache.get(INCOME_CATEGORY_PAYLOAD_CACHE_KEY)
+def _build_category_payload(lang_code="az") -> Tuple[List[str], Dict[str, dict]]:
+    cache_key = f"{INCOME_CATEGORY_PAYLOAD_CACHE_KEY}:{lang_code}"
+    cached = cache.get(cache_key)
     if cached is not None:
         return cached
 
@@ -313,7 +347,8 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
     type_map = _category_type_map()
 
     def add_category(name: str, items: List[str]):
-        categories.append(name)
+        translated_name = str(_(name))
+        categories.append(translated_name)
         sorted_items = _sorted_items(items)
         ctype = type_map.get(name, "other")
         item_rows = []
@@ -325,8 +360,8 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
                 unit = "ədəd"
             elif ctype == "seed":
                 unit = "kq"
-            item_rows.append({"name": item, "unit": unit})
-        payload[name] = {"type": ctype, "items": item_rows}
+            item_rows.append({"name": str(_(item)), "unit": unit})
+        payload[translated_name] = {"type": ctype, "items": item_rows}
 
     for name, items in FARM_PRODUCT_CATEGORIES:
         add_category(name, items)
@@ -336,7 +371,7 @@ def _build_category_payload() -> Tuple[List[str], Dict[str, dict]]:
     add_category(OTHER_CATEGORY[0], OTHER_CATEGORY[1])
 
     result = (categories, payload)
-    cache.set(INCOME_CATEGORY_PAYLOAD_CACHE_KEY, result, INCOME_CATEGORY_PAYLOAD_TTL)
+    cache.set(cache_key, result, INCOME_CATEGORY_PAYLOAD_TTL)
     return result
 
 
@@ -645,8 +680,12 @@ def _animal_available_count(user, item_name: str, gender: str) -> int:
 
 
 @login_required
+@never_cache
 def income_list(request):
-    cache_key = f"incomes:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cache_key = (
+        f"incomes:list:v2:{request.user.pk}:{_income_list_cache_bust_value(request.user.pk)}:"
+        f"{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
+    )
     cached_context = cache.get(cache_key)
     if cached_context is not None:
         return render(request, "incomes/income_list.html", cached_context)
@@ -681,7 +720,8 @@ def income_list(request):
         income.icon_class = _get_income_icon(income.category, income.item_name)
         income.amount_display = format_currency(income.amount, 2)
 
-    categories, category_data = _build_category_payload()
+    lang_code = (getattr(request, "LANGUAGE_CODE", "") or "az").split("-")[0]
+    categories, category_data = _build_category_payload(lang_code)
 
     context = {
         "incomes": incomes,
@@ -846,8 +886,9 @@ def add_income(request):
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
 
+    _bust_income_list_cache(request.user.pk)
     messages.success(request, _("Gəlir əlavə edildi."))
-    return redirect(redirect_to)
+    return _redirect_with_refresh(redirect_to)
 
 
 @login_required
@@ -1013,10 +1054,12 @@ def edit_income(request, pk: int):
                 income.content_object = None
                 income.save(update_fields=["content_type", "object_id"])
 
+        _bust_income_list_cache(request.user.pk)
         messages.success(request, _("Gəlir yeniləndi."))
-        return redirect("incomes:income_list")
+        return _redirect_with_refresh("incomes:income_list")
 
-    categories, category_data = _build_category_payload()
+    lang_code = (getattr(request, "LANGUAGE_CODE", "") or "az").split("-")[0]
+    categories, category_data = _build_category_payload(lang_code)
     context = {
         "income": income,
         "categories": categories,
@@ -1038,5 +1081,6 @@ def delete_income(request, pk: int):
         elif ctype == "animal":
             _delete_income_animals(request.user, income.id)
         income.delete()
+        _bust_income_list_cache(request.user.pk)
         messages.success(request, _("Gəlir silindi."))
-    return redirect("incomes:income_list")
+    return _redirect_with_refresh("incomes:income_list")

@@ -19,7 +19,7 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Heyvan Məlumatlarını Yenilə" %}</h3>
 
-        <form method="POST" id="animal-form" data-sync-entity="animal" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'animals:animal_list' %}">
+        <form method="POST" id="animal-form" data-sync-entity="animal" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'animals:animal_list' %}" data-sync-direct-online="true">
             {% csrf_token %}
             <input type="hidden" name="record_id" value="{{ animal.pk }}">
             <input type="hidden" name="record_version" value="{{ animal.updated_at|date:'c' }}">
@@ -96,6 +96,17 @@
                 </div>
             </div>
 
+            <div class="form-group" id="animal-zero-price-source-group" style="display: none;">
+                <label>{% trans "Bu stok haradan gəlib?" %} <span class="required-star">*</span></label>
+                <select name="zero_price_source" id="animal-zero-price-source" class="custom-input">
+                    <option value="">{% trans "Seçin" %}</option>
+                    {% for value, label in zero_price_source_choices %}
+                    <option value="{{ value }}" {% if animal.zero_price_source == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="zero-price-source-note">{% trans "Məbləğ 0 olduqda mənbəni seçin." %}</div>
+            </div>
+
             <div class="form-group">
                 <label>{% trans "Əlavə Məlumat" %}</label>
                 <textarea name="additional_info" placeholder="{% trans 'Məsələn: Heyvanın vəziyyəti, vaksinasiya və s.' %}"
@@ -112,105 +123,6 @@
 
 {{ subcategory_data|json_script:"animal-subcats-data" }}
 <script>
-    const subcategoryData = JSON.parse(
-        document.getElementById('animal-subcats-data').textContent
-    );
-
-    const categorySelect = document.getElementById('category-select');
-    const subcategorySelect = document.getElementById('subcategory-select');
-    const qtyInput = document.querySelector('input[name="quantity"]');
-    const idInput = document.querySelector('input[name="identification_no"]');
-
-    categorySelect.addEventListener('change', function () {
-        const categoryId = this.value;
-        const categoryText = this.options[this.selectedIndex].text;
-        const subcats = subcategoryData[categoryId] || [];
-        const subcategoryGroup = document.getElementById('subcategory-field-group');
-        const manualGroup = document.getElementById('manual-name-group');
-        const manualInput = document.getElementById('manual-name-input');
-
-        if (categoryText === "Digər") {
-            subcategoryGroup.style.display = 'none';
-            subcategorySelect.required = false;
-            subcategorySelect.disabled = true;
-
-            manualGroup.style.display = 'block';
-            manualInput.required = true;
-        } else {
-            manualGroup.style.display = 'none';
-            manualInput.required = false;
-            manualInput.value = '';
-
-            subcategoryGroup.style.display = 'block';
-            subcategorySelect.required = true;
-
-            subcategorySelect.innerHTML = '<option value="" disabled selected>{% trans "Heyvan növünü seçin" %}</option>';
-
-            if (subcats.length === 0) {
-                subcategorySelect.disabled = true;
-                subcategorySelect.innerHTML = '<option value="" selected>{% trans "Alt kateqoriya yoxdur" %}</option>';
-            } else {
-                subcats.forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub.id;
-                    option.textContent = sub.name;
-                    subcategorySelect.appendChild(option);
-                });
-                subcategorySelect.disabled = false;
-                handleAnimalSubcategorySelection();
-            }
-        }
-    });
-
-    function handleAnimalSubcategorySelection() {
-        const selected = subcategorySelect.options[subcategorySelect.selectedIndex];
-        const isOther = (selected?.textContent || "").trim() === "Digər";
-        const manualGroup = document.getElementById('manual-name-group');
-        const manualInput = document.getElementById('manual-name-input');
-        if (isOther) {
-            manualGroup.style.display = 'block';
-            manualInput.required = true;
-        } else if (manualGroup) {
-            manualGroup.style.display = 'none';
-            manualInput.required = false;
-            manualInput.value = '';
-        }
-    }
-
-    subcategorySelect.addEventListener('change', handleAnimalSubcategorySelection);
-
-    function syncIdByQty() {
-        if (!qtyInput || !idInput) return;
-        const qty = parseInt(qtyInput.value || "1", 10);
-        if (Math.abs(qty) !== 1) {
-            idInput.value = "";
-            idInput.disabled = true;
-            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
-        } else {
-            idInput.disabled = false;
-            idInput.placeholder = "Məsələn: AZ12345";
-        }
-    }
-
-    if (qtyInput) {
-        qtyInput.addEventListener('input', syncIdByQty);
-        syncIdByQty();
-    }
-
-    (function initSelection() {
-        const initialCategoryId = "{{ animal.subcategory.category_id|default:'' }}";
-        const initialSubcategoryId = "{{ animal.subcategory_id|default:'' }}";
-
-        if (initialCategoryId) {
-            categorySelect.value = initialCategoryId;
-            categorySelect.dispatchEvent(new Event('change'));
-        }
-        if (initialSubcategoryId) {
-            subcategorySelect.value = initialSubcategoryId;
-        }
-        if (subcategorySelect && subcategorySelect.value) {
-            handleAnimalSubcategorySelection();
-        }
-    })();
+  {% include 'scripts/animals/animal_form.js' %}
 </script>
 {% endblock %}

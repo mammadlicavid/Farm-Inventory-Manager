@@ -19,10 +19,12 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+from django.views.i18n import JavaScriptCatalog
 
 urlpatterns = [
     path("", RedirectView.as_view(url="/dashboard/", permanent=True)),
     path("admin/", admin.site.urls),
+    path("jsi18n/", JavaScriptCatalog.as_view(domain="django"), name="javascript-catalog"),
     path("dashboard/", include("dashboard.urls")),
     path("", include("users.urls")),
     path("", include("inventory.urls")),

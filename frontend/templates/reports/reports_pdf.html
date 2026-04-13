@@ -1,36 +1,186 @@
+{% load i18n %}
+{% load common_extras %}
 <!DOCTYPE html>
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <title>Xərc Hesabatı</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ purpose_meta.label }} - {{ range_label }}</title>
     <style>
+        :root {
+            color-scheme: light;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 32px;
+            margin: 0;
+            padding: 28px;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: #f4f7f9;
             color: #1f2937;
         }
 
-        .report-header {
-            margin-bottom: 24px;
+        .report-shell {
+            max-width: 1120px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .report-hero {
+            padding: 30px 34px 24px;
+            background:
+                radial-gradient(circle at top right, rgba(244, 211, 94, 0.18), transparent 32%),
+                linear-gradient(135deg, #143642 0%, #1f6f5f 44%, #2d5f73 100%);
+            color: #fff;
+        }
+
+        .report-kicker {
+            margin: 0 0 8px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.74);
         }
 
         .report-title {
-            font-size: 28px;
-            font-weight: 800;
-            margin-bottom: 8px;
+            margin: 0 0 12px;
+            font-size: 32px;
+            line-height: 1.1;
         }
 
         .report-meta {
-            font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .report-total {
-            margin-top: 14px;
-            font-size: 18px;
+        .report-meta-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            font-size: 13px;
             font-weight: 700;
-            color: #2E8B57;
+        }
+
+        .report-body {
+            padding: 26px 34px 34px;
+        }
+
+        .report-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+        }
+
+        .print-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: #1f6f5f;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 800;
+        }
+
+        .report-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .report-kpi {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(226, 232, 240, 0.92);
+            display: grid;
+            gap: 6px;
+        }
+
+        .report-kpi--income { background: #f0fdf4; }
+        .report-kpi--expense { background: #fff7ed; }
+        .report-kpi--net { background: #eff6ff; }
+        .report-kpi--tax { background: #fef9c3; }
+
+        .report-kpi span {
+            font-size: 12px;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .report-kpi strong {
+            font-size: 24px;
+            color: #0f172a;
+        }
+
+        .report-tax-grid,
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .report-panel {
+            border-radius: 20px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            background: #fff;
+            padding: 20px;
+        }
+
+        .report-panel h2 {
+            margin: 0 0 12px;
+            font-size: 20px;
+            color: #0f172a;
+        }
+
+        .report-tax-card {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            background: #f8fafc;
+            display: grid;
+            gap: 6px;
+        }
+
+        .report-tax-card span,
+        .report-tax-card small {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .report-tax-card strong {
+            font-size: 22px;
+            color: #0f172a;
+        }
+
+        .report-tax-note {
+            margin-top: 14px;
+            padding: 16px 18px;
+            border-radius: 18px;
+            background: #f8fafc;
+            border: 1px solid rgba(226, 232, 240, 0.92);
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .report-tax-note p {
+            margin: 0 0 6px;
+        }
+
+        .report-tax-note p:last-child {
+            margin-bottom: 0;
         }
 
         table {
@@ -40,85 +190,250 @@
         }
 
         th, td {
-            border: 1px solid #d1d5db;
-            padding: 10px 12px;
+            padding: 11px 10px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.92);
             text-align: left;
             font-size: 13px;
+            color: #334155;
         }
 
         th {
-            background: #f3f4f6;
-            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            font-weight: 800;
         }
 
-        tr:nth-child(even) {
-            background: #fafafa;
+        .report-break-row {
+            display: grid;
+            gap: 8px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.92);
         }
 
-        .amount {
-            font-weight: 700;
-            color: #8B1E1E;
+        .report-break-top,
+        .report-break-foot {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
         }
 
-        .print-btn {
-            margin-top: 24px;
-            display: inline-block;
-            padding: 12px 18px;
-            background: #2E8B57;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 10px;
+        .report-break-bar {
+            height: 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .report-break-fill {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #ef7d57 0%, #f97316 100%);
+        }
+
+        .report-empty {
+            color: #94a3b8;
             font-weight: 700;
+            text-align: center;
+            padding: 18px 0;
         }
 
         @media print {
-            .print-btn {
-                display: none;
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
 
             body {
-                margin: 10mm;
+                background: #fff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .report-shell {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+
+            .print-btn {
+                display: none !important;
+            }
+            
+            /* Add some page breaking rules so large reports look good */
+            .report-panel {
+                break-inside: avoid;
+            }
+            table {
+                break-inside: auto;
+            }
+            tr {
+                break-inside: avoid;
+                break-after: auto;
             }
         }
     </style>
 </head>
 <body>
-    <div class="report-header">
-        <div class="report-title">Xərc Hesabatı</div>
-        <div class="report-meta">İl: {{ report_year }}</div>
-        <div class="report-meta">Tarix: {{ today }}</div>
-        <div class="report-total">Ümumi Xərc: {{ total_expense_display }}₼</div>
+    <div class="report-shell">
+        <section class="report-hero">
+            <p class="report-kicker">{% trans "Ferma Hesabatı" %}</p>
+            <h1 class="report-title">{{ purpose_meta.label }}</h1>
+            <div class="report-meta">
+                <span class="report-meta-pill">{{ range_label }}</span>
+                <span class="report-meta-pill">{% trans "Qruplaşdırma" %}: {{ filters.resolved_group_by_label }}</span>
+                <span class="report-meta-pill">{% trans "Hazırlanma tarixi" %}: {% now "d.m.Y" %}</span>
+            </div>
+        </section>
+
+        <section class="report-body">
+            <div class="report-toolbar">
+                <a href="#" class="print-btn" onclick="window.print(); return false;">
+                    {% trans "PDF kimi saxla / çap et" %}
+                </a>
+            </div>
+
+            <div class="report-kpis">
+                <div class="report-kpi report-kpi--income">
+                    <span>{% trans "Ümumi gəlir" %}</span>
+                    <strong>{% money kpis.total_income request.user "+" %}</strong>
+                </div>
+                <div class="report-kpi report-kpi--expense">
+                    <span>{% trans "Ümumi xərc" %}</span>
+                    <strong>{% money kpis.total_expense request.user "-" %}</strong>
+                </div>
+                <div class="report-kpi report-kpi--net">
+                    <span>{% trans "Xalis qazanc" %}</span>
+                    <strong>{% if kpis.net_profit >= 0 %}{% money kpis.net_profit request.user "+" %}{% else %}{% money kpis.net_profit request.user %}{% endif %}</strong>
+                </div>
+                <div class="report-kpi report-kpi--tax">
+                    <span>{% trans "Hesablanan vergi" %}</span>
+                    <strong>{% money tax.total_due request.user %}</strong>
+                </div>
+            </div>
+
+            <div class="report-tax-grid">
+                <div class="report-tax-card">
+                    <span>{% trans "Standart ƏDV arayışı" %}</span>
+                    <strong>{{ tax.reference_rate_display }}%</strong>
+                    <small>{% trans "Güzəşt olmasaydı ümumi dərəcə" %}</small>
+                </div>
+                <div class="report-tax-card">
+                    <span>{% trans "Güzəşt olmasaydı ƏDV" %}</span>
+                    <strong>{% money tax.reference_vat_amount request.user %}</strong>
+                    <small>{% trans "Müqayisə üçün arayış məbləği" %}</small>
+                </div>
+                <div class="report-tax-card">
+                    <span>{% trans "Vergi qaydası" %}</span>
+                    <strong>{{ tax.agri_rule_label }}</strong>
+                    <small>{{ tax.agri_rule_period }}</small>
+                </div>
+                <div class="report-tax-card">
+                    <span>{% trans "Torpaq vergisi" %}</span>
+                    <strong>{% trans "Ayrı hesablanır" %}</strong>
+                    <small>{{ tax.land_tax_note }}</small>
+                </div>
+            </div>
+
+            <div class="report-tax-note">
+                <p>{{ tax.agri_rule_note }}</p>
+                <p>{{ tax.source_note }}</p>
+            </div>
+
+            <div class="report-grid">
+                <section class="report-panel">
+                    <h2>{% trans "Məhsul növlərinə görə müqayisə" %}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{% trans "Məhsul" %}</th>
+                                <th>{% trans "Kateqoriya" %}</th>
+                                <th>{% trans "Miqdar" %}</th>
+                                <th>{% trans "Gəlir" %}</th>
+                                <th>{% trans "Vergi" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in product_rows %}
+                            <tr>
+                                <td>{{ row.item_name }}</td>
+                                <td>{{ row.category }}</td>
+                                <td>{% display_measure row.quantity row.unit request.user %}</td>
+                                <td>{% money row.amount request.user "+" %}</td>
+                                <td>{% money row.tax_due request.user %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="report-empty">{% trans "Bu tarix aralığında satış məlumatı yoxdur." %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="report-panel">
+                    <h2>{% trans "Xərc istiqamətləri" %}</h2>
+                    {% for row in expense_breakdown %}
+                    <div class="report-break-row">
+                        <div class="report-break-top">
+                            <strong>{{ row.name }}</strong>
+                            <span>{% money row.amount request.user "-" %}</span>
+                        </div>
+                        <div class="report-break-bar">
+                            <span class="report-break-fill" style="width: {{ row.share_pct }}%;"></span>
+                        </div>
+                        <div class="report-break-foot">
+                            <span>{{ row.share_pct }}%</span>
+                            <span>{{ row.amount_display }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="report-empty">{% trans "Bu tarix aralığında xərc məlumatı yoxdur." %}</div>
+                    {% endfor %}
+                </section>
+            </div>
+
+            <section class="report-panel">
+                <h2>{% trans "Əməliyyat jurnalı" %}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% trans "Tarix" %}</th>
+                            <th>{% trans "Növ" %}</th>
+                            <th>{% trans "Mənbə" %}</th>
+                            <th>{% trans "Bölmə" %}</th>
+                            <th>{% trans "Məbləğ" %}</th>
+                            <th>{% trans "Vergi" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in transactions %}
+                        <tr>
+                            <td>{{ row.date|date:"d.m.Y" }}</td>
+                            <td>{{ row.type_label }}</td>
+                            <td>{{ row.line_name }}</td>
+                            <td>{{ row.group_name }}</td>
+                            <td>
+                                {% if row.type == "income" %}
+                                {% money row.amount request.user "+" %}
+                                {% else %}
+                                {% money row.amount request.user "-" %}
+                                {% endif %}
+                            </td>
+                            <td>{% if row.type == "income" %}{% money row.tax_due request.user %}{% else %}—{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="report-empty">{% trans "Bu tarix aralığında heç bir əməliyyat tapılmadı." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </section>
     </div>
-
-    <a href="#" class="print-btn" onclick="window.print(); return false;">
-        PDF kimi çap et
-    </a>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Tarix</th>
-                <th>Kateqoriya</th>
-                <th>Alt Kateqoriya</th>
-                <th>Məbləğ</th>
-                <th>Qeyd</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in expense_rows %}
-            <tr>
-                <td>{{ row.date }}</td>
-                <td>{{ row.category }}</td>
-                <td>{{ row.subcategory }}</td>
-                <td class="amount">{{ row.amount }}₼</td>
-                <td>{{ row.note }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">Məlumat yoxdur</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </body>
 </html>

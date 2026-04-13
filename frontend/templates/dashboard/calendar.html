@@ -1,0 +1,975 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load common_extras %}
+
+{% block content %}
+<header class="main-header calendar-hero">
+    <div class="header-content">
+        <div class="header-top">
+            <a href="{% url 'dashboard' %}" class="back-btn-box">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>{% trans "Dashboard" %}</span>
+            </a>
+            <div class="calendar-hero-badge">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span>{% trans "Gündəlik iş axını" %}</span>
+            </div>
+        </div>
+        <div class="calendar-hero-copy">
+            <div>
+                <p class="calendar-eyebrow">{% trans "Təqvim" %}</p>
+                <h1>{{ calendar_data.month_label }}</h1>
+                <p class="welcome-text calendar-welcome-text">
+                    {% trans "Hansı gün nə etdiyinizi bir ekranda görün: stok əlavələri, azalmalar, satışlar və xərclər hər gün üzrə toplanır." %}
+                </p>
+            </div>
+            <div class="calendar-hero-actions">
+                <a href="?month={{ calendar_data.today_month_key }}&day={{ calendar_data.today_iso }}" class="calendar-toolbar-link calendar-toolbar-link--primary">
+                    <i class="fa-solid fa-crosshairs"></i>
+                    <span>{% trans "Bu gün" %}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="header-curve"></div>
+</header>
+
+<main class="main-content calendar-page">
+    <section class="calendar-summary-grid">
+        <article class="calendar-summary-card">
+            <span class="calendar-summary-label">{% trans "Aktiv gün" %}</span>
+            <strong class="calendar-summary-value">{{ calendar_data.active_day_count }}</strong>
+            <span class="calendar-summary-note">{% trans "Bu ay qeydi olan günlərin sayı" %}</span>
+        </article>
+        <article class="calendar-summary-card">
+            <span class="calendar-summary-label">{% trans "Ümumi qeyd" %}</span>
+            <strong class="calendar-summary-value">{{ calendar_data.total_activity_count }}</strong>
+            <span class="calendar-summary-note">{% trans "Stok, satış və xərc hərəkətləri" %}</span>
+        </article>
+        <article class="calendar-summary-card calendar-summary-card--income">
+            <span class="calendar-summary-label">{% trans "Bu ay gəlir" %}</span>
+            <strong class="calendar-summary-value calendar-summary-value--income">{% money calendar_data.monthly_income request.user %}</strong>
+            <span class="calendar-summary-note">{% trans "Satış və digər gəlirlər" %}</span>
+        </article>
+        <article class="calendar-summary-card calendar-summary-card--expense">
+            <span class="calendar-summary-label">{% trans "Bu ay xərc" %}</span>
+            <strong class="calendar-summary-value calendar-summary-value--expense">{% money calendar_data.monthly_expense request.user %}</strong>
+            <span class="calendar-summary-note">{% trans "Alışlar və gündəlik xərclər" %}</span>
+        </article>
+    </section>
+
+    <section class="calendar-layout">
+        <div class="calendar-board">
+            <div class="calendar-board-head">
+                <div>
+                    <p class="calendar-section-label">{% trans "Aylıq görünüş" %}</p>
+                    <h2>{% trans "Hər gün üzrə nə etdiyiniz görünür" %}</h2>
+                </div>
+                <div class="calendar-month-nav">
+                    <a href="?month={{ calendar_data.prev_month_key }}" class="calendar-nav-btn" aria-label="{% trans 'Əvvəlki ay' %}">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                    <div class="calendar-month-nav-center">
+                        <span class="calendar-month-label">{{ calendar_data.month_label }}</span>
+                        <form method="get" class="calendar-month-picker" id="calendar-month-picker">
+                            <label for="calendar-month-input" class="calendar-month-picker-label">{% trans "Ay və il seçin" %}</label>
+                            <div class="calendar-month-picker-row">
+                                <input
+                                    id="calendar-month-input"
+                                    type="month"
+                                    name="month"
+                                    value="{{ calendar_data.active_month_key }}"
+                                    class="calendar-month-input"
+                                >
+                                <button type="submit" class="calendar-month-submit">{% trans "Keç" %}</button>
+                            </div>
+                        </form>
+                    </div>
+                    <a href="?month={{ calendar_data.next_month_key }}" class="calendar-nav-btn" aria-label="{% trans 'Növbəti ay' %}">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="calendar-legend">
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--stock-in"></span>{% trans "Stok əlavə" %}</span>
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--income"></span>{% trans "Satış" %}</span>
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--expense"></span>{% trans "Xərc" %}</span>
+                <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--stock-out"></span>{% trans "Azalma" %}</span>
+            </div>
+
+            <div class="calendar-weekdays">
+                {% for weekday in calendar_data.weekday_labels %}
+                <span class="calendar-weekday">{{ weekday }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="calendar-grid">
+                {% for week in calendar_data.weeks %}
+                    {% for day in week %}
+                    <a
+                        href="?month={{ day.month_key }}&day={{ day.date_iso }}"
+                        class="calendar-day-card{% if not day.in_month %} calendar-day-card--muted{% endif %}{% if day.is_today %} calendar-day-card--today{% endif %}{% if day.is_selected %} calendar-day-card--selected{% endif %}{% if day.summary.total %} calendar-day-card--active{% endif %}"
+                    >
+                        <div class="calendar-day-top">
+                            <span class="calendar-day-number">{{ day.day_number }}</span>
+                            {% if day.summary.total %}
+                            <span class="calendar-day-count">{{ day.summary.total }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="calendar-day-body">
+                            {% if day.summary.badges %}
+                            <div class="calendar-day-badges">
+                                {% for badge in day.summary.badges %}
+                                <span class="calendar-day-badge calendar-day-badge--{{ badge.class_name }}">{{ badge.label }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            {% if day.summary.preview_items %}
+                            <div class="calendar-day-preview-list">
+                                {% for item in day.summary.preview_items %}
+                                <div class="calendar-day-preview calendar-day-preview--{{ item.class_name }}">
+                                    <i class="fa-solid {{ item.icon }}"></i>
+                                    <span>{{ item.title }}</span>
+                                </div>
+                                {% endfor %}
+                                {% if day.summary.more_count %}
+                                <div class="calendar-day-more">
+                                    +{{ day.summary.more_count }} {% trans "daha" %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="calendar-day-empty">{% trans "Qeyd yoxdur" %}</div>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <aside class="calendar-day-panel">
+            <div class="calendar-day-panel-head">
+                <p class="calendar-section-label">{% trans "Seçilmiş gün" %}</p>
+                <h2>{{ calendar_data.selected_day.label }}</h2>
+                <p class="calendar-day-panel-copy">
+                    {% if calendar_data.selected_day.is_today %}
+                    {% trans "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək." %}
+                    {% else %}
+                    {% trans "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür." %}
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="calendar-day-stats">
+                <article class="calendar-day-stat">
+                    <span>{% trans "Qeyd sayı" %}</span>
+                    <strong>{{ calendar_data.selected_day.summary.total }}</strong>
+                </article>
+                <article class="calendar-day-stat calendar-day-stat--income">
+                    <span>{% trans "Gəlir" %}</span>
+                    <strong>{% money calendar_data.selected_day.income_total request.user %}</strong>
+                </article>
+                <article class="calendar-day-stat calendar-day-stat--expense">
+                    <span>{% trans "Xərc" %}</span>
+                    <strong>{% money calendar_data.selected_day.expense_total request.user %}</strong>
+                </article>
+            </div>
+
+            <div class="calendar-timeline">
+                {% for activity in calendar_data.selected_day.activities %}
+                <article class="calendar-activity-card calendar-activity-card--{{ activity.kind }}">
+                    <span class="calendar-activity-icon">
+                        <i class="fa-solid {{ activity.icon }}"></i>
+                    </span>
+                    <div class="calendar-activity-content">
+                        <div class="calendar-activity-row">
+                            <strong class="calendar-activity-title">{{ activity.title }}</strong>
+                            <div class="calendar-activity-badges-inline">
+                                {% if activity.quantity is not None %}
+                                <span class="calendar-activity-qty calendar-activity-qty--{{ activity.kind }}">
+                                    {{ activity.quantity_prefix }}{% display_measure activity.quantity activity.unit request.user %}
+                                </span>
+                                {% endif %}
+                                {% if activity.amount is not None %}
+                                <span class="calendar-activity-money calendar-activity-money--{{ activity.financial_role|default:activity.kind }}">
+                                    {% money activity.amount request.user activity.amount_prefix %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="calendar-activity-details">
+                            <div class="calendar-activity-detail">
+                                <strong>{% trans "Əməliyyat" %}:</strong>
+                                <span>{{ activity.operation_label }}</span>
+                            </div>
+                            <div class="calendar-activity-detail">
+                                <strong>{% trans "Bölmə" %}:</strong>
+                                <span>{{ activity.subtitle }}</span>
+                            </div>
+                        </div>
+                        {% if activity.note %}
+                        <div class="calendar-activity-note">{{ activity.note }}</div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% empty %}
+                <div class="calendar-empty-state">
+                    <span class="calendar-empty-icon"><i class="fa-regular fa-calendar"></i></span>
+                    <h3>{% trans "Bu gün üçün qeyd yoxdur" %}</h3>
+                    <p>{% trans "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin." %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </aside>
+    </section>
+</main>
+
+<style>
+    .calendar-hero {
+        background:
+            radial-gradient(circle at top right, rgba(110, 231, 140, 0.24), transparent 36%),
+            radial-gradient(circle at left center, rgba(255, 255, 255, 0.16), transparent 32%),
+            linear-gradient(135deg, #14532d 0%, #1f8f4d 42%, #34c26a 100%);
+    }
+
+    .calendar-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #f8fafc;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .calendar-hero-copy {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
+        margin-top: 18px;
+    }
+
+    .calendar-eyebrow {
+        margin: 0 0 8px;
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+    }
+
+    .calendar-welcome-text {
+        max-width: 760px;
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.82);
+    }
+
+    .calendar-toolbar-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .calendar-toolbar-link:hover {
+        transform: translateY(-1px);
+    }
+
+    .calendar-toolbar-link--primary {
+        background: #f4d35e;
+        color: #263238;
+        box-shadow: 0 14px 28px rgba(20, 83, 45, 0.18);
+    }
+
+    .calendar-page {
+        display: grid;
+        gap: 24px;
+    }
+
+    .calendar-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .calendar-summary-card {
+        padding: 22px;
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(255, 252, 245, 0.98) 0%, rgba(249, 246, 237, 0.98) 100%);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        box-shadow: 0 18px 35px rgba(15, 23, 42, 0.06);
+        display: grid;
+        gap: 8px;
+    }
+
+    .calendar-summary-card--income {
+        background: linear-gradient(180deg, rgba(240, 253, 244, 0.98) 0%, rgba(220, 252, 231, 0.98) 100%);
+    }
+
+    .calendar-summary-card--expense {
+        background: linear-gradient(180deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 237, 213, 0.98) 100%);
+    }
+
+    .calendar-summary-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .calendar-summary-value {
+        font-size: 34px;
+        line-height: 1;
+        color: #0f172a;
+    }
+
+    .calendar-summary-value--income {
+        color: #166534;
+    }
+
+    .calendar-summary-value--expense {
+        color: #c2410c;
+    }
+
+    .calendar-summary-note {
+        font-size: 14px;
+        color: #475569;
+    }
+
+    .calendar-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .calendar-board,
+    .calendar-day-panel {
+        border-radius: 30px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    }
+
+    .calendar-board {
+        padding: 24px;
+        background:
+            radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 24%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 250, 248, 0.98) 100%);
+    }
+
+    .calendar-day-panel {
+        padding: 24px;
+        background:
+            radial-gradient(circle at top right, rgba(250, 204, 21, 0.14), transparent 28%),
+            linear-gradient(180deg, rgba(255, 250, 240, 0.99) 0%, rgba(255, 255, 255, 0.99) 100%);
+        position: sticky;
+        top: 24px;
+    }
+
+    .calendar-board-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 16px;
+    }
+
+    .calendar-section-label {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 800;
+        color: #0f766e;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+
+    .calendar-board-head h2,
+    .calendar-day-panel-head h2 {
+        margin: 0;
+        font-size: 28px;
+        color: #0f172a;
+    }
+
+    .calendar-month-nav {
+        display: inline-flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px;
+        border-radius: 999px;
+        background: rgba(248, 250, 252, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .calendar-nav-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #0f172a;
+        background: #fff;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .calendar-month-label {
+        min-width: 132px;
+        text-align: center;
+        font-size: 15px;
+        font-weight: 700;
+        color: #334155;
+    }
+
+    .calendar-month-nav-center {
+        display: grid;
+        gap: 8px;
+        min-width: 220px;
+    }
+
+    .calendar-month-picker {
+        display: grid;
+        gap: 6px;
+    }
+
+    .calendar-month-picker-label {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .calendar-month-picker-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+    }
+
+    .calendar-month-input {
+        min-width: 0;
+        width: 100%;
+        height: 42px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        background: #fff;
+        padding: 0 12px;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .calendar-month-submit {
+        height: 42px;
+        border: none;
+        border-radius: 14px;
+        padding: 0 14px;
+        background: linear-gradient(135deg, #1f6f5f 0%, #2d8f6f 100%);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(31, 111, 95, 0.18);
+    }
+
+    .calendar-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        margin-bottom: 18px;
+    }
+
+    .calendar-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .calendar-legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .calendar-legend-dot--stock-in { background: #0f766e; }
+    .calendar-legend-dot--income { background: #16a34a; }
+    .calendar-legend-dot--expense { background: #ea580c; }
+    .calendar-legend-dot--stock-out { background: #2563eb; }
+
+    .calendar-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .calendar-weekday {
+        text-align: center;
+        font-size: 13px;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .calendar-day-card {
+        min-height: 156px;
+        padding: 14px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        overflow: hidden;
+    }
+
+    .calendar-day-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(15, 118, 110, 0.26);
+        box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    .calendar-day-card--muted {
+        background: rgba(248, 250, 252, 0.62);
+        color: #94a3b8;
+    }
+
+    .calendar-day-card--today {
+        border-color: rgba(244, 180, 0, 0.42);
+        box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.18);
+    }
+
+    .calendar-day-card--selected {
+        background: linear-gradient(180deg, rgba(236, 253, 245, 0.98) 0%, rgba(255, 255, 255, 0.98) 100%);
+        border-color: rgba(22, 163, 74, 0.34);
+    }
+
+    .calendar-day-card--active {
+        border-color: rgba(14, 116, 144, 0.18);
+    }
+
+    .calendar-day-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .calendar-day-number {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .calendar-day-card--muted .calendar-day-number {
+        color: #94a3b8;
+    }
+
+    .calendar-day-count {
+        min-width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .calendar-day-body {
+        display: grid;
+        gap: 10px;
+        min-height: 0;
+    }
+
+    .calendar-day-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .calendar-day-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+    }
+
+    .calendar-day-badge--stock-in {
+        background: rgba(13, 148, 136, 0.12);
+        color: #0f766e;
+    }
+
+    .calendar-day-badge--income {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .calendar-day-badge--expense {
+        background: rgba(234, 88, 12, 0.12);
+        color: #c2410c;
+    }
+
+    .calendar-day-badge--stock-out {
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+    }
+
+    .calendar-day-preview-list {
+        display: grid;
+        gap: 8px;
+    }
+
+    .calendar-day-preview {
+        display: grid;
+        grid-template-columns: 14px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        font-size: 13px;
+        line-height: 1.35;
+        color: #334155;
+    }
+
+    .calendar-day-preview i {
+        margin-top: 2px;
+        font-size: 12px;
+    }
+
+    .calendar-day-preview--stock-in i { color: #0f766e; }
+    .calendar-day-preview--income i { color: #16a34a; }
+    .calendar-day-preview--expense i { color: #ea580c; }
+    .calendar-day-preview--stock-out i { color: #2563eb; }
+
+    .calendar-day-preview span {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .calendar-day-more,
+    .calendar-day-empty {
+        font-size: 12px;
+        font-weight: 700;
+        color: #94a3b8;
+    }
+
+    .calendar-day-panel-head {
+        margin-bottom: 18px;
+    }
+
+    .calendar-day-panel-copy {
+        margin: 10px 0 0;
+        color: #475569;
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+    .calendar-day-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .calendar-day-stat {
+        padding: 14px 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        display: grid;
+        gap: 4px;
+    }
+
+    .calendar-day-stat span {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .calendar-day-stat strong {
+        font-size: 20px;
+        color: #0f172a;
+    }
+
+    .calendar-day-stat--income strong { color: #166534; }
+    .calendar-day-stat--expense strong { color: #c2410c; }
+
+    .calendar-timeline {
+        display: grid;
+        gap: 12px;
+    }
+
+    .calendar-activity-card {
+        display: grid;
+        grid-template-columns: 50px minmax(0, 1fr);
+        gap: 14px;
+        align-items: center;
+        padding: 16px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(226, 232, 240, 0.86);
+        transition: box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .calendar-activity-card:hover {
+        box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .calendar-activity-card--stock-in:hover { border-color: rgba(13, 148, 136, 0.26); }
+    .calendar-activity-card--income:hover { border-color: rgba(22, 163, 74, 0.26); }
+    .calendar-activity-card--expense:hover { border-color: rgba(234, 88, 12, 0.26); }
+    .calendar-activity-card--stock-out:hover { border-color: rgba(37, 99, 235, 0.26); }
+
+    .calendar-activity-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .calendar-activity-card--stock-in .calendar-activity-icon {
+        background: rgba(13, 148, 136, 0.12);
+        color: #0f766e;
+    }
+
+    .calendar-activity-card--income .calendar-activity-icon {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .calendar-activity-card--expense .calendar-activity-icon {
+        background: rgba(234, 88, 12, 0.12);
+        color: #c2410c;
+    }
+
+    .calendar-activity-card--stock-out .calendar-activity-icon {
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+    }
+
+    .calendar-activity-content {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .calendar-activity-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .calendar-activity-title {
+        font-size: 17px;
+        color: #0f172a;
+    }
+
+    .calendar-activity-badges-inline {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .calendar-activity-money,
+    .calendar-activity-qty {
+        flex-shrink: 0;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .calendar-activity-money--income,
+    .calendar-activity-qty--income,
+    .calendar-activity-qty--stock-in {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .calendar-activity-money--expense {
+        background: rgba(234, 88, 12, 0.12);
+        color: #c2410c;
+    }
+
+    .calendar-activity-qty--stock-out {
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+    }
+
+    .calendar-activity-details {
+        display: grid;
+        gap: 6px;
+    }
+
+    .calendar-activity-detail {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 13px;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .calendar-activity-note {
+        font-size: 13px;
+        line-height: 1.45;
+        color: #0f766e;
+        background: rgba(236, 253, 245, 0.95);
+        border-radius: 14px;
+        padding: 8px 10px;
+    }
+
+    .calendar-empty-state {
+        padding: 28px 20px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px dashed rgba(148, 163, 184, 0.32);
+        text-align: center;
+    }
+
+    .calendar-empty-icon {
+        display: inline-flex;
+        width: 62px;
+        height: 62px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(226, 232, 240, 0.65);
+        color: #64748b;
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
+
+    .calendar-empty-state h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        color: #0f172a;
+    }
+
+    .calendar-empty-state p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 1180px) {
+        .calendar-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .calendar-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .calendar-day-panel {
+            position: static;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .calendar-hero-copy,
+        .calendar-board-head {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .calendar-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .calendar-weekdays {
+            display: none;
+        }
+
+        .calendar-month-nav {
+            justify-content: space-between;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .calendar-summary-grid,
+        .calendar-day-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .calendar-board,
+        .calendar-day-panel {
+            padding: 18px;
+            border-radius: 24px;
+        }
+
+        .calendar-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .calendar-month-nav {
+            width: 100%;
+        }
+
+        .calendar-month-nav-center {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .calendar-day-card {
+            min-height: 132px;
+        }
+
+        .calendar-activity-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .calendar-activity-badges-inline {
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+<script>
+    {% include 'scripts/dashboard/calendar.js' %}
+</script>
+{% endblock %}

@@ -17,7 +17,7 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Alət Məlumatlarını Yenilə" %}</h3>
 
-        <form method="POST" id="tool-form" data-sync-entity="tool" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'tools:tool_list' %}">
+        <form method="POST" id="tool-form" data-sync-entity="tool" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'tools:tool_list' %}" data-sync-direct-online="true">
             {% csrf_token %}
             <input type="hidden" name="record_id" value="{{ alet.pk }}">
             <input type="hidden" name="record_version" value="{{ alet.updated_at|date:'c' }}">
@@ -65,6 +65,17 @@
                 </div>
             </div>
 
+            <div class="form-group" id="tool-zero-price-source-group" style="display: none;">
+                <label>{% trans "Bu stok haradan gəlib?" %} <span class="required-star">*</span></label>
+                <select name="zero_price_source" id="tool-zero-price-source" class="custom-input">
+                    <option value="">{% trans "Seçin" %}</option>
+                    {% for value, label in zero_price_source_choices %}
+                    <option value="{{ value }}" {% if alet.zero_price_source == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="zero-price-source-note">{% trans "Məbləğ 0 olduqda mənbəni seçin." %}</div>
+            </div>
+
             <div class="form-group">
                 <label>Tarix <span style="color: #dc3545;">*</span></label>
                 <input type="date" name="date" required value="{{ alet.date|date:'Y-m-d' }}"
@@ -86,75 +97,6 @@
 </main>
 {{ category_item_map|json_script:"tool-form-category-item-map" }}
 <script>
-    const toolFormCategoryItemMap = JSON.parse(document.getElementById("tool-form-category-item-map")?.textContent || "{}");
-    const toolFormManualGroup = document.getElementById('manual-name-group');
-    const toolFormManualInput = document.getElementById('manual-name-input');
-
-    function populateToolFormItems(categoryId, selectedItemId = "") {
-        const itemSelect = document.getElementById('item-select');
-        if (!itemSelect) return;
-        const items = toolFormCategoryItemMap[String(categoryId)] || [];
-        itemSelect.innerHTML = '<option value="" disabled selected>{% trans "Alət seçin" %}</option>';
-        items.forEach((item) => {
-            const option = document.createElement('option');
-            option.value = String(item.id);
-            option.textContent = item.name;
-            if (String(item.id) === String(selectedItemId)) {
-                option.selected = true;
-            }
-            itemSelect.appendChild(option);
-        });
-        itemSelect.disabled = false;
-    }
-
-    document.getElementById('category-select').addEventListener('change', function () {
-        const categoryId = this.value;
-        const categoryText = this.options[this.selectedIndex].text;
-        const itemSelect = document.getElementById('item-select');
-        const itemGroup = document.getElementById('item-field-group');
-        const manualGroup = document.getElementById('manual-name-group');
-        const manualInput = document.getElementById('manual-name-input');
-
-        if (categoryText === "Digər") {
-            itemGroup.style.display = 'none';
-            itemSelect.required = false;
-            itemSelect.disabled = true;
-
-            toolFormManualGroup.style.display = 'block';
-            toolFormManualInput.required = true;
-        } else {
-            toolFormManualGroup.style.display = 'none';
-            toolFormManualInput.required = false;
-            toolFormManualInput.value = '';
-
-            itemGroup.style.display = 'block';
-            itemSelect.style.display = 'block';
-            itemSelect.required = true;
-            populateToolFormItems(categoryId);
-            handleToolItemSelection();
-        }
-    });
-
-    function handleToolItemSelection() {
-        const selected = document.getElementById('item-select').options[document.getElementById('item-select').selectedIndex];
-        const isOther = (selected?.textContent || "").trim() === "Digər";
-        if (isOther) {
-            toolFormManualGroup.style.display = 'block';
-            toolFormManualInput.required = true;
-        } else {
-            toolFormManualGroup.style.display = 'none';
-            toolFormManualInput.required = false;
-            toolFormManualInput.value = '';
-        }
-    }
-
-    document.getElementById('item-select').addEventListener('change', handleToolItemSelection);
-
-    (function initSelection() {
-        const itemSelect = document.getElementById('item-select');
-        if (itemSelect && itemSelect.value) {
-            handleToolItemSelection();
-        }
-    })();
+  {% include 'scripts/tools/tool_form.js' %}
 </script>
 {% endblock %}

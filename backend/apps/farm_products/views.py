@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy as _
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, resolve_url
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
@@ -10,6 +10,8 @@ from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
 from hashlib import md5
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from .models import FarmProduct, FarmProductCategory, FarmProductItem
 from common.messages import add_crud_success_message
@@ -20,12 +22,49 @@ from common.category_order import (
 )
 from common.icons import get_farm_product_icon_for_product
 from common.text import normalize_manual_label
+from common.view_cache import bust_dashboard_related_caches
+from common.zero_price_source import (
+    ZERO_PRICE_SOURCE_CHOICES,
+    get_zero_price_source_label,
+    is_blank_or_zero_price,
+    normalize_zero_price_source,
+)
 from expenses.models import Expense, ExpenseCategory, ExpenseSubCategory
 from incomes.models import Income
 
 FARM_FORM_CATALOG_CACHE_KEY = "farm-products:form-catalog:v1"
-FARM_FORM_CATALOG_TTL = 300
-FARM_LIST_CACHE_TTL = 30
+FARM_FORM_CATALOG_TTL = 3600
+FARM_LIST_CACHE_TTL = 180
+FARM_LIST_BUST_TTL = 60 * 60 * 24 * 30
+
+
+def _farm_list_bust_key(user_id: int) -> str:
+    return f"farm-products:list-bust:v1:{user_id}"
+
+
+def _farm_list_cache_bust_value(user_id: int) -> str:
+    return str(cache.get(_farm_list_bust_key(user_id), "0"))
+
+
+def _bust_farm_list_cache(user_id: int) -> None:
+    cache.set(_farm_list_bust_key(user_id), timezone.now().isoformat(), FARM_LIST_BUST_TTL)
+    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
+    bust_dashboard_related_caches(user_id)
+
+
+def _list_query_signature(query_dict) -> str:
+    filtered = query_dict.copy()
+    filtered.pop("_ui", None)
+    return md5(filtered.urlencode().encode()).hexdigest()
+
+
+def _redirect_with_refresh(target) -> object:
+    url = resolve_url(target)
+    parsed = urlsplit(url)
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "_ui"]
+    query.append(("_ui", str(int(timezone.now().timestamp() * 1000))))
+    refreshed_url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
+    return redirect(refreshed_url)
 
 
 def _is_forage_item(name: str) -> bool:
@@ -87,6 +126,7 @@ def _farm_form_context(product):
         "product": product,
         "categories": catalog["categories"],
         "category_item_map": catalog["item_map"],
+        "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
     }
 
 
@@ -208,7 +248,7 @@ def _sync_farm_product_related_records(user, product):
         linked_expense.delete()
 
 
-def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, additional_info, entry_date):
+def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, zero_price_source, additional_info, entry_date):
     existing = (
         FarmProduct.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name, unit=unit)
@@ -231,6 +271,7 @@ def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, add
     existing.quantity = total_qty
     existing.unit = unit
     existing.price = price
+    existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
     existing.save()
@@ -239,8 +280,9 @@ def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, add
 
 
 @login_required
+@never_cache
 def farm_product_list(request):
-    cache_key = f"farm-products:list:v1:{request.user.pk}:{md5(request.GET.urlencode().encode()).hexdigest()}:{timezone.localdate().isoformat()}"
+    cache_key = f"farm-products:list:v2:{request.user.pk}:{_farm_list_cache_bust_value(request.user.pk)}:{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
     cached_context = cache.get(cache_key)
     if cached_context is not None:
         return render(request, "farm_products/farm_product_list.html", cached_context)
@@ -308,6 +350,7 @@ def farm_product_list(request):
     products = list(products_qs)
     for product in products:
         product.icon_class = get_farm_product_icon_for_product(product)
+        product.zero_price_source_label = get_zero_price_source_label(product)
         try:
             product.price_display = abs(Decimal(product.price))
         except Exception:
@@ -318,6 +361,7 @@ def farm_product_list(request):
         "products": products,
         "categories": form_catalog["categories"],
         "category_item_map": form_catalog["item_map"],
+        "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
         "filter_items": filtered_items,
         "selected_category": category_id,
         "selected_item": item_id,
@@ -355,6 +399,7 @@ def farm_product_create(request):
         quantity = request.POST.get("quantity")
         unit = request.POST.get("unit")
         price = request.POST.get("price")
+        zero_price_source = normalize_zero_price_source(request.POST.get("zero_price_source"))
         manual_name = normalize_manual_label(request.POST.get("manual_name"))
         additional_info = request.POST.get("additional_info")
         date_raw = request.POST.get("date")
@@ -370,6 +415,11 @@ def farm_product_create(request):
         except (InvalidOperation, TypeError, ValueError):
             messages.error(request, _("Miqdar düzgün deyil."))
             return redirect(redirect_to)
+        if quantity_val > 0 and is_blank_or_zero_price(price) and not zero_price_source:
+            messages.error(request, _("Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin."))
+            return redirect(redirect_to)
+        if quantity_val <= 0 or not is_blank_or_zero_price(price):
+            zero_price_source = None
 
         def allowed_units_for_item(item_obj):
             forage_items = {"yonca", "koronilla", "seradella"}
@@ -427,15 +477,18 @@ def farm_product_create(request):
                 quantity_val,
                 effective_unit,
                 price,
+                zero_price_source,
                 additional_info,
                 entry_date,
             ) if effective_manual else None
             if merged == "deleted":
+                _bust_farm_list_cache(request.user.pk)
                 add_crud_success_message(request, "FarmProduct", "delete")
-                return redirect(redirect_to)
+                return _redirect_with_refresh(redirect_to)
             if merged:
+                _bust_farm_list_cache(request.user.pk)
                 add_crud_success_message(request, "FarmProduct", "update")
-                return redirect(redirect_to)
+                return _redirect_with_refresh(redirect_to)
 
             product = FarmProduct.objects.create(
                 item=item,
@@ -443,6 +496,7 @@ def farm_product_create(request):
                 quantity=quantity,
                 unit=effective_unit,
                 price=price,
+                zero_price_source=zero_price_source,
                 additional_info=additional_info,
                 date=entry_date,
                 created_by=request.user,
@@ -497,9 +551,10 @@ def farm_product_create(request):
         except FarmProductItem.DoesNotExist:
             messages.error(request, _("Seçilmiş məhsul tapılmadı."))
         else:
+            _bust_farm_list_cache(request.user.pk)
             add_crud_success_message(request, "FarmProduct", "create")
 
-        return redirect(redirect_to)
+        return _redirect_with_refresh(redirect_to)
 
     return redirect(redirect_to)
 
@@ -512,6 +567,7 @@ def farm_product_update(request, pk):
         quantity = request.POST.get("quantity")
         unit = request.POST.get("unit")
         price = request.POST.get("price")
+        zero_price_source = normalize_zero_price_source(request.POST.get("zero_price_source"))
         manual_name = normalize_manual_label(request.POST.get("manual_name"))
         additional_info = request.POST.get("additional_info")
         date_raw = request.POST.get("date")
@@ -530,6 +586,13 @@ def farm_product_update(request, pk):
             quantity_val = Decimal(str(quantity))
         except (InvalidOperation, TypeError, ValueError):
             messages.error(request, _("Miqdar düzgün deyil."))
+            return render(
+                request,
+                "farm_products/farm_product_form.html",
+                _farm_form_context(product),
+            )
+        if quantity_val > 0 and is_blank_or_zero_price(price) and not zero_price_source:
+            messages.error(request, _("Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin."))
             return render(
                 request,
                 "farm_products/farm_product_form.html",
@@ -556,6 +619,7 @@ def farm_product_update(request, pk):
         product.quantity = quantity
         product.additional_info = additional_info
         product.price = price
+        product.zero_price_source = zero_price_source if quantity_val > 0 and is_blank_or_zero_price(price) else None
         product.date = entry_date
 
         if item_id:
@@ -708,8 +772,9 @@ def farm_product_update(request, pk):
         elif linked_expense:
             linked_expense.delete()
 
+        _bust_farm_list_cache(request.user.pk)
         add_crud_success_message(request, "FarmProduct", "update")
-        return redirect("farm_products:product_list")
+        return _redirect_with_refresh("farm_products:product_list")
 
     return render(
         request,
@@ -726,8 +791,9 @@ def farm_product_delete(request, pk):
         Expense.objects.filter(content_type=product_type, object_id=product.id).delete()
         Income.objects.filter(content_type=product_type, object_id=product.id).delete()
         product.delete()
+        _bust_farm_list_cache(request.user.pk)
         add_crud_success_message(request, "FarmProduct", "delete")
-        return redirect("farm_products:product_list")
+        return _redirect_with_refresh("farm_products:product_list")
     return render(request, "farm_products/farm_product_confirm_delete.html", {"product": product})
 
 
