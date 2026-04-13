@@ -17,12 +17,6 @@
 
     <main class="main-content">
         {% currency_symbol request.user as current_currency_symbol %}
-        <section class="sell-guide-card">
-            <p class="sell-guide-kicker">{% trans "Satış" %}</p>
-            <h2>{% trans "Məhsul satdıqca gəliri dərhal yazın" %}</h2>
-            <p>{% trans "Hazır seçimlərdən istifadə edin və ya məbləği özünüz daxil edin. Satış yazıldıqda gəlir görünəcək." %}</p>
-        </section>
-
         <form method="get" action="" class="search-form" style="margin-bottom: 18px;">
             <div style="position: relative;" class="click-focus">
                 <i class="fa-solid fa-search"
@@ -109,39 +103,6 @@
         </div>
     </main>
 <style>
-    .sell-guide-card {
-        margin-bottom: 18px;
-        padding: 18px;
-        border-radius: 22px;
-        background:
-            radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 26%),
-            linear-gradient(180deg, #ffffff 0%, #fff8ee 100%);
-        border: 1px solid rgba(245, 158, 11, 0.18);
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
-    }
-
-    .sell-guide-kicker {
-        margin: 0 0 6px;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #9a3412;
-    }
-
-    .sell-guide-card h2 {
-        margin: 0;
-        font-size: 24px;
-        color: #111827;
-    }
-
-    .sell-guide-card p:last-child {
-        margin: 8px 0 0;
-        font-size: 14px;
-        line-height: 1.55;
-        color: #4b5563;
-    }
-
     .quick-expense-section .template-item {
         padding: 22px 22px;
     }
@@ -172,6 +133,82 @@
         font-size: 20px;
     }
 </style>
+
+<script>
+  (function () {
+    const lang = ("{{ request.LANGUAGE_CODE|default:'az'|escapejs }}".split("-")[0] || "az").toLowerCase();
+    if (lang === "az") return;
+
+    const maps = {
+      en: {
+        staticTexts: {
+          "Məhsul Sat": "Sell Product",
+          "Bir toxunuşla satış yaz": "Add sale in one tap",
+          "Məbləği özünüz yazın": "Enter amount manually",
+          "Son istifadə olunan satışlar": "Recently used sales",
+          "Yeni": "New",
+          "Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək.": "No income templates yet. They will appear here after you add income.",
+        },
+        placeholders: {
+          "Satış şablonu axtar...": "Search sale template...",
+        },
+        dynamicTexts: {
+          "Bal satışı": "Honey sale",
+          "Yumurta satışı": "Egg sale",
+          "Süd satışı": "Milk sale",
+          "İnək südü": "Cow milk",
+          "Toyuq yumurtası": "Chicken eggs",
+          "Bal": "Honey",
+          "Kartof": "Potato",
+          "Xüsusi gəlir": "Custom income",
+        },
+      },
+      ru: {
+        staticTexts: {
+          "Məhsul Sat": "Продать товар",
+          "Bir toxunuşla satış yaz": "Продажа в одно касание",
+          "Məbləği özünüz yazın": "Введите сумму вручную",
+          "Son istifadə olunan satışlar": "Недавно использованные продажи",
+          "Yeni": "Новый",
+          "Hələ heç bir gəlir şablonu yoxdur. Gəlir əlavə etdikdə burada görünəcək.": "Шаблонов дохода пока нет. Они появятся после добавления дохода.",
+        },
+        placeholders: {
+          "Satış şablonu axtar...": "Поиск шаблона продажи...",
+        },
+        dynamicTexts: {
+          "Bal satışı": "Продажа меда",
+          "Yumurta satışı": "Продажа яиц",
+          "Süd satışı": "Продажа молока",
+          "İnək südü": "Коровье молоко",
+          "Toyuq yumurtası": "Куриные яйца",
+          "Bal": "Мед",
+          "Kartof": "Картофель",
+          "Xüsusi gəlir": "Специальный доход",
+        },
+      },
+    };
+
+    const selected = maps[lang];
+    if (!selected) return;
+
+    document.querySelectorAll(".back-btn-box span, .quick-expense-section-title, .templates-new-badge, .templates-empty p").forEach((node) => {
+      const value = (node.textContent || "").trim();
+      if (selected.staticTexts[value]) node.textContent = selected.staticTexts[value];
+      if (selected.dynamicTexts[value]) node.textContent = selected.dynamicTexts[value];
+    });
+
+    document.querySelectorAll(".quick-tap-name, .template-item-title, .template-tag").forEach((node) => {
+      const value = (node.textContent || "").trim();
+      if (selected.dynamicTexts[value]) node.textContent = selected.dynamicTexts[value];
+    });
+
+    const searchInput = document.getElementById("template-search");
+    if (searchInput) {
+      const value = (searchInput.getAttribute("placeholder") || "").trim();
+      if (selected.placeholders[value]) searchInput.setAttribute("placeholder", selected.placeholders[value]);
+    }
+  })();
+</script>
 
 <script>
   {% include 'scripts/dashboard/quick_income.js' %}

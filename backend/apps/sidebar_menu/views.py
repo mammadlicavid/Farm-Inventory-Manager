@@ -6,11 +6,56 @@ from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from django.utils import translation
 from django.utils.translation import gettext as _
+from zoneinfo import ZoneInfo
+from datetime import datetime
 
 from users.services import get_or_create_profile
-from .models import UserSettings
+from .models import TIMEZONE_GROUPS, UserSettings
 
 VOICE_LANGUAGE_CHOICES = {"system", "az", "en", "ru"}
+VALID_TIMEZONES = {
+    zone_name
+    for _, zone_entries in TIMEZONE_GROUPS
+    for zone_name, _ in zone_entries
+}
+
+
+def _format_utc_offset(zone_name):
+    now = datetime.now(ZoneInfo(zone_name))
+    offset = now.utcoffset()
+    if offset is None:
+        return "UTC+00:00"
+    total_minutes = int(offset.total_seconds() // 60)
+    sign = "+" if total_minutes >= 0 else "-"
+    total_minutes = abs(total_minutes)
+    hours, minutes = divmod(total_minutes, 60)
+    return f"UTC{sign}{hours:02d}:{minutes:02d}"
+
+
+def _build_timezone_groups(selected_timezone):
+    timezone_groups = []
+    selected_label = ""
+    selected_now = ""
+
+    for group_label, zone_entries in TIMEZONE_GROUPS:
+        options = []
+        for zone_name, city_label in zone_entries:
+            offset_label = _format_utc_offset(zone_name)
+            full_label = f"{offset_label} {city_label}"
+            options.append({
+                "value": zone_name,
+                "label": full_label,
+                "selected": zone_name == selected_timezone,
+            })
+            if zone_name == selected_timezone:
+                selected_label = full_label
+                selected_now = datetime.now(ZoneInfo(zone_name)).strftime("%d.%m.%Y %H:%M")
+        timezone_groups.append({
+            "label": group_label,
+            "options": options,
+        })
+
+    return timezone_groups, selected_label, selected_now
 
 
 def _get_voice_language(request):
@@ -106,7 +151,8 @@ def setting_view(request):
     settings_obj.save(update_fields=["unit", "weight_unit", "volume_unit"])
     if request.method == 'POST':
         settings_obj.language             = request.POST.get('language', 'az')
-        settings_obj.timezone             = request.POST.get('timezone', 'Asia/Baku')
+        selected_timezone = (request.POST.get('timezone', 'Asia/Baku') or 'Asia/Baku').strip()
+        settings_obj.timezone             = selected_timezone if selected_timezone in VALID_TIMEZONES else 'Asia/Baku'
         weight_unit = request.POST.get('weight_unit', 'kg')
         if weight_unit == 'oz':
             weight_unit = 'lb'
@@ -143,11 +189,17 @@ def setting_view(request):
         weight_unit, volume_unit = "kg", "litr"
     if weight_unit == "oz":
         weight_unit = "lb"
+    timezone_groups, current_timezone_label, current_timezone_now = _build_timezone_groups(
+        settings_obj.timezone or "Asia/Baku"
+    )
     response = render(request, 'sidebar_menu/setting.html', {
         'user_settings': settings_obj,
         'weight_unit_value': weight_unit,
         'volume_unit_value': volume_unit,
         'voice_input_language': _get_voice_language(request),
+        'timezone_groups': timezone_groups,
+        'current_timezone_label': current_timezone_label,
+        'current_timezone_now': current_timezone_now,
     })
     response.set_cookie("voice_input_language", _get_voice_language(request), max_age=60 * 60 * 24 * 365)
     return response

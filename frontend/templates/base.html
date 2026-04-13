@@ -6,6 +6,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}{% trans "Ferma İdarəsi" %}{% endblock %}</title>
+    {% if LANGUAGE_CODE != 'az' %}
+      <script>
+        document.documentElement.setAttribute('data-i18n-pending', 'true');
+        window.__releaseI18nPending = function () {
+          document.documentElement.removeAttribute('data-i18n-pending');
+        };
+        window.setTimeout(window.__releaseI18nPending, 1200);
+        window.addEventListener('load', window.__releaseI18nPending, { once: true });
+      </script>
+      <style>
+        html[data-i18n-pending='true'] body {
+          visibility: hidden;
+        }
+      </style>
+    {% endif %}
     <link
       rel="preload"
       href="{% static 'vendor/fontawesome/css/all.min.css' %}"
@@ -173,7 +188,7 @@
         <a href="{% url 'inventory:add_placeholder' %}" class="nav-add-btn"><i class="fa-solid fa-plus"></i></a>
 
         <!-- Tez xərc -->
-        <a href="{% url 'inventory:add_placeholder' %}?form=expense" class="nav-item {% if request.resolver_match.url_name == 'add_placeholder' and request.GET.form == 'expense' %}active{% endif %}">
+        <a href="{% url 'quick_expense' %}" class="nav-item {% if request.resolver_match.url_name == 'quick_expense' %}active{% endif %}">
           <i class="fa-solid fa-bolt"></i>
           <span>{% trans "Tez xərc" %}</span>
         </a>
@@ -191,7 +206,7 @@
     </script>
     {% if LANGUAGE_CODE != 'az' %}
       <script src="{% url 'javascript-catalog' %}"></script>
-      <script src="{% static 'js/runtime_i18n.js' %}"></script>
+      <script src="{% static 'js/runtime_i18n.js' %}" onerror="window.__releaseI18nPending && window.__releaseI18nPending()"></script>
     {% endif %}
 
     {% if user.is_authenticated %}

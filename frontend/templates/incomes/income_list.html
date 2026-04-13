@@ -21,7 +21,7 @@
             <span class="label">{% trans "Bu həftə ümumi gəlir" %}</span>
             <span class="value">{% money weekly_total_display request.user %}</span>
         </div>
-        <a href="{% url 'inventory:add_placeholder' %}?form=income" class="summary-card-quick">
+        <a href="{% url 'quick_income' %}" class="summary-card-quick">
             <i class="fa-solid fa-bolt"></i>
             <span>{% trans "Tez sat" %}</span>
         </a>
@@ -188,7 +188,7 @@
                     </div>
                     <div class="expense-item-amount">
                         <div style="text-align: right;">
-                            <span style="display: block; font-weight: 700; color: var(--primary-green);">{% money income.amount_display request.user "+" %}</span>
+                            <span style="display: block; font-weight: 700; color: var(--primary-green);">{% money income.amount_display request.user %}</span>
                             <div
                                 style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
                                 <a href="{% url 'incomes:edit_income' income.pk %}"

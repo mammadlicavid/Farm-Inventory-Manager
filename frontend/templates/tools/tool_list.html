@@ -187,11 +187,7 @@
                         <div class="stock-source-badge">{{ alet.zero_price_source_label }}</div>
                         {% else %}
                         <div class="expense-item-amount" style="{% if alet.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
-                            {% if alet.quantity < 0 %}
-                            {% money alet.price_display request.user "+" %}
-                            {% else %}
-                            {% money alet.price_display request.user "-" %}
-                            {% endif %}
+                            {% money alet.price_display request.user %}
                         </div>
                         {% endif %}
                         <div class="expense-item-actions">

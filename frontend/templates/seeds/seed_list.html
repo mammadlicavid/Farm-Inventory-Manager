@@ -202,11 +202,7 @@
                         <div class="stock-source-badge">{{ seed.zero_price_source_label }}</div>
                         {% else %}
                         <div class="expense-item-amount" style="{% if seed.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
-                            {% if seed.quantity < 0 %}
-                            {% money seed.price_display request.user "+" %}
-                            {% else %}
-                            {% money seed.price_display request.user "-" %}
-                            {% endif %}
+                            {% money seed.price_display request.user %}
                         </div>
                         {% endif %}
                         <div class="expense-item-actions">

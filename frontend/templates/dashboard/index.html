@@ -104,12 +104,12 @@
         </article>
         <article class="dashboard-metric-card dashboard-metric-card--income">
             <span class="dashboard-metric-label">{% trans "Bu həftə gəlir" %}</span>
-            <strong class="dashboard-metric-value dashboard-metric-value--income">{% money overview.weekly_income_display request.user "+" %}</strong>
+            <strong class="dashboard-metric-value dashboard-metric-value--income">{% money overview.weekly_income_display request.user %}</strong>
             <span class="dashboard-metric-note">{% trans "Satış və digər gəlirlər" %}</span>
         </article>
         <article class="dashboard-metric-card dashboard-metric-card--expense">
             <span class="dashboard-metric-label">{% trans "Bu həftə xərc" %}</span>
-            <strong class="dashboard-metric-value dashboard-metric-value--expense">{% money overview.weekly_expenses_display request.user "-" %}</strong>
+            <strong class="dashboard-metric-value dashboard-metric-value--expense">{% money overview.weekly_expenses_display request.user %}</strong>
             <span class="dashboard-metric-note">{% trans "Alışlar və gündəlik xərclər" %}</span>
         </article>
         <article class="dashboard-metric-card dashboard-metric-card--balance">

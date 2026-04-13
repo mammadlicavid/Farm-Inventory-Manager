@@ -55,11 +55,10 @@
   function updateFocus(point) {
     if (!point) return
     if (focusLabel) focusLabel.textContent = point.label
-    if (focusIncome) focusIncome.textContent = formatMoney(point.income, '+')
-    if (focusExpense) focusExpense.textContent = formatMoney(point.expense, '-')
+    if (focusIncome) focusIncome.textContent = formatMoney(point.income)
+    if (focusExpense) focusExpense.textContent = formatMoney(point.expense)
     if (focusNet) {
-      const netPrefix = Number(point.net) >= 0 ? '+' : ''
-      focusNet.textContent = formatMoney(point.net, netPrefix)
+      focusNet.textContent = formatMoney(point.net)
     }
     if (focusTax) focusTax.textContent = formatMoney(point.tax)
   }

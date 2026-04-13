@@ -59,13 +59,23 @@
           <i class="fa-solid fa-clock param-icon"></i>
           <div>
             <span class="param-title">{% trans "Vaxt zonası" %}</span>
-            <span class="param-sub">{% trans "Sistem saatı" %}</span>
+            <span class="param-sub">
+              {% if current_timezone_label and current_timezone_now %}
+                {{ current_timezone_label }} • {{ current_timezone_now }}
+              {% else %}
+                {% trans "Sistem saatı" %}
+              {% endif %}
+            </span>
           </div>
         </div>
         <select name="timezone" class="param-select">
-          <option value="Asia/Baku"     {% if user_settings.timezone == 'Asia/Baku'     %}selected{% endif %}>{% trans "UTC+4 Bakı" %}</option>
-          <option value="Europe/London" {% if user_settings.timezone == 'Europe/London' %}selected{% endif %}>{% trans "UTC+0 London" %}</option>
-          <option value="Europe/Moscow" {% if user_settings.timezone == 'Europe/Moscow' %}selected{% endif %}>{% trans "UTC+3 Moskva" %}</option>
+          {% for group in timezone_groups %}
+            <optgroup label="{{ group.label }}">
+              {% for option in group.options %}
+                <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </optgroup>
+          {% endfor %}
         </select>
       </div>
 

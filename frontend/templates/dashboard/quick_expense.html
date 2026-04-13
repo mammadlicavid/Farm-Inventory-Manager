@@ -139,6 +139,76 @@
 </style>
 
 <script>
+  (function () {
+    const lang = ("{{ request.LANGUAGE_CODE|default:'az'|escapejs }}".split("-")[0] || "az").toLowerCase();
+    if (lang === "az") return;
+
+    const maps = {
+      en: {
+        staticTexts: {
+          "Tez Xərc": "Quick Expense",
+          "Bir toxunuşla xərc": "One-tap expense",
+          "Xüsusi məbləğ": "Custom amount",
+          "Şablonlar": "Templates",
+          "Yeni": "New",
+          "Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək.": "No templates yet. They will appear here after you add an expense.",
+        },
+        placeholders: {
+          "Şablon axtar...": "Search template...",
+        },
+        dynamicTexts: {
+          "Yem": "Feed",
+          "Yanacaq": "Fuel",
+          "Gübrə": "Fertilizer",
+          "Baytar": "Veterinary",
+          "Xüsusi xərc": "Custom expense",
+        },
+      },
+      ru: {
+        staticTexts: {
+          "Tez Xərc": "Быстрый расход",
+          "Bir toxunuşla xərc": "Расход в одно касание",
+          "Xüsusi məbləğ": "Своя сумма",
+          "Şablonlar": "Шаблоны",
+          "Yeni": "Новый",
+          "Hələ heç bir şablon yoxdur. Xərc əlavə etdikdə burada görünəcək.": "Шаблонов пока нет. Они появятся после добавления расхода.",
+        },
+        placeholders: {
+          "Şablon axtar...": "Поиск шаблона...",
+        },
+        dynamicTexts: {
+          "Yem": "Корм",
+          "Yanacaq": "Топливо",
+          "Gübrə": "Удобрение",
+          "Baytar": "Ветеринар",
+          "Xüsusi xərc": "Специальный расход",
+        },
+      },
+    };
+
+    const selected = maps[lang];
+    if (!selected) return;
+
+    document.querySelectorAll(".back-btn-box span, .quick-expense-section-title, .templates-new-badge, .templates-empty p").forEach((node) => {
+      const value = (node.textContent || "").trim();
+      if (selected.staticTexts[value]) node.textContent = selected.staticTexts[value];
+      if (selected.dynamicTexts[value]) node.textContent = selected.dynamicTexts[value];
+    });
+
+    document.querySelectorAll(".quick-tap-name, .template-item-title, .template-tag").forEach((node) => {
+      const value = (node.textContent || "").trim();
+      if (selected.dynamicTexts[value]) node.textContent = selected.dynamicTexts[value];
+    });
+
+    const searchInput = document.getElementById("template-search");
+    if (searchInput) {
+      const value = (searchInput.getAttribute("placeholder") || "").trim();
+      if (selected.placeholders[value]) searchInput.setAttribute("placeholder", selected.placeholders[value]);
+    }
+  })();
+</script>
+
+<script>
   {% include 'scripts/dashboard/quick_expense.js' %}
 </script>
 {% endblock %}

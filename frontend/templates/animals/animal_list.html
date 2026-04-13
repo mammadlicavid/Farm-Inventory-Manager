@@ -223,11 +223,7 @@
                         <div class="stock-source-badge">{{ animal.zero_price_source_label }}</div>
                         {% else %}
                         <div class="expense-item-amount" style="{% if animal.quantity < 0 %}color: var(--primary-green);{% else %}color: #E74C04;{% endif %}">
-                            {% if animal.quantity < 0 %}
-                            {% money animal.price request.user "+" %}
-                            {% else %}
-                            {% money animal.price request.user "-" %}
-                            {% endif %}
+                            {% money animal.price request.user %}
                         </div>
                         {% endif %}
                         <div class="expense-item-actions">

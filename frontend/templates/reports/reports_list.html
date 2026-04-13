@@ -105,12 +105,12 @@
             <section class="reports-kpi-grid">
                 <article class="reports-kpi-card reports-kpi-card--income">
                     <span class="reports-kpi-label">{% trans "Ümumi gəlir" %}</span>
-                    <strong class="reports-kpi-value reports-kpi-value--income">{% money kpis.total_income request.user "+" %}</strong>
+                    <strong class="reports-kpi-value reports-kpi-value--income">{% money kpis.total_income request.user %}</strong>
                     <span class="reports-kpi-note">{% trans "Seçilmiş aralıqdakı bütün satışların cəmi" %}</span>
                 </article>
                 <article class="reports-kpi-card reports-kpi-card--expense">
                     <span class="reports-kpi-label">{% trans "Ümumi xərc" %}</span>
-                    <strong class="reports-kpi-value reports-kpi-value--expense">{% money kpis.total_expense request.user "-" %}</strong>
+                    <strong class="reports-kpi-value reports-kpi-value--expense">{% money kpis.total_expense request.user %}</strong>
                     <span class="reports-kpi-note">{% trans "Seçilmiş aralıqdakı bütün xərclərin cəmi" %}</span>
                 </article>
                 <article class="reports-kpi-card reports-kpi-card--net">
@@ -239,7 +239,6 @@
                         <div class="reports-breakdown-row">
                             <div class="reports-breakdown-top">
                                 <strong>{{ row.name }}</strong>
-                                <span>{% money row.amount request.user "-" %}</span>
                             </div>
                             <div class="reports-breakdown-bar">
                                 <span class="reports-breakdown-fill" style="width: {{ row.share_pct }}%;"></span>
@@ -286,8 +285,8 @@
                         <strong id="reportsChartFocusLabel">{{ chart.initial_point.label }}</strong>
                     </div>
                     <div class="reports-chart-focus-values">
-                        <span class="is-income">{% trans "Gəlir" %}: <strong id="reportsChartFocusIncome">{% money chart.initial_point.income request.user "+" %}</strong></span>
-                        <span class="is-expense">{% trans "Xərc" %}: <strong id="reportsChartFocusExpense">{% money chart.initial_point.expense request.user "-" %}</strong></span>
+                        <span class="is-income">{% trans "Gəlir" %}: <strong id="reportsChartFocusIncome">{% money chart.initial_point.income request.user %}</strong></span>
+                        <span class="is-expense">{% trans "Xərc" %}: <strong id="reportsChartFocusExpense">{% money chart.initial_point.expense request.user %}</strong></span>
                         <span class="is-net">{% trans "Qazanc" %}: <strong id="reportsChartFocusNet">{% if chart.initial_point.net >= 0 %}{% money chart.initial_point.net request.user "+" %}{% else %}{% money chart.initial_point.net request.user %}{% endif %}</strong></span>
                         <span>{% trans "Vergi" %}: <strong id="reportsChartFocusTax">{% money chart.initial_point.tax request.user %}</strong></span>
                     </div>
@@ -401,9 +400,9 @@
 
     .reports-hero {
         background:
-            radial-gradient(circle at top right, rgba(244, 211, 94, 0.18), transparent 32%),
-            radial-gradient(circle at left center, rgba(14, 165, 233, 0.16), transparent 28%),
-            linear-gradient(135deg, #143642 0%, #195b57 42%, #2d5f73 100%);
+            radial-gradient(circle at top right, rgba(110, 231, 140, 0.24), transparent 32%),
+            radial-gradient(circle at left center, rgba(255, 255, 255, 0.16), transparent 28%),
+            linear-gradient(135deg, #14532d 0%, #1f8f4d 44%, #34c26a 100%);
     }
 
     .reports-hero-badge,

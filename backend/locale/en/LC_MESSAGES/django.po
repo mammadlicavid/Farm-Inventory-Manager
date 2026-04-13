@@ -521,11 +521,38 @@ msgstr ""
 "information."
 
 #: apps/reports/views.py:626
-msgid "Seçilmiş dövr üzrə ümumi gəlir və xərc ayrıca göstərilir."
-msgstr ""
-"Total income and expenses are shown separately for the selected period."
+msgid "Seçilmiş aralıqdakı bütün satışların cəmi"
+msgstr "Total sales for the selected period"
 
 #: apps/reports/views.py:627
+msgid "Seçilmiş aralıqdakı bütün xərclərin cəmi"
+msgstr "Total expenses for the selected period"
+
+#: apps/reports/views.py:628
+msgid "Satışlara uyğun hesablanan məbləğ"
+msgstr "Sales-based amount"
+
+#: apps/reports/views.py:629
+msgid "Əsas xərc istiqamətləri"
+msgstr "Key expense categories"
+
+#: apps/reports/views.py:630
+msgid "Dövr cədvəli"
+msgstr "Period table"
+
+#: apps/reports/views.py:631
+msgid "Hər period üzrə tam görünüş"
+msgstr "Complete overview for each period"
+
+#: apps/reports/views.py:632
+msgid "Seçilmiş aralıqdakı bütün gəlir və xərclər"
+msgstr "All income and expenses in the selected period"
+
+#: apps/reports/views.py:633
+msgid "Seçilmiş dövr üzrə ümumi gəlir və xərc ayrıca göstərilir."
+msgstr "Total income and expenses are shown separately for the selected period."
+
+#: apps/reports/views.py:634
 msgid ""
 "Vergi blokunda satış üzrə ödəniləcək məbləğ və güzəşt ayrıca göstərilir."
 msgstr ""

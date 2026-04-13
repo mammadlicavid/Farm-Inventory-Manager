@@ -519,10 +519,38 @@ msgid ""
 msgstr "Справочный расчёт на основе разъяснений ГНС и данных о льготах."
 
 #: apps/reports/views.py:626
+msgid "Seçilmiş aralıqdakı bütün satışların cəmi"
+msgstr "Сумма всех продаж за выбранный период"
+
+#: apps/reports/views.py:627
+msgid "Seçilmiş aralıqdakı bütün xərclərin cəmi"
+msgstr "Сумма всех расходов за выбранный период"
+
+#: apps/reports/views.py:628
+msgid "Satışlara uyğun hesablanan məbləğ"
+msgstr "Сумма, рассчитанная на основе продаж"
+
+#: apps/reports/views.py:629
+msgid "Əsas xərc istiqamətləri"
+msgstr "Основные направления расходов"
+
+#: apps/reports/views.py:630
+msgid "Dövr cədvəli"
+msgstr "Таблица периодов"
+
+#: apps/reports/views.py:631
+msgid "Hər period üzrə tam görünüş"
+msgstr "Полный обзор по каждому периоду"
+
+#: apps/reports/views.py:632
+msgid "Seçilmiş aralıqdakı bütün gəlir və xərclər"
+msgstr "Все доходы и расходы за выбранный период"
+
+#: apps/reports/views.py:633
 msgid "Seçilmiş dövr üzrə ümumi gəlir və xərc ayrıca göstərilir."
 msgstr "Общий доход и расходы показаны отдельно за выбранный период."
 
-#: apps/reports/views.py:627
+#: apps/reports/views.py:634
 msgid ""
 "Vergi blokunda satış üzrə ödəniləcək məbləğ və güzəşt ayrıca göstərilir."
 msgstr ""

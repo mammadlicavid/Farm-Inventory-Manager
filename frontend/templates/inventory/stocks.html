@@ -586,6 +586,131 @@
     }
 </style>
 
+<script>
+    (function () {
+        const lang = ("{{ request.LANGUAGE_CODE|default:'az'|escapejs }}".split("-")[0] || "az").toLowerCase();
+        if (lang === "az") return;
+
+        const maps = {
+            en: {
+                texts: {
+                    "Stoku izləyin": "Track stock",
+                    "Burada qalıq miqdarını görün və sayımı düzəldin.": "See remaining stock here and adjust the count.",
+                    'Filtrlə məhsulu tapın. Sayım fərqlidirsə, "Miqdarı düzəlt" düyməsini seçin.': 'Find the product with filters. If the count is different, select "Adjust quantity".',
+                    "Stok əlavə et": "Add stock",
+                    "Satış yaz": "Record sale",
+                    "Bölmə": "Section",
+                    "Növ": "Type",
+                    "Necə göstərilsin?": "How to display?",
+                    "Məhsul axtar": "Search product",
+                    "Miqdarı düzəlt": "Adjust quantity",
+                    "Sıfırla": "Reset",
+                    "Hamısı": "All",
+                    "Toxumlar": "Seeds",
+                    "Alətlər": "Tools",
+                    "Heyvanlar": "Animals",
+                    "Təsərrüfat Məhsulları": "Farm Products",
+                    "Standart düzülüş": "Default order",
+                    "Ada görə A-Z": "Name A-Z",
+                    "Ada görə Z-A": "Name Z-A",
+                    "Saya görə çox olan": "Highest quantity",
+                    "Saya görə az olan": "Lowest quantity",
+                    "Heç bir məhsul tapılmadı.": "No products found.",
+                    "Bu filtrə uyğun məhsul yoxdur.": "No products match this filter.",
+                    "Əl Alətləri": "Hand Tools",
+                    "Suvarma Alətləri": "Irrigation Tools",
+                    "Kənd Texnikası": "Agricultural Machinery",
+                    "Baxım və Təmir": "Maintenance and Repair",
+                    "Kənd Təsərrüfatı Texnikası": "Farm Equipment",
+                    "Digər": "Other",
+                },
+                placeholders: {
+                    "Məhsul adını yazın": "Type product name",
+                },
+            },
+            ru: {
+                texts: {
+                    "Stoku izləyin": "Следите за складом",
+                    "Burada qalıq miqdarını görün və sayımı düzəldin.": "Здесь можно увидеть остаток и скорректировать количество.",
+                    'Filtrlə məhsulu tapın. Sayım fərqlidirsə, "Miqdarı düzəlt" düyməsini seçin.': 'Найдите товар через фильтр. Если количество отличается, выберите "Изменить количество".',
+                    "Stok əlavə et": "Добавить в склад",
+                    "Satış yaz": "Записать продажу",
+                    "Bölmə": "Раздел",
+                    "Növ": "Тип",
+                    "Necə göstərilsin?": "Как показать?",
+                    "Məhsul axtar": "Поиск товара",
+                    "Miqdarı düzəlt": "Изменить количество",
+                    "Sıfırla": "Сбросить",
+                    "Hamısı": "Все",
+                    "Toxumlar": "Семена",
+                    "Alətlər": "Инструменты",
+                    "Heyvanlar": "Животные",
+                    "Təsərrüfat Məhsulları": "Фермерская продукция",
+                    "Standart düzülüş": "Стандартный порядок",
+                    "Ada görə A-Z": "По имени А-Я",
+                    "Ada görə Z-A": "По имени Я-А",
+                    "Saya görə çox olan": "С наибольшим количеством",
+                    "Saya görə az olan": "С наименьшим количеством",
+                    "Heç bir məhsul tapılmadı.": "Товары не найдены.",
+                    "Bu filtrə uyğun məhsul yoxdur.": "Нет товаров для этого фильтра.",
+                    "Əl Alətləri": "Ручные инструменты",
+                    "Suvarma Alətləri": "Инструменты для орошения",
+                    "Kənd Texnikası": "Сельхозтехника",
+                    "Baxım və Təmir": "Обслуживание и ремонт",
+                    "Kənd Təsərrüfatı Texnikası": "Сельскохозяйственная техника",
+                    "Digər": "Другое",
+                },
+                placeholders: {
+                    "Məhsul adını yazın": "Введите название товара",
+                },
+            },
+        };
+
+        const selected = maps[lang];
+        if (!selected) return;
+
+        function translateTextNode(node) {
+            const value = (node.textContent || "").trim();
+            if (selected.texts[value]) node.textContent = selected.texts[value];
+        }
+
+        function translateOptionList(select) {
+            if (!select) return;
+            select.querySelectorAll("option").forEach((option) => {
+                const value = (option.textContent || "").trim();
+                if (selected.texts[value]) option.textContent = selected.texts[value];
+            });
+        }
+
+        function applyTranslations() {
+            document.querySelectorAll(
+                ".stocks-kicker, .stocks-guide-copy h2, .stocks-guide-copy p, .stocks-quick-action span, .filter-field label, .stocks-reset-btn, .product-update-btn, .product-empty"
+            ).forEach(translateTextNode);
+
+            const searchInput = document.getElementById("stocks-search");
+            if (searchInput) {
+                const value = (searchInput.getAttribute("placeholder") || "").trim();
+                if (selected.placeholders[value]) searchInput.setAttribute("placeholder", selected.placeholders[value]);
+            }
+
+            ["main-category-select", "subcategory-select", "stocks-sort"].forEach((id) => {
+                translateOptionList(document.getElementById(id));
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", applyTranslations);
+        window.addEventListener("load", applyTranslations);
+
+        const subcategorySelect = document.getElementById("subcategory-select");
+        if (subcategorySelect) {
+            new MutationObserver(applyTranslations).observe(subcategorySelect, {
+                childList: true,
+                subtree: true,
+            });
+        }
+    })();
+</script>
+
 <div class="modal-backdrop" id="product-modal" aria-hidden="true">
     <div class="modal">
         <div class="modal-title" id="modal-title">Məhsul</div>
@@ -622,6 +747,6 @@
 </div>
 
 <script>
-  {% include 'scripts/inventory/stocks.js' %}
+    {% include 'scripts/inventory/stocks.js' %}
 </script>
 {% endblock %}

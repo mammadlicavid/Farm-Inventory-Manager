@@ -48,12 +48,12 @@
         </article>
         <article class="calendar-summary-card calendar-summary-card--income">
             <span class="calendar-summary-label">{% trans "Bu ay gəlir" %}</span>
-            <strong class="calendar-summary-value calendar-summary-value--income">{% money calendar_data.monthly_income request.user "+" %}</strong>
+            <strong class="calendar-summary-value calendar-summary-value--income">{% money calendar_data.monthly_income request.user %}</strong>
             <span class="calendar-summary-note">{% trans "Satış və digər gəlirlər" %}</span>
         </article>
         <article class="calendar-summary-card calendar-summary-card--expense">
             <span class="calendar-summary-label">{% trans "Bu ay xərc" %}</span>
-            <strong class="calendar-summary-value calendar-summary-value--expense">{% money calendar_data.monthly_expense request.user "-" %}</strong>
+            <strong class="calendar-summary-value calendar-summary-value--expense">{% money calendar_data.monthly_expense request.user %}</strong>
             <span class="calendar-summary-note">{% trans "Alışlar və gündəlik xərclər" %}</span>
         </article>
     </section>
@@ -171,11 +171,11 @@
                 </article>
                 <article class="calendar-day-stat calendar-day-stat--income">
                     <span>{% trans "Gəlir" %}</span>
-                    <strong>{% money calendar_data.selected_day.income_total request.user "+" %}</strong>
+                    <strong>{% money calendar_data.selected_day.income_total request.user %}</strong>
                 </article>
                 <article class="calendar-day-stat calendar-day-stat--expense">
                     <span>{% trans "Xərc" %}</span>
-                    <strong>{% money calendar_data.selected_day.expense_total request.user "-" %}</strong>
+                    <strong>{% money calendar_data.selected_day.expense_total request.user %}</strong>
                 </article>
             </div>
 
@@ -231,9 +231,9 @@
 <style>
     .calendar-hero {
         background:
-            radial-gradient(circle at top right, rgba(250, 204, 21, 0.18), transparent 36%),
-            radial-gradient(circle at left center, rgba(14, 165, 233, 0.12), transparent 32%),
-            linear-gradient(135deg, #1f6f5f 0%, #245e54 38%, #264653 100%);
+            radial-gradient(circle at top right, rgba(110, 231, 140, 0.24), transparent 36%),
+            radial-gradient(circle at left center, rgba(255, 255, 255, 0.16), transparent 32%),
+            linear-gradient(135deg, #14532d 0%, #1f8f4d 42%, #34c26a 100%);
     }
 
     .calendar-hero-badge {

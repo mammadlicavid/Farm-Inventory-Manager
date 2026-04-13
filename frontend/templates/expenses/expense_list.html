@@ -22,7 +22,7 @@
             <span class="label">{% trans "Bu həftə ümumi xərc" %}</span>
             <span class="value">{% money weekly_total_display request.user %}</span>
         </div>
-        <a href="{% url 'inventory:add_placeholder' %}?form=expense" class="summary-card-quick">
+        <a href="/dashboard/quick-expense/" class="summary-card-quick">
             <i class="fa-solid fa-bolt"></i>
             <span>{% trans "Tez Xərc" %}</span>
         </a>
@@ -133,7 +133,7 @@
                     </div>
                     <div class="expense-item-amount">
                         <div style="text-align: right;">
-                            <span style="display: block; font-weight: 700;">{% money expense.amount_display request.user "-" %}</span>
+                            <span style="display: block; font-weight: 700;">{% money expense.amount_display request.user %}</span>
                             <div
                                 style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 5px;">
                                 <a href="{% url 'expenses:edit_expense' expense.pk %}"
@@ -169,13 +169,15 @@
 {{ subcategory_data|json_script:"expense-subcats-data" }}
 <style>
     .summary-row--single {
-        grid-template-columns: 1fr;
-        justify-items: center;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-items: stretch;
+        align-items: stretch;
     }
 
-    .summary-row--single .summary-card-cream {
+    .summary-row--single .summary-card-cream,
+    .summary-row--single .summary-card-quick {
         width: 100%;
-        max-width: 560px;
+        max-width: none;
     }
 
     /* Subtle tint on main boxes for clearer separation */
@@ -261,6 +263,12 @@
 
     .recent-expenses-title {
         margin-top: 6px;
+    }
+
+    @media (max-width: 640px) {
+        .summary-row--single {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 <script>

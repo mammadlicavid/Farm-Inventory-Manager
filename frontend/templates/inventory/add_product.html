@@ -64,7 +64,7 @@
                 </span>
                 <span class="value">{% money add_page_weekly_total request.user %}</span>
             </div>
-            <a href="{% url 'inventory:add_placeholder' %}?form={{ add_page_mode }}" class="summary-card-quick">
+            <a href="{% if add_page_mode == 'income' %}{% url 'quick_income' %}{% else %}{% url 'quick_expense' %}{% endif %}" class="summary-card-quick">
                 <i class="fa-solid fa-bolt"></i>
                 <span>
                     {% if add_page_mode == "income" %}
