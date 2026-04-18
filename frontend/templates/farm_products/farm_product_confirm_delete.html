@@ -5,7 +5,7 @@
 <header class="main-header">
     <div class="header-content">
         <div class="header-top">
-            <a href="{% url 'farm_products:product_list' %}"
+            <a href="{% url 'inventory:add_placeholder' %}?type=farm"
                 style="text-decoration: none; color: white; display: flex; align-items: center; gap: 10px;">
                 <i class="fa-solid fa-arrow-left"></i>
                 <h1>{% trans "Silmək" %}</h1>
@@ -24,7 +24,7 @@
         <form method="post">
             {% csrf_token %}
             <button type="submit" class="add-new-btn" style="background-color: #dc3545; margin-bottom: 10px;">{% trans "Bəli, Sil" %}</button>
-            <a href="{% url 'farm_products:product_list' %}" class="back-btn-box"
+            <a href="{% url 'inventory:add_placeholder' %}?type=farm" class="back-btn-box"
                 style="background-color: #6c757d; text-decoration: none;">{% trans "Xeyr, Geri Qayıt" %}</a>
         </form>
     </div>

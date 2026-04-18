@@ -1,4 +1,5 @@
 import os
+import hashlib
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -7,11 +8,14 @@ from io import BytesIO
 from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
+from common.expense_titles import translate_expense_title
+from common.view_cache import get_reports_bust_value
 
 from common.formatting import format_currency
 from expenses.models import Expense, ExpenseSubCategory
@@ -103,6 +107,7 @@ PROCESSED_PRODUCT_KEYWORDS = (
     "kompost",
     "mineral",
 )
+REPORT_CONTEXT_CACHE_TTL = 300
 
 
 def _safe_decimal(value) -> Decimal:
@@ -153,6 +158,26 @@ def _normalize_purpose(raw_value: str | None) -> str:
 def _normalize_group_by(raw_value: str | None) -> str:
     value = str(raw_value or "auto").strip().lower()
     return value if value in GROUP_BY_OPTIONS else "auto"
+
+
+def _report_context_cache_key(request) -> str:
+    user = request.user
+    language_code = (get_language() or "az").split("-")[0].lower()
+    bust_value = get_reports_bust_value(user.pk)
+    today_key = timezone.localdate().isoformat()
+    normalized_query = urlencode(sorted(request.GET.lists()), doseq=True)
+    query_hash = hashlib.md5(normalized_query.encode("utf-8")).hexdigest()
+    return f"reports:context:v1:{user.pk}:{bust_value}:{language_code}:{today_key}:{query_hash}"
+
+
+def _get_cached_report_context(request):
+    cache_key = _report_context_cache_key(request)
+    cached_context = cache.get(cache_key)
+    if cached_context is not None:
+        return cached_context
+    context = _report_context(request)
+    cache.set(cache_key, context, REPORT_CONTEXT_CACHE_TTL)
+    return context
 
 
 def _resolved_group_by(date_from: date, date_to: date, selected: str) -> str:
@@ -256,9 +281,9 @@ def _expense_category_name(expense: Expense, subcat_lookup: dict[str, ExpenseSub
 def _expense_line_name(expense: Expense) -> str:
     title = str(expense.title or "").strip()
     if title:
-        return title
+        return translate_expense_title(title)
     if expense.manual_name:
-        return str(expense.manual_name).strip()
+        return translate_expense_title(str(expense.manual_name).strip())
     if expense.subcategory:
         return str(expense.subcategory.name).strip()
     return str(_("Xərc"))
@@ -1118,7 +1143,7 @@ def _report_context(request):
 
 @login_required
 def reports_list(request):
-    context = _report_context(request)
+    context = _get_cached_report_context(request)
     return render(request, "reports/reports_list.html", context)
 
 
@@ -1129,6 +1154,5 @@ def reports_form(request):
 
 @login_required
 def reports_pdf(request):
-    context = _report_context(request)
+    context = _get_cached_report_context(request)
     return render(request, "reports/reports_pdf.html", context)
-

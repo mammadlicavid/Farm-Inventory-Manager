@@ -116,8 +116,10 @@
                 <article class="reports-kpi-card reports-kpi-card--net">
                     <span class="reports-kpi-label">{% trans "Xalis qazanc" %}</span>
                     <strong class="reports-kpi-value reports-kpi-value--{{ kpis.net_tone }}">
-                        {% if kpis.net_profit >= 0 %}
+                        {% if kpis.net_profit > 0 %}
                         {% money kpis.net_profit request.user "+" %}
+                        {% elif kpis.net_profit == 0 %}
+                        {% money kpis.net_profit request.user %}
                         {% else %}
                         {% money kpis.net_profit request.user %}
                         {% endif %}
@@ -188,7 +190,7 @@
             </section>
 
             <section class="reports-compare-grid">
-                <article class="reports-panel">
+                <article class="reports-panel reports-panel--product-compare">
                     <div class="reports-panel-head">
                         <div>
                             <p class="reports-section-label">{% trans "Məhsul müqayisəsi" %}</p>
@@ -224,33 +226,6 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    </div>
-                </article>
-
-                <article class="reports-panel">
-                    <div class="reports-panel-head">
-                        <div>
-                            <p class="reports-section-label">{% trans "Xərc müqayisəsi" %}</p>
-                            <h3>{% trans "Əsas xərc istiqamətləri" %}</h3>
-                        </div>
-                    </div>
-                    <div class="reports-breakdown-list">
-                        {% for row in expense_breakdown %}
-                        <div class="reports-breakdown-row">
-                            <div class="reports-breakdown-top">
-                                <strong>{{ row.name }}</strong>
-                            </div>
-                            <div class="reports-breakdown-bar">
-                                <span class="reports-breakdown-fill" style="width: {{ row.share_pct }}%;"></span>
-                            </div>
-                            <div class="reports-breakdown-foot">
-                                <span>{{ row.share_pct }}%</span>
-                                <span>{{ row.amount_display }} {{ report_currency_symbol }}</span>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="reports-empty-state">{% trans "Bu tarix aralığında xərc məlumatı yoxdur." %}</div>
-                        {% endfor %}
                     </div>
                 </article>
             </section>
@@ -319,6 +294,33 @@
                     </div>
                     {% empty %}
                     <div class="reports-empty-state">{% trans "Qrafik üçün məlumat yoxdur." %}</div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="reports-panel reports-panel--expense-compare">
+                <div class="reports-panel-head">
+                    <div>
+                        <p class="reports-section-label">{% trans "Xərc müqayisəsi" %}</p>
+                        <h3>{% trans "Əsas xərc istiqamətləri" %}</h3>
+                    </div>
+                </div>
+                <div class="reports-breakdown-list">
+                    {% for row in expense_breakdown %}
+                    <div class="reports-breakdown-row">
+                        <div class="reports-breakdown-top">
+                            <strong>{{ row.name }}</strong>
+                        </div>
+                        <div class="reports-breakdown-bar">
+                            <span class="reports-breakdown-fill" style="width: {{ row.share_pct }}%;"></span>
+                        </div>
+                        <div class="reports-breakdown-foot">
+                            <span>{{ row.share_pct }}%</span>
+                            <span>{{ row.amount_display }} {{ report_currency_symbol }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="reports-empty-state">{% trans "Bu tarix aralığında xərc məlumatı yoxdur." %}</div>
                     {% endfor %}
                 </div>
             </section>
@@ -784,8 +786,17 @@
 
     .reports-compare-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 18px;
+        align-items: start;
+    }
+
+    .reports-panel--product-compare {
+        grid-column: 1;
+    }
+
+    .reports-panel--expense-compare {
+        grid-column: auto;
     }
 
     .reports-table-wrap {
@@ -1085,6 +1096,15 @@
         .reports-transactions-panel {
             padding: 18px;
             border-radius: 24px;
+        }
+
+        .reports-table {
+            min-width: 620px;
+        }
+
+        .reports-table-wrap {
+            margin: 0 -4px;
+            padding-bottom: 4px;
         }
     }
 </style>

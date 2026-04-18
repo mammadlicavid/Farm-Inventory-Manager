@@ -517,6 +517,8 @@
       reloadOnSuccess: true,
       successMessage: '',
       failureMessage: 'Məlumat yoxlamadan keçmədi.',
+      onSuccess: null,
+      onFailure: null,
       ...effect,
     })
   }
@@ -530,6 +532,9 @@
       if (!effect) continue
       pendingOperationEffects.delete(operationId)
       handledFailure = true
+      if (typeof effect.onFailure === 'function') {
+        effect.onFailure({ operationId })
+      }
       showToast(effect.failureMessage || 'Məlumat yoxlamadan keçmədi.', 'error')
     }
 
@@ -538,6 +543,9 @@
       if (!effect) continue
       pendingOperationEffects.delete(operationId)
       handledSuccess = true
+      if (typeof effect.onSuccess === 'function') {
+        effect.onSuccess({ operationId })
+      }
 
       if (effect.successRedirect) {
         queueToast(effect.successMessage || 'Uğurla əlavə edildi.', 'success')
@@ -567,6 +575,57 @@
     })
 
     return data
+  }
+
+  async function queueFormOperation(form, options = {}) {
+    if (!(form instanceof HTMLFormElement)) {
+      throw new Error('Form gözlənilirdi.')
+    }
+
+    const operationId = generateId()
+    const operation = {
+      id: operationId,
+      entity: form.dataset.syncEntity,
+      action: form.dataset.syncAction || 'create',
+      data: serializeForm(form),
+      createdAt: new Date().toISOString(),
+    }
+
+    await addOperation(operation)
+
+    if (!navigator.onLine) {
+      if (options.resetForm !== false) {
+        resetOfflineForm(form)
+      }
+      showToast(options.offlineMessage || 'Offline saxlanıldı. İnternet gələndə göndəriləcək.', 'warning')
+      await emitStatus()
+      if (typeof options.onQueued === 'function') {
+        await options.onQueued({ operationId, online: false })
+      }
+      return { operationId, queued: true, online: false }
+    }
+
+    registerPendingOperationEffect(operationId, {
+      successRedirect: options.successRedirect || '',
+      reloadOnSuccess: Boolean(options.successRedirect) ? false : Boolean(options.reloadOnSuccess),
+      successMessage: options.successMessage || successMessageForAction(operation.action),
+      failureMessage: options.failureMessage || 'Məlumat yoxlamadan keçmədi.',
+      onSuccess: options.onSuccess || null,
+      onFailure: options.onFailure || null,
+    })
+
+    if (typeof options.onQueued === 'function') {
+      await options.onQueued({ operationId, online: true })
+    }
+
+    syncPendingOperations({
+      silentSuccess: true,
+      skipRemoteStatusRefresh: true,
+    }).catch(() => {
+      showToast(options.networkFallbackMessage || 'Şəbəkə problemi var. Məlumat lokal saxlanıldı.', 'warning')
+    })
+
+    return { operationId, queued: true, online: true }
   }
 
   function resetOfflineForm(form) {
@@ -904,6 +963,8 @@
     fetchServerStatus,
     getDeviceId,
     getPendingCount,
+    queueFormOperation,
+    showToast,
     syncNow: () => syncPendingOperations(),
   }
 

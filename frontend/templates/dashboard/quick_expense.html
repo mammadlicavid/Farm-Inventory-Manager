@@ -7,7 +7,7 @@
     <header class="main-header">
         <div class="header-content">
             <div class="header-top">
-                <a href="{% if request.GET.source == 'expenses' %}{% url 'expenses:expense_list' %}{% else %}{% url 'dashboard' %}{% endif %}" class="back-btn-box">
+                <a href="{% if request.GET.source == 'expenses' %}{% url 'inventory:add_placeholder' %}?form=expense{% else %}{% url 'dashboard' %}{% endif %}" class="back-btn-box">
                     <i class="fa-solid fa-arrow-left"></i>
                     <span>{% trans "Tez Xərc" %}</span>
                 </a>
@@ -161,6 +161,7 @@
           "Yanacaq": "Fuel",
           "Gübrə": "Fertilizer",
           "Baytar": "Veterinary",
+          "Veterinary": "Veterinary",
           "Xüsusi xərc": "Custom expense",
         },
       },
@@ -181,6 +182,7 @@
           "Yanacaq": "Топливо",
           "Gübrə": "Удобрение",
           "Baytar": "Ветеринар",
+          "Veterinary": "Ветеринар",
           "Xüsusi xərc": "Специальный расход",
         },
       },

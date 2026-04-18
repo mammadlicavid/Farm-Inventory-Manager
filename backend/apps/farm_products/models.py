@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+from common.datetime_defaults import current_local_time
 from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES
 
 
@@ -84,6 +85,7 @@ class FarmProduct(models.Model):
     )
     additional_info = models.TextField(blank=True, null=True, verbose_name="Əlavə məlumat")
     date = models.DateField(default=timezone.now, verbose_name="Tarix")
+    time = models.TimeField(default=current_local_time, verbose_name="Saat")
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -103,7 +105,7 @@ class FarmProduct(models.Model):
     class Meta:
         verbose_name = "Təsərrüfat Məhsulu"
         verbose_name_plural = "Təsərrüfat Məhsulları"
-        ordering = ["-date", "-created_at"]
+        ordering = ["-date", "-time", "-created_at"]
         indexes = [
             models.Index(fields=["created_by", "item"]),
             models.Index(fields=["created_by", "manual_name"]),

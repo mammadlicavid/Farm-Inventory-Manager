@@ -307,7 +307,7 @@
                 </div>
                 <div class="report-kpi report-kpi--net">
                     <span>{% trans "Xalis qazanc" %}</span>
-                    <strong>{% if kpis.net_profit >= 0 %}{% money kpis.net_profit request.user "+" %}{% else %}{% money kpis.net_profit request.user %}{% endif %}</strong>
+                    <strong>{% if kpis.net_profit > 0 %}{% money kpis.net_profit request.user "+" %}{% else %}{% money kpis.net_profit request.user %}{% endif %}</strong>
                 </div>
                 <div class="report-kpi report-kpi--tax">
                     <span>{% trans "Hesablanan vergi" %}</span>

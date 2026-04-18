@@ -5,7 +5,7 @@
 <header class="main-header">
     <div class="header-content">
         <div class="header-top">
-            <a href="{% url 'incomes:income_list' %}" class="back-btn-box">
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'inventory:add_placeholder' %}?form=income{% endif %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>{% trans "Gəliri Düzəlt" %}</span>
             </a>
@@ -17,8 +17,9 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Gəlir Məlumatlarını Yenilə" %}</h3>
 
-        <form method="POST" id="income-form" data-sync-entity="income" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'incomes:income_list' %}" data-sync-direct-online="true">
+        <form method="POST" id="income-form" data-sync-entity="income" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% if next_url %}{{ next_url }}{% else %}{% url 'inventory:add_placeholder' %}?form=income{% endif %}" data-sync-direct-online="true">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
             <input type="hidden" name="record_id" value="{{ income.pk }}">
             <input type="hidden" name="record_version" value="{{ income.updated_at|date:'c' }}">
             <div class="desktop-form-grid">
@@ -88,6 +89,10 @@
                         <input type="date" name="date" required value="{{ income.date|date:'Y-m-d' }}"
                             class="custom-input">
                     </div>
+                </div>
+                <div class="form-group form-full-width">
+                    <label>{% trans "Saat" %} <span style="color: #dc3545;">*</span></label>
+                    <input type="time" name="time" required value="{{ income.time|time:'H:i' }}" class="custom-input">
                 </div>
 
                 <div class="form-group form-full-width">

@@ -9,6 +9,17 @@
     const weightUnitSystem = "{% unit_system request.user %}";
     const KG_PER_POUND = 0.45359237;
     const GRAMS_PER_OUNCE = 28.349523125;
+    const otherLabels = new Set(["digər", "other", "другое"]);
+
+    function translateDynamicLabel(value) {
+        const text = String(value || "");
+        if (!text) return text;
+        return window.runtimeI18n?.translateInlineValue?.(text) || text;
+    }
+
+    function isOtherLabel(value) {
+        return otherLabels.has(String(value || "").trim().toLowerCase());
+    }
 
     function populateSeedFormItems(categoryId, selectedItemId = "") {
         const itemSelect = document.getElementById('item-select');
@@ -18,7 +29,7 @@
         items.forEach((item) => {
             const option = document.createElement('option');
             option.value = String(item.id);
-            option.textContent = item.name;
+            option.textContent = translateDynamicLabel(item.name);
             if (String(item.id) === String(selectedItemId)) {
                 option.selected = true;
             }
@@ -35,7 +46,7 @@
         const manualGroup = document.getElementById('manual-name-group');
         const manualInput = document.getElementById('manual-name-input');
 
-        if (categoryText === "Digər") {
+        if (isOtherLabel(categoryText)) {
             itemGroup.style.display = 'none';
             itemSelect.required = false;
             itemSelect.disabled = true;
@@ -57,7 +68,7 @@
 
     function handleSeedItemSelection() {
         const selected = document.getElementById('item-select').options[document.getElementById('item-select').selectedIndex];
-        const isOther = (selected?.textContent || "").trim() === "Digər";
+        const isOther = isOtherLabel(selected?.textContent || "");
         if (isOther) {
             seedFormManualGroup.style.display = 'block';
             seedFormManualInput.required = true;

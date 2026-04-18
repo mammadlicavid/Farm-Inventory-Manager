@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+from common.datetime_defaults import current_local_time
 from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES
 
 class AnimalCategory(models.Model):
@@ -28,8 +29,8 @@ class AnimalSubCategory(models.Model):
 
 class Animal(models.Model):
     GENDER_CHOICES = [
-        ('erkek', 'Erkək'),
-        ('disi', 'Dişi'),
+        ('erkek', _('Erkək')),
+        ('disi', _('Dişi')),
     ]
     
 
@@ -58,6 +59,7 @@ class Animal(models.Model):
     )
     quantity = models.IntegerField(default=1, verbose_name="Miqdar")
     date = models.DateField(default=timezone.now, verbose_name="Tarix")
+    time = models.TimeField(default=current_local_time, verbose_name="Saat")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -77,7 +79,7 @@ class Animal(models.Model):
     class Meta:
         verbose_name = "Heyvan"
         verbose_name_plural = "Heyvanlar"
-        ordering = ['-date', '-created_at']
+        ordering = ['-date', '-time', '-created_at']
         indexes = [
             models.Index(fields=["created_by", "subcategory"]),
             models.Index(fields=["created_by", "manual_name"]),

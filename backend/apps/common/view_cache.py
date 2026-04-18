@@ -25,9 +25,14 @@ def get_calendar_bust_value(user_id: int) -> str:
     return get_user_view_bust_value("calendar", user_id)
 
 
+def get_reports_bust_value(user_id: int) -> str:
+    return get_user_view_bust_value("reports", user_id)
+
+
 def bust_dashboard_related_caches(user_id: int) -> None:
     bust_user_view_scope("dashboard", user_id)
     bust_user_view_scope("calendar", user_id)
+    bust_user_view_scope("reports", user_id)
     from notifications.services import invalidate_notification_header_count_cache
 
     invalidate_notification_header_count_cache(user_id)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta, date
+from datetime import timedelta, date, time
 from decimal import Decimal, InvalidOperation
 from hashlib import md5
 from typing import Dict, List, Tuple
@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db.models import Q, Sum
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _T, gettext_lazy as _, override
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
@@ -260,6 +260,135 @@ INCOME_CATEGORY_PAYLOAD_TTL = 300
 INCOME_LIST_CACHE_TTL = 30
 INCOME_LIST_BUST_TTL = 60 * 60 * 24 * 30
 
+INCOME_CATALOG_TRANSLATIONS = {
+    "en": {
+        "Süd və Süd Məhsulları": "Milk and dairy products",
+        "Yumurta": "Eggs",
+        "Ət Məhsulları": "Meat products",
+        "Meyvə": "Fruit",
+        "Tərəvəz": "Vegetables",
+        "Göyərti": "Greens",
+        "Taxıl Məhsulları": "Grain products",
+        "Yem Bitkiləri": "Forage crops",
+        "Bostan Məhsulları": "Melon products",
+        "Bal və Arıçılıq": "Honey and beekeeping",
+        "Gübrələr": "Fertilizers",
+        "Heyvanlar": "Animals",
+        "Digər": "Other",
+        "İnək": "Cow",
+        "Dana": "Calf",
+        "Camış": "Buffalo",
+        "Qoyun": "Sheep",
+        "Keçi": "Goat",
+        "Toyuq": "Chicken",
+        "Hinduşka": "Turkey",
+        "Qaz": "Goose",
+        "Ördək": "Duck",
+        "Bildircin": "Quail",
+        "At": "Horse",
+        "Eşşək": "Donkey",
+        "Qatır": "Mule",
+        "Buğda toxumu": "Wheat seed",
+        "Arpa toxumu": "Barley seed",
+        "Çovdar toxumu": "Rye seed",
+        "Vələmir toxumu": "Oat seed",
+        "Qarğıdalı toxumu": "Corn seed",
+        "Çəltik toxumu": "Rice seed",
+        "Lobya toxumu": "Bean seed",
+        "Noxud toxumu": "Chickpea seed",
+        "Mərcimək toxumu": "Lentil seed",
+        "Yonca toxumu": "Alfalfa seed",
+        "Koronilla toxumu": "Coronilla seed",
+        "Seradella toxumu": "Seradella seed",
+        "Günəbaxan toxumu": "Sunflower seed",
+        "Pambıq toxumu": "Cotton seed",
+        "Soya toxumu": "Soybean seed",
+        "Şəkər çuğunduru toxumu": "Sugar beet seed",
+        "Pomidor toxumu": "Tomato seed",
+        "Xiyar toxumu": "Cucumber seed",
+        "Bibər toxumu": "Pepper seed",
+        "Badımcan toxumu": "Eggplant seed",
+        "Kahı toxumu": "Lettuce seed",
+        "İspanaq toxumu": "Spinach seed",
+        "Qarpız toxumu": "Watermelon seed",
+        "Yemiş toxumu": "Melon seed",
+        "Boranı toxumu": "Pumpkin seed",
+        "Keşniş": "Coriander",
+        "Şüyüt": "Dill",
+        "Cəfəri": "Parsley",
+        "Yaşıl soğan": "Green onion",
+        "Reyhan": "Basil",
+        "Tərxun": "Tarragon",
+        "Buğda": "Wheat",
+        "Arpa": "Barley",
+        "Qarğıdalı": "Corn",
+        "Yonca": "Alfalfa",
+    },
+    "ru": {
+        "Süd və Süd Məhsulları": "Молоко и молочные продукты",
+        "Yumurta": "Яйца",
+        "Ət Məhsulları": "Мясные продукты",
+        "Meyvə": "Фрукты",
+        "Tərəvəz": "Овощи",
+        "Göyərti": "Зелень",
+        "Taxıl Məhsulları": "Зерновые продукты",
+        "Yem Bitkiləri": "Кормовые культуры",
+        "Bostan Məhsulları": "Бахчевые продукты",
+        "Bal və Arıçılıq": "Мед и пчеловодство",
+        "Gübrələr": "Удобрения",
+        "Heyvanlar": "Животные",
+        "Digər": "Другое",
+        "İnək": "Корова",
+        "Dana": "Теленок",
+        "Camış": "Буйвол",
+        "Qoyun": "Овца",
+        "Keçi": "Коза",
+        "Toyuq": "Курица",
+        "Hinduşka": "Индейка",
+        "Qaz": "Гусь",
+        "Ördək": "Утка",
+        "Bildircin": "Перепел",
+        "At": "Лошадь",
+        "Eşşək": "Осел",
+        "Qatır": "Мул",
+        "Buğda toxumu": "Семена пшеницы",
+        "Arpa toxumu": "Семена ячменя",
+        "Çovdar toxumu": "Семена ржи",
+        "Vələmir toxumu": "Семена овса",
+        "Qarğıdalı toxumu": "Семена кукурузы",
+        "Çəltik toxumu": "Семена риса",
+        "Lobya toxumu": "Семена фасоли",
+        "Noxud toxumu": "Семена нута",
+        "Mərcimək toxumu": "Семена чечевицы",
+        "Yonca toxumu": "Семена люцерны",
+        "Koronilla toxumu": "Семена корониллы",
+        "Seradella toxumu": "Семена сераделлы",
+        "Günəbaxan toxumu": "Семена подсолнечника",
+        "Pambıq toxumu": "Семена хлопка",
+        "Soya toxumu": "Семена сои",
+        "Şəkər çuğunduru toxumu": "Семена сахарной свеклы",
+        "Pomidor toxumu": "Семена помидора",
+        "Xiyar toxumu": "Семена огурца",
+        "Bibər toxumu": "Семена перца",
+        "Badımcan toxumu": "Семена баклажана",
+        "Kahı toxumu": "Семена салата",
+        "İspanaq toxumu": "Семена шпината",
+        "Qarpız toxumu": "Семена арбуза",
+        "Yemiş toxumu": "Семена дыни",
+        "Boranı toxumu": "Семена тыквы",
+        "Keşniş": "Кинза",
+        "Şüyüt": "Укроп",
+        "Cəfəri": "Петрушка",
+        "Yaşıl soğan": "Зеленый лук",
+        "Reyhan": "Базилик",
+        "Tərxun": "Эстрагон",
+        "Buğda": "Пшеница",
+        "Arpa": "Ячмень",
+        "Qarğıdalı": "Кукуруза",
+        "Yonca": "Люцерна",
+    },
+}
+
 
 def _income_list_bust_key(user_id: int) -> str:
     return f"incomes:list-bust:v1:{user_id}"
@@ -346,8 +475,19 @@ def _build_category_payload(lang_code="az") -> Tuple[List[str], Dict[str, dict]]
     unit_lookup = _farm_unit_lookup()
     type_map = _category_type_map()
 
+    def translate_label(value: str) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        with override(lang_code or "az"):
+            translated = str(_T(text))
+        lang = (lang_code or "az").split("-")[0]
+        if translated == text:
+            return INCOME_CATALOG_TRANSLATIONS.get(lang, {}).get(text, translated)
+        return translated
+
     def add_category(name: str, items: List[str]):
-        translated_name = str(_(name))
+        translated_name = translate_label(name)
         categories.append(translated_name)
         sorted_items = _sorted_items(items)
         ctype = type_map.get(name, "other")
@@ -360,7 +500,7 @@ def _build_category_payload(lang_code="az") -> Tuple[List[str], Dict[str, dict]]
                 unit = "ədəd"
             elif ctype == "seed":
                 unit = "kq"
-            item_rows.append({"name": str(_(item)), "unit": unit})
+            item_rows.append({"name": translate_label(item), "unit": unit})
         payload[translated_name] = {"type": ctype, "items": item_rows}
 
     for name, items in FARM_PRODUCT_CATEGORIES:
@@ -391,6 +531,15 @@ def _parse_date(value: str | None) -> date:
         return date.fromisoformat(value)
     except Exception:
         return timezone.localdate()
+
+
+def _parse_time(value: str | None):
+    if not value:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+    try:
+        return time.fromisoformat(value)
+    except Exception:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
 
 
 def _category_type(category: str) -> str:
@@ -507,7 +656,16 @@ def _farm_stock_base(user, item_name: str, base_unit: str) -> Decimal:
     return total
 
 
-def _adjust_seed_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None):
+def _adjust_seed_stock(
+    user,
+    item_name: str,
+    quantity: Decimal,
+    unit: str,
+    note: str,
+    price: Decimal | None = None,
+    entry_date=None,
+    entry_time=None,
+):
     if quantity == 0:
         return None
     item = SeedItem.objects.filter(name=item_name).first()
@@ -520,11 +678,22 @@ def _adjust_seed_stock(user, item_name: str, quantity: Decimal, unit: str, note:
         unit=_seed_unit_for_income(unit),
         price=price_value,
         additional_info=note,
+        date=entry_date or timezone.localdate(),
+        time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
         created_by=user,
     )
 
 
-def _adjust_farm_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None):
+def _adjust_farm_stock(
+    user,
+    item_name: str,
+    quantity: Decimal,
+    unit: str,
+    note: str,
+    price: Decimal | None = None,
+    entry_date=None,
+    entry_time=None,
+):
     if quantity == 0:
         return None
     item = FarmProductItem.objects.filter(name=item_name).first()
@@ -537,11 +706,23 @@ def _adjust_farm_stock(user, item_name: str, quantity: Decimal, unit: str, note:
         unit=unit,
         price=price_value,
         additional_info=note,
+        date=entry_date or timezone.localdate(),
+        time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
         created_by=user,
     )
 
 
-def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, gender: str | None = None):
+def _adjust_other_stock(
+    user,
+    item_name: str,
+    quantity: Decimal,
+    unit: str,
+    note: str,
+    price: Decimal | None = None,
+    gender: str | None = None,
+    entry_date=None,
+    entry_time=None,
+):
     normalized_name = (item_name or "").strip()
     if not normalized_name or quantity == 0:
         return None
@@ -550,14 +731,14 @@ def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note
         Q(item__isnull=True) | Q(item__name__iexact="Digər"),
         manual_name__iexact=normalized_name,
     ).exists():
-        return _adjust_seed_stock(user, normalized_name, quantity, unit, note, price)
+        return _adjust_seed_stock(user, normalized_name, quantity, unit, note, price, entry_date, entry_time)
 
     if FarmProduct.objects.filter(created_by=user).filter(
         Q(item__isnull=True) | Q(item__name__iexact="Digər"),
         manual_name__iexact=normalized_name,
         unit=unit,
     ).exists():
-        return _adjust_farm_stock(user, normalized_name, quantity, unit, note, price)
+        return _adjust_farm_stock(user, normalized_name, quantity, unit, note, price, entry_date, entry_time)
 
     if unit == "ədəd" and Tool.objects.filter(created_by=user).filter(
         Q(item__isnull=True) | Q(item__name__iexact="Digər"),
@@ -569,6 +750,8 @@ def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note
             quantity=int(quantity),
             price=price if price is not None else 0,
             additional_info=note,
+            date=entry_date or timezone.localdate(),
+            time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
             created_by=user,
         )
 
@@ -583,6 +766,8 @@ def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note
             quantity=int(quantity),
             price=price if price is not None else 0,
             additional_info=note,
+            date=entry_date or timezone.localdate(),
+            time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
             created_by=user,
         )
 
@@ -593,6 +778,8 @@ def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note
         unit=unit,
         price=price if price is not None else 0,
         additional_info=note,
+        date=entry_date or timezone.localdate(),
+        time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
         created_by=user,
     )
 
@@ -682,65 +869,12 @@ def _animal_available_count(user, item_name: str, gender: str) -> int:
 @login_required
 @never_cache
 def income_list(request):
-    cache_key = (
-        f"incomes:list:v2:{request.user.pk}:{_income_list_cache_bust_value(request.user.pk)}:"
-        f"{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
-    )
-    cached_context = cache.get(cache_key)
-    if cached_context is not None:
-        return render(request, "incomes/income_list.html", cached_context)
-
-    query = (request.GET.get("q") or "").strip()
-    incomes_qs = Income.objects.filter(created_by=request.user).only(
-        "id",
-        "category",
-        "item_name",
-        "quantity",
-        "unit",
-        "amount",
-        "gender",
-        "date",
-        "additional_info",
-        "updated_at",
-    )
-
-    if query:
-        incomes_qs = incomes_qs.filter(
-            Q(item_name__icontains=query)
-            | Q(category__icontains=query)
-            | Q(additional_info__icontains=query)
-        )
-
-    total_amount = incomes_qs.aggregate(total=Sum("amount"))["total"] or 0
-    last_week = timezone.localdate() - timedelta(days=7)
-    weekly_total = incomes_qs.filter(date__gte=last_week).aggregate(total=Sum("amount"))["total"] or 0
-
-    incomes = list(incomes_qs)
-    for income in incomes:
-        income.icon_class = _get_income_icon(income.category, income.item_name)
-        income.amount_display = format_currency(income.amount, 2)
-
-    lang_code = (getattr(request, "LANGUAGE_CODE", "") or "az").split("-")[0]
-    categories, category_data = _build_category_payload(lang_code)
-
-    context = {
-        "incomes": incomes,
-        "total_amount": total_amount,
-        "total_amount_display": format_currency(total_amount, 2),
-        "weekly_total": weekly_total,
-        "weekly_total_display": format_currency(weekly_total, 2),
-        "categories": categories,
-        "category_data": category_data,
-        "today": timezone.localdate(),
-        "yesterday": timezone.localdate() - timedelta(days=1),
-    }
-    cache.set(cache_key, context, INCOME_LIST_CACHE_TTL)
-    return render(request, "incomes/income_list.html", context)
+    return redirect(f"{resolve_url('inventory:add_placeholder')}?form=income")
 
 
 @login_required
 def add_income(request):
-    redirect_to = request.POST.get("next") or "incomes:income_list"
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?form=income"
     if request.method != "POST":
         return redirect(redirect_to)
 
@@ -754,6 +888,7 @@ def add_income(request):
     identification_no = (request.POST.get("identification_no") or "").strip()
     additional_info = request.POST.get("additional_info")
     date_value = _parse_date(request.POST.get("date"))
+    time_value = _parse_time(request.POST.get("time"))
 
     if not category or not quantity_raw or not unit or not amount:
         messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
@@ -830,17 +965,18 @@ def add_income(request):
         gender=gender if ctype == "animal" else None,
         additional_info=additional_info,
         date=date_value,
+        time=time_value,
         created_by=request.user,
     )
 
     note = "Gəlir satışı"
     if ctype == "seed":
-        stock_item = _adjust_seed_stock(request.user, item_name, -abs(quantity), unit, note, amount_val)
+        stock_item = _adjust_seed_stock(request.user, item_name, -abs(quantity), unit, note, amount_val, date_value, time_value)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
     elif ctype == "farm":
-        stock_item = _adjust_farm_stock(request.user, item_name, -abs(quantity), unit, note, amount_val)
+        stock_item = _adjust_farm_stock(request.user, item_name, -abs(quantity), unit, note, amount_val, date_value, time_value)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
@@ -874,6 +1010,8 @@ def add_income(request):
             quantity=-abs(qty_int),
             price=amount_val,
             additional_info=f"Gəlir satışı | {income_tag}",
+            date=date_value,
+            time=time_value,
             created_by=request.user,
         )
         if identification_no:
@@ -881,7 +1019,7 @@ def add_income(request):
         income.content_object = display_animal
         income.save(update_fields=["content_type", "object_id"])
     elif category.lower() == "digər" or (request.POST.get("item_name") or "").strip().lower() == "digər":
-        stock_item = _adjust_other_stock(request.user, item_name, -abs(quantity), unit, note, amount_val, gender or None)
+        stock_item = _adjust_other_stock(request.user, item_name, -abs(quantity), unit, note, amount_val, gender or None, date_value, time_value)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
@@ -894,6 +1032,8 @@ def add_income(request):
 @login_required
 def edit_income(request, pk: int):
     income = get_object_or_404(Income, pk=pk, created_by=request.user)
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    redirect_to = next_url or f"{resolve_url('inventory:add_placeholder')}?form=income"
 
     if request.method == "POST":
         prev_category = income.category
@@ -913,6 +1053,7 @@ def edit_income(request, pk: int):
         identification_no = (request.POST.get("identification_no") or "").strip()
         additional_info = request.POST.get("additional_info")
         date_value = _parse_date(request.POST.get("date"))
+        time_value = _parse_time(request.POST.get("time"))
 
         if not category or not quantity_raw or not unit or not amount:
             messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
@@ -994,25 +1135,26 @@ def edit_income(request, pk: int):
         income.gender = gender if ctype == "animal" else None
         income.additional_info = additional_info
         income.date = date_value
+        income.time = time_value
         income.save()
 
         prev_type = _category_type(prev_category)
         new_type = ctype
         note = "Gəlir düzəlişi"
         if prev_type == "seed":
-            _adjust_seed_stock(request.user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount)
+            _adjust_seed_stock(request.user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount, income.date, income.time)
         elif prev_type == "farm":
-            _adjust_farm_stock(request.user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount)
+            _adjust_farm_stock(request.user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount, income.date, income.time)
         elif prev_type == "animal":
             _delete_income_animals(request.user, income.id)
 
         if new_type == "seed":
-            stock_item = _adjust_seed_stock(request.user, item_name, -abs(quantity), unit, note, amount_val)
+            stock_item = _adjust_seed_stock(request.user, item_name, -abs(quantity), unit, note, amount_val, date_value, time_value)
             if stock_item:
                 income.content_object = stock_item
                 income.save(update_fields=["content_type", "object_id"])
         elif new_type == "farm":
-            stock_item = _adjust_farm_stock(request.user, item_name, -abs(quantity), unit, note, amount_val)
+            stock_item = _adjust_farm_stock(request.user, item_name, -abs(quantity), unit, note, amount_val, date_value, time_value)
             if stock_item:
                 income.content_object = stock_item
                 income.save(update_fields=["content_type", "object_id"])
@@ -1043,6 +1185,8 @@ def edit_income(request, pk: int):
                 quantity=-abs(qty_int),
                 price=amount_val,
                 additional_info=f"Gəlir satışı | {income_tag}",
+                date=date_value,
+                time=time_value,
                 created_by=request.user,
             )
             if identification_no:
@@ -1056,7 +1200,7 @@ def edit_income(request, pk: int):
 
         _bust_income_list_cache(request.user.pk)
         messages.success(request, _("Gəlir yeniləndi."))
-        return _redirect_with_refresh("incomes:income_list")
+        return _redirect_with_refresh(redirect_to)
 
     lang_code = (getattr(request, "LANGUAGE_CODE", "") or "az").split("-")[0]
     categories, category_data = _build_category_payload(lang_code)
@@ -1064,6 +1208,7 @@ def edit_income(request, pk: int):
         "income": income,
         "categories": categories,
         "category_data": category_data,
+        "next_url": next_url,
     }
     return render(request, "incomes/income_form.html", context)
 
@@ -1071,16 +1216,17 @@ def edit_income(request, pk: int):
 @login_required
 def delete_income(request, pk: int):
     income = get_object_or_404(Income, pk=pk, created_by=request.user)
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?form=income"
     if request.method == "POST":
         note = "Gəlir silindi"
         ctype = _category_type(income.category)
         if ctype == "seed":
-            _adjust_seed_stock(request.user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)))
+            _adjust_seed_stock(request.user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)), income.date, income.time)
         elif ctype == "farm":
-            _adjust_farm_stock(request.user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)))
+            _adjust_farm_stock(request.user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)), income.date, income.time)
         elif ctype == "animal":
             _delete_income_animals(request.user, income.id)
         income.delete()
         _bust_income_list_cache(request.user.pk)
         messages.success(request, _("Gəlir silindi."))
-    return _redirect_with_refresh("incomes:income_list")
+    return _redirect_with_refresh(redirect_to)

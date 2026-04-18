@@ -1,0 +1,127 @@
+{% load i18n common_extras %}
+
+<div class="add-list-panel" data-panel-form-type="{{ panel_form_type }}">
+    {{ panel_items_by_category|json_script:"add-list-items-by-category" }}
+    <div class="add-list-head">
+        <h4>{{ panel_title|t_var }}</h4>
+    </div>
+    <form class="inventory-filter-shell add-list-filter-shell" data-add-list-filter>
+        <div class="inventory-filter-grid add-list-filter-grid">
+            <select class="custom-input inventory-filter-control" data-filter-category>
+                <option value="">{% trans "Bütün kateqoriyalar" %}</option>
+                {% for option in panel_category_options %}
+                    <option value="{{ option.value }}">{{ option.label|t_var }}</option>
+                {% endfor %}
+            </select>
+            <select class="custom-input inventory-filter-control" data-filter-item>
+                <option value="">{% trans "Bütün növlər" %}</option>
+                {% for option in panel_item_options %}
+                    <option value="{{ option.value }}">{{ option.label|t_var }}</option>
+                {% endfor %}
+            </select>
+            <div class="inventory-filter-date-range add-list-filter-dates">
+                <input type="date" class="custom-input inventory-filter-control" data-filter-date-from>
+                <span class="inventory-filter-date-arrow" aria-hidden="true">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                </span>
+                <input type="date" class="custom-input inventory-filter-control" data-filter-date-to>
+            </div>
+        </div>
+        <div class="inventory-filter-actions add-list-filter-actions">
+            <input
+                type="search"
+                class="custom-input inventory-filter-control inventory-filter-search"
+                placeholder="{% trans 'Axtarış...' %}"
+                autocomplete="off"
+                data-filter-search
+            >
+            <button type="button" class="inventory-filter-reset" data-filter-reset>{% trans "Sıfırla" %}</button>
+        </div>
+    </form>
+    <div class="add-list-cards">
+        {% for item in panel_items %}
+        <div
+            class="add-list-card"
+            data-list-card
+            data-category="{{ item.filter_category_key }}"
+            data-item="{{ item.filter_item_key }}"
+            data-date="{{ item.date|date:'Y-m-d' }}"
+            data-search="{{ item.display_title|t_var|lower }} {{ item.display_category_name|t_var|lower }} {{ item.additional_info|default:''|lower }} {{ item.display_additional_info|default:''|lower }} {{ item.identification_no|default:''|lower }}"
+        >
+            <div class="add-list-icon">
+                {% if item.icon_class|slice:":6" == "emoji:" %}
+                <span class="emoji-icon">{{ item.icon_class|slice:"6:" }}</span>
+                {% else %}
+                <i class="{{ item.icon_class }}"></i>
+                {% endif %}
+            </div>
+            <div class="add-list-body">
+                <h5>{{ item.display_title|t_var }} <span>({{ item.display_category_name|t_var }})</span></h5>
+                {% if panel_form_type == "expense" %}
+                {% elif panel_form_type == "income" %}
+                <p><strong>{% trans "Miqdar" %}:</strong> {% display_measure item.quantity item.unit request.user %}</p>
+                {% if item.gender %}<p><strong>{% trans "Cinsiyyət" %}:</strong> {{ item.get_gender_display }}</p>{% endif %}
+                {% elif panel_form_type == "animal" %}
+                <p><strong>{% trans "Miqdar" %}:</strong> {{ item.quantity }} {% trans "ədəd" %}</p>
+                {% if item.gender %}<p><strong>{% trans "Cinsiyyət" %}:</strong> {{ item.get_gender_display }}</p>{% endif %}
+                {% if item.weight %}<p><strong>{% trans "Çəki" %}:</strong> {% display_measure item.weight 'kg' request.user %}</p>{% endif %}
+                {% if item.identification_no %}<p><strong>{% trans "İdentifikasiya No" %}:</strong> {{ item.identification_no }}</p>{% endif %}
+                {% elif panel_form_type == "seed" or panel_form_type == "farm" %}
+                <p><strong>{% trans "Miqdar" %}:</strong> {% display_measure item.quantity item.unit request.user %}</p>
+                {% elif panel_form_type == "tool" %}
+                <p><strong>{% trans "Miqdar" %}:</strong> {{ item.quantity }} {% trans "ədəd" %}</p>
+                {% endif %}
+            </div>
+            <div class="add-list-side">
+                {% if panel_form_type == "expense" %}
+                <strong class="add-list-amount add-list-amount-expense">{% money item.amount_display request.user %}</strong>
+                {% elif panel_form_type == "income" %}
+                <strong class="add-list-amount add-list-amount-income">{% money item.amount_display request.user %}</strong>
+                {% elif item.zero_price_source_label %}
+                <div class="stock-source-badge">{{ item.zero_price_source_label }}</div>
+                {% elif panel_form_type == "animal" %}
+                <strong class="add-list-amount {% if item.quantity < 0 %}add-list-amount-income{% else %}add-list-amount-expense{% endif %}">{% money item.price request.user %}</strong>
+                {% else %}
+                <strong class="add-list-amount {% if item.quantity < 0 %}add-list-amount-income{% else %}add-list-amount-expense{% endif %}">{% money item.price_display request.user %}</strong>
+                {% endif %}
+                <div class="add-list-actions">
+                    {% if panel_form_type == "expense" %}
+                    <a href="{% url 'expenses:edit_expense' item.pk %}?next={{ panel_return_path|urlencode }}">{% trans "Düzəliş" %}</a>
+                    <form action="{% url 'expenses:delete_expense' item.pk %}" method="POST" data-sync-entity="expense" data-sync-action="delete" data-sync-reset="false" data-sync-direct-online="true" onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                    {% elif panel_form_type == "income" %}
+                    <a href="{% url 'incomes:edit_income' item.pk %}?next={{ panel_return_path|urlencode }}">{% trans "Düzəliş" %}</a>
+                    <form action="{% url 'incomes:delete_income' item.pk %}" method="POST" data-sync-entity="income" data-sync-action="delete" data-sync-reset="false" data-sync-direct-online="true" onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                    {% elif panel_form_type == "animal" %}
+                    <a href="{% url 'animals:animal_update' item.pk %}?next={{ panel_return_path|urlencode }}">{% trans "Düzəliş" %}</a>
+                    <form action="{% url 'animals:animal_delete' item.pk %}" method="POST" data-sync-entity="animal" data-sync-action="delete" data-sync-reset="false" data-sync-direct-online="true" onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                    {% elif panel_form_type == "seed" %}
+                    <a href="{% url 'seeds:seed_update' item.pk %}?next={{ panel_return_path|urlencode }}">{% trans "Düzəliş" %}</a>
+                    <form action="{% url 'seeds:seed_delete' item.pk %}" method="POST" data-sync-entity="seed" data-sync-action="delete" data-sync-reset="false" data-sync-direct-online="true" onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                    {% elif panel_form_type == "tool" %}
+                    <a href="{% url 'tools:tool_update' item.pk %}?next={{ panel_return_path|urlencode }}">{% trans "Düzəliş" %}</a>
+                    <form action="{% url 'tools:tool_delete' item.pk %}" method="POST" data-sync-entity="tool" data-sync-action="delete" data-sync-reset="false" data-sync-direct-online="true" onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                    {% else %}
+                    <a href="{% url 'farm_products:product_update' item.pk %}?next={{ panel_return_path|urlencode }}">{% trans "Düzəliş" %}</a>
+                    <form action="{% url 'farm_products:product_delete' item.pk %}" method="POST" data-sync-entity="farm_product" data-sync-action="delete" data-sync-reset="false" data-sync-direct-online="true" onsubmit="return confirm('Silmək istədiyinizə əminsiniz?');">
+                    {% endif %}
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ panel_return_path }}">
+                        <input type="hidden" name="record_id" value="{{ item.pk }}">
+                        <input type="hidden" name="record_version" value="{{ item.updated_at|date:'c' }}">
+                        <button type="submit">{% trans "Sil" %}</button>
+                    </form>
+                </div>
+                <div class="add-list-date">
+                    <i class="fa-regular fa-clock"></i>
+                    <span>{{ item.date|date:"d.m.Y" }}{% if item.display_time %} {{ item.display_time }}{% endif %}</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="add-list-empty">{{ panel_empty_message }}</div>
+        {% endfor %}
+    </div>
+    {% if panel_items %}
+    <div class="add-list-empty" data-filter-empty hidden>{% trans "Filterə uyğun nəticə tapılmadı." %}</div>
+    {% endif %}
+</div>

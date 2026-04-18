@@ -928,6 +928,90 @@ msgstr "Неверное имя пользователя или пароль."
 msgid "Toxumlar"
 msgstr "Семена"
 
+msgid "Heyvandarlıq"
+msgstr "Животноводство"
+
+msgid "Bitkiçilik"
+msgstr "Растениеводство"
+
+msgid "İşçi qüvvəsi"
+msgstr "Рабочая сила"
+
+msgid "Texnika və Maşınlar"
+msgstr "Техника и оборудование"
+
+msgid "İnfrastruktur"
+msgstr "Инфраструктура"
+
+msgid "Logistika və Satış"
+msgstr "Логистика и продажи"
+
+msgid "Yem"
+msgstr "Корм"
+
+msgid "Baytar"
+msgstr "Ветеринар"
+
+msgid "Peyvəndləmə"
+msgstr "Вакцинация"
+
+msgid "Heyvan alışı"
+msgstr "Покупка животных"
+
+msgid "Gübrə"
+msgstr "Удобрение"
+
+msgid "Süd məhsulları"
+msgstr "Молочные продукты"
+
+msgid "Arıçılıq"
+msgstr "Пчеловодство"
+
+msgid "Pesticidlər"
+msgstr "Пестициды"
+
+msgid "Suvarma"
+msgstr "Орошение"
+
+msgid "Meyvə-Tərəvəz alışı"
+msgstr "Покупка фруктов и овощей"
+
+msgid "Taxıl alışı"
+msgstr "Покупка зерна"
+
+msgid "Yem bitkisi alışı"
+msgstr "Покупка кормовых культур"
+
+msgid "Maaşlar"
+msgstr "Зарплаты"
+
+msgid "Sığorta"
+msgstr "Страхование"
+
+msgid "Yanacaq"
+msgstr "Топливо"
+
+msgid "Təmir və Baxım"
+msgstr "Ремонт и обслуживание"
+
+msgid "Texnika alışı"
+msgstr "Покупка техники"
+
+msgid "Elektrik"
+msgstr "Электричество"
+
+msgid "Su"
+msgstr "Вода"
+
+msgid "Tikinti"
+msgstr "Строительство"
+
+msgid "Nəqliyyat"
+msgstr "Транспорт"
+
+msgid "Qablaşdırma"
+msgstr "Упаковка"
+
 msgid "Heyvanlar"
 msgstr "Животные"
 
@@ -1535,6 +1619,9 @@ msgstr "Инструменты для полива"
 msgid "Kənd Texnikası"
 msgstr "Сельхозтехника"
 
+msgid "Kənd Təsərrüfatı Texnikası"
+msgstr "Сельскохозяйственная техника"
+
 msgid "Baxım və Təmir"
 msgstr "Обслуживание и ремонт"
 
@@ -1817,6 +1904,54 @@ msgstr "Сначала выберите основную категорию"
 msgid "Heyvan Siyahısı"
 msgstr "Список животных"
 
+msgid "Siyahı yüklənir..."
+msgstr "Загрузка списка..."
+
+msgid "Xərc Siyahısı"
+msgstr "Список расходов"
+
+msgid "Satış Siyahısı"
+msgstr "Список продаж"
+
+msgid "Alət Siyahısı"
+msgstr "Список инструментов"
+
+msgid "Məhsul Siyahısı"
+msgstr "Список продуктов"
+
+msgid "Düzəliş"
+msgstr "Редактировать"
+
+msgid "Sil"
+msgstr "Удалить"
+
+msgid "Tarix və saat"
+msgstr "Дата и время"
+
+msgid "İndi"
+msgstr "Сейчас"
+
+msgid "Şifrəni dəyiş"
+msgstr "Изменить пароль"
+
+msgid "Təsdiq"
+msgstr "Подтверждение"
+
+msgid "Satış Əlavə Et"
+msgstr "Добавить продажу"
+
+msgid "Stoku yenilə"
+msgstr "Обновить остаток"
+
+msgid "Sayımdan sonra qalan miqdar"
+msgstr "Остаток после пересчёта"
+
+msgid "Sayım etdinizsə, hazırkı qalan miqdarı yazın."
+msgstr "Если вы пересчитали, введите текущий остаток."
+
+msgid "Silmək istədiyinizə əminsiniz?"
+msgstr "Вы уверены, что хотите удалить?"
+
 msgid "Heç bir heyvan tapılmadı"
 msgstr "Животные не найдены"
 
@@ -2044,6 +2179,9 @@ msgstr "Доходы еще не записаны"
 msgid "Filterə uyğun gəlir tapılmadı"
 msgstr "Доходов для этого фильтра не найдено"
 
+msgid "Filterə uyğun nəticə tapılmadı."
+msgstr "Для этого фильтра ничего не найдено."
+
 msgid "Alt məhsul seçin"
 msgstr "Выберите подпродукт"
 
@@ -2072,11 +2210,17 @@ msgstr "Идет запись"
 msgid "Danışın, sistem səsi dinləyir."
 msgstr "Говорите, система слушает."
 
+msgid "Dinlənilir... Bitirmək üçün “Yazını Bitir” düyməsinə basın."
+msgstr "Идет прослушивание... Нажмите «Остановить запись», чтобы завершить."
+
 msgid "Kod / ID"
 msgstr "Код / ID"
 
 msgid "Barkod kodunu yazın"
 msgstr "Введите штрихкод"
+
+msgid "Kodu və ya ID-ni əl ilə yazın."
+msgstr "Введите код или ID вручную."
 
 msgid "Kodu Yoxla"
 msgstr "Проверить код"
@@ -2086,6 +2230,15 @@ msgstr "Форма"
 
 msgid "Scan olunan barkoda uyğun form açıldı."
 msgstr "Открыта форма для отсканированного штрихкода."
+
+msgid "Kamera açılır..."
+msgstr "Камера открывается..."
+
+msgid "Barkodu kameraya yaxınlaşdırın."
+msgstr "Поднесите штрихкод к камере."
+
+msgid "Skan dayandırıldı."
+msgstr "Сканирование остановлено."
 
 msgid "Alt Kateqoriya"
 msgstr "Подкатегория"
@@ -2189,6 +2342,12 @@ msgstr "Аудио обрабатывается..."
 
 msgid "Yazını Bitir"
 msgstr "Остановить запись"
+
+msgid "Bütün növlər"
+msgstr "Все типы"
+
+msgid "Növ seçin"
+msgstr "Выберите тип"
 
 msgid "Barkod Yarat"
 msgstr "Создать штрихкод"
@@ -2615,6 +2774,30 @@ msgstr "Форма продажи"
 msgid "Satış formu açıldı."
 msgstr "Форма продажи открыта."
 
+msgid "Əl ilə toxum formu açıldı."
+msgstr "Форма семян открыта вручную."
+
+msgid "Toxum məlumatlarını doldurun."
+msgstr "Заполните данные о семенах."
+
+msgid "Əl ilə heyvan formu açıldı."
+msgstr "Форма животного открыта вручную."
+
+msgid "Heyvan məlumatlarını doldurun."
+msgstr "Заполните данные о животном."
+
+msgid "Əl ilə məhsul formu açıldı."
+msgstr "Форма продукта открыта вручную."
+
+msgid "Hazır məhsul məlumatlarını doldurun."
+msgstr "Заполните данные о готовом продукте."
+
+msgid "Əl ilə alət formu açıldı."
+msgstr "Форма инструмента открыта вручную."
+
+msgid "Alət məlumatlarını doldurun."
+msgstr "Заполните данные об инструменте."
+
 msgid "Tez sat"
 msgstr "Быстрая продажа"
 
@@ -2639,3 +2822,12 @@ msgstr "Что вы добавляете?"
 
 msgid "Satışı Saxla"
 msgstr "Сохранить продажу"
+
+msgid "Toxum alışı"
+msgstr "Покупка семян"
+
+msgid "Alət alışı"
+msgstr "Покупка инструмента"
+
+msgid "Hazır məhsul alışı"
+msgstr "Покупка готовой продукции"

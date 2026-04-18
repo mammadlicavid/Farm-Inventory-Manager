@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.views.decorators.cache import never_cache
 from hashlib import md5
 import re
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from django.utils import timezone
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -85,6 +85,15 @@ def _parse_date(value: str | None):
         return timezone.localdate()
 
 
+def _parse_time(value: str | None):
+    if not value:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+    try:
+        return time.fromisoformat(value)
+    except Exception:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+
+
 def _parse_filter_date(value: str | None):
     if not value:
         return None
@@ -146,6 +155,8 @@ def _sync_animal_related_records(user, animal):
             linked_expense.additional_info = animal.additional_info
             linked_expense.subcategory = expense_sub
             linked_expense.manual_name = None if expense_sub else "Heyvan alışı (Digər)"
+            linked_expense.date = animal.date
+            linked_expense.time = animal.time
             linked_expense.save()
         else:
             Expense.objects.create(
@@ -154,6 +165,8 @@ def _sync_animal_related_records(user, animal):
                 subcategory=expense_sub,
                 manual_name=None if expense_sub else "Heyvan alışı (Digər)",
                 additional_info=animal.additional_info,
+                date=animal.date,
+                time=animal.time,
                 created_by=user,
                 content_object=animal
             )
@@ -161,7 +174,7 @@ def _sync_animal_related_records(user, animal):
         linked_expense.delete()
 
 
-def _merge_manual_animal(user, manual_name, gender, quantity, weight, price, zero_price_source, additional_info, entry_date):
+def _merge_manual_animal(user, manual_name, gender, quantity, weight, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         Animal.objects.filter(created_by=user, gender=gender, identification_no__isnull=True)
         .filter((Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər")), manual_name__iexact=manual_name)
@@ -186,6 +199,7 @@ def _merge_manual_animal(user, manual_name, gender, quantity, weight, price, zer
     existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     _sync_animal_related_records(user, existing)
     return existing
@@ -193,103 +207,11 @@ def _merge_manual_animal(user, manual_name, gender, quantity, weight, price, zer
 @login_required
 @never_cache
 def animal_list(request):
-    cache_key = f"animals:list:v2:{request.user.pk}:{_animal_list_cache_bust_value(request.user.pk)}:{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
-    cached_context = cache.get(cache_key)
-    if cached_context is not None:
-        return render(request, 'animals/animal_list.html', cached_context)
-
-    query = (request.GET.get('q') or '').strip()
-    category_id = (request.GET.get('category') or '').strip()
-    subcategory_id = (request.GET.get('subcategory') or '').strip()
-    date_from_raw = (request.GET.get('date_from') or '').strip()
-    date_to_raw = (request.GET.get('date_to') or '').strip()
-    movement = (request.GET.get('movement') or '').strip()
-    animals_qs = (
-        Animal.objects.filter(created_by=request.user)
-        .exclude(quantity=0)
-        .exclude(additional_info__icontains="Gəlir stoku | income:")
-        .select_related('subcategory', 'subcategory__category')
-        .only(
-            'id',
-            'quantity',
-            'weight',
-            'date',
-            'gender',
-            'identification_no',
-            'manual_name',
-            'additional_info',
-            'price',
-            'updated_at',
-            'subcategory__id',
-            'subcategory__name',
-            'subcategory__category__id',
-            'subcategory__category__name',
-        )
-    )
-
-    if query:
-        animals_qs = animals_qs.filter(
-            Q(identification_no__icontains=query)
-            | Q(additional_info__icontains=query)
-            | Q(subcategory__name__icontains=query)
-            | Q(manual_name__icontains=query)
-        )
-
-    form_catalog = _animal_form_catalog()
-    selected_category = next((category for category in form_catalog["categories"] if str(category.id) == category_id), None) if category_id else None
-    if selected_category:
-        if (selected_category.name or "").strip().lower() == "digər":
-            animals_qs = animals_qs.filter(Q(subcategory__category=selected_category) | Q(subcategory__isnull=True))
-        else:
-            animals_qs = animals_qs.filter(subcategory__category=selected_category)
-
-    filtered_subcategories = []
-    if selected_category:
-        filtered_subcategories = list(selected_category.subcategories.all())
-
-    if subcategory_id:
-        animals_qs = animals_qs.filter(subcategory_id=subcategory_id)
-
-    date_from = _parse_filter_date(date_from_raw)
-    if date_from:
-        animals_qs = animals_qs.filter(date__gte=date_from)
-
-    date_to = _parse_filter_date(date_to_raw)
-    if date_to:
-        animals_qs = animals_qs.filter(date__lte=date_to)
-
-    if movement == "increase":
-        animals_qs = animals_qs.filter(quantity__gt=0)
-    elif movement == "decrease":
-        animals_qs = animals_qs.filter(quantity__lt=0)
-
-    animals = list(animals_qs)
-    for animal in animals:
-        animal.icon_class = get_animal_icon_for_animal(animal)
-        animal.display_additional_info = _clean_additional_info(animal.additional_info)
-        animal.zero_price_source_label = get_zero_price_source_label(animal)
-
-    today = timezone.localdate()
-    context = {
-        'animals': animals,
-        'categories': form_catalog["categories"],
-        'subcategory_data': form_catalog["subcategory_data"],
-        'zero_price_source_choices': ZERO_PRICE_SOURCE_CHOICES,
-        'filter_subcategories': filtered_subcategories,
-        'selected_category': category_id,
-        'selected_subcategory': subcategory_id,
-        'selected_date_from': date_from_raw,
-        'selected_date_to': date_to_raw,
-        'selected_movement': movement,
-        'today': today,
-        'yesterday': today - timedelta(days=1),
-    }
-    cache.set(cache_key, context, ANIMAL_LIST_CACHE_TTL)
-    return render(request, 'animals/animal_list.html', context)
+    return redirect(f"{resolve_url('inventory:add_placeholder')}?type=animal")
 
 @login_required
 def animal_create(request):
-    redirect_to = request.POST.get('next') or 'animals:animal_list'
+    redirect_to = request.POST.get('next') or f"{resolve_url('inventory:add_placeholder')}?type=animal"
     if request.method == 'POST':
         subcategory_id = request.POST.get('subcategory')
         identification_no = request.POST.get('identification_no')
@@ -302,6 +224,7 @@ def animal_create(request):
         manual_name = normalize_manual_label(request.POST.get('manual_name'))
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
         
         # Backend Validation
         if not (subcategory_id or manual_name) or not gender:
@@ -357,6 +280,7 @@ def animal_create(request):
                     zero_price_source,
                     additional_info,
                     entry_date,
+                    entry_time,
                 )
             if merged == "deleted":
                 _bust_animal_list_cache(request.user.pk)
@@ -378,6 +302,7 @@ def animal_create(request):
                 zero_price_source=zero_price_source,
                 quantity=quantity,
                 date=entry_date,
+                time=entry_time,
                 created_by=request.user
             )
 
@@ -391,6 +316,8 @@ def animal_create(request):
                         amount=price,
                         subcategory=expense_sub,
                         additional_info=additional_info,
+                        date=entry_date,
+                        time=entry_time,
                         created_by=request.user,
                         content_object=animal
                     )
@@ -401,6 +328,8 @@ def animal_create(request):
                         amount=price,
                         manual_name="Heyvan alışı (Digər)",
                         additional_info=additional_info,
+                        date=entry_date,
+                        time=entry_time,
                         created_by=request.user,
                         content_object=animal
                     )
@@ -416,6 +345,8 @@ def animal_create(request):
 @login_required
 def animal_update(request, pk):
     animal = get_object_or_404(Animal, pk=pk, created_by=request.user)
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    redirect_to = next_url or f"{resolve_url('inventory:add_placeholder')}?type=animal"
     if request.method == 'POST':
         subcategory_id = request.POST.get('subcategory')
         identification_no = request.POST.get('identification_no')
@@ -428,6 +359,7 @@ def animal_update(request, pk):
         manual_name = normalize_manual_label(request.POST.get('manual_name'))
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
         
         # Backend Validation
         if not (subcategory_id or manual_name) or not gender:
@@ -455,6 +387,7 @@ def animal_update(request, pk):
         animal.additional_info = additional_info
         animal.gender = gender
         animal.date = entry_date
+        animal.time = entry_time
         if subcategory_id:
             subcategory = AnimalSubCategory.objects.get(id=subcategory_id)
             if subcategory.name == "Digər" and not manual_name:
@@ -488,6 +421,8 @@ def animal_update(request, pk):
                 linked_expense.amount = animal.price
                 linked_expense.title = f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}"
                 linked_expense.additional_info = animal.additional_info
+                linked_expense.date = animal.date
+                linked_expense.time = animal.time
                 linked_expense.save()
             else:
                 linked_expense.delete()
@@ -500,6 +435,8 @@ def animal_update(request, pk):
                     amount=animal.price,
                     subcategory=expense_sub,
                     additional_info=animal.additional_info,
+                    date=animal.date,
+                    time=animal.time,
                     created_by=request.user,
                     content_object=animal
                 )
@@ -509,23 +446,28 @@ def animal_update(request, pk):
                     amount=animal.price,
                     manual_name="Heyvan alışı (Digər)",
                     additional_info=animal.additional_info,
+                    date=animal.date,
+                    time=animal.time,
                     created_by=request.user,
                     content_object=animal
                 )
 
         _bust_animal_list_cache(request.user.pk)
         add_crud_success_message(request, "Animal", "update")
-        return _redirect_with_refresh('animals:animal_list')
+        return _redirect_with_refresh(redirect_to)
     
-    return render(request, 'animals/animal_form.html', _animal_form_context(animal))
+    context = _animal_form_context(animal)
+    context["next_url"] = next_url
+    return render(request, 'animals/animal_form.html', context)
 
 @login_required
 def animal_delete(request, pk):
     animal = get_object_or_404(Animal, pk=pk, created_by=request.user)
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?type=animal"
     if request.method == 'POST':
         animal_type = ContentType.objects.get_for_model(Animal)
         Expense.objects.filter(content_type=animal_type, object_id=animal.id).delete()
         animal.delete()
         _bust_animal_list_cache(request.user.pk)
         add_crud_success_message(request, "Animal", "delete")
-    return _redirect_with_refresh('animals:animal_list')
+    return _redirect_with_refresh(redirect_to)

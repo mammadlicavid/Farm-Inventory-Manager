@@ -18,6 +18,18 @@ VALID_TIMEZONES = {
     for _, zone_entries in TIMEZONE_GROUPS
     for zone_name, _ in zone_entries
 }
+LEGACY_TIMEZONE_ALIASES = {
+    "Asia/Dubai": "Asia/Baku",
+    "Europe/Moscow": "Europe/Istanbul",
+    "Asia/Riyadh": "Europe/Istanbul",
+}
+
+
+def _normalize_timezone(zone_name):
+    normalized = (zone_name or "").strip()
+    if not normalized:
+        return "Asia/Baku"
+    return LEGACY_TIMEZONE_ALIASES.get(normalized, normalized)
 
 
 def _format_utc_offset(zone_name):
@@ -36,11 +48,16 @@ def _build_timezone_groups(selected_timezone):
     timezone_groups = []
     selected_label = ""
     selected_now = ""
+    seen_offsets = set()
+    selected_timezone = _normalize_timezone(selected_timezone)
 
     for group_label, zone_entries in TIMEZONE_GROUPS:
         options = []
         for zone_name, city_label in zone_entries:
             offset_label = _format_utc_offset(zone_name)
+            if offset_label in seen_offsets and zone_name != selected_timezone:
+                continue
+            seen_offsets.add(offset_label)
             full_label = f"{offset_label} {city_label}"
             options.append({
                 "value": zone_name,
@@ -130,7 +147,7 @@ def change_password_view(request):
 def setting_view(request):
     settings_obj, created = UserSettings.objects.get_or_create(
         user=request.user,
-        defaults={"weight_unit": "kg", "volume_unit": "litr"},
+        defaults={"weight_unit": "kg", "volume_unit": "litr", "timezone": "Asia/Baku"},
     )
 
     # Heal any legacy/broken rows defensively (DB currently expects NOT NULL).
@@ -148,10 +165,13 @@ def setting_view(request):
             settings_obj.volume_unit = v
     if created:
         settings_obj.unit = f"{settings_obj.weight_unit}_{settings_obj.volume_unit}"
-    settings_obj.save(update_fields=["unit", "weight_unit", "volume_unit"])
+    normalized_timezone = _normalize_timezone(settings_obj.timezone)
+    if normalized_timezone != settings_obj.timezone:
+        settings_obj.timezone = normalized_timezone
+    settings_obj.save(update_fields=["unit", "weight_unit", "volume_unit", "timezone"])
     if request.method == 'POST':
         settings_obj.language             = request.POST.get('language', 'az')
-        selected_timezone = (request.POST.get('timezone', 'Asia/Baku') or 'Asia/Baku').strip()
+        selected_timezone = _normalize_timezone(request.POST.get('timezone', 'Asia/Baku'))
         settings_obj.timezone             = selected_timezone if selected_timezone in VALID_TIMEZONES else 'Asia/Baku'
         weight_unit = request.POST.get('weight_unit', 'kg')
         if weight_unit == 'oz':
@@ -190,7 +210,7 @@ def setting_view(request):
     if weight_unit == "oz":
         weight_unit = "lb"
     timezone_groups, current_timezone_label, current_timezone_now = _build_timezone_groups(
-        settings_obj.timezone or "Asia/Baku"
+        _normalize_timezone(settings_obj.timezone)
     )
     response = render(request, 'sidebar_menu/setting.html', {
         'user_settings': settings_obj,

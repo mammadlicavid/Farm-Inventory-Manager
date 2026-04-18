@@ -38,6 +38,8 @@
   }
 
   let hoverIndex = Math.max(0, points.length - 1)
+  let drawFrameId = 0
+  let lastCanvasSize = { width: 0, height: 0 }
 
   function formatNumber(value) {
     const amount = Number(value || 0)
@@ -66,9 +68,18 @@
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect()
     const ratio = window.devicePixelRatio || 1
-    canvas.width = Math.max(1, Math.floor(rect.width * ratio))
-    canvas.height = Math.max(1, Math.floor(rect.height * ratio))
+    const cssWidth = Math.max(1, Math.floor(rect.width))
+    const cssHeight = Math.max(1, Math.floor(rect.height))
+    const nextWidth = Math.max(1, Math.floor(cssWidth * ratio))
+    const nextHeight = Math.max(1, Math.floor(cssHeight * ratio))
+
+    if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+      canvas.width = nextWidth
+      canvas.height = nextHeight
+    }
+
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+    lastCanvasSize = { width: cssWidth, height: cssHeight }
   }
 
   function visibleKeys() {
@@ -255,8 +266,10 @@
   function draw() {
     resizeCanvas()
 
-    const width = canvas.clientWidth
-    const height = canvas.clientHeight
+    const width = lastCanvasSize.width || canvas.clientWidth
+    const height = lastCanvasSize.height || canvas.clientHeight
+    if (width < 80 || height < 80) return
+
     ctx.clearRect(0, 0, width, height)
 
     const padding = {
@@ -289,6 +302,23 @@
     drawBars(frame)
     drawLabels(frame)
     updateFocus(points[hoverIndex] || points[points.length - 1])
+  }
+
+  function scheduleDraw(frameCount = 2) {
+    if (drawFrameId) cancelAnimationFrame(drawFrameId)
+
+    const step = (remaining) => {
+      drawFrameId = requestAnimationFrame(() => {
+        if (remaining > 1) {
+          step(remaining - 1)
+          return
+        }
+        drawFrameId = 0
+        draw()
+      })
+    }
+
+    step(Math.max(1, frameCount))
   }
 
   function nearestIndex(clientX) {
@@ -329,6 +359,27 @@
     })
   })
 
-  window.addEventListener('resize', draw)
-  draw()
+  window.addEventListener('resize', () => scheduleDraw(2))
+  window.addEventListener('load', () => scheduleDraw(3), { once: true })
+
+  if (document.fonts && typeof document.fonts.ready?.then === 'function') {
+    document.fonts.ready.then(() => scheduleDraw(3)).catch(() => {})
+  }
+
+  if (typeof ResizeObserver !== 'undefined') {
+    const resizeObserver = new ResizeObserver(() => scheduleDraw(2))
+    resizeObserver.observe(canvas)
+    if (canvas.parentElement) resizeObserver.observe(canvas.parentElement)
+  }
+
+  if (typeof IntersectionObserver !== 'undefined') {
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) scheduleDraw(2)
+      })
+    }, { threshold: 0.2 })
+    intersectionObserver.observe(canvas)
+  }
+
+  scheduleDraw(3)
 })()

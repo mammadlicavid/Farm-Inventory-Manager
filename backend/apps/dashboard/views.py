@@ -26,6 +26,7 @@ from common.view_cache import (
     get_dashboard_bust_value,
 )
 from common.zero_price_source import get_zero_price_source_label
+from common.expense_titles import translate_expense_title
 from notifications.services import sync_stock_alert_notifications
 
 
@@ -602,7 +603,7 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
     for expense in expenses:
         if expense.content_type_id and expense.object_id:
             continue
-        expense_title = str(expense.title or expense.manual_name or _("Xərc")).strip()
+        expense_title = translate_expense_title(str(expense.title or expense.manual_name or _("Xərc")).strip())
         expense_subtitle = (
             getattr(expense.subcategory, "name", None)
             or getattr(getattr(expense.subcategory, "category", None), "name", None)
@@ -753,7 +754,7 @@ def calendar_page(request):
             },
         }
     }
-    cache.set(calendar_cache_key, context, 120)
+    cache.set(calendar_cache_key, context, 300)
     return render(request, "dashboard/calendar.html", context)
 
 
@@ -828,7 +829,7 @@ def dashboard(request):
         "critical_count": critical_count,
         "pending_notification_count": pending_notification_count,
     }
-    cache.set(cache_key, context, 60)
+    cache.set(cache_key, context, 300)
 
     return render(request, "dashboard/index.html", context)
 
@@ -984,7 +985,7 @@ def quick_expense(request):
             seen_titles.add(exp.title)
             exp.amount_display = format_currency(exp.amount, 2)
             exp.quantity_display, exp.unit_display = _expense_template_measure(exp)
-            exp.display_title = exp.title
+            exp.display_title = translate_expense_title(exp.title)
             if exp.title:
                 title_stripped = exp.title.strip()
                 if ":" in title_stripped:

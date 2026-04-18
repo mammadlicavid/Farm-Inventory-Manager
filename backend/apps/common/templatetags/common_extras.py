@@ -63,6 +63,8 @@ def _unit_label(unit):
             "litr": "litr",
             "gallon": "gallon",
             "ml": "millilitr",
+            "xidmət": "xidmət",
+            "service": "xidmət",
         },
         "en": {
             "kg": "kg",
@@ -71,6 +73,8 @@ def _unit_label(unit):
             "litr": "liter",
             "gallon": "gallon",
             "ml": "milliliter",
+            "xidmət": "service",
+            "service": "service",
         },
         "ru": {
             "kg": "кг",
@@ -79,6 +83,8 @@ def _unit_label(unit):
             "litr": "литр",
             "gallon": "галлон",
             "ml": "миллилитр",
+            "xidmət": "услуга",
+            "service": "услуга",
         },
     }
     lang = (get_language() or "az").split("-")[0]
@@ -182,7 +188,7 @@ def display_unit(value):
         "kg": "kq",
         "ml": "millilitr",
     }
-    return mapping.get(unit, unit)
+    return _unit_label(mapping.get(unit, unit))
 
 
 @register.simple_tag
