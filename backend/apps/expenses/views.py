@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.db.models import Q, Sum
 from hashlib import md5
 from django.utils import timezone
-from datetime import timedelta
+from datetime import date, timedelta, time
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
@@ -71,6 +71,24 @@ def _build_subcategory_category_lookup(categories):
         for subcategory in category.subcategories.all():
             lookup[subcategory.name.lower()] = category.name
     return lookup
+
+
+def _parse_date(value: str | None):
+    if not value:
+        return timezone.localdate()
+    try:
+        return date.fromisoformat(value)
+    except Exception:
+        return timezone.localdate()
+
+
+def _parse_time(value: str | None):
+    if not value:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+    try:
+        return time.fromisoformat(value)
+    except Exception:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
 
 def _get_display_additional_info(expense: Expense) -> str:
     """
@@ -163,7 +181,7 @@ def _expense_form_catalog():
     return payload
 
 
-def _merge_manual_expense(user, title, amount_val, additional_info):
+def _merge_manual_expense(user, title, amount_val, additional_info, entry_date, entry_time):
     existing = (
         Expense.objects.filter(created_by=user, subcategory__isnull=True, manual_name__iexact=title)
         .order_by("-updated_at", "-created_at")
@@ -181,117 +199,27 @@ def _merge_manual_expense(user, title, amount_val, additional_info):
     existing.amount = new_amount
     existing.manual_name = title
     existing.additional_info = additional_info
+    existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     return existing
 
 @login_required
 @never_cache
 def expense_list(request):
-    cache_key = (
-        f"expenses:list:v2:{request.user.pk}:{_expense_list_cache_bust_value(request.user.pk)}:"
-        f"{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
-    )
-    cached_context = cache.get(cache_key)
-    if cached_context is not None:
-        return render(request, 'expenses/expense_list.html', cached_context)
-
-    query = (request.GET.get("q") or "").strip()
-    expenses_qs = Expense.objects.filter(created_by=request.user).select_related(
-        'subcategory', 'subcategory__category'
-    ).only(
-        'id',
-        'title',
-        'amount',
-        'manual_name',
-        'additional_info',
-        'date',
-        'updated_at',
-        'content_type_id',
-        'object_id',
-        'subcategory__id',
-        'subcategory__name',
-        'subcategory__category__id',
-        'subcategory__category__name',
-    )
-
-    if query:
-        expenses_qs = expenses_qs.filter(
-            Q(subcategory__name__icontains=query)
-            | Q(subcategory__category__name__icontains=query)
-            | Q(additional_info__icontains=query)
-            | Q(manual_name__icontains=query)
-            | Q(title__icontains=query)
-        )
-    
-    # Perform aggregations on QuerySet before converting to list
-    total_amount = expenses_qs.aggregate(Sum('amount'))['amount__sum'] or 0
-    
-    # Weekly total calculation on QuerySet
-    last_week = timezone.localdate() - timedelta(days=7)
-    weekly_total = expenses_qs.filter(date__gte=last_week).aggregate(Sum('amount'))['amount__sum'] or 0
-    
-    # Convert to list for secondary processing (attaching display info)
-    expenses = list(expenses_qs)
-    _attach_prefetched_expense_objects(expenses)
-    form_catalog = _expense_form_catalog()
-    subcat_lookup = form_catalog["subcategory_category_lookup"]
-
-    # Attach display-only additional info and icon class
-    for exp in expenses:
-        exp.display_additional_info = _get_display_additional_info(exp)
-        exp.icon_class = get_expense_icon(exp)
-        exp.amount_display = format_currency(exp.amount, 2)
-        exp.display_title = exp.title
-        exp.display_type_tag = ""
-        if exp.title:
-            title_stripped = exp.title.strip()
-            if ":" in title_stripped:
-                base, rest = title_stripped.split(":", 1)
-                base = base.strip()
-                rest = rest.strip()
-                if base and rest and base.lower() in {
-                    "heyvan alışı",
-                    "toxum alışı",
-                    "alət alışı",
-                    "texnika alışı",
-                }:
-                    exp.display_title = rest
-                    exp.display_type_tag = base
-        if exp.subcategory and exp.subcategory.category:
-            exp.display_category_name = exp.subcategory.category.name
-        else:
-            match_category_name = None
-            if exp.manual_name:
-                match_category_name = subcat_lookup.get(exp.manual_name.lower())
-            if not match_category_name and exp.title:
-                match_category_name = subcat_lookup.get(exp.title.lower())
-            if match_category_name:
-                exp.display_category_name = match_category_name
-            else:
-                exp.display_category_name = "Digər"
-    
-    context = {
-        'expenses': expenses,
-        'total_amount': total_amount,
-        'weekly_total': weekly_total,
-        'weekly_total_display': format_currency(weekly_total, 2),
-        'categories': form_catalog["categories"],
-        'subcategory_data': form_catalog["subcategory_data"],
-        'today': timezone.localdate(),
-        'yesterday': timezone.localdate() - timedelta(days=1),
-    }
-    cache.set(cache_key, context, EXPENSE_LIST_CACHE_TTL)
-    return render(request, 'expenses/expense_list.html', context)
+    return redirect(f"{resolve_url('inventory:add_placeholder')}?form=expense")
 
 @login_required
 def add_expense(request):
-    redirect_to = request.POST.get('next') or 'expenses:expense_list'
+    redirect_to = request.POST.get('next') or f"{resolve_url('inventory:add_placeholder')}?form=expense"
     if request.method == 'POST':
         title = request.POST.get('title')
         amount = request.POST.get('amount')
         manual_name = normalize_manual_label(request.POST.get('manual_name'))
         subcategory_id = request.POST.get('subcategory')
         additional_info = request.POST.get('additional_info')
+        entry_date = _parse_date(request.POST.get("date"))
+        entry_time = _parse_time(request.POST.get("time"))
         
         subcategory = None
         if subcategory_id:
@@ -316,7 +244,7 @@ def add_expense(request):
             title = subcategory.name if subcategory else manual_name
 
         if not subcategory:
-            merged = _merge_manual_expense(request.user, title, amount_val, additional_info)
+            merged = _merge_manual_expense(request.user, title, amount_val, additional_info, entry_date, entry_time)
             if merged == "deleted":
                 _bust_expense_list_cache(request.user.pk)
                 add_crud_success_message(request, "Expense", "delete")
@@ -332,6 +260,8 @@ def add_expense(request):
             subcategory=subcategory,
             manual_name=None if subcategory else title,
             additional_info=additional_info,
+            date=entry_date,
+            time=entry_time,
             created_by=request.user
         )
         _bust_expense_list_cache(request.user.pk)
@@ -343,12 +273,16 @@ def add_expense(request):
 @login_required
 def edit_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk, created_by=request.user)
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    redirect_to = next_url or f"{resolve_url('inventory:add_placeholder')}?form=expense"
     if request.method == 'POST':
         title = request.POST.get('title')
         amount = request.POST.get('amount')
         subcategory_id = request.POST.get('subcategory')
         manual_name = normalize_manual_label(request.POST.get('manual_name'))
         additional_info = request.POST.get('additional_info')
+        entry_date = _parse_date(request.POST.get("date"))
+        entry_time = _parse_time(request.POST.get("time"))
         
         subcategory = None
         if subcategory_id:
@@ -364,6 +298,7 @@ def edit_expense(request, pk):
                 'expense': expense,
                 'categories': form_catalog["categories"],
                 'subcategory_data': form_catalog["subcategory_data"],
+                'next_url': next_url,
             })
 
         try:
@@ -377,6 +312,7 @@ def edit_expense(request, pk):
                 'expense': expense,
                 'categories': form_catalog["categories"],
                 'subcategory_data': form_catalog["subcategory_data"],
+                'next_url': next_url,
             })
             
         expense.title = title if title else (subcategory.name if subcategory else manual_name)
@@ -384,6 +320,8 @@ def edit_expense(request, pk):
         expense.subcategory = subcategory
         expense.manual_name = None if subcategory else (title if title else manual_name)
         expense.additional_info = additional_info
+        expense.date = entry_date
+        expense.time = entry_time
         expense.save()
 
         # Reverse Synchronization: Expense -> Inventory
@@ -396,6 +334,10 @@ def edit_expense(request, pk):
                 item.amount = expense.amount
             if hasattr(item, 'additional_info'):
                 item.additional_info = additional_info
+            if hasattr(item, 'date'):
+                item.date = entry_date
+            if hasattr(item, 'time'):
+                item.time = entry_time
             
             # Optionally update title/name if it changed? 
             # Usually inventory name is more specific, so we might keep it.
@@ -404,7 +346,7 @@ def edit_expense(request, pk):
         
         _bust_expense_list_cache(request.user.pk)
         add_crud_success_message(request, "Expense", "update")
-        return _redirect_with_refresh('expenses:expense_list')
+        return _redirect_with_refresh(redirect_to)
 
     # Initial GET render: compute display_additional_info for textarea
     expense.display_additional_info = _get_display_additional_info(expense)
@@ -413,11 +355,13 @@ def edit_expense(request, pk):
         'expense': expense,
         'categories': form_catalog["categories"],
         'subcategory_data': form_catalog["subcategory_data"],
+        'next_url': next_url,
     })
 
 @login_required
 def delete_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk, created_by=request.user)
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?form=expense"
     if request.method == 'POST':
         # Reverse Synchronization: Deleting expense deletes the linked item
         if expense.content_object:
@@ -426,4 +370,4 @@ def delete_expense(request, pk):
         expense.delete()
         _bust_expense_list_cache(request.user.pk)
         add_crud_success_message(request, "Expense", "delete")
-    return _redirect_with_refresh('expenses:expense_list')
+    return _redirect_with_refresh(redirect_to)

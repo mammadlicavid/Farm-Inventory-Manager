@@ -30,6 +30,17 @@
     const KG_PER_POUND = 0.45359237;
     const GRAMS_PER_OUNCE = 28.349523125;
     const LITERS_PER_GALLON = 3.785411784;
+    const otherLabels = new Set(["digər", "other", "другое"]);
+
+    function translateDynamicLabel(value) {
+        const text = String(value || "");
+        if (!text) return text;
+        return window.runtimeI18n?.translateInlineValue?.(text) || text;
+    }
+
+    function isOtherLabel(value) {
+        return otherLabels.has(String(value || "").trim().toLowerCase());
+    }
 
     function displayUnitLabel(unit) {
         if (weightUnitSystem === "lb") {
@@ -48,7 +59,7 @@
         units.forEach(unit => {
             const option = document.createElement('option');
             option.value = unit;
-            option.textContent = displayUnitLabel(unit);
+            option.textContent = translateDynamicLabel(displayUnitLabel(unit));
             if (currentValue && currentValue === unit) {
                 option.selected = true;
             }
@@ -64,7 +75,7 @@
         unitSelect.innerHTML = '';
         const option = document.createElement('option');
         option.value = '';
-        option.textContent = message;
+        option.textContent = translateDynamicLabel(message);
         option.selected = true;
         unitSelect.appendChild(option);
     }
@@ -159,7 +170,7 @@
 
         updateGenderState(data.type);
 
-        if (category === "Digər") {
+        if (isOtherLabel(category)) {
             itemGroup.style.display = 'none';
             itemSelect.required = false;
             itemSelect.disabled = true;
@@ -177,7 +188,7 @@
         data.items.forEach(item => {
             const option = document.createElement('option');
             option.value = item.name;
-            option.textContent = item.name;
+            option.textContent = translateDynamicLabel(item.name);
             option.dataset.unit = item.unit || '';
             if (selectedItem && item.name === selectedItem) {
                 option.selected = true;
@@ -187,7 +198,7 @@
         });
 
         if (!matched) {
-            const digerOption = Array.from(itemSelect.options).find(opt => opt.value === "Digər");
+            const digerOption = Array.from(itemSelect.options).find(opt => isOtherLabel(opt.value));
             if (digerOption) {
                 digerOption.selected = true;
             }
@@ -207,7 +218,7 @@
         } else if (data.type === "animal") {
             setUnits(animalUnits, initialUnit);
         } else if (data.type === "farm") {
-            if (itemName === "Digər") {
+            if (isOtherLabel(itemName)) {
                 setUnits(allUnits, initialUnit);
             } else {
                 setUnits(resolveFarmUnits(itemName, itemUnit), initialUnit);
@@ -232,7 +243,7 @@
             return;
         }
 
-        if (itemName === "Digər") {
+        if (isOtherLabel(itemName)) {
             updateManualState(true, initialItem);
         } else {
             updateManualState(false);

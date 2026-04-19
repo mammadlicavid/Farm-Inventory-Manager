@@ -50,6 +50,7 @@
     const modalMale = document.getElementById("modal-male");
     const modalFemale = document.getElementById("modal-female");
     const modalTotal = document.getElementById("modal-total");
+    const modalSave = document.getElementById("modal-save");
 
     const FILTER_KEY = "stocks_filters_session_v1";
     const KEEP_KEY = "stocks_filters_keep_v1";
@@ -237,6 +238,84 @@
         modalForm.reset();
     }
 
+    function showToast(message, type = "success") {
+        if (!message) return;
+        if (window.farmSync?.showToast) {
+            window.farmSync.showToast(message, type);
+            return;
+        }
+        window.alert(message);
+    }
+
+    function parseToastMessagesFromHtml(htmlText) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(String(htmlText || ""), "text/html");
+        return Array.from(doc.querySelectorAll("#toast-container .toast-message")).map((node) => ({
+            text: (node.textContent || "").trim(),
+            isError: node.classList.contains("toast-error"),
+            type: node.classList.contains("toast-error")
+                ? "error"
+                : node.classList.contains("toast-warning")
+                    ? "warning"
+                    : node.classList.contains("toast-info")
+                        ? "info"
+                        : "success",
+        })).filter((entry) => entry.text);
+    }
+
+    function formatDisplayNumber(value) {
+        const numberValue = Number.parseFloat(String(value || "0").replace(",", "."));
+        if (!Number.isFinite(numberValue)) return String(value || "0");
+        if (Number.isInteger(numberValue)) return String(numberValue);
+        return numberValue.toFixed(2).replace(/\.?0+$/, "");
+    }
+
+    function updateCardQuantityDisplay(card, quantityValue) {
+        card.dataset.quantity = String(quantityValue);
+        const qtyButton = card.querySelector(".product-update-btn");
+        const qtyValueNode = card.querySelector(".product-qty-value");
+        if (qtyButton) qtyButton.dataset.qty = String(quantityValue);
+        if (qtyValueNode) qtyValueNode.textContent = formatDisplayNumber(quantityValue);
+    }
+
+    function updateAnimalCardDisplay(card, maleValue, femaleValue) {
+        const safeMale = Number.parseInt(maleValue || "0", 10) || 0;
+        const safeFemale = Number.parseInt(femaleValue || "0", 10) || 0;
+        const totalValue = safeMale + safeFemale;
+        const qtyButton = card.querySelector(".product-update-btn");
+        if (qtyButton) {
+            qtyButton.dataset.male = String(safeMale);
+            qtyButton.dataset.female = String(safeFemale);
+            qtyButton.dataset.qty = String(totalValue);
+        }
+        updateCardQuantityDisplay(card, totalValue);
+        const infoLines = card.querySelectorAll(".product-subtitle");
+        const genderInfo = infoLines[1];
+        if (genderInfo) {
+            genderInfo.innerHTML = `{% trans 'Erkək' %}: ${safeMale}<br>{% trans 'Dişi' %}: ${safeFemale}`;
+        }
+    }
+
+    async function submitStockUpdateForm() {
+        const response = await fetch(modalForm.action, {
+            method: "POST",
+            body: new FormData(modalForm),
+            credentials: "same-origin",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
+        const htmlText = await response.text();
+        const responseMessages = parseToastMessagesFromHtml(htmlText);
+        const errorMessage = responseMessages.find((entry) => entry.isError);
+        if (!response.ok || errorMessage) {
+            throw new Error(errorMessage?.text || "{% trans 'Stok yenilənmədi.' %}");
+        }
+        const firstMessage = responseMessages[0];
+        if (firstMessage) showToast(firstMessage.text, firstMessage.type);
+        return responseMessages;
+    }
+
     document.querySelectorAll(".product-update-btn").forEach(btn => {
         btn.addEventListener("click", () => openModal(btn));
     });
@@ -259,11 +338,53 @@
     modalMale.addEventListener("input", updateAnimalTotal);
     modalFemale.addEventListener("input", updateAnimalTotal);
 
+    function applyModalUpdateToCard() {
+        const updateType = modalUpdateType.value || "";
+        const updateId = modalUpdateId.value || "";
+        const card = cards.find((entry) => {
+            const button = entry.querySelector(".product-update-btn");
+            return button && button.dataset.updateType === updateType && button.dataset.updateId === updateId;
+        });
+
+        if (!card) return;
+
+        if (updateType === "animal_sub" || updateType === "animal_other") {
+            updateAnimalCardDisplay(card, modalMale.value, modalFemale.value);
+        } else {
+            updateCardQuantityDisplay(card, modalQty.value);
+        }
+        applyFilters();
+    }
+
     if (modalForm) {
-        modalForm.addEventListener("submit", () => {
-            sessionStorage.setItem(KEEP_KEY, "1");
+        modalForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
             saveFilters();
-            setTimeout(closeModal, 0);
+
+            if (modalSave) modalSave.disabled = true;
+
+            try {
+                if (navigator.onLine) {
+                    await submitStockUpdateForm();
+                } else if (window.farmSync?.queueFormOperation) {
+                    await window.farmSync.queueFormOperation(modalForm, {
+                        reloadOnSuccess: false,
+                        resetForm: false,
+                        offlineMessage: "{% trans 'Offline saxlanıldı. İnternet gələndə göndəriləcək.' %}",
+                        networkFallbackMessage: "{% trans 'Şəbəkə problemi var. Məlumat lokal saxlanıldı.' %}",
+                    });
+                } else {
+                    throw new Error("{% trans 'Stok yenilənmədi.' %}");
+                }
+
+                applyModalUpdateToCard();
+                closeModal();
+            } catch (error) {
+                showToast(error?.message || "{% trans 'Stok yenilənmədi.' %}", "error");
+            } finally {
+                if (modalSave) modalSave.disabled = false;
+            }
         });
     }
 

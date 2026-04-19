@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.views.decorators.cache import never_cache
 from hashlib import md5
 from decimal import Decimal, InvalidOperation
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from django.utils import timezone
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -121,6 +121,15 @@ def _parse_date(value: str | None):
         return date.fromisoformat(value)
     except Exception:
         return timezone.localdate()
+
+
+def _parse_time(value: str | None):
+    if not value:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+    try:
+        return time.fromisoformat(value)
+    except Exception:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
 
 
 def _parse_filter_date(value: str | None):
@@ -248,6 +257,7 @@ def _sync_seed_related_records(user, seed):
                 linked_income.amount = amount_val
                 linked_income.additional_info = seed.additional_info
                 linked_income.date = seed.date
+                linked_income.time = seed.time
                 linked_income.save()
             else:
                 linked_income.delete()
@@ -260,6 +270,7 @@ def _sync_seed_related_records(user, seed):
                 amount=amount_val,
                 additional_info=seed.additional_info,
                 date=seed.date,
+                time=seed.time,
                 created_by=user,
                 content_object=seed,
             )
@@ -280,6 +291,8 @@ def _sync_seed_related_records(user, seed):
             linked_expense.additional_info = seed.additional_info
             linked_expense.subcategory = expense_sub
             linked_expense.manual_name = None if expense_sub else "Toxum alışı"
+            linked_expense.date = seed.date
+            linked_expense.time = seed.time
             linked_expense.save()
         else:
             Expense.objects.create(
@@ -288,6 +301,8 @@ def _sync_seed_related_records(user, seed):
                 subcategory=expense_sub,
                 manual_name=None if expense_sub else "Toxum alışı",
                 additional_info=seed.additional_info,
+                date=seed.date,
+                time=seed.time,
                 created_by=user,
                 content_object=seed
             )
@@ -295,7 +310,7 @@ def _sync_seed_related_records(user, seed):
         linked_expense.delete()
 
 
-def _merge_manual_seed(user, manual_name, quantity_val, unit, price, zero_price_source, additional_info, entry_date):
+def _merge_manual_seed(user, manual_name, quantity_val, unit, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         Seed.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name)
@@ -321,6 +336,7 @@ def _merge_manual_seed(user, manual_name, quantity_val, unit, price, zero_price_
     existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     _sync_seed_related_records(user, existing)
     return existing
@@ -328,95 +344,7 @@ def _merge_manual_seed(user, manual_name, quantity_val, unit, price, zero_price_
 @login_required
 @never_cache
 def seed_list(request):
-    cache_key = f"seeds:list:v2:{request.user.pk}:{_seed_list_cache_bust_value(request.user.pk)}:{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
-    cached_context = cache.get(cache_key)
-    if cached_context is not None:
-        return render(request, 'seeds/seed_list.html', cached_context)
-
-    query = (request.GET.get('q') or '').strip()
-    category_id = (request.GET.get('category') or '').strip()
-    item_id = (request.GET.get('item') or '').strip()
-    date_from_raw = (request.GET.get('date_from') or '').strip()
-    date_to_raw = (request.GET.get('date_to') or '').strip()
-    movement = (request.GET.get('movement') or '').strip()
-    seeds_qs = Seed.objects.filter(created_by=request.user).select_related('item', 'item__category').only(
-        'id',
-        'quantity',
-        'unit',
-        'price',
-        'date',
-        'manual_name',
-        'additional_info',
-        'updated_at',
-        'item__id',
-        'item__name',
-        'item__category__id',
-        'item__category__name',
-    )
-
-    if query:
-        seeds_qs = seeds_qs.filter(
-            Q(item__name__icontains=query)
-            | Q(item__category__name__icontains=query)
-            | Q(additional_info__icontains=query)
-            | Q(manual_name__icontains=query)
-        )
-
-    form_catalog = _seed_form_catalog()
-    selected_category = next((category for category in form_catalog["categories"] if str(category.id) == category_id), None) if category_id else None
-    if selected_category:
-        if (selected_category.name or "").strip().lower() == "digər":
-            seeds_qs = seeds_qs.filter(Q(item__category=selected_category) | Q(item__isnull=True))
-        else:
-            seeds_qs = seeds_qs.filter(item__category=selected_category)
-
-    filtered_items = []
-    if selected_category:
-        filtered_items = form_catalog["item_map"].get(str(selected_category.id), [])
-
-    if item_id:
-        seeds_qs = seeds_qs.filter(item_id=item_id)
-
-    date_from = _parse_filter_date(date_from_raw)
-    if date_from:
-        seeds_qs = seeds_qs.filter(date__gte=date_from)
-
-    date_to = _parse_filter_date(date_to_raw)
-    if date_to:
-        seeds_qs = seeds_qs.filter(date__lte=date_to)
-
-    if movement == "increase":
-        seeds_qs = seeds_qs.filter(quantity__gt=0)
-    elif movement == "decrease":
-        seeds_qs = seeds_qs.filter(quantity__lt=0)
-
-    seeds = list(seeds_qs)
-    for seed in seeds:
-        seed.icon_class = get_seed_icon_for_seed(seed)
-        seed.display_category_name = _seed_category_name_for_item(seed.item)
-        seed.zero_price_source_label = get_zero_price_source_label(seed)
-        try:
-            seed.price_display = abs(Decimal(seed.price))
-        except Exception:
-            seed.price_display = seed.price
-
-    today = timezone.localdate()
-    context = {
-        'seeds': seeds,
-        'categories': form_catalog["categories"],
-        'category_item_map': form_catalog["item_map"],
-        'zero_price_source_choices': ZERO_PRICE_SOURCE_CHOICES,
-        'filter_items': filtered_items,
-        'selected_category': category_id,
-        'selected_item': item_id,
-        'selected_date_from': date_from_raw,
-        'selected_date_to': date_to_raw,
-        'selected_movement': movement,
-        'today': today,
-        'yesterday': today - timedelta(days=1),
-    }
-    cache.set(cache_key, context, SEED_LIST_CACHE_TTL)
-    return render(request, 'seeds/seed_list.html', context)
+    return redirect(f"{resolve_url('inventory:add_placeholder')}?type=seed")
 
 @login_required
 def get_seed_items(request):
@@ -434,7 +362,7 @@ def get_seed_items(request):
 
 @login_required
 def seed_create(request):
-    redirect_to = request.POST.get('next') or 'seeds:seed_list'
+    redirect_to = request.POST.get('next') or f"{resolve_url('inventory:add_placeholder')}?type=seed"
     if request.method == 'POST':
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
@@ -445,6 +373,7 @@ def seed_create(request):
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
 
         # Backend Validation
         if not (item_id or manual_name) or not quantity or not unit:
@@ -485,7 +414,7 @@ def seed_create(request):
                     return redirect(redirect_to)
 
             manual_value = manual_name if (not item or item.name == "Digər") else None
-            merged = _merge_manual_seed(request.user, manual_value, quantity_val, unit, price, zero_price_source, additional_info, entry_date) if manual_value else None
+            merged = _merge_manual_seed(request.user, manual_value, quantity_val, unit, price, zero_price_source, additional_info, entry_date, entry_time) if manual_value else None
             if merged == "deleted":
                 _bust_seed_list_cache(request.user.pk)
                 add_crud_success_message(request, "Seed", "delete")
@@ -504,6 +433,7 @@ def seed_create(request):
                 zero_price_source=zero_price_source,
                 additional_info=additional_info,
                 date=entry_date,
+                time=entry_time,
                 created_by=request.user
             )
 
@@ -527,6 +457,7 @@ def seed_create(request):
                     amount=amount_val,
                     additional_info=additional_info,
                     date=entry_date,
+                    time=entry_time,
                     created_by=request.user,
                     content_object=seed,
                 )
@@ -542,6 +473,8 @@ def seed_create(request):
                             amount=price,
                             subcategory=expense_sub,
                             additional_info=additional_info,
+                            date=entry_date,
+                            time=entry_time,
                             created_by=request.user,
                             content_object=seed
                         )
@@ -552,6 +485,8 @@ def seed_create(request):
                             amount=price,
                             manual_name="Toxum alışı",
                             additional_info=additional_info,
+                            date=entry_date,
+                            time=entry_time,
                             created_by=request.user,
                             content_object=seed
                         )
@@ -571,6 +506,8 @@ def seed_create(request):
 @login_required
 def seed_update(request, pk):
     seed = get_object_or_404(Seed, pk=pk, created_by=request.user)
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    redirect_to = next_url or f"{resolve_url('inventory:add_placeholder')}?type=seed"
     if request.method == 'POST':
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
@@ -581,6 +518,7 @@ def seed_update(request, pk):
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity or not unit:
@@ -606,6 +544,7 @@ def seed_update(request, pk):
         seed.unit = unit
         seed.additional_info = additional_info
         seed.date = entry_date
+        seed.time = entry_time
         if item_id:
             item = SeedItem.objects.get(id=item_id)
             if item.name == "Digər" and not manual_name:
@@ -657,6 +596,7 @@ def seed_update(request, pk):
                     linked_income.amount = amount_val
                     linked_income.additional_info = seed.additional_info
                     linked_income.date = seed.date
+                    linked_income.time = seed.time
                     linked_income.save()
                 else:
                     linked_income.delete()
@@ -670,6 +610,7 @@ def seed_update(request, pk):
                         amount=amount_val,
                         additional_info=seed.additional_info,
                         date=seed.date,
+                        time=seed.time,
                         created_by=request.user,
                         content_object=seed,
                     )
@@ -686,6 +627,8 @@ def seed_update(request, pk):
                 linked_expense.amount = seed.price
                 linked_expense.title = f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}"
                 linked_expense.additional_info = seed.additional_info
+                linked_expense.date = seed.date
+                linked_expense.time = seed.time
                 linked_expense.save()
             else:
                 linked_expense.delete()
@@ -698,6 +641,8 @@ def seed_update(request, pk):
                     amount=seed.price,
                     subcategory=expense_sub,
                     additional_info=seed.additional_info,
+                    date=seed.date,
+                    time=seed.time,
                     created_by=request.user,
                     content_object=seed
                 )
@@ -707,19 +652,24 @@ def seed_update(request, pk):
                     amount=seed.price,
                     manual_name="Toxum alışı",
                     additional_info=seed.additional_info,
+                    date=seed.date,
+                    time=seed.time,
                     created_by=request.user,
                     content_object=seed
                 )
 
         _bust_seed_list_cache(request.user.pk)
         add_crud_success_message(request, "Seed", "update")
-        return _redirect_with_refresh('seeds:seed_list')
+        return _redirect_with_refresh(redirect_to)
     
-    return render(request, 'seeds/seed_form.html', _seed_form_context(seed))
+    context = _seed_form_context(seed)
+    context["next_url"] = next_url
+    return render(request, 'seeds/seed_form.html', context)
 
 @login_required
 def seed_delete(request, pk):
     seed = get_object_or_404(Seed, pk=pk, created_by=request.user)
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?type=seed"
     if request.method == 'POST':
         # Manually delete linked expenses
         seed_type = ContentType.objects.get_for_model(Seed)
@@ -728,5 +678,5 @@ def seed_delete(request, pk):
         seed.delete()
         _bust_seed_list_cache(request.user.pk)
         add_crud_success_message(request, "Seed", "delete")
-        return _redirect_with_refresh('seeds:seed_list')
+        return _redirect_with_refresh(redirect_to)
     return render(request, 'seeds/seed_confirm_delete.html', {'seed': seed})

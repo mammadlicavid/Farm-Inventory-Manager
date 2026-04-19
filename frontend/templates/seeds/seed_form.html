@@ -5,7 +5,7 @@
 <header class="main-header">
     <div class="header-content">
         <div class="header-top">
-            <a href="{% url 'seeds:seed_list' %}" class="back-btn-box">
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'inventory:add_placeholder' %}?type=seed{% endif %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>{% trans "Toxumu Düzəlt" %}</span>
             </a>
@@ -18,8 +18,9 @@
         {% unit_system request.user as weight_unit_system %}
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Toxum Məlumatlarını Yenilə" %}</h3>
 
-        <form method="POST" id="seed-form" data-sync-entity="seed" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'seeds:seed_list' %}" data-sync-direct-online="true">
+        <form method="POST" id="seed-form" data-sync-entity="seed" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% if next_url %}{{ next_url }}{% else %}{% url 'inventory:add_placeholder' %}?type=seed{% endif %}" data-sync-direct-online="true">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
             <input type="hidden" name="record_id" value="{{ seed.pk }}">
             <input type="hidden" name="record_version" value="{{ seed.updated_at|date:'c' }}">
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -83,6 +84,10 @@
                     <input type="date" name="date" required value="{{ seed.date|date:'Y-m-d' }}"
                         class="custom-input">
                 </div>
+            </div>
+            <div class="form-group">
+                <label>{% trans "Saat" %} <span style="color: #dc3545;">*</span></label>
+                <input type="time" name="time" required value="{{ seed.time|time:'H:i' }}" class="custom-input">
             </div>
 
             <div class="form-group" id="seed-zero-price-source-group" style="display: none;">

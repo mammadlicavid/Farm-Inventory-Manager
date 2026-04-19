@@ -1613,6 +1613,12 @@
     }
   }
 
+  window.runtimeI18n = {
+    translateValue,
+    translateInlineValue,
+    translateTree,
+  };
+
   if (document.body) {
     initializeRuntimeI18n();
   } else {

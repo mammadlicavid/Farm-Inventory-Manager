@@ -87,6 +87,68 @@
         color: inherit;
       }
 
+      .datetime-combined-row {
+        display: flex;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .datetime-combined-row .custom-input[data-datetime-combined='true'] {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .datetime-now-btn {
+        flex: 0 0 auto;
+        min-width: 88px;
+        border: 1px solid rgba(47, 125, 50, 0.16);
+        border-radius: 14px;
+        background: #eef8f0;
+        color: #2f7d32;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 0 16px;
+        cursor: pointer;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+        white-space: nowrap;
+      }
+
+      .datetime-now-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        background: #e4f4e8;
+      }
+
+      .datetime-now-btn:active {
+        transform: scale(0.985);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+      }
+
+      @media (max-width: 640px) {
+        .datetime-combined-row {
+          flex-direction: column;
+        }
+
+        .datetime-now-btn {
+          min-height: 50px;
+        }
+
+        #toast-container {
+          left: 10px;
+          right: 10px;
+          bottom: 14px;
+        }
+
+        .toast-message {
+          min-width: 0;
+          width: 100%;
+          max-width: 100%;
+          border-radius: 18px;
+          padding: 12px 14px;
+          text-align: center;
+        }
+      }
+
       .sync-header-link[data-state='offline'] {
         background-color: rgba(255, 237, 213, 0.22);
         border-color: rgba(255, 237, 213, 0.45);
@@ -203,6 +265,130 @@
 
     <script>
       {% include 'scripts/base/6.js' %}
+    </script>
+    <script>
+      (function () {
+        function currentDateTimeLocalValue() {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, "0");
+          const day = String(now.getDate()).padStart(2, "0");
+          const hours = String(now.getHours()).padStart(2, "0");
+          const minutes = String(now.getMinutes()).padStart(2, "0");
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function toDateTimeLocalValue(dateValue, timeValue) {
+          if (!dateValue) {
+            return currentDateTimeLocalValue();
+          }
+          const safeTime = timeValue || currentDateTimeLocalValue().split("T")[1];
+          return dateValue + "T" + safeTime;
+        }
+
+        function setCombinedDateTimeValue(combinedInput, dateInput, timeInput, value) {
+          combinedInput.value = value || currentDateTimeLocalValue();
+          syncSplitFields(combinedInput, dateInput, timeInput);
+        }
+
+        function syncSplitFields(combinedInput, dateInput, timeInput) {
+          const value = combinedInput.value || "";
+          if (!value) {
+            dateInput.value = "";
+            timeInput.value = "";
+            return;
+          }
+          const parts = value.split("T");
+          dateInput.value = parts[0] || "";
+          timeInput.value = (parts[1] || "").slice(0, 5);
+        }
+
+        function upgradeDateTimePairs() {
+          const processed = new WeakSet();
+          const dateInputs = document.querySelectorAll('input[type="date"][name="date"]');
+
+          dateInputs.forEach(function (dateInput) {
+            if (processed.has(dateInput)) return;
+            const form = dateInput.form;
+            if (!form) return;
+            if (dateInput.dataset.datetimeUpgraded === 'true') return;
+
+            const timeInput = form.querySelector('input[type="time"][name="time"]');
+            if (!timeInput || processed.has(timeInput)) return;
+
+            const dateGroup = dateInput.closest('.input-group, .form-group') || dateInput.parentElement;
+            const timeGroup = timeInput.closest('.input-group, .form-group') || timeInput.parentElement;
+            if (!dateGroup || !timeGroup) return;
+
+            const combinedRow = document.createElement('div');
+            combinedRow.className = 'datetime-combined-row';
+            combinedRow.setAttribute('data-datetime-row', 'true');
+
+            const combinedInput = document.createElement('input');
+            combinedInput.type = 'datetime-local';
+            combinedInput.className = dateInput.className || timeInput.className || 'custom-input';
+            combinedInput.required = dateInput.required || timeInput.required;
+            combinedInput.value = toDateTimeLocalValue(dateInput.value, timeInput.value);
+            combinedInput.setAttribute('data-datetime-combined', 'true');
+
+            const nowButton = document.createElement('button');
+            nowButton.type = 'button';
+            nowButton.className = 'datetime-now-btn';
+            nowButton.textContent = "{% trans 'İndi' %}";
+            nowButton.setAttribute('data-datetime-now', 'true');
+            nowButton.setAttribute('aria-label', "{% trans 'İndi' %}");
+
+            combinedRow.appendChild(combinedInput);
+            combinedRow.appendChild(nowButton);
+
+            const label = dateGroup.querySelector('label');
+            if (label) {
+              label.textContent = "{% trans 'Tarix və saat' %}";
+              const requiredStar = document.createElement('span');
+              requiredStar.style.color = '#dc3545';
+              requiredStar.textContent = ' *';
+              label.appendChild(requiredStar);
+            }
+
+            dateInput.type = 'hidden';
+            timeInput.type = 'hidden';
+            dateInput.required = false;
+            timeInput.required = false;
+
+            timeGroup.style.display = 'none';
+            dateInput.insertAdjacentElement('beforebegin', combinedRow);
+
+            syncSplitFields(combinedInput, dateInput, timeInput);
+            combinedInput.addEventListener('input', function () {
+              syncSplitFields(combinedInput, dateInput, timeInput);
+            });
+            nowButton.addEventListener('click', function () {
+              setCombinedDateTimeValue(combinedInput, dateInput, timeInput, currentDateTimeLocalValue());
+              combinedInput.focus();
+            });
+            form.addEventListener('reset', function () {
+              window.setTimeout(function () {
+                const resetToNow = form.dataset.resetDatetimeToNow === 'true';
+                const resetValue = resetToNow
+                  ? currentDateTimeLocalValue()
+                  : toDateTimeLocalValue(dateInput.defaultValue, timeInput.defaultValue);
+                setCombinedDateTimeValue(combinedInput, dateInput, timeInput, resetValue);
+              }, 0);
+            });
+
+            dateInput.dataset.datetimeUpgraded = 'true';
+            timeInput.dataset.datetimeUpgraded = 'true';
+            processed.add(dateInput);
+            processed.add(timeInput);
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', upgradeDateTimePairs);
+        } else {
+          upgradeDateTimePairs();
+        }
+      })();
     </script>
     {% if LANGUAGE_CODE != 'az' %}
       <script src="{% url 'javascript-catalog' %}"></script>

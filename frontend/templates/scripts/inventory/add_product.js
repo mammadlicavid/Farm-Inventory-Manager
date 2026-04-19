@@ -1,12 +1,23 @@
 {% load i18n common_extras static %}
 document.addEventListener("DOMContentLoaded", function () {
-    const expenseData = JSON.parse(document.getElementById("inventory-expense-data").textContent);
-    const animalData = JSON.parse(document.getElementById("inventory-animal-data").textContent);
-    const seedData = JSON.parse(document.getElementById("inventory-seed-data").textContent);
-    const toolData = JSON.parse(document.getElementById("inventory-tool-data").textContent);
-    const farmData = JSON.parse(document.getElementById("inventory-farm-data").textContent);
-    const incomeCategories = JSON.parse(document.getElementById("inventory-income-categories").textContent);
-    const incomeData = JSON.parse(document.getElementById("inventory-income-data").textContent);
+    function readJsonScript(id, fallback) {
+        const node = document.getElementById(id);
+        if (!node) return fallback;
+        try {
+            return JSON.parse(node.textContent);
+        } catch (error) {
+            return fallback;
+        }
+    }
+
+    const enabledFormTypes = readJsonScript("inventory-enabled-form-types", []);
+    const expenseData = readJsonScript("inventory-expense-data", []);
+    const animalData = readJsonScript("inventory-animal-data", []);
+    const seedData = readJsonScript("inventory-seed-data", []);
+    const toolData = readJsonScript("inventory-tool-data", []);
+    const farmData = readJsonScript("inventory-farm-data", []);
+    const incomeCategories = readJsonScript("inventory-income-categories", []);
+    const incomeData = readJsonScript("inventory-income-data", {});
 
     const scannerWrapper = document.getElementById("scanner-wrapper");
     const barcodeBtn = document.getElementById("barcode-btn");
@@ -28,8 +39,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const formShell = document.getElementById("dynamic-form-shell");
     const activeFormTitle = document.getElementById("active-form-title");
     const activeFormSubtitle = document.getElementById("active-form-subtitle");
+    const listColumn = document.getElementById("add-list-column");
+    const listPanelContent = document.getElementById("add-list-panel-content");
+    const listLoading = document.getElementById("add-list-loading");
     const manualPanelButtons = Array.from(document.querySelectorAll("[data-manual-panel]"));
     const urlParams = new URLSearchParams(window.location.search);
+    const currentLanguage = ("{{ request.LANGUAGE_CODE|default:'az'|escapejs }}".split("-")[0] || "az").toLowerCase();
     const addPageMode = ["income", "expense"].includes(urlParams.get("form")) ? urlParams.get("form") : "stock";
     const addPageFormTypes = new Set(
         addPageMode === "income"
@@ -70,6 +85,10 @@ document.addEventListener("DOMContentLoaded", function () {
     let voiceVocabularyReady = false;
     let voiceVocabularyScheduled = false;
     let barcodeLibraryPromise = null;
+    const initializedFormTypes = new Set();
+    const listPanelCache = new Map();
+    const listPanelFilterState = new Map();
+    let activeListPanelRequestId = 0;
 
     const panelTitles = { expense: "{% trans 'Xərc formu' %}", income: "{% trans 'Satış formu' %}", animal: "{% trans 'Heyvan formu' %}", seed: "{% trans 'Toxum formu' %}", tool: "{% trans 'Alət formu' %}", farm: "{% trans 'Təsərrüfat formu' %}" };
     const voiceFormFilledSubtitles = {
@@ -679,6 +698,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const voiceLanguageTokenKeys = Object.fromEntries(
         Object.entries(voiceLanguageTokenMap).map(([lang, map]) => [lang, Object.keys(map).sort((a, b) => b.length - a.length)]),
     );
+    const otherLabels = new Set([
+        "digər",
+        "other",
+        "другое",
+        "{% trans 'Digər' %}".trim().toLowerCase(),
+    ]);
+
+    function isOtherLabel(value) {
+        return otherLabels.has(String(value || "").trim().toLowerCase());
+    }
+
     const voiceNativeConfig = {
         en: {
             formTypePatterns: {
@@ -721,21 +751,27 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     function fillOptions(select, rows, placeholder, mapFn) {
+        const translateDynamicLabel = (value) => {
+            const text = String(value || "");
+            if (!text) return text;
+            return window.runtimeI18n?.translateInlineValue?.(text) || text;
+        };
         select.innerHTML = "";
         const first = document.createElement("option");
         first.value = "";
-        first.textContent = placeholder;
+        first.textContent = translateDynamicLabel(placeholder);
         select.appendChild(first);
         rows.forEach((row) => {
             const option = document.createElement("option");
             const mapped = mapFn(row);
             option.value = mapped.value;
-            option.textContent = mapped.label;
+            option.textContent = translateDynamicLabel(mapped.label);
             if (mapped.dataset) {
                 Object.entries(mapped.dataset).forEach(([key, val]) => { option.dataset[key] = val; });
             }
             select.appendChild(option);
         });
+        select.disabled = !rows.length;
     }
 
     function setActionState(activeKey) {
@@ -764,6 +800,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function syncAnimalIdentificationState() {
         const quantityInput = document.getElementById("animal-quantity");
         const idInput = document.getElementById("animal-id");
+        if (!quantityInput || !idInput) return;
         const parsedQuantity = parseInt(quantityInput.value || "1", 10);
         if (Math.abs(parsedQuantity) !== 1) {
             idInput.value = "";
@@ -2470,8 +2507,8 @@ document.addEventListener("DOMContentLoaded", function () {
             || bestMatchByLabel(getIncomeItemRows(), label, (row) => row.name);
         return {
             categoryName: matchedItem?.categoryName || "Digər",
-            itemName: matchedItem && matchedItem.name !== "Digər" ? matchedItem.name : "",
-            manualName: matchedItem && matchedItem.name !== "Digər" ? "" : String(label || "").trim(),
+            itemName: matchedItem && !isOtherLabel(matchedItem.name) ? matchedItem.name : "",
+            manualName: matchedItem && !isOtherLabel(matchedItem.name) ? "" : String(label || "").trim(),
             unit: matchedItem?.unit || fallbackUnit || "",
         };
     }
@@ -2674,44 +2711,531 @@ document.addEventListener("DOMContentLoaded", function () {
         zeroPriceSourceConfigs.forEach((config) => syncZeroPriceSourceField(config.formType));
     }
 
+    function captureActiveListFilterState(formType) {
+        if (!formType || !listPanelContent) return null;
+        const filterShell = listPanelContent.querySelector("[data-add-list-filter]");
+        if (!filterShell) return null;
+        return {
+            category: filterShell.querySelector("[data-filter-category]")?.value || "",
+            item: filterShell.querySelector("[data-filter-item]")?.value || "",
+            dateFrom: filterShell.querySelector("[data-filter-date-from]")?.value || "",
+            dateTo: filterShell.querySelector("[data-filter-date-to]")?.value || "",
+            search: filterShell.querySelector("[data-filter-search]")?.value || "",
+        };
+    }
+
+    function initAddListFilters(initialState = null) {
+        if (!listPanelContent) return;
+        const panelRoot = listPanelContent.querySelector(".add-list-panel");
+        const filterShell = listPanelContent.querySelector("[data-add-list-filter]");
+        if (!filterShell) return;
+        const itemsByCategoryNode = listPanelContent.querySelector("#add-list-items-by-category");
+        const panelFormType = panelRoot?.dataset.panelFormType || getVisibleFormType() || "";
+
+        const categoryInput = filterShell.querySelector("[data-filter-category]");
+        const itemInput = filterShell.querySelector("[data-filter-item]");
+        const dateFromInput = filterShell.querySelector("[data-filter-date-from]");
+        const dateToInput = filterShell.querySelector("[data-filter-date-to]");
+        const searchInput = filterShell.querySelector("[data-filter-search]");
+        const resetButton = filterShell.querySelector("[data-filter-reset]");
+        const cards = Array.from(listPanelContent.querySelectorAll("[data-list-card]"));
+        const emptyState = listPanelContent.querySelector("[data-filter-empty]");
+
+        if (!cards.length) return;
+
+        const itemPlaceholder = "{% trans 'Bütün növlər' %}";
+        const itemsByCategory = new Map();
+
+        const persistFilterState = () => {
+            if (!panelFormType) return;
+            listPanelFilterState.set(panelFormType, {
+                category: categoryInput?.value || "",
+                item: itemInput?.value || "",
+                dateFrom: dateFromInput?.value || "",
+                dateTo: dateToInput?.value || "",
+                search: searchInput?.value || "",
+            });
+        };
+
+        function sortWithOtherLast(left, right) {
+            const leftLabel = String(left || "").trim();
+            const rightLabel = String(right || "").trim();
+            const leftIsOther = isOtherLabel(leftLabel);
+            const rightIsOther = isOtherLabel(rightLabel);
+            if (leftIsOther !== rightIsOther) return leftIsOther ? 1 : -1;
+            return leftLabel.localeCompare(rightLabel, "az");
+        }
+
+        function registerCategoryItems(categoryValue, items) {
+            const normalizedCategory = String(categoryValue || "").trim().toLowerCase();
+            if (!normalizedCategory) return;
+            if (!itemsByCategory.has(normalizedCategory)) {
+                itemsByCategory.set(normalizedCategory, new Map());
+            }
+            const bucket = itemsByCategory.get(normalizedCategory);
+            (items || []).forEach((itemEntry) => {
+                const entryValue = itemEntry?.value ?? itemEntry ?? "";
+                const entryLabel = itemEntry?.label ?? itemEntry ?? "";
+                const normalizedItem = String(entryValue).trim().toLowerCase();
+                const itemLabel = String(entryLabel).trim();
+                if (!normalizedItem) return;
+                bucket.set(normalizedItem, itemLabel || normalizedItem);
+            });
+        }
+
+        if (itemsByCategoryNode?.textContent) {
+            try {
+                const parsedMap = JSON.parse(itemsByCategoryNode.textContent);
+                Object.entries(parsedMap || {}).forEach(([categoryValue, entries]) => {
+                    registerCategoryItems(categoryValue, entries);
+                });
+            } catch (_error) {
+                // Fallback to visible cards below.
+            }
+        }
+
+        if (!itemsByCategory.size) {
+            cards.forEach((card) => {
+                const category = (card.dataset.category || "").trim().toLowerCase();
+                const item = (card.dataset.item || "").trim();
+                if (!category || !item) return;
+                if (!itemsByCategory.has(category)) {
+                    itemsByCategory.set(category, new Map());
+                }
+                itemsByCategory.get(category).set(item.toLowerCase(), item);
+            });
+        }
+
+        const syncItemFilterOptions = () => {
+            if (!itemInput) return;
+
+            const categoryValue = (categoryInput?.value || "").trim().toLowerCase();
+            const previousValue = (itemInput.value || "").trim().toLowerCase();
+            itemInput.innerHTML = "";
+
+            if (!categoryValue) {
+                itemInput.disabled = true;
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = window.runtimeI18n?.translateInlineValue?.(itemPlaceholder) || itemPlaceholder;
+                option.selected = true;
+                itemInput.appendChild(option);
+                return;
+            }
+
+            itemInput.disabled = false;
+            const defaultOption = document.createElement("option");
+            defaultOption.value = "";
+            defaultOption.textContent = window.runtimeI18n?.translateInlineValue?.(itemPlaceholder) || itemPlaceholder;
+            defaultOption.selected = true;
+            itemInput.appendChild(defaultOption);
+
+            const categoryItems = Array.from(itemsByCategory.get(categoryValue)?.entries() || [])
+                .sort((a, b) => sortWithOtherLast(a[1], b[1]));
+
+            categoryItems.forEach(([value, label]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = window.runtimeI18n?.translateInlineValue?.(label) || label;
+                if (value === previousValue) {
+                    option.selected = true;
+                    defaultOption.selected = false;
+                }
+                itemInput.appendChild(option);
+            });
+        };
+
+        const applyFilters = () => {
+            const categoryValue = (categoryInput?.value || "").trim().toLowerCase();
+            const itemValue = (itemInput?.value || "").trim().toLowerCase();
+            const dateFromValue = (dateFromInput?.value || "").trim();
+            const dateToValue = (dateToInput?.value || "").trim();
+            const searchValue = (searchInput?.value || "").trim().toLowerCase();
+
+            let visibleCount = 0;
+            cards.forEach((card) => {
+                const category = (card.dataset.category || "").toLowerCase();
+                const item = (card.dataset.item || "").toLowerCase();
+                const date = card.dataset.date || "";
+                const search = (card.dataset.search || "").toLowerCase();
+
+                const matchesCategory = !categoryValue || category === categoryValue;
+                const matchesItem = !itemValue || item === itemValue;
+                const matchesDateFrom = !dateFromValue || (date && date >= dateFromValue);
+                const matchesDateTo = !dateToValue || (date && date <= dateToValue);
+                const matchesSearch = !searchValue || search.includes(searchValue);
+
+                const isVisible = matchesCategory && matchesItem && matchesDateFrom && matchesDateTo && matchesSearch;
+                card.hidden = !isVisible;
+                card.style.display = isVisible ? "" : "none";
+                if (isVisible) visibleCount += 1;
+            });
+
+            if (emptyState) {
+                emptyState.hidden = visibleCount !== 0;
+            }
+        };
+
+        if (categoryInput) {
+            categoryInput.addEventListener("change", () => {
+                syncItemFilterOptions();
+                applyFilters();
+                persistFilterState();
+            });
+        }
+
+        filterShell.addEventListener("change", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            if (target === categoryInput) {
+                syncItemFilterOptions();
+            }
+            applyFilters();
+            persistFilterState();
+        });
+
+        filterShell.addEventListener("input", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            if (target === categoryInput) {
+                syncItemFilterOptions();
+            }
+            applyFilters();
+            persistFilterState();
+        });
+
+        if (resetButton) {
+            resetButton.addEventListener("click", () => {
+                if (categoryInput) categoryInput.value = "";
+                if (itemInput) itemInput.value = "";
+                if (dateFromInput) dateFromInput.value = "";
+                if (dateToInput) dateToInput.value = "";
+                if (searchInput) searchInput.value = "";
+                syncItemFilterOptions();
+                applyFilters();
+                persistFilterState();
+            });
+        }
+
+        const restoredState = initialState || (panelFormType ? listPanelFilterState.get(panelFormType) : null);
+        if (restoredState) {
+            if (categoryInput) categoryInput.value = restoredState.category || "";
+            syncItemFilterOptions();
+            if (itemInput) itemInput.value = restoredState.item || "";
+            if (dateFromInput) dateFromInput.value = restoredState.dateFrom || "";
+            if (dateToInput) dateToInput.value = restoredState.dateTo || "";
+            if (searchInput) searchInput.value = restoredState.search || "";
+        } else {
+            syncItemFilterOptions();
+        }
+        applyFilters();
+        persistFilterState();
+    }
+
+    function getVisibleFormPanel() {
+        return document.querySelector("[data-form-panel]:not([hidden])");
+    }
+
+    function getVisibleFormType() {
+        return getVisibleFormPanel()?.dataset.formPanel || "";
+    }
+
+    function reinitializeFormState(formType) {
+        if (formType === "expense") {
+            updateExpenseSubcategories();
+        } else if (formType === "income") {
+            updateIncomeItems();
+        } else if (formType === "animal") {
+            updateAnimalSubcategories();
+            syncAnimalIdentificationState();
+        } else if (formType === "seed") {
+            updateSeedItems();
+        } else if (formType === "tool") {
+            updateToolItems();
+        } else if (formType === "farm") {
+            updateFarmItems();
+        }
+        syncZeroPriceSourceField(formType);
+        syncAllRequiredStars();
+    }
+
+    function setAsyncResultMessage(message, isError = false) {
+        if (!resultBox) return;
+        resultBox.textContent = message || "";
+        resultBox.classList.toggle("is-error", Boolean(isError));
+    }
+
+    function parseToastMessagesFromHtml(htmlText) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(String(htmlText || ""), "text/html");
+        return Array.from(doc.querySelectorAll("#toast-container .toast-message")).map((node) => ({
+            text: (node.textContent || "").trim(),
+            isError: node.classList.contains("toast-error"),
+            type: node.classList.contains("toast-error")
+                ? "error"
+                : node.classList.contains("toast-warning")
+                    ? "warning"
+                    : node.classList.contains("toast-info")
+                        ? "info"
+                        : "success",
+        })).filter((entry) => entry.text);
+    }
+
+    async function submitAddProductFormOnline(form) {
+        const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            credentials: "same-origin",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
+        const htmlText = await response.text();
+        const responseMessages = parseToastMessagesFromHtml(htmlText);
+        const errorMessage = responseMessages.find((entry) => entry.isError);
+
+        if (!response.ok || errorMessage) {
+            throw new Error(errorMessage?.text || "{% trans 'Əməliyyat alınmadı.' %}");
+        }
+
+        responseMessages.forEach((entry) => {
+            window.farmSync?.showToast?.(entry.text, entry.type);
+        });
+
+        return responseMessages;
+    }
+
+    async function submitAddProductDeleteFormOnline(form) {
+        const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            credentials: "same-origin",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
+        const htmlText = await response.text();
+        const responseMessages = parseToastMessagesFromHtml(htmlText);
+        const errorMessage = responseMessages.find((entry) => entry.isError);
+
+        if (!response.ok || errorMessage) {
+            throw new Error(errorMessage?.text || "{% trans 'Silmə alınmadı.' %}");
+        }
+
+        responseMessages.forEach((entry) => {
+            window.farmSync?.showToast?.(entry.text, entry.type);
+        });
+
+        return responseMessages;
+    }
+
+    async function refreshActiveListPanel(formType) {
+        if (!formType) return;
+        const currentFilterState = captureActiveListFilterState(formType);
+        if (currentFilterState) {
+            listPanelFilterState.set(formType, currentFilterState);
+        }
+        listPanelCache.delete(`${currentLanguage}:${formType}`);
+        await loadListPanel(formType, { forceReload: true, filterState: currentFilterState });
+    }
+
+    async function submitAddProductForm(form, formType) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        setAsyncResultMessage("");
+
+        try {
+            if (navigator.onLine) {
+                await submitAddProductFormOnline(form);
+                form.reset();
+                reinitializeFormState(formType);
+                await refreshActiveListPanel(formType);
+                setAsyncResultMessage("{% trans 'Əməliyyat tamamlandı.' %}");
+                return;
+            }
+
+            if (window.farmSync?.queueFormOperation) {
+                await window.farmSync.queueFormOperation(form, {
+                    reloadOnSuccess: false,
+                    resetForm: true,
+                    successMessage: "{% trans 'Uğurla əlavə edildi.' %}",
+                    failureMessage: "{% trans 'Əməliyyat alınmadı.' %}",
+                    onQueued: async ({ online }) => {
+                        form.reset();
+                        reinitializeFormState(formType);
+                        if (!online) {
+                            setAsyncResultMessage("{% trans 'Offline saxlanıldı. İnternet gələndə göndəriləcək.' %}");
+                        }
+                    },
+                    onSuccess: async () => {
+                        await refreshActiveListPanel(formType);
+                        setAsyncResultMessage("{% trans 'Əməliyyat tamamlandı.' %}");
+                    },
+                    onFailure: () => {
+                        setAsyncResultMessage("{% trans 'Əməliyyat alınmadı.' %}", true);
+                    },
+                });
+            } else {
+                throw new Error("farmSync unavailable");
+            }
+        } catch (error) {
+            setAsyncResultMessage(error?.message || "{% trans 'Əməliyyat alınmadı.' %}", true);
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
+    }
+
+    async function submitAddProductDeleteForm(form, formType) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        setAsyncResultMessage("");
+
+        try {
+            if (navigator.onLine) {
+                await submitAddProductDeleteFormOnline(form);
+                await refreshActiveListPanel(formType);
+                setAsyncResultMessage("{% trans 'Qeyd silindi.' %}");
+                return;
+            }
+
+            if (window.farmSync?.queueFormOperation) {
+                await window.farmSync.queueFormOperation(form, {
+                    reloadOnSuccess: false,
+                    resetForm: false,
+                    successMessage: "{% trans 'Uğurla silindi.' %}",
+                    failureMessage: "{% trans 'Silmə alınmadı.' %}",
+                    onQueued: ({ online }) => {
+                        if (!online) {
+                            setAsyncResultMessage("{% trans 'Offline saxlanıldı. İnternet gələndə göndəriləcək.' %}");
+                        }
+                    },
+                    onSuccess: async () => {
+                        await refreshActiveListPanel(formType);
+                        setAsyncResultMessage("{% trans 'Qeyd silindi.' %}");
+                    },
+                    onFailure: () => {
+                        setAsyncResultMessage("{% trans 'Silmə alınmadı.' %}", true);
+                    },
+                });
+            } else {
+                throw new Error("farmSync unavailable");
+            }
+        } catch (error) {
+            setAsyncResultMessage(error?.message || "{% trans 'Silmə alınmadı.' %}", true);
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
+    }
+
+    async function loadListPanel(formType, options = {}) {
+        if (!listColumn || !listPanelContent) return;
+        if (!["expense", "income", "animal", "seed", "tool", "farm"].includes(formType)) {
+            listColumn.hidden = true;
+            listPanelContent.innerHTML = "";
+            if (listLoading) listLoading.hidden = true;
+            return;
+        }
+        listColumn.hidden = false;
+
+        const cacheKey = `${currentLanguage}:${formType}`;
+        const forceReload = Boolean(options.forceReload);
+
+        if (!forceReload && listPanelCache.has(cacheKey)) {
+            listPanelContent.innerHTML = listPanelCache.get(cacheKey);
+            if (listLoading) listLoading.hidden = true;
+            initAddListFilters(options.filterState || listPanelFilterState.get(formType) || null);
+            return;
+        }
+
+        const endpoint = listColumn.dataset.listEndpoint;
+        if (!endpoint) return;
+
+        const requestId = ++activeListPanelRequestId;
+        listPanelContent.innerHTML = "";
+        if (listLoading) listLoading.hidden = false;
+
+        try {
+            const response = await fetch(`${endpoint}?form=${encodeURIComponent(formType)}`, {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+            if (!response.ok) {
+                throw new Error(`List load failed: ${response.status}`);
+            }
+            const html = await response.text();
+            listPanelCache.set(cacheKey, html);
+            if (requestId !== activeListPanelRequestId) return;
+            listPanelContent.innerHTML = html;
+            initAddListFilters(options.filterState || listPanelFilterState.get(formType) || null);
+        } catch (_error) {
+            if (requestId !== activeListPanelRequestId) return;
+            listPanelContent.innerHTML = `<div class="add-list-empty">{% trans "Siyahı yüklənmədi." %}</div>`;
+        } finally {
+            if (requestId === activeListPanelRequestId && listLoading) {
+                listLoading.hidden = true;
+            }
+        }
+    }
+
     function showPanel(formType, subtitle) {
+        ensureFormReady(formType);
         formShell.hidden = false;
         document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = panel.dataset.formPanel !== formType; });
         activeFormTitle.textContent = panelTitles[formType] || "Form";
         activeFormSubtitle.textContent = subtitle || "{% trans 'Seçilən əməliyyata uyğun form açıldı.' %}";
         syncManualPanelSelection(formType);
         syncZeroPriceSourceField(formType);
+        loadListPanel(formType);
         window.scrollTo({ top: formShell.offsetTop - 20, behavior: "smooth" });
     }
 
     function clearActiveForms() {
         document.querySelectorAll("[data-form-panel] form").forEach((form) => form.reset());
+        initializedFormTypes.clear();
         formShell.hidden = true;
         document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = true; });
+        if (listColumn) listColumn.hidden = true;
+        if (listPanelContent) listPanelContent.innerHTML = "";
+        if (listLoading) listLoading.hidden = true;
         manualCodeInput.value = "";
         setVoiceResult("");
         syncManualPanelSelection(null);
-        initFormOptions();
         syncAllRequiredStars();
-        updateExpenseSubcategories();
-        updateAnimalSubcategories();
-        updateSeedItems();
-        updateToolItems();
-        updateFarmItems();
-        updateIncomeItems();
-        syncAnimalIdentificationState();
         syncAllZeroPriceSourceFields();
     }
+
+    formShell?.addEventListener("submit", (event) => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement) || !form.matches("form[data-sync-entity]")) return;
+        const panel = form.closest("[data-form-panel]");
+        if (!panel) return;
+        event.preventDefault();
+        event.stopPropagation();
+        submitAddProductForm(form, panel.dataset.formPanel || "");
+    });
+
+    listPanelContent?.addEventListener("submit", (event) => {
+        const form = event.target;
+        if (
+            !(form instanceof HTMLFormElement) ||
+            form.dataset.syncAction !== "delete"
+        ) return;
+        const formType = getVisibleFormType();
+        if (!formType) return;
+        event.preventDefault();
+        event.stopPropagation();
+        submitAddProductDeleteForm(form, formType);
+    });
 
     function updateExpenseSubcategories(selectedSubcategoryId) {
         const categorySelect = document.getElementById("expense-category");
         const subcategorySelect = document.getElementById("expense-subcategory");
         const manualWrap = document.getElementById("expense-manual-wrap");
         const manualInput = document.getElementById("expense-manual-name");
+        if (!categorySelect || !subcategorySelect || !manualWrap || !manualInput) return;
         const selectedCategory = expenseData.find((row) => String(row.id) === categorySelect.value);
         const isOther = selectedCategory && selectedCategory.name.includes("Digər");
         if (!selectedCategory) {
-            fillOptions(subcategorySelect, [], "Heyvan növünü seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, false);
@@ -2719,14 +3243,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         if (isOther) {
             manualWrap.hidden = false;
-            fillOptions(subcategorySelect, [], "Heyvan növünü seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             subcategorySelect.value = "";
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, true);
             return;
         }
         manualWrap.hidden = true;
-        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Heyvan növünü seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
         setControlRequired(subcategorySelect, true);
         setControlRequired(manualInput, false);
@@ -2737,10 +3261,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const subcategorySelect = document.getElementById("animal-subcategory");
         const manualWrap = document.getElementById("animal-manual-wrap");
         const manualInput = document.getElementById("animal-manual-name");
+        if (!categorySelect || !subcategorySelect || !manualWrap || !manualInput) return;
         const selectedCategory = animalData.find((row) => String(row.id) === categorySelect.value);
         const isOther = selectedCategory && selectedCategory.name.includes("Digər");
         if (!selectedCategory) {
-            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, false);
@@ -2748,14 +3273,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         if (isOther) {
             manualWrap.hidden = false;
-            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             subcategorySelect.value = "";
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, true);
             return;
         }
         manualWrap.hidden = true;
-        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
         setControlRequired(subcategorySelect, true);
         setControlRequired(manualInput, false);
@@ -2766,18 +3291,19 @@ document.addEventListener("DOMContentLoaded", function () {
         const itemSelect = document.getElementById("seed-item");
         const manualWrap = document.getElementById("seed-manual-wrap");
         const manualInput = document.getElementById("seed-manual-name");
+        if (!categorySelect || !itemSelect || !manualWrap || !manualInput) return;
         const selectedCategory = seedData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(itemSelect, [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(itemSelect, [], "{% trans 'Növ seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        fillOptions(itemSelect, selectedCategory.items || [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(itemSelect, selectedCategory.items || [], "{% trans 'Növ seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedItemId) itemSelect.value = String(selectedItemId);
         const selectedText = itemSelect.options[itemSelect.selectedIndex]?.text || "";
-        const isOther = selectedCategory.name.includes("Digər") || selectedText === "Digər";
+        const isOther = isOtherLabel(selectedCategory.name) || isOtherLabel(selectedText);
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -2789,18 +3315,19 @@ document.addEventListener("DOMContentLoaded", function () {
         const itemSelect = document.getElementById("tool-item");
         const manualWrap = document.getElementById("tool-manual-wrap");
         const manualInput = document.getElementById("tool-manual-name");
+        if (!categorySelect || !itemSelect || !manualWrap || !manualInput) return;
         const selectedCategory = toolData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(itemSelect, [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(itemSelect, [], "{% trans 'Növ seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        fillOptions(itemSelect, selectedCategory.items || [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(itemSelect, selectedCategory.items || [], "{% trans 'Növ seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedItemId) itemSelect.value = String(selectedItemId);
         const selectedText = itemSelect.options[itemSelect.selectedIndex]?.text || "";
-        const isOther = selectedCategory.name.includes("Digər") || selectedText === "Digər";
+        const isOther = isOtherLabel(selectedCategory.name) || isOtherLabel(selectedText);
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -2812,18 +3339,19 @@ document.addEventListener("DOMContentLoaded", function () {
         const unitSelect = document.getElementById("farm-unit");
         const manualWrap = document.getElementById("farm-manual-wrap");
         const manualInput = document.getElementById("farm-manual-name");
+        if (!categorySelect || !itemSelect || !unitSelect || !manualWrap || !manualInput) return;
         const selectedCategory = farmData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(itemSelect, [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(itemSelect, [], "{% trans 'Növ seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        fillOptions(itemSelect, selectedCategory.items || [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name, dataset: { unit: row.unit || "" } }));
+        fillOptions(itemSelect, selectedCategory.items || [], "{% trans 'Növ seçin' %}", (row) => ({ value: row.id, label: row.name, dataset: { unit: row.unit || "" } }));
         if (selectedItemId) itemSelect.value = String(selectedItemId);
         const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-        const isOther = selectedCategory.name.includes("Digər") || selectedOption?.text === "Digər";
+        const isOther = isOtherLabel(selectedCategory.name) || isOtherLabel(selectedOption?.text || "");
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -2859,7 +3387,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const unitSelect = document.getElementById(selectId);
         if (!unitSelect) return;
         const normalizedUnits = normalizeUnitChoices(units);
-        fillOptions(unitSelect, normalizedUnits, "Vahid seçin", (value) => ({ value, label: displayUnitLabel(value) }));
+        fillOptions(unitSelect, normalizedUnits, "{% trans 'Vahid seçin' %}", (value) => ({ value, label: displayUnitLabel(value) }));
         unitSelect.value = preferred && normalizedUnits.includes(preferred) ? preferred : (normalizedUnits[0] || "");
     }
 
@@ -2876,8 +3404,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function setIncomeUnits(units, preferred) {
         const unitSelect = document.getElementById("income-unit");
+        if (!unitSelect) return;
         const normalizedUnits = normalizeUnitChoices(units);
-        fillOptions(unitSelect, normalizedUnits, "Vahid seçin", (value) => ({ value, label: displayUnitLabel(value) }));
+        fillOptions(unitSelect, normalizedUnits, "{% trans 'Vahid seçin' %}", (value) => ({ value, label: displayUnitLabel(value) }));
         unitSelect.value = preferred && normalizedUnits.includes(preferred) ? preferred : (normalizedUnits[0] || "");
     }
 
@@ -2909,13 +3438,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const genderWrap = document.getElementById("income-gender-wrap");
         const animalIdWrap = document.getElementById("income-animal-id-wrap");
         const genderSelect = document.getElementById("income-gender");
+        if (!categorySelect || !itemSelect || !manualWrap || !manualInput || !genderWrap || !animalIdWrap || !genderSelect) return;
         const selectedCategory = categorySelect.value;
         const row = incomeData[selectedCategory];
         const type = row ? row.type : "other";
         genderWrap.hidden = type !== "animal";
         animalIdWrap.hidden = type !== "animal";
         if (!row) {
-            fillOptions(itemSelect, [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name }));
+            fillOptions(itemSelect, [], "{% trans 'Növ seçin' %}", (entry) => ({ value: entry.name, label: entry.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
@@ -2923,10 +3453,10 @@ document.addEventListener("DOMContentLoaded", function () {
             setIncomeUnits(allUnits, "kq");
             return;
         }
-        fillOptions(itemSelect, row.items || [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name, dataset: { unit: entry.unit || "" } }));
+        fillOptions(itemSelect, row.items || [], "{% trans 'Növ seçin' %}", (entry) => ({ value: entry.name, label: entry.name, dataset: { unit: entry.unit || "" } }));
         if (selectedItemName) itemSelect.value = selectedItemName;
         const selectedText = itemSelect.options[itemSelect.selectedIndex]?.text || "";
-        const isOther = selectedCategory === "Digər" || selectedText === "Digər";
+        const isOther = isOtherLabel(selectedCategory) || isOtherLabel(selectedText);
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -2941,16 +3471,34 @@ document.addEventListener("DOMContentLoaded", function () {
         setIncomeUnits(units, units[0]);
     }
 
-    function initFormOptions() {
-        fillOptions(document.getElementById("expense-category"), expenseData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("animal-category"), animalData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("seed-category"), seedData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("tool-category"), toolData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("farm-category"), farmData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("income-category"), incomeCategories, "Kateqoriya seçin", (row) => ({ value: row, label: row }));
-        setIncomeUnits(allUnits, "kq");
-        setUnitSelectOptions("seed-unit", weightUnits, document.getElementById("seed-unit")?.value || weightUnits[0]);
-        setUnitSelectOptions("farm-unit", allUnits, document.getElementById("farm-unit")?.value || allUnits[0]);
+    function ensureFormReady(formType) {
+        if (!enabledFormTypes.includes(formType) || initializedFormTypes.has(formType)) return;
+        if (formType === "expense") {
+            fillOptions(document.getElementById("expense-category"), expenseData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+            updateExpenseSubcategories();
+        } else if (formType === "income") {
+            fillOptions(document.getElementById("income-category"), incomeCategories, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row, label: row }));
+            setIncomeUnits(allUnits, "kq");
+            updateIncomeItems();
+        } else if (formType === "animal") {
+            fillOptions(document.getElementById("animal-category"), animalData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+            updateAnimalSubcategories();
+            syncAnimalIdentificationState();
+        } else if (formType === "seed") {
+            fillOptions(document.getElementById("seed-category"), seedData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+            setUnitSelectOptions("seed-unit", weightUnits, document.getElementById("seed-unit")?.value || weightUnits[0]);
+            updateSeedItems();
+        } else if (formType === "tool") {
+            fillOptions(document.getElementById("tool-category"), toolData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+            updateToolItems();
+        } else if (formType === "farm") {
+            fillOptions(document.getElementById("farm-category"), farmData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+            setUnitSelectOptions("farm-unit", allUnits, document.getElementById("farm-unit")?.value || allUnits[0]);
+            updateFarmItems();
+        }
+        syncAllRequiredStars();
+        syncZeroPriceSourceField(formType);
+        initializedFormTypes.add(formType);
     }
 
     function applyExpenseRecord(item) {
@@ -3466,19 +4014,19 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    document.getElementById("expense-category").addEventListener("change", () => updateExpenseSubcategories());
-    document.getElementById("animal-category").addEventListener("change", () => updateAnimalSubcategories());
-    document.getElementById("seed-category").addEventListener("change", () => updateSeedItems());
-    document.getElementById("seed-item").addEventListener("change", () => updateSeedItems(document.getElementById("seed-item").value));
-    document.getElementById("tool-category").addEventListener("change", () => updateToolItems());
-    document.getElementById("tool-item").addEventListener("change", () => updateToolItems(document.getElementById("tool-item").value));
-    document.getElementById("farm-category").addEventListener("change", () => updateFarmItems());
-    document.getElementById("farm-item").addEventListener("change", () => updateFarmItems(document.getElementById("farm-item").value));
-    document.getElementById("income-category").addEventListener("change", () => updateIncomeItems());
-    document.getElementById("income-item").addEventListener("change", () => updateIncomeItems(document.getElementById("income-item").value));
-    document.getElementById("income-form").addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("income-quantity"), document.getElementById("income-unit")));
-    document.getElementById("seed-form").addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("seed-quantity"), document.getElementById("seed-unit")));
-    document.getElementById("farm-form").addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("farm-quantity"), document.getElementById("farm-unit")));
+    document.getElementById("expense-category")?.addEventListener("change", () => updateExpenseSubcategories());
+    document.getElementById("animal-category")?.addEventListener("change", () => updateAnimalSubcategories());
+    document.getElementById("seed-category")?.addEventListener("change", () => updateSeedItems());
+    document.getElementById("seed-item")?.addEventListener("change", () => updateSeedItems(document.getElementById("seed-item")?.value));
+    document.getElementById("tool-category")?.addEventListener("change", () => updateToolItems());
+    document.getElementById("tool-item")?.addEventListener("change", () => updateToolItems(document.getElementById("tool-item")?.value));
+    document.getElementById("farm-category")?.addEventListener("change", () => updateFarmItems());
+    document.getElementById("farm-item")?.addEventListener("change", () => updateFarmItems(document.getElementById("farm-item")?.value));
+    document.getElementById("income-category")?.addEventListener("change", () => updateIncomeItems());
+    document.getElementById("income-item")?.addEventListener("change", () => updateIncomeItems(document.getElementById("income-item")?.value));
+    document.getElementById("income-form")?.addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("income-quantity"), document.getElementById("income-unit")));
+    document.getElementById("seed-form")?.addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("seed-quantity"), document.getElementById("seed-unit")));
+    document.getElementById("farm-form")?.addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("farm-quantity"), document.getElementById("farm-unit")));
     zeroPriceSourceConfigs.forEach((config) => {
         const input = document.getElementById(config.priceInputId);
         if (!input) return;
@@ -3486,7 +4034,7 @@ document.addEventListener("DOMContentLoaded", function () {
         input.addEventListener("change", () => syncZeroPriceSourceField(config.formType));
     });
 
-    document.getElementById("animal-quantity").addEventListener("input", syncAnimalIdentificationState);
+    document.getElementById("animal-quantity")?.addEventListener("input", syncAnimalIdentificationState);
 
     manualPanelButtons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -3532,17 +4080,9 @@ document.addEventListener("DOMContentLoaded", function () {
         stopVoiceRecognition();
     });
 
-    initFormOptions();
     syncAllRequiredStars();
-    updateExpenseSubcategories();
-    updateAnimalSubcategories();
-    updateSeedItems();
-    updateToolItems();
-    updateFarmItems();
-    updateIncomeItems();
-    syncAnimalIdentificationState();
 
-    const initialForm = "{{ initial_form|escapejs }}" || urlParams.get("form");
+    const initialForm = "{{ initial_form|escapejs }}" || urlParams.get("form") || urlParams.get("type");
     const initialManualButton = manualPanelButtons.find((button) => button.dataset.manualPanel === initialForm);
     if (initialManualButton) {
         initialManualButton.click();

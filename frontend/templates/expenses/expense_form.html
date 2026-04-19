@@ -5,7 +5,7 @@
 <header class="main-header">
     <div class="header-content">
         <div class="header-top">
-            <a href="{% url 'expenses:expense_list' %}" class="back-btn-box">
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'inventory:add_placeholder' %}?form=expense{% endif %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>{% trans "Xərci Düzəlt" %}</span>
             </a>
@@ -17,8 +17,9 @@
     <div class="form-container-white">
         <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">{% trans "Xərc Məlumatlarını Yenilə" %}</h3>
 
-        <form method="POST" id="expense-form" data-sync-entity="expense" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% url 'expenses:expense_list' %}" data-sync-direct-online="true">
+        <form method="POST" id="expense-form" data-sync-entity="expense" data-sync-action="update" data-sync-reset="false" data-sync-success-redirect="{% if next_url %}{{ next_url }}{% else %}{% url 'inventory:add_placeholder' %}?form=expense{% endif %}" data-sync-direct-online="true">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
             <input type="hidden" name="record_id" value="{{ expense.pk }}">
             <input type="hidden" name="record_version" value="{{ expense.updated_at|date:'c' }}">
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -56,6 +57,16 @@
                 <label>Məbləğ ({% currency_symbol request.user %}) <span style="color: #dc3545;">*</span></label>
                 <input type="number" name="amount" step="0.01" min="0" placeholder="0.00" class="custom-input" required
                     value="{{ expense.amount|stringformat:'.2f' }}">
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>{% trans "Tarix" %} <span style="color: #dc3545;">*</span></label>
+                    <input type="date" name="date" required value="{{ expense.date|date:'Y-m-d' }}" class="custom-input">
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Saat" %} <span style="color: #dc3545;">*</span></label>
+                    <input type="time" name="time" required value="{{ expense.time|time:'H:i' }}" class="custom-input">
+                </div>
             </div>
 
             <div class="form-group">

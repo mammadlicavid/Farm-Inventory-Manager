@@ -20,7 +20,16 @@ class UserLanguageMiddleware:
             if not cached_language or active_timezone is None:
                 try:
                     UserSettings = apps.get_model("sidebar_menu", "UserSettings")
-                    sidebar_settings = UserSettings.objects.filter(user=request.user).only("language", "timezone").first()
+                    sidebar_settings = UserSettings.objects.filter(user=request.user).only(
+                        "language",
+                        "timezone",
+                        "unit",
+                        "currency",
+                        "weight_unit",
+                        "volume_unit",
+                        "email_notifications",
+                        "system_notifications",
+                    ).first()
                 except Exception:
                     sidebar_settings = None
 

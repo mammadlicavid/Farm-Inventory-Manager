@@ -3,6 +3,8 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+from common.datetime_defaults import current_local_time
+
 
 UNIT_KQ = "kq"
 UNIT_TON = "ton"
@@ -28,8 +30,8 @@ GENDER_MALE = "erkek"
 GENDER_FEMALE = "disi"
 
 GENDER_CHOICES = [
-    (GENDER_MALE, "Erkək"),
-    (GENDER_FEMALE, "Dişi"),
+    (GENDER_MALE, _("Erkək")),
+    (GENDER_FEMALE, _("Dişi")),
 ]
 
 
@@ -48,6 +50,7 @@ class Income(models.Model):
     )
     additional_info = models.TextField(blank=True, null=True, verbose_name="Əlavə məlumat")
     date = models.DateField(default=timezone.now, verbose_name="Tarix")
+    time = models.TimeField(default=current_local_time, verbose_name="Saat")
 
     # Generic linking to inventory items
     from django.contrib.contenttypes.fields import GenericForeignKey
@@ -73,7 +76,7 @@ class Income(models.Model):
     class Meta:
         verbose_name = "Gəlir"
         verbose_name_plural = "Gəlirlər"
-        ordering = ["-date", "-created_at"]
+        ordering = ["-date", "-time", "-created_at"]
         indexes = [
             models.Index(fields=["created_by", "category"]),
             models.Index(fields=["created_by", "item_name"]),

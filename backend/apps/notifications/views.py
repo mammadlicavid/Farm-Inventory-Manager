@@ -4,13 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
-from datetime import timedelta
-from django.core.cache import cache
 import json
 
+from common.view_cache import bust_dashboard_related_caches
 from .models import Notification, StockAlertRule
 from .services import (
-    build_stock_alerts,
     build_stock_alert_rule_list,
     build_stock_rule_catalog,
     get_default_threshold_for_item,
@@ -36,11 +34,7 @@ def _relative_date(due_date):
 
 
 def _clear_dashboard_cache(user):
-    now = timezone.localtime(timezone.now())
-    start_of_week = (now - timedelta(days=now.weekday())).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    cache.delete(f"dashboard:v4:{user.pk}:{start_of_week.date().isoformat()}")
+    bust_dashboard_related_caches(user.pk)
     invalidate_notification_header_count_cache(user.pk)
 
 
@@ -208,7 +202,10 @@ def notifications_page(request):
         return redirect('notifications:list')
 
     # GET — build context
-    generated_alerts, attention_count = sync_stock_alert_notifications(request.user)
+    stock_alerts, attention_count, stock_items, _rule_map = sync_stock_alert_notifications(
+        request.user,
+        include_details=True,
+    )
     user_notifications = Notification.objects.filter(
         created_by=request.user,
     ).exclude(
@@ -225,9 +222,6 @@ def notifications_page(request):
     for notif in completed:
         notif.relative_date = _relative_date(notif.due_date)
 
-    stock_alerts, stock_items, rule_map = build_stock_alerts(request.user)
-    if generated_alerts:
-        stock_alerts = generated_alerts
     stock_rule_catalog = build_stock_rule_catalog(stock_items)
     stock_alert_rules = build_stock_alert_rule_list(request.user, stock_items=stock_items)
 

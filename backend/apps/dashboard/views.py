@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, InvalidOperation
 
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _T, gettext_lazy as _, override
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -26,7 +26,9 @@ from common.view_cache import (
     get_dashboard_bust_value,
 )
 from common.zero_price_source import get_zero_price_source_label
+from common.expense_titles import translate_expense_title
 from notifications.services import sync_stock_alert_notifications
+from inventory.views import FARM_PRODUCT_NAME_TRANSLATIONS, GENERIC_OPTION_TRANSLATIONS
 
 
 CALENDAR_WEEKDAY_LABELS = [
@@ -38,6 +40,22 @@ CALENDAR_WEEKDAY_LABELS = [
     _("Ş."),
     _("B."),
 ]
+
+
+def _translate_calendar_label(value, language_code: str):
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    with override(language_code or "az"):
+        translated = _T(text)
+    lang = (language_code or "az").split("-")[0]
+    if translated == text:
+        return (
+            FARM_PRODUCT_NAME_TRANSLATIONS.get(lang, {}).get(text)
+            or GENERIC_OPTION_TRANSLATIONS.get(lang, {}).get(text)
+            or translated
+        )
+    return translated
 
 
 def _convert_farm_qty(value: Decimal, unit: str, base_unit: str) -> Decimal:
@@ -330,6 +348,7 @@ def _summarize_day_activities(activities: list[dict]) -> dict:
 
 def _build_calendar_activity_map(user, month_start: date, month_end: date) -> dict[date, list[dict]]:
     activity_map: dict[date, list[dict]] = defaultdict(list)
+    language_code = (translation.get_language() or "az").lower()
 
     def append(entry: dict):
         activity_map[entry["date"]].append(entry)
@@ -370,10 +389,13 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
                 "kind": kind,
                 "financial_role": financial_role,
                 "icon": "fa-seedling",
-                "title": _display_record_name(
-                    getattr(seed.item, "name", None),
-                    seed.manual_name,
-                    str(_("Toxum")),
+                "title": _translate_calendar_label(
+                    _display_record_name(
+                        getattr(seed.item, "name", None),
+                        seed.manual_name,
+                        str(_("Toxum")),
+                    ),
+                    language_code,
                 ),
                 "subtitle": str(_("Toxumlar bölməsi")),
                 "operation_label": str(_("Stok hərəkəti")),
@@ -429,10 +451,13 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
                 "kind": kind,
                 "financial_role": financial_role,
                 "icon": "fa-cow",
-                "title": _display_record_name(
-                    getattr(animal.subcategory, "name", None),
-                    animal.manual_name,
-                    str(_("Heyvan")),
+                "title": _translate_calendar_label(
+                    _display_record_name(
+                        getattr(animal.subcategory, "name", None),
+                        animal.manual_name,
+                        str(_("Heyvan")),
+                    ),
+                    language_code,
                 ),
                 "subtitle": str(_("Heyvanlar bölməsi")),
                 "operation_label": str(_("Stok hərəkəti")),
@@ -480,10 +505,13 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
                 "kind": kind,
                 "financial_role": financial_role,
                 "icon": "fa-wrench",
-                "title": _display_record_name(
-                    getattr(tool.item, "name", None),
-                    tool.manual_name,
-                    str(_("Alət")),
+                "title": _translate_calendar_label(
+                    _display_record_name(
+                        getattr(tool.item, "name", None),
+                        tool.manual_name,
+                        str(_("Alət")),
+                    ),
+                    language_code,
                 ),
                 "subtitle": str(_("Alətlər bölməsi")),
                 "operation_label": str(_("Stok hərəkəti")),
@@ -532,10 +560,13 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
                 "kind": kind,
                 "financial_role": financial_role,
                 "icon": "fa-warehouse",
-                "title": _display_record_name(
-                    getattr(product.item, "name", None),
-                    product.manual_name,
-                    str(_("Məhsul")),
+                "title": _translate_calendar_label(
+                    _display_record_name(
+                        getattr(product.item, "name", None),
+                        product.manual_name,
+                        str(_("Məhsul")),
+                    ),
+                    language_code,
                 ),
                 "subtitle": str(_("Hazır məhsullar bölməsi")),
                 "operation_label": str(_("Stok hərəkəti")),
@@ -548,23 +579,29 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
             }
         )
 
-    incomes = Income.objects.filter(created_by=user, date__range=(month_start, month_end)).only(
-        "date",
-        "created_at",
-        "category",
-        "item_name",
-        "quantity",
-        "unit",
-        "amount",
-        "additional_info",
-        "content_type_id",
-        "object_id",
+    incomes = (
+        Income.objects.filter(created_by=user, date__range=(month_start, month_end))
+        .prefetch_related("content_object")
+        .only(
+            "date",
+            "created_at",
+            "category",
+            "item_name",
+            "quantity",
+            "unit",
+            "amount",
+            "additional_info",
+            "content_type_id",
+            "object_id",
+        )
     )
     for income in incomes:
-        linked_object = getattr(income, "content_object", None)
-        linked_note = getattr(linked_object, "additional_info", "") if linked_object is not None else ""
-        if linked_object is not None and not _is_income_origin_note(linked_note):
-            continue
+        linked_object = income.content_object
+        if linked_object is not None:
+            linked_note = getattr(linked_object, "additional_info", "")
+            if not _is_income_origin_note(linked_note):
+                continue
+
         append(
             {
                 "date": income.date,
@@ -572,9 +609,15 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
                 "kind": "income",
                 "financial_role": "income",
                 "icon": "fa-money-bill-trend-up",
-                "title": _display_record_name(income.item_name, None, str(_("Gəlir"))),
+                "title": _translate_calendar_label(
+                    _display_record_name(income.item_name, None, str(_("Gəlir"))),
+                    language_code,
+                ),
                 "subtitle": str(_("Gəlir səhifəsi")),
-                "operation_label": income.category or str(_("Satış")),
+                "operation_label": _translate_calendar_label(
+                    income.category or str(_("Satış")),
+                    language_code,
+                ),
                 "quantity": abs(_safe_decimal(income.quantity)),
                 "unit": income.unit or "ədəd",
                 "quantity_prefix": "",
@@ -602,11 +645,15 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
     for expense in expenses:
         if expense.content_type_id and expense.object_id:
             continue
-        expense_title = str(expense.title or expense.manual_name or _("Xərc")).strip()
-        expense_subtitle = (
+        expense_title = _translate_calendar_label(
+            translate_expense_title(str(expense.title or expense.manual_name or _("Xərc")).strip()),
+            language_code,
+        )
+        expense_subtitle = _translate_calendar_label(
             getattr(expense.subcategory, "name", None)
             or getattr(getattr(expense.subcategory, "category", None), "name", None)
-            or str(_("Xərc"))
+            or str(_("Xərc")),
+            language_code,
         )
         append(
             {
@@ -642,6 +689,48 @@ def _build_calendar_activity_map(user, month_start: date, month_end: date) -> di
     return activity_map
 
 
+def _build_calendar_month_metrics(activity_map):
+    day_summary_map = {}
+    monthly_income = Decimal("0")
+    monthly_expense = Decimal("0")
+    monthly_stock_actions = 0
+    total_activity_count = 0
+
+    for day, activities in activity_map.items():
+        summary = _summarize_day_activities(activities)
+        day_summary_map[day] = summary
+        total_activity_count += len(activities)
+        monthly_income += summary["income_total"]
+        monthly_expense += summary["expense_total"]
+        monthly_stock_actions += summary["stock_in"] + summary["stock_out"]
+
+    return {
+        "activity_map": activity_map,
+        "day_summary_map": day_summary_map,
+        "active_day_count": len(activity_map),
+        "total_activity_count": total_activity_count,
+        "monthly_income": monthly_income,
+        "monthly_expense": monthly_expense,
+        "monthly_stock_actions": monthly_stock_actions,
+    }
+
+
+def _get_calendar_month_data(user, month_start: date, month_end: date, language_code: str):
+    cache_key = (
+        f"calendar:month:v2:{user.pk}:{get_calendar_bust_value(user.pk)}:"
+        f"{language_code}:{month_start.isoformat()}"
+    )
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        return cached_data
+
+    month_data = _build_calendar_month_metrics(
+        _build_calendar_activity_map(user, month_start, month_end)
+    )
+    cache.set(cache_key, month_data, 300)
+    return month_data
+
+
 def _choose_selected_day(month_start: date, today: date, requested_day: date | None, activity_map) -> date:
     if requested_day is not None:
         return requested_day
@@ -653,7 +742,7 @@ def _choose_selected_day(month_start: date, today: date, requested_day: date | N
     return month_start
 
 
-def _build_calendar_grid(month_start: date, today: date, selected_day: date, activity_map) -> list[list[dict]]:
+def _build_calendar_grid(month_start: date, today: date, selected_day: date, day_summary_map) -> list[list[dict]]:
     grid = []
     calendar_rows = month_calendar.Calendar(firstweekday=0).monthdatescalendar(
         month_start.year,
@@ -662,8 +751,18 @@ def _build_calendar_grid(month_start: date, today: date, selected_day: date, act
     for week in calendar_rows:
         week_cells = []
         for day in week:
-            activities = activity_map.get(day, [])
-            summary = _summarize_day_activities(activities)
+            summary = day_summary_map.get(
+                day,
+                {
+                    "total": 0,
+                    "stock_in": 0,
+                    "stock_out": 0,
+                    "income": 0,
+                    "expense": 0,
+                    "income_total": Decimal("0"),
+                    "expense_total": Decimal("0"),
+                },
+            )
             week_cells.append(
                 {
                     "date": day,
@@ -689,43 +788,35 @@ def calendar_page(request):
     requested_day = _selected_day_from_query(request.GET.get("day"), month_start)
     language_code = (translation.get_language() or "az").lower()
     calendar_cache_key = (
-        f"calendar:v1:{user.pk}:{get_calendar_bust_value(user.pk)}:{language_code}:"
+        f"calendar:v2:{user.pk}:{get_calendar_bust_value(user.pk)}:{language_code}:"
         f"{month_start.isoformat()}:{today.isoformat()}:{requested_day.isoformat() if requested_day else ''}"
     )
     cached_context = cache.get(calendar_cache_key)
     if cached_context is not None:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            if request.headers.get("x-full-layout") == "true":
+                return render(request, "dashboard/calendar_layout_partial.html", cached_context)
+            return render(request, "dashboard/calendar_day_panel.html", cached_context)
         return render(request, "dashboard/calendar.html", cached_context)
 
-    activity_map = _build_calendar_activity_map(user, month_start, month_end)
+    month_data = _get_calendar_month_data(user, month_start, month_end, language_code)
+    activity_map = month_data["activity_map"]
+    day_summary_map = month_data["day_summary_map"]
     selected_day = _choose_selected_day(month_start, today, requested_day, activity_map)
     selected_day_activities = activity_map.get(selected_day, [])
-    selected_day_summary = _summarize_day_activities(selected_day_activities)
-    calendar_grid = _build_calendar_grid(month_start, today, selected_day, activity_map)
-
-    monthly_income = sum(
-        (
-            _safe_decimal(activity["amount"])
-            for activities in activity_map.values()
-            for activity in activities
-            if activity.get("financial_role") == "income"
-        ),
-        start=Decimal("0"),
+    selected_day_summary = day_summary_map.get(
+        selected_day,
+        {
+            "total": 0,
+            "stock_in": 0,
+            "stock_out": 0,
+            "income": 0,
+            "expense": 0,
+            "income_total": Decimal("0"),
+            "expense_total": Decimal("0"),
+        },
     )
-    monthly_expense = sum(
-        (
-            _safe_decimal(activity["amount"])
-            for activities in activity_map.values()
-            for activity in activities
-            if activity.get("financial_role") == "expense"
-        ),
-        start=Decimal("0"),
-    )
-    monthly_stock_actions = sum(
-        1
-        for activities in activity_map.values()
-        for activity in activities
-        if activity["kind"] in {"stock-in", "stock-out"}
-    )
+    calendar_grid = _build_calendar_grid(month_start, today, selected_day, day_summary_map)
 
     context = {
         "calendar_data": {
@@ -737,11 +828,11 @@ def calendar_page(request):
             "today_iso": today.isoformat(),
             "weekday_labels": CALENDAR_WEEKDAY_LABELS,
             "weeks": calendar_grid,
-            "active_day_count": len(activity_map),
-            "total_activity_count": sum(len(activities) for activities in activity_map.values()),
-            "monthly_stock_actions": monthly_stock_actions,
-            "monthly_income": monthly_income,
-            "monthly_expense": monthly_expense,
+            "active_day_count": month_data["active_day_count"],
+            "total_activity_count": month_data["total_activity_count"],
+            "monthly_stock_actions": month_data["monthly_stock_actions"],
+            "monthly_income": month_data["monthly_income"],
+            "monthly_expense": month_data["monthly_expense"],
             "selected_day": {
                 "label": date_format(selected_day, "j F Y, l"),
                 "date_iso": selected_day.isoformat(),
@@ -753,7 +844,12 @@ def calendar_page(request):
             },
         }
     }
-    cache.set(calendar_cache_key, context, 120)
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        if request.headers.get("x-full-layout") == "true":
+            return render(request, "dashboard/calendar_layout_partial.html", context)
+        return render(request, "dashboard/calendar_day_panel.html", context)
+
+    cache.set(calendar_cache_key, context, 300)
     return render(request, "dashboard/calendar.html", context)
 
 
@@ -766,7 +862,7 @@ def dashboard(request):
     )
     language_code = (translation.get_language() or "az").lower()
     cache_key = (
-        f"dashboard:v6:{user.pk}:{get_dashboard_bust_value(user.pk)}:"
+        f"dashboard:v7:{user.pk}:{get_dashboard_bust_value(user.pk)}:"
         f"{language_code}:{start_of_week.date().isoformat()}"
     )
     cached_context = cache.get(cache_key)
@@ -828,7 +924,7 @@ def dashboard(request):
         "critical_count": critical_count,
         "pending_notification_count": pending_notification_count,
     }
-    cache.set(cache_key, context, 60)
+    cache.set(cache_key, context, 300)
 
     return render(request, "dashboard/index.html", context)
 
@@ -984,7 +1080,7 @@ def quick_expense(request):
             seen_titles.add(exp.title)
             exp.amount_display = format_currency(exp.amount, 2)
             exp.quantity_display, exp.unit_display = _expense_template_measure(exp)
-            exp.display_title = exp.title
+            exp.display_title = translate_expense_title(exp.title)
             if exp.title:
                 title_stripped = exp.title.strip()
                 if ":" in title_stripped:

@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from hashlib import md5
 from django.utils import timezone
 from django.db.models import Q
@@ -90,6 +90,15 @@ def _parse_date(value: str | None):
         return timezone.localdate()
 
 
+def _parse_time(value: str | None):
+    if not value:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+    try:
+        return time.fromisoformat(value)
+    except Exception:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+
+
 def _parse_filter_date(value: str | None):
     if not value:
         return None
@@ -151,6 +160,7 @@ def _sync_tool_related_records(user, tool):
                 linked_income.amount = amount_val
                 linked_income.additional_info = tool.additional_info
                 linked_income.date = tool.date
+                linked_income.time = tool.time
                 linked_income.save()
             else:
                 linked_income.delete()
@@ -163,6 +173,7 @@ def _sync_tool_related_records(user, tool):
                 amount=amount_val,
                 additional_info=tool.additional_info,
                 date=tool.date,
+                time=tool.time,
                 created_by=user,
                 content_object=tool,
             )
@@ -183,6 +194,8 @@ def _sync_tool_related_records(user, tool):
             linked_expense.additional_info = tool.additional_info
             linked_expense.subcategory = expense_sub
             linked_expense.manual_name = None if expense_sub else "Alət alışı (Digər)"
+            linked_expense.date = tool.date
+            linked_expense.time = tool.time
             linked_expense.save()
         else:
             Expense.objects.create(
@@ -191,6 +204,8 @@ def _sync_tool_related_records(user, tool):
                 subcategory=expense_sub,
                 manual_name=None if expense_sub else "Alət alışı (Digər)",
                 additional_info=tool.additional_info,
+                date=tool.date,
+                time=tool.time,
                 created_by=user,
                 content_object=tool
             )
@@ -198,7 +213,7 @@ def _sync_tool_related_records(user, tool):
         linked_expense.delete()
 
 
-def _merge_manual_tool(user, manual_name, quantity_val, price, zero_price_source, additional_info, entry_date):
+def _merge_manual_tool(user, manual_name, quantity_val, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         Tool.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name)
@@ -223,6 +238,7 @@ def _merge_manual_tool(user, manual_name, quantity_val, price, zero_price_source
     existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     _sync_tool_related_records(user, existing)
     return existing
@@ -230,93 +246,7 @@ def _merge_manual_tool(user, manual_name, quantity_val, price, zero_price_source
 @login_required
 @never_cache
 def tool_list(request):
-    cache_key = f"tools:list:v2:{request.user.pk}:{_tool_list_cache_bust_value(request.user.pk)}:{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
-    cached_context = cache.get(cache_key)
-    if cached_context is not None:
-        return render(request, 'tools/tool_list.html', cached_context)
-
-    query = (request.GET.get('q') or '').strip()
-    category_id = (request.GET.get('category') or '').strip()
-    item_id = (request.GET.get('item') or '').strip()
-    date_from_raw = (request.GET.get('date_from') or '').strip()
-    date_to_raw = (request.GET.get('date_to') or '').strip()
-    movement = (request.GET.get('movement') or '').strip()
-    alets_qs = Tool.objects.filter(created_by=request.user).select_related('item', 'item__category').only(
-        'id',
-        'quantity',
-        'price',
-        'date',
-        'manual_name',
-        'additional_info',
-        'updated_at',
-        'item__id',
-        'item__name',
-        'item__category__id',
-        'item__category__name',
-    )
-
-    if query:
-        alets_qs = alets_qs.filter(
-            Q(item__name__icontains=query)
-            | Q(item__category__name__icontains=query)
-            | Q(additional_info__icontains=query)
-            | Q(manual_name__icontains=query)
-        )
-
-    form_catalog = _tool_form_catalog()
-    selected_category = next((category for category in form_catalog["categories"] if str(category.id) == category_id), None) if category_id else None
-    if selected_category:
-        if (selected_category.name or "").strip().lower() == "digər":
-            alets_qs = alets_qs.filter(Q(item__category=selected_category) | Q(item__isnull=True))
-        else:
-            alets_qs = alets_qs.filter(item__category=selected_category)
-
-    filtered_items = []
-    if selected_category:
-        filtered_items = form_catalog["item_map"].get(str(selected_category.id), [])
-
-    if item_id:
-        alets_qs = alets_qs.filter(item_id=item_id)
-
-    date_from = _parse_filter_date(date_from_raw)
-    if date_from:
-        alets_qs = alets_qs.filter(date__gte=date_from)
-
-    date_to = _parse_filter_date(date_to_raw)
-    if date_to:
-        alets_qs = alets_qs.filter(date__lte=date_to)
-
-    if movement == "increase":
-        alets_qs = alets_qs.filter(quantity__gt=0)
-    elif movement == "decrease":
-        alets_qs = alets_qs.filter(quantity__lt=0)
-
-    alets = list(alets_qs)
-    for alet in alets:
-        alet.icon_class = get_tool_icon_for_tool(alet)
-        alet.zero_price_source_label = get_zero_price_source_label(alet)
-        try:
-            alet.price_display = abs(float(alet.price))
-        except Exception:
-            alet.price_display = alet.price
-
-    today = timezone.localdate()
-    context = {
-        'alets': alets,
-        'categories': form_catalog["categories"],
-        'category_item_map': form_catalog["item_map"],
-        'zero_price_source_choices': ZERO_PRICE_SOURCE_CHOICES,
-        'filter_items': filtered_items,
-        'selected_category': category_id,
-        'selected_item': item_id,
-        'selected_date_from': date_from_raw,
-        'selected_date_to': date_to_raw,
-        'selected_movement': movement,
-        'today': today,
-        'yesterday': today - timedelta(days=1),
-    }
-    cache.set(cache_key, context, TOOL_LIST_CACHE_TTL)
-    return render(request, 'tools/tool_list.html', context)
+    return redirect(f"{resolve_url('inventory:add_placeholder')}?type=tool")
 
 @login_required
 def get_tool_items(request):
@@ -333,7 +263,7 @@ def get_tool_items(request):
 
 @login_required
 def tool_create(request):
-    redirect_to = request.POST.get('next') or 'tools:tool_list'
+    redirect_to = request.POST.get('next') or f"{resolve_url('inventory:add_placeholder')}?type=tool"
     if request.method == 'POST':
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
@@ -343,6 +273,7 @@ def tool_create(request):
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
@@ -382,7 +313,7 @@ def tool_create(request):
                     return redirect(redirect_to)
 
             manual_value = manual_name if (not item or item.name == "Digər") else None
-            merged = _merge_manual_tool(request.user, manual_value, quantity_val, price, zero_price_source, additional_info, entry_date) if manual_value else None
+            merged = _merge_manual_tool(request.user, manual_value, quantity_val, price, zero_price_source, additional_info, entry_date, entry_time) if manual_value else None
             if merged == "deleted":
                 _bust_tool_list_cache(request.user.pk)
                 add_crud_success_message(request, "Tool", "delete")
@@ -400,6 +331,7 @@ def tool_create(request):
                 zero_price_source=zero_price_source,
                 additional_info=additional_info,
                 date=entry_date,
+                time=entry_time,
                 created_by=request.user
             )
 
@@ -421,6 +353,7 @@ def tool_create(request):
                     amount=amount_val,
                     additional_info=additional_info,
                     date=entry_date,
+                    time=entry_time,
                     created_by=request.user,
                     content_object=tool,
                 )
@@ -436,6 +369,8 @@ def tool_create(request):
                         amount=price,
                         subcategory=expense_sub,
                         additional_info=additional_info,
+                        date=entry_date,
+                        time=entry_time,
                         created_by=request.user,
                         content_object=tool
                     )
@@ -446,6 +381,8 @@ def tool_create(request):
                         amount=price,
                         manual_name="Alət alışı (Digər)",
                         additional_info=additional_info,
+                        date=entry_date,
+                        time=entry_time,
                         created_by=request.user,
                         content_object=tool
                     )
@@ -462,6 +399,8 @@ def tool_create(request):
 @login_required
 def tool_update(request, pk):
     tool = get_object_or_404(Tool, pk=pk, created_by=request.user)
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    redirect_to = next_url or f"{resolve_url('inventory:add_placeholder')}?type=tool"
     if request.method == 'POST':
         item_id = request.POST.get('item')
         quantity = request.POST.get('quantity')
@@ -471,6 +410,7 @@ def tool_update(request, pk):
         additional_info = request.POST.get('additional_info')
         date_raw = request.POST.get('date')
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
         
         # Backend Validation
         if not (item_id or manual_name) or not quantity:
@@ -494,6 +434,7 @@ def tool_update(request, pk):
         tool.quantity = quantity
         tool.additional_info = additional_info
         tool.date = entry_date
+        tool.time = entry_time
         if item_id:
             item = ToolItem.objects.get(id=item_id)
             if item.name == "Digər" and not manual_name:
@@ -543,6 +484,7 @@ def tool_update(request, pk):
                     linked_income.amount = amount_val
                     linked_income.additional_info = tool.additional_info
                     linked_income.date = tool.date
+                    linked_income.time = tool.time
                     linked_income.save()
                 else:
                     linked_income.delete()
@@ -556,6 +498,7 @@ def tool_update(request, pk):
                         amount=amount_val,
                         additional_info=tool.additional_info,
                         date=tool.date,
+                        time=tool.time,
                         created_by=request.user,
                         content_object=tool,
                     )
@@ -572,6 +515,8 @@ def tool_update(request, pk):
                 linked_expense.amount = tool.price
                 linked_expense.title = f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}"
                 linked_expense.additional_info = tool.additional_info
+                linked_expense.date = tool.date
+                linked_expense.time = tool.time
                 linked_expense.save()
             else:
                 linked_expense.delete()
@@ -584,6 +529,8 @@ def tool_update(request, pk):
                     amount=tool.price,
                     subcategory=expense_sub,
                     additional_info=tool.additional_info,
+                    date=tool.date,
+                    time=tool.time,
                     created_by=request.user,
                     content_object=tool
                 )
@@ -593,19 +540,24 @@ def tool_update(request, pk):
                     amount=tool.price,
                     manual_name="Alət alışı (Digər)",
                     additional_info=tool.additional_info,
+                    date=tool.date,
+                    time=tool.time,
                     created_by=request.user,
                     content_object=tool
                 )
 
         _bust_tool_list_cache(request.user.pk)
         add_crud_success_message(request, "Tool", "update")
-        return _redirect_with_refresh('tools:tool_list')
+        return _redirect_with_refresh(redirect_to)
     
-    return render(request, 'tools/tool_form.html', _tool_form_context(tool))
+    context = _tool_form_context(tool)
+    context["next_url"] = next_url
+    return render(request, 'tools/tool_form.html', context)
 
 @login_required
 def tool_delete(request, pk):
     tool = get_object_or_404(Tool, pk=pk, created_by=request.user)
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?type=tool"
     if request.method == 'POST':
         # Manually delete linked expenses
         tool_type = ContentType.objects.get_for_model(Tool)
@@ -614,5 +566,5 @@ def tool_delete(request, pk):
         tool.delete()
         _bust_tool_list_cache(request.user.pk)
         add_crud_success_message(request, "Tool", "delete")
-        return _redirect_with_refresh('tools:tool_list')
+        return _redirect_with_refresh(redirect_to)
     return render(request, 'tools/tool_confirm_delete.html', {'alet': tool})

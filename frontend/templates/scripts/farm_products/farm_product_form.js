@@ -16,6 +16,7 @@
     const KG_PER_POUND = 0.45359237;
     const GRAMS_PER_OUNCE = 28.349523125;
     const LITERS_PER_GALLON = 3.785411784;
+    const otherLabels = new Set(["digər", "other", "другое"]);
     const UNIT_LABELS = {
         kq: weightUnitSystem === "lb" ? "pound" : "kq",
         ton: "ton",
@@ -27,13 +28,23 @@
         "bağlama": "bağlama",
     };
 
+    function translateDynamicLabel(value) {
+        const text = String(value || "");
+        if (!text) return text;
+        return window.runtimeI18n?.translateInlineValue?.(text) || text;
+    }
+
+    function isOtherLabel(value) {
+        return otherLabels.has(String(value || "").trim().toLowerCase());
+    }
+
     function applyUnitOptions(allowed, defaultValue) {
         if (!unitSelect) return;
         unitSelect.innerHTML = "";
         allowed.forEach(value => {
             const option = document.createElement("option");
             option.value = value;
-            option.textContent = UNIT_LABELS[value] || value;
+            option.textContent = translateDynamicLabel(UNIT_LABELS[value] || value);
             unitSelect.appendChild(option);
         });
         if (defaultValue && allowed.includes(defaultValue)) {
@@ -48,7 +59,7 @@
         unitSelect.innerHTML = "";
         const option = document.createElement("option");
         option.value = "";
-        option.textContent = message;
+        option.textContent = translateDynamicLabel(message);
         option.selected = true;
         unitSelect.appendChild(option);
         unitSelect.disabled = true;
@@ -86,7 +97,7 @@
     function handleItemSelection(option) {
         const itemName = option?.dataset?.name || "";
         const itemUnit = option?.dataset?.unit || "";
-        const isOther = itemName === "Digər" || !itemUnit;
+        const isOther = isOtherLabel(itemName) || !itemUnit;
         let allowed = ALL_UNITS;
         let lockUnit = false;
 
@@ -133,7 +144,7 @@
         items.forEach((item) => {
             const option = document.createElement("option");
             option.value = String(item.id);
-            option.textContent = item.name;
+            option.textContent = translateDynamicLabel(item.name);
             option.dataset.name = item.name;
             option.dataset.unit = item.unit || "";
             if (String(item.id) === String(selectedItemId)) {
@@ -150,7 +161,7 @@
         const itemSelect = document.getElementById("item-select");
         const itemGroup = document.getElementById("item-field-group");
 
-        if (categoryText.startsWith("Digər")) {
+        if (isOtherLabel(categoryText)) {
             itemGroup.style.display = "none";
             itemSelect.required = false;
             itemSelect.disabled = true;
@@ -202,7 +213,7 @@
         const itemSelect = document.getElementById("item-select");
         const categorySelect = document.getElementById("category-select");
         const categoryText = categorySelect?.options[categorySelect.selectedIndex]?.text || "";
-        if (categoryText.startsWith("Digər")) {
+        if (isOtherLabel(categoryText)) {
             const itemGroup = document.getElementById("item-field-group");
             itemGroup.style.display = "none";
             itemSelect.required = false;

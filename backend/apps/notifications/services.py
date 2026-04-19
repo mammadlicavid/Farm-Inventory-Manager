@@ -3,7 +3,10 @@ from decimal import Decimal
 from django.core.cache import cache
 from django.db.models import Sum
 from django.utils import timezone
+from django.utils.translation import get_language
+from django.utils.translation import gettext as _
 
+from common.view_cache import get_dashboard_bust_value
 from animals.models import Animal
 from animals.models import AnimalSubCategory
 from farm_products.models import FarmProduct
@@ -47,13 +50,14 @@ IMPORTANT_FARM_PRODUCT_KEYWORDS = (
     "derman",
 )
 
-HEADER_NOTIFICATION_COUNT_CACHE_TTL = 30
+HEADER_NOTIFICATION_COUNT_CACHE_TTL = 300
+STOCK_ITEMS_CACHE_TTL = 300
 
 SOURCE_LABELS = {
-    StockAlertRule.SOURCE_SEED: "Toxum",
-    StockAlertRule.SOURCE_TOOL: "Alət",
-    StockAlertRule.SOURCE_FARM: "Təsərrüfat məhsulu",
-    StockAlertRule.SOURCE_ANIMAL: "Heyvan",
+    StockAlertRule.SOURCE_SEED: _("Toxum"),
+    StockAlertRule.SOURCE_TOOL: _("Alət"),
+    StockAlertRule.SOURCE_FARM: _("Təsərrüfat məhsulu"),
+    StockAlertRule.SOURCE_ANIMAL: _("Heyvan"),
 }
 
 SOURCE_ICONS = {
@@ -64,12 +68,20 @@ SOURCE_ICONS = {
 }
 
 
-def _header_notification_count_cache_key(user_id: int) -> str:
-    return f"notifications:header-count:v1:{user_id}"
+def _header_notification_count_cache_key(user_id: int, day_key: str | None = None) -> str:
+    resolved_day_key = day_key or timezone.localdate().isoformat()
+    return f"notifications:header-count:v2:{user_id}:{resolved_day_key}"
+
+
+def _stock_items_cache_key(user_id: int, language_code: str) -> str:
+    normalized_language = (language_code or "az").split("-")[0].lower()
+    bust_value = get_dashboard_bust_value(user_id)
+    return f"notifications:stock-items:v1:{user_id}:{bust_value}:{normalized_language}"
 
 
 def invalidate_notification_header_count_cache(user_id: int) -> None:
-    cache.delete(_header_notification_count_cache_key(user_id))
+    today_key = timezone.localdate().isoformat()
+    cache.delete(_header_notification_count_cache_key(user_id, today_key))
 
 
 def set_cached_header_notification_count(user_id: int, count: int) -> None:
@@ -129,7 +141,7 @@ def _serialize_stock_item(*, source_type, item_key, item_name, unit, total, is_i
         "source_type": source_type,
         "source_label": SOURCE_LABELS[source_type],
         "item_key": item_key,
-        "item_name": item_name,
+        "item_name": _(item_name or ""),
         "unit": unit,
         "total": _normalize_decimal(total),
         "total_display": _format_quantity(total),
@@ -139,10 +151,32 @@ def _serialize_stock_item(*, source_type, item_key, item_name, unit, total, is_i
 
 
 def _manual_category_label():
-    return "Xüsusi"
+    return _("Digər")
+
+
+def _category_sort_key(label):
+    normalized = str(label or "").strip().lower()
+    other_labels = {
+        _("Digər").lower(),
+        _("Other").lower(),
+        _("Другое").lower(),
+        "digər",
+        "other",
+        "другое",
+    }
+    return (1 if normalized in other_labels else 0, normalized)
 
 
 def get_stock_items_for_user(user):
+    if not getattr(user, "is_authenticated", False):
+        return []
+
+    language_code = (get_language() or "az").split("-")[0].lower()
+    cache_key = _stock_items_cache_key(user.pk, language_code)
+    cached_items = cache.get(cache_key)
+    if cached_items is not None:
+        return cached_items
+
     stock_items = {}
 
     seed_rows = (
@@ -161,7 +195,7 @@ def get_stock_items_for_user(user):
             total=row["total"],
             is_important=_is_important_seed(item_name),
         )
-        stock_item["category_name"] = row.get("item__category__name") or _manual_category_label()
+        stock_item["category_name"] = _(row.get("item__category__name") or "") or _manual_category_label()
         stock_items[item_key] = stock_item
 
     tool_rows = (
@@ -180,7 +214,7 @@ def get_stock_items_for_user(user):
             total=row["total"],
             is_important=False,
         )
-        stock_item["category_name"] = row.get("item__category__name") or _manual_category_label()
+        stock_item["category_name"] = _(row.get("item__category__name") or "") or _manual_category_label()
         stock_items[item_key] = stock_item
 
     animal_rows = (
@@ -199,7 +233,7 @@ def get_stock_items_for_user(user):
             total=row["total"],
             is_important=False,
         )
-        stock_item["category_name"] = row.get("subcategory__category__name") or _manual_category_label()
+        stock_item["category_name"] = _(row.get("subcategory__category__name") or "") or _manual_category_label()
         stock_items[item_key] = stock_item
 
     tool_catalog_items = ToolItem.objects.select_related("category")
@@ -216,7 +250,7 @@ def get_stock_items_for_user(user):
                     total=Decimal("0"),
                     is_important=False,
                 ),
-                "category_name": item.category.name if item.category else _manual_category_label(),
+                "category_name": _(item.category.name) if item.category else _manual_category_label(),
             },
         )
 
@@ -234,7 +268,7 @@ def get_stock_items_for_user(user):
                     total=Decimal("0"),
                     is_important=False,
                 ),
-                "category_name": item.category.name if item.category else _manual_category_label(),
+                "category_name": _(item.category.name) if item.category else _manual_category_label(),
             },
         )
 
@@ -255,7 +289,7 @@ def get_stock_items_for_user(user):
             total=row["total"],
             is_important=_is_important_farm_product(item_name, row["item__category__name"]),
         )
-        stock_item["category_name"] = row.get("item__category__name") or _manual_category_label()
+        stock_item["category_name"] = _(row.get("item__category__name") or "") or _manual_category_label()
         stock_items[item_key] = stock_item
 
     seed_catalog_items = SeedItem.objects.select_related("category")
@@ -272,13 +306,13 @@ def get_stock_items_for_user(user):
                     total=Decimal("0"),
                     is_important=_is_important_seed(item.name),
                 ),
-                "category_name": item.category.name if item.category else _manual_category_label(),
+                "category_name": _(item.category.name) if item.category else _manual_category_label(),
             },
         )
 
     farm_catalog_items = FarmProductItem.objects.select_related("category")
     for item in farm_catalog_items:
-        category_name = item.category.name if item.category else _manual_category_label()
+        category_name = _(item.category.name) if item.category else _manual_category_label()
         unit = item.unit or "kq"
         item_key = f"farm:{item.id}:{unit}"
         stock_items.setdefault(
@@ -298,6 +332,7 @@ def get_stock_items_for_user(user):
 
     result = list(stock_items.values())
     result.sort(key=lambda item: (item["source_label"].lower(), item["category_name"].lower(), item["item_name"].lower()))
+    cache.set(cache_key, result, STOCK_ITEMS_CACHE_TTL)
     return result
 
 
@@ -335,7 +370,7 @@ def build_stock_rule_catalog(stock_items):
     sources = []
     for source in sorted(source_map.values(), key=lambda value: value["label"].lower()):
         categories = []
-        for category in sorted(source["categories"].values(), key=lambda value: value["label"].lower()):
+        for category in sorted(source["categories"].values(), key=lambda value: _category_sort_key(value["label"])):
             category["items"].sort(key=lambda value: value["label"].lower())
             categories.append(category)
         source["categories"] = categories
@@ -469,11 +504,10 @@ def build_stock_alerts(user):
     return alerts, stock_items, rule_map
 
 
-def sync_stock_alert_notifications(user):
+def sync_stock_alert_notifications(user, include_details: bool = False):
     from .models import Notification
 
     alerts, stock_items, rule_map = build_stock_alerts(user)
-    del stock_items, rule_map
 
     today = timezone.localdate()
     active_keys = set()
@@ -512,4 +546,6 @@ def sync_stock_alert_notifications(user):
 
     count = len(alerts) + pending_manual_count
     set_cached_header_notification_count(user.pk, count)
+    if include_details:
+        return alerts, count, stock_items, rule_map
     return alerts, count

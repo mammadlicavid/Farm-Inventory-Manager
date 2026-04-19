@@ -2003,28 +2003,14 @@ def _update_stock(user, data):
                 if remaining <= 0:
                     break
 
-        def add_negative_entry(count, gender_value):
-            nonlocal created_any
-            if count <= 0:
-                return
-            payload = {"gender": gender_value, "quantity": -abs(int(count)), "additional_info": "Stok azaldı", "created_by": user}
-            if update_type == "animal_sub":
-                payload["subcategory_id"] = update_id
-            else:
-                payload["subcategory"] = None
-                payload["manual_name"] = update_id
-            created_any = Animal.objects.create(**payload)
-
         if male_delta > 0:
             create_animals(male_delta, "erkek")
         elif male_delta < 0:
             disable_animals(abs(male_delta), "erkek")
-            add_negative_entry(abs(male_delta), "erkek")
         if female_delta > 0:
             create_animals(female_delta, "disi")
         elif female_delta < 0:
             disable_animals(abs(female_delta), "disi")
-            add_negative_entry(abs(female_delta), "disi")
         return created_any
 
     raise ValueError("Bu kateqoriya üçün yeniləmə dəstəklənmir.")

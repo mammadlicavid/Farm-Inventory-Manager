@@ -1,6 +1,9 @@
 from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+
+from common.datetime_defaults import current_local_time
 
 class ExpenseCategory(models.Model):
     name = models.CharField(max_length=100, verbose_name="Kateqoriya Adı")
@@ -39,7 +42,8 @@ class Expense(models.Model):
     manual_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Xüsusi Ad")
     
     additional_info = models.TextField(blank=True, null=True, verbose_name="Əlavə məlumat")
-    date = models.DateField(auto_now_add=True, verbose_name="Tarix")
+    date = models.DateField(default=timezone.now, verbose_name="Tarix")
+    time = models.TimeField(default=current_local_time, verbose_name="Saat")
     
     # Generic linking to inventory items
     from django.contrib.contenttypes.fields import GenericForeignKey
@@ -65,7 +69,7 @@ class Expense(models.Model):
     class Meta:
         verbose_name = "Xərc"
         verbose_name_plural = "Xərclər"
-        ordering = ['-date', '-created_at']
+        ordering = ['-date', '-time', '-created_at']
         indexes = [
             models.Index(fields=["created_by", "subcategory"]),
             models.Index(fields=["created_by", "manual_name"]),

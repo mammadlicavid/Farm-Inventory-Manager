@@ -27,8 +27,32 @@ document.addEventListener("DOMContentLoaded", function () {
     const volumeUnits = volumeUnitSystem === "gallon" ? ["litr"] : ["litr", "ml"];
     const allUnits = [...weightUnits, ...volumeUnits, "ədəd", "dəstə", "bağlama"];
     let barcodeDownloadName = "barcode";
+    const otherLabels = new Set(["digər", "other", "другое", "{% trans 'Digər' %}".trim().toLowerCase()]);
+    const zeroPriceSourceConfigs = [
+        { formType: "animal", priceInputId: "animal-price", wrapId: "animal-zero-price-source-wrap", selectId: "animal-zero-price-source" },
+        { formType: "seed", priceInputId: "seed-price", wrapId: "seed-zero-price-source-wrap", selectId: "seed-zero-price-source" },
+        { formType: "tool", priceInputId: "tool-price", wrapId: "tool-zero-price-source-wrap", selectId: "tool-zero-price-source" },
+        { formType: "farm", priceInputId: "farm-price", wrapId: "farm-zero-price-source-wrap", selectId: "farm-zero-price-source" },
+    ];
 
-    const panelTitles = { expense: "Xərc formu", income: "Gəlir formu", animal: "Heyvan formu", seed: "Toxum formu", tool: "Alət formu", farm: "Təsərrüfat formu" };
+    const panelTitles = {
+        expense: "{% trans 'Xərc formu' %}",
+        income: "{% trans 'Gəlir formu' %}",
+        animal: "{% trans 'Heyvan formu' %}",
+        seed: "{% trans 'Toxum formu' %}",
+        tool: "{% trans 'Alət formu' %}",
+        farm: "{% trans 'Təsərrüfat formu' %}",
+    };
+
+    function translateDynamicLabel(value) {
+        const text = String(value || "");
+        if (!text) return text;
+        return window.runtimeI18n?.translateInlineValue?.(text) || text;
+    }
+
+    function isOtherLabel(value) {
+        return otherLabels.has(String(value || "").trim().toLowerCase());
+    }
 
     function getCsrfToken() {
         const match = document.cookie.match(/csrftoken=([^;]+)/);
@@ -43,13 +67,13 @@ document.addEventListener("DOMContentLoaded", function () {
         select.innerHTML = "";
         const first = document.createElement("option");
         first.value = "";
-        first.textContent = placeholder;
+        first.textContent = translateDynamicLabel(placeholder);
         select.appendChild(first);
         rows.forEach((row) => {
             const option = document.createElement("option");
             const mapped = mapFn(row);
             option.value = mapped.value;
-            option.textContent = mapped.label;
+            option.textContent = translateDynamicLabel(mapped.label);
             if (mapped.dataset) Object.entries(mapped.dataset).forEach(([key, val]) => { option.dataset[key] = val; });
             select.appendChild(option);
         });
@@ -82,6 +106,27 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".input-group input, .input-group select, .input-group textarea").forEach(syncRequiredStar);
     }
 
+    function shouldShowZeroPriceSource(input) {
+        if (!input) return false;
+        const raw = String(input.value ?? "").trim();
+        if (!raw) return true;
+        const parsed = Number(raw.replace(",", "."));
+        return Number.isFinite(parsed) && parsed === 0;
+    }
+
+    function syncZeroPriceSourceField(formType) {
+        const config = zeroPriceSourceConfigs.find((entry) => entry.formType === formType);
+        if (!config) return;
+        const input = document.getElementById(config.priceInputId);
+        const wrap = document.getElementById(config.wrapId);
+        const select = document.getElementById(config.selectId);
+        if (!input || !wrap || !select) return;
+        const isVisible = shouldShowZeroPriceSource(input);
+        wrap.hidden = !isVisible;
+        setControlRequired(select, isVisible);
+        if (!isVisible) select.value = "";
+    }
+
     function syncAnimalIdentificationState() {
         const quantityInput = document.getElementById("animal-quantity");
         const idInput = document.getElementById("animal-id");
@@ -89,11 +134,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (Math.abs(parsedQuantity) !== 1) {
             idInput.value = "";
             idInput.disabled = true;
-            idInput.placeholder = "Miqdar ±1 olmadıqda ID yazılmır";
+            idInput.placeholder = "{% trans 'Miqdar ±1 olmadıqda ID yazılmır' %}";
             return;
         }
         idInput.disabled = false;
-        idInput.placeholder = "Məsələn: AZ12345";
+        idInput.placeholder = "{% trans 'Məsələn: AZ12345' %}";
     }
 
     function displayUnitLabel(unit) {
@@ -109,14 +154,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function setIncomeUnits(units, preferred) {
         const unitSelect = document.getElementById("income-unit");
-        fillOptions(unitSelect, units, "Vahid seçin", (value) => ({ value, label: displayUnitLabel(value) }));
+        fillOptions(unitSelect, units, "{% trans 'Vahid seçin' %}", (value) => ({ value, label: displayUnitLabel(value) }));
         unitSelect.value = preferred && units.includes(preferred) ? preferred : (units[0] || "");
     }
 
     function setUnitSelectOptions(selectId, units, preferred) {
         const unitSelect = document.getElementById(selectId);
         if (!unitSelect) return;
-        fillOptions(unitSelect, units, "Vahid seçin", (value) => ({ value, label: displayUnitLabel(value) }));
+        fillOptions(unitSelect, units, "{% trans 'Vahid seçin' %}", (value) => ({ value, label: displayUnitLabel(value) }));
         unitSelect.value = preferred && units.includes(preferred) ? preferred : (units[0] || "");
     }
 
@@ -127,22 +172,22 @@ document.addEventListener("DOMContentLoaded", function () {
         const manualInput = document.getElementById("expense-manual-name");
         const selectedCategory = expenseData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        if (selectedCategory.name.includes("Digər")) {
+        if (isOtherLabel(selectedCategory.name)) {
             manualWrap.hidden = false;
-            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             subcategorySelect.value = "";
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, true);
             return;
         }
         manualWrap.hidden = true;
-        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
         setControlRequired(subcategorySelect, true);
         setControlRequired(manualInput, false);
@@ -155,22 +200,22 @@ document.addEventListener("DOMContentLoaded", function () {
         const manualInput = document.getElementById("animal-manual-name");
         const selectedCategory = animalData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        if (selectedCategory.name.includes("Digər")) {
+        if (isOtherLabel(selectedCategory.name)) {
             manualWrap.hidden = false;
-            fillOptions(subcategorySelect, [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(subcategorySelect, [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             subcategorySelect.value = "";
             setControlRequired(subcategorySelect, false);
             setControlRequired(manualInput, true);
             return;
         }
         manualWrap.hidden = true;
-        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "Alt kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(subcategorySelect, selectedCategory.subcategories || [], "{% trans 'Alt kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedSubcategoryId) subcategorySelect.value = String(selectedSubcategoryId);
         setControlRequired(subcategorySelect, true);
         setControlRequired(manualInput, false);
@@ -183,15 +228,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const manualInput = document.getElementById("seed-manual-name");
         const selectedCategory = seedData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(itemSelect, [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(itemSelect, [], "{% trans 'Toxum seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        fillOptions(itemSelect, selectedCategory.items || [], "Toxum seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(itemSelect, selectedCategory.items || [], "{% trans 'Toxum seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedItemId) itemSelect.value = String(selectedItemId);
-        const isOther = selectedCategory.name.includes("Digər") || itemSelect.options[itemSelect.selectedIndex]?.text === "Digər";
+        const isOther = isOtherLabel(selectedCategory.name) || isOtherLabel(itemSelect.options[itemSelect.selectedIndex]?.text || "");
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -205,15 +250,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const manualInput = document.getElementById("tool-manual-name");
         const selectedCategory = toolData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(itemSelect, [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(itemSelect, [], "{% trans 'Alət seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        fillOptions(itemSelect, selectedCategory.items || [], "Alət seçin", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(itemSelect, selectedCategory.items || [], "{% trans 'Alət seçin' %}", (row) => ({ value: row.id, label: row.name }));
         if (selectedItemId) itemSelect.value = String(selectedItemId);
-        const isOther = selectedCategory.name.includes("Digər") || itemSelect.options[itemSelect.selectedIndex]?.text === "Digər";
+        const isOther = isOtherLabel(selectedCategory.name) || isOtherLabel(itemSelect.options[itemSelect.selectedIndex]?.text || "");
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -227,16 +272,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const manualInput = document.getElementById("farm-manual-name");
         const selectedCategory = farmData.find((row) => String(row.id) === categorySelect.value);
         if (!selectedCategory) {
-            fillOptions(itemSelect, [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name }));
+            fillOptions(itemSelect, [], "{% trans 'Məhsul seçin' %}", (row) => ({ value: row.id, label: row.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
             return;
         }
-        fillOptions(itemSelect, selectedCategory.items || [], "Məhsul seçin", (row) => ({ value: row.id, label: row.name, dataset: { unit: row.unit || "" } }));
+        fillOptions(itemSelect, selectedCategory.items || [], "{% trans 'Məhsul seçin' %}", (row) => ({ value: row.id, label: row.name, dataset: { unit: row.unit || "" } }));
         if (selectedItemId) itemSelect.value = String(selectedItemId);
         const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-        const isOther = selectedCategory.name.includes("Digər") || selectedOption?.text === "Digər";
+        const isOther = isOtherLabel(selectedCategory.name) || isOtherLabel(selectedOption?.text || "");
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -262,7 +307,7 @@ document.addEventListener("DOMContentLoaded", function () {
         genderWrap.hidden = type !== "animal";
         animalIdWrap.hidden = type !== "animal";
         if (!row) {
-            fillOptions(itemSelect, [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name }));
+            fillOptions(itemSelect, [], "{% trans 'Məhsul seçin' %}", (entry) => ({ value: entry.name, label: entry.name }));
             manualWrap.hidden = true;
             setControlRequired(itemSelect, false);
             setControlRequired(manualInput, false);
@@ -270,9 +315,9 @@ document.addEventListener("DOMContentLoaded", function () {
             setIncomeUnits(allUnits, "kq");
             return;
         }
-        fillOptions(itemSelect, row.items || [], "Məhsul seçin", (entry) => ({ value: entry.name, label: entry.name, dataset: { unit: entry.unit || "" } }));
+        fillOptions(itemSelect, row.items || [], "{% trans 'Məhsul seçin' %}", (entry) => ({ value: entry.name, label: entry.name, dataset: { unit: entry.unit || "" } }));
         if (selectedItemName) itemSelect.value = selectedItemName;
-        const isOther = selectedCategory === "Digər" || itemSelect.options[itemSelect.selectedIndex]?.text === "Digər";
+        const isOther = isOtherLabel(selectedCategory) || isOtherLabel(itemSelect.options[itemSelect.selectedIndex]?.text || "");
         manualWrap.hidden = !isOther;
         setControlRequired(itemSelect, !isOther);
         setControlRequired(manualInput, isOther);
@@ -288,12 +333,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function initFormOptions() {
-        fillOptions(document.getElementById("expense-category"), expenseData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("animal-category"), animalData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("seed-category"), seedData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("tool-category"), toolData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("farm-category"), farmData, "Kateqoriya seçin", (row) => ({ value: row.id, label: row.name }));
-        fillOptions(document.getElementById("income-category"), incomeCategories, "Kateqoriya seçin", (row) => ({ value: row, label: row }));
+        fillOptions(document.getElementById("expense-category"), expenseData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("animal-category"), animalData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("seed-category"), seedData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("tool-category"), toolData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("farm-category"), farmData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
+        fillOptions(document.getElementById("income-category"), incomeCategories, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row, label: row }));
         setIncomeUnits(allUnits, "kq");
         setUnitSelectOptions("seed-unit", weightUnits, document.getElementById("seed-unit")?.value || weightUnits[0]);
         setUnitSelectOptions("farm-unit", allUnits, document.getElementById("farm-unit")?.value || allUnits[0]);
@@ -302,7 +347,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function showPanel(formType) {
         formShell.hidden = !formType;
         document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = panel.dataset.formPanel !== formType; });
-        activeTitle.textContent = panelTitles[formType] || "Form";
+        activeTitle.textContent = panelTitles[formType] || "{% trans 'Form' %}";
         previewSection.hidden = true;
     }
 
@@ -378,7 +423,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     identification_no: document.getElementById("animal-id").value.trim(),
                     gender: document.getElementById("animal-gender").value,
                     weight: document.getElementById("animal-weight").value,
-                    price: document.getElementById("animal-price").value
+                    price: document.getElementById("animal-price").value,
+                    zero_price_source: document.getElementById("animal-zero-price-source").value
                 }
             };
         }
@@ -399,7 +445,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     manual_name: manualName,
                     quantity: document.getElementById("seed-quantity").value,
                     unit: document.getElementById("seed-unit").value,
-                    price: document.getElementById("seed-price").value
+                    price: document.getElementById("seed-price").value,
+                    zero_price_source: document.getElementById("seed-zero-price-source").value
                 }
             };
         }
@@ -419,7 +466,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     item_name: itemSelect.options[itemSelect.selectedIndex]?.text || "",
                     manual_name: manualName,
                     quantity: document.getElementById("tool-quantity").value,
-                    price: document.getElementById("tool-price").value
+                    price: document.getElementById("tool-price").value,
+                    zero_price_source: document.getElementById("tool-zero-price-source").value
                 }
             };
         }
@@ -439,7 +487,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 manual_name: manualName,
                 quantity: document.getElementById("farm-quantity").value,
                 unit: document.getElementById("farm-unit").value,
-                price: document.getElementById("farm-price").value
+                price: document.getElementById("farm-price").value,
+                zero_price_source: document.getElementById("farm-zero-price-source").value
             }
         };
     }
@@ -457,7 +506,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!data.success) return;
         previewSection.hidden = false;
         previewTitle.textContent = data.barcode.label;
-        previewText.textContent = `${panelTitles[data.barcode.form_type] || data.barcode.form_type} üçün barkod`;
+        previewText.textContent = `${panelTitles[data.barcode.form_type] || data.barcode.form_type} {% trans 'üçün barkod' %}`;
         barcodeCodeText.textContent = data.barcode.code;
         barcodeDownloadName = `${slugify(data.barcode.label)}-${data.barcode.code}`;
         JsBarcode("#barcode-svg", data.barcode.code, { format: "CODE128", displayValue: true, fontSize: 16, margin: 12, height: 68 });
@@ -481,6 +530,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.querySelectorAll("[data-show-barcode]").forEach((btn) => {
         btn.addEventListener("click", async () => { await showBarcode(btn.dataset.showBarcode); });
+    });
+
+    zeroPriceSourceConfigs.forEach((config) => {
+        const input = document.getElementById(config.priceInputId);
+        if (!input) return;
+        input.addEventListener("input", () => syncZeroPriceSourceField(config.formType));
+        input.addEventListener("change", () => syncZeroPriceSourceField(config.formType));
     });
 
     downloadBtn.addEventListener("click", function () {
@@ -514,11 +570,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!code) return;
         try {
             await navigator.clipboard.writeText(code);
-            copyBtn.textContent = "Kopyalandı";
-            window.setTimeout(() => { copyBtn.textContent = "Kopyala"; }, 1400);
+            copyBtn.textContent = "{% trans 'Kopyalandı' %}";
+            window.setTimeout(() => { copyBtn.textContent = "{% trans 'Kopyala' %}"; }, 1400);
         } catch (error) {
-            copyBtn.textContent = "Olmadı";
-            window.setTimeout(() => { copyBtn.textContent = "Kopyala"; }, 1400);
+            copyBtn.textContent = "{% trans 'Olmadı' %}";
+            window.setTimeout(() => { copyBtn.textContent = "{% trans 'Kopyala' %}"; }, 1400);
         }
     });
 
@@ -531,6 +587,7 @@ document.addEventListener("DOMContentLoaded", function () {
     updateFarmItems();
     updateIncomeItems();
     syncAnimalIdentificationState();
+    zeroPriceSourceConfigs.forEach((config) => syncZeroPriceSourceField(config.formType));
 
     if (initialForm) {
         if (formTypeSelect) formTypeSelect.value = initialForm;

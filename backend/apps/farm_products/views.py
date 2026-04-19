@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from decimal import Decimal, InvalidOperation
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from hashlib import md5
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
@@ -168,6 +168,15 @@ def _parse_date(value: str | None):
         return timezone.localdate()
 
 
+def _parse_time(value: str | None):
+    if not value:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+    try:
+        return time.fromisoformat(value)
+    except Exception:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+
+
 def _parse_filter_date(value: str | None):
     if not value:
         return None
@@ -175,6 +184,10 @@ def _parse_filter_date(value: str | None):
         return date.fromisoformat(value)
     except Exception:
         return None
+
+
+def _farm_expense_title(item_name: str | None) -> str:
+    return f"Hazır məhsul alışı: {item_name or ''}".strip()
 
 
 def _sync_farm_product_related_records(user, product):
@@ -198,6 +211,7 @@ def _sync_farm_product_related_records(user, product):
                 linked_income.amount = amount_val
                 linked_income.additional_info = product.additional_info
                 linked_income.date = product.date
+                linked_income.time = product.time
                 linked_income.save()
             else:
                 linked_income.delete()
@@ -210,6 +224,7 @@ def _sync_farm_product_related_records(user, product):
                 amount=amount_val,
                 additional_info=product.additional_info,
                 date=product.date,
+                time=product.time,
                 created_by=user,
                 content_object=product,
             )
@@ -226,13 +241,15 @@ def _sync_farm_product_related_records(user, product):
         item_name = product.item.name if product.item else product.manual_name
         category_name = product.item.category.name if product.item and product.item.category else None
         subcat = _resolve_expense_subcategory(category_name)
-        title = f"{item_name} alışı"
+        title = _farm_expense_title(item_name)
         if linked_expense:
             linked_expense.amount = product.price
             linked_expense.title = title
             linked_expense.additional_info = product.additional_info
             linked_expense.subcategory = subcat
             linked_expense.manual_name = None if subcat else title
+            linked_expense.date = product.date
+            linked_expense.time = product.time
             linked_expense.save()
         else:
             Expense.objects.create(
@@ -241,6 +258,8 @@ def _sync_farm_product_related_records(user, product):
                 subcategory=subcat,
                 manual_name=None if subcat else title,
                 additional_info=product.additional_info,
+                date=product.date,
+                time=product.time,
                 created_by=user,
                 content_object=product,
             )
@@ -248,7 +267,7 @@ def _sync_farm_product_related_records(user, product):
         linked_expense.delete()
 
 
-def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, zero_price_source, additional_info, entry_date):
+def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         FarmProduct.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name, unit=unit)
@@ -274,6 +293,7 @@ def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, zer
     existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     _sync_farm_product_related_records(user, existing)
     return existing
@@ -282,97 +302,7 @@ def _merge_manual_farm_product(user, manual_name, quantity_val, unit, price, zer
 @login_required
 @never_cache
 def farm_product_list(request):
-    cache_key = f"farm-products:list:v2:{request.user.pk}:{_farm_list_cache_bust_value(request.user.pk)}:{_list_query_signature(request.GET)}:{timezone.localdate().isoformat()}"
-    cached_context = cache.get(cache_key)
-    if cached_context is not None:
-        return render(request, "farm_products/farm_product_list.html", cached_context)
-
-    query = (request.GET.get("q") or "").strip()
-    category_id = (request.GET.get("category") or "").strip()
-    item_id = (request.GET.get("item") or "").strip()
-    date_from_raw = (request.GET.get("date_from") or "").strip()
-    date_to_raw = (request.GET.get("date_to") or "").strip()
-    movement = (request.GET.get("movement") or "").strip()
-    products_qs = FarmProduct.objects.filter(created_by=request.user).select_related(
-        "item", "item__category"
-    ).only(
-        "id",
-        "quantity",
-        "unit",
-        "price",
-        "date",
-        "manual_name",
-        "additional_info",
-        "updated_at",
-        "item__id",
-        "item__name",
-        "item__unit",
-        "item__category__id",
-        "item__category__name",
-    )
-
-    if query:
-        products_qs = products_qs.filter(
-            Q(item__name__icontains=query)
-            | Q(item__category__name__icontains=query)
-            | Q(additional_info__icontains=query)
-            | Q(manual_name__icontains=query)
-        )
-
-    form_catalog = _farm_form_catalog()
-    selected_category = next((category for category in form_catalog["categories"] if str(category.id) == category_id), None) if category_id else None
-    if selected_category:
-        if (selected_category.name or "").strip().lower().startswith("digər"):
-            products_qs = products_qs.filter(Q(item__category=selected_category) | Q(item__isnull=True))
-        else:
-            products_qs = products_qs.filter(item__category=selected_category)
-
-    filtered_items = []
-    if selected_category and not (selected_category.name or "").strip().lower().startswith("digər"):
-        filtered_items = form_catalog["item_map"].get(str(selected_category.id), [])
-
-    if item_id:
-        products_qs = products_qs.filter(item_id=item_id)
-
-    date_from = _parse_filter_date(date_from_raw)
-    if date_from:
-        products_qs = products_qs.filter(date__gte=date_from)
-
-    date_to = _parse_filter_date(date_to_raw)
-    if date_to:
-        products_qs = products_qs.filter(date__lte=date_to)
-
-    if movement == "increase":
-        products_qs = products_qs.filter(quantity__gt=0)
-    elif movement == "decrease":
-        products_qs = products_qs.filter(quantity__lt=0)
-
-    products = list(products_qs)
-    for product in products:
-        product.icon_class = get_farm_product_icon_for_product(product)
-        product.zero_price_source_label = get_zero_price_source_label(product)
-        try:
-            product.price_display = abs(Decimal(product.price))
-        except Exception:
-            product.price_display = product.price
-
-    today = timezone.localdate()
-    context = {
-        "products": products,
-        "categories": form_catalog["categories"],
-        "category_item_map": form_catalog["item_map"],
-        "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
-        "filter_items": filtered_items,
-        "selected_category": category_id,
-        "selected_item": item_id,
-        "selected_date_from": date_from_raw,
-        "selected_date_to": date_to_raw,
-        "selected_movement": movement,
-        "today": today,
-        "yesterday": today - timedelta(days=1),
-    }
-    cache.set(cache_key, context, FARM_LIST_CACHE_TTL)
-    return render(request, "farm_products/farm_product_list.html", context)
+    return redirect(f"{resolve_url('inventory:add_placeholder')}?type=farm")
 
 
 @login_required
@@ -393,7 +323,7 @@ def get_farm_product_items(request):
 
 @login_required
 def farm_product_create(request):
-    redirect_to = request.POST.get("next") or "farm_products:product_list"
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?type=farm"
     if request.method == "POST":
         item_id = request.POST.get("item")
         quantity = request.POST.get("quantity")
@@ -404,6 +334,7 @@ def farm_product_create(request):
         additional_info = request.POST.get("additional_info")
         date_raw = request.POST.get("date")
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
 
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
@@ -480,6 +411,7 @@ def farm_product_create(request):
                 zero_price_source,
                 additional_info,
                 entry_date,
+                entry_time,
             ) if effective_manual else None
             if merged == "deleted":
                 _bust_farm_list_cache(request.user.pk)
@@ -499,6 +431,7 @@ def farm_product_create(request):
                 zero_price_source=zero_price_source,
                 additional_info=additional_info,
                 date=entry_date,
+                time=entry_time,
                 created_by=request.user,
             )
 
@@ -521,6 +454,7 @@ def farm_product_create(request):
                     amount=amount_val,
                     additional_info=additional_info,
                     date=entry_date,
+                    time=entry_time,
                     created_by=request.user,
                     content_object=product,
                 )
@@ -529,13 +463,15 @@ def farm_product_create(request):
                 item_name = item.name if item else manual_name
                 category_name = item.category.name if item and item.category else None
                 subcat = _resolve_expense_subcategory(category_name)
-                title = f"{item_name} alışı"
+                title = _farm_expense_title(item_name)
                 if subcat:
                     Expense.objects.create(
                         title=title,
                         amount=price,
                         subcategory=subcat,
                         additional_info=additional_info,
+                        date=entry_date,
+                        time=entry_time,
                         created_by=request.user,
                         content_object=product,
                     )
@@ -545,6 +481,8 @@ def farm_product_create(request):
                         amount=price,
                         manual_name=title,
                         additional_info=additional_info,
+                        date=entry_date,
+                        time=entry_time,
                         created_by=request.user,
                         content_object=product,
                     )
@@ -562,6 +500,8 @@ def farm_product_create(request):
 @login_required
 def farm_product_update(request, pk):
     product = get_object_or_404(FarmProduct, pk=pk, created_by=request.user)
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    redirect_to = next_url or f"{resolve_url('inventory:add_placeholder')}?type=farm"
     if request.method == "POST":
         item_id = request.POST.get("item")
         quantity = request.POST.get("quantity")
@@ -572,6 +512,7 @@ def farm_product_update(request, pk):
         additional_info = request.POST.get("additional_info")
         date_raw = request.POST.get("date")
         entry_date = _parse_date(date_raw)
+        entry_time = _parse_time(request.POST.get("time"))
 
         if not (item_id or manual_name) or not quantity or not unit:
             messages.error(request, _("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun."))
@@ -621,6 +562,7 @@ def farm_product_update(request, pk):
         product.price = price
         product.zero_price_source = zero_price_source if quantity_val > 0 and is_blank_or_zero_price(price) else None
         product.date = entry_date
+        product.time = entry_time
 
         if item_id:
             item = FarmProductItem.objects.get(id=item_id)
@@ -723,6 +665,7 @@ def farm_product_update(request, pk):
                     linked_income.amount = amount_val
                     linked_income.additional_info = product.additional_info
                     linked_income.date = product.date
+                    linked_income.time = product.time
                     linked_income.save()
                 else:
                     linked_income.delete()
@@ -736,6 +679,7 @@ def farm_product_update(request, pk):
                         amount=amount_val,
                         additional_info=product.additional_info,
                         date=product.date,
+                        time=product.time,
                         created_by=request.user,
                         content_object=product,
                     )
@@ -750,7 +694,7 @@ def farm_product_update(request, pk):
             item_name = product.item.name if product.item else product.manual_name
             category_name = product.item.category.name if product.item and product.item.category else None
             subcat = _resolve_expense_subcategory(category_name)
-            title = f"{item_name} alışı"
+            title = _farm_expense_title(item_name)
 
             if linked_expense:
                 linked_expense.amount = product.price
@@ -758,6 +702,8 @@ def farm_product_update(request, pk):
                 linked_expense.additional_info = product.additional_info
                 linked_expense.subcategory = subcat
                 linked_expense.manual_name = None if subcat else title
+                linked_expense.date = product.date
+                linked_expense.time = product.time
                 linked_expense.save()
             else:
                 Expense.objects.create(
@@ -766,6 +712,8 @@ def farm_product_update(request, pk):
                     subcategory=subcat,
                     manual_name=None if subcat else title,
                     additional_info=product.additional_info,
+                    date=product.date,
+                    time=product.time,
                     created_by=request.user,
                     content_object=product,
                 )
@@ -774,18 +722,19 @@ def farm_product_update(request, pk):
 
         _bust_farm_list_cache(request.user.pk)
         add_crud_success_message(request, "FarmProduct", "update")
-        return _redirect_with_refresh("farm_products:product_list")
+        return _redirect_with_refresh(redirect_to)
 
     return render(
         request,
         "farm_products/farm_product_form.html",
-        _farm_form_context(product),
+        {**_farm_form_context(product), "next_url": next_url},
     )
 
 
 @login_required
 def farm_product_delete(request, pk):
     product = get_object_or_404(FarmProduct, pk=pk, created_by=request.user)
+    redirect_to = request.POST.get("next") or f"{resolve_url('inventory:add_placeholder')}?type=farm"
     if request.method == "POST":
         product_type = ContentType.objects.get_for_model(FarmProduct)
         Expense.objects.filter(content_type=product_type, object_id=product.id).delete()
@@ -793,7 +742,7 @@ def farm_product_delete(request, pk):
         product.delete()
         _bust_farm_list_cache(request.user.pk)
         add_crud_success_message(request, "FarmProduct", "delete")
-        return _redirect_with_refresh("farm_products:product_list")
+        return _redirect_with_refresh(redirect_to)
     return render(request, "farm_products/farm_product_confirm_delete.html", {"product": product})
 
 

@@ -5,6 +5,17 @@
 
     const categorySelect = document.getElementById('category-select');
     const subcategorySelect = document.getElementById('subcategory-select');
+    const otherLabels = new Set(["digər", "other", "другое"]);
+
+    function translateDynamicLabel(value) {
+        const text = String(value || "");
+        if (!text) return text;
+        return window.runtimeI18n?.translateInlineValue?.(text) || text;
+    }
+
+    function isOtherLabel(value) {
+        return otherLabels.has(String(value || "").trim().toLowerCase());
+    }
 
     categorySelect.addEventListener('change', function () {
         const categoryId = this.value;
@@ -14,7 +25,7 @@
         const manualGroup = document.getElementById('manual-name-group');
         const manualInput = document.getElementById('manual-name-input');
 
-        if (categoryText === "Digər") {
+        if (isOtherLabel(categoryText)) {
             subcategoryGroup.style.display = 'none';
             subcategorySelect.required = false;
             subcategorySelect.disabled = true;
@@ -38,7 +49,7 @@
                 subcats.forEach(sub => {
                     const option = document.createElement('option');
                     option.value = sub.id;
-                    option.textContent = sub.name;
+                    option.textContent = translateDynamicLabel(sub.name);
                     subcategorySelect.appendChild(option);
                 });
                 subcategorySelect.disabled = false;

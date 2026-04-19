@@ -115,8 +115,10 @@
         <article class="dashboard-metric-card dashboard-metric-card--balance">
             <span class="dashboard-metric-label">{% trans "Həftəlik balans" %}</span>
             <strong class="dashboard-metric-value {% if overview.weekly_balance >= 0 %}dashboard-metric-value--income{% else %}dashboard-metric-value--expense{% endif %}">
-                {% if overview.weekly_balance >= 0 %}
+                {% if overview.weekly_balance > 0 %}
                 {% money overview.weekly_balance_display request.user "+" %}
+                {% elif overview.weekly_balance == 0 %}
+                {% money overview.weekly_balance_display request.user %}
                 {% else %}
                 {% money overview.weekly_balance_display request.user %}
                 {% endif %}
@@ -214,47 +216,6 @@
     </section>
     {% endif %}
 
-    <section class="dashboard-panel">
-        <div class="dashboard-section-head">
-            <div>
-                <p class="dashboard-section-label">{% trans "Ətraflı bölmələr" %}</p>
-                <h2 class="dashboard-section-heading">{% trans "Bölmələr üzrə işləyin" %}</h2>
-                <p class="dashboard-section-text">{% trans "Ayrı-ayrı inventar və maliyyə səhifələrinə birbaşa keçin." %}</p>
-            </div>
-        </div>
-        <div class="dashboard-shortcuts-grid">
-            <a href="{% url 'animals:animal_list' %}" class="dashboard-shortcut-card">
-                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-cow"></i></span>
-                <span class="dashboard-shortcut-title">{% trans "Heyvanlar" %}</span>
-                <span class="dashboard-shortcut-copy">{% trans "Alış, satış və say dəyişimini izləyin." %}</span>
-            </a>
-            <a href="{% url 'seeds:seed_list' %}" class="dashboard-shortcut-card">
-                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-seedling"></i></span>
-                <span class="dashboard-shortcut-title">{% trans "Toxumlar" %}</span>
-                <span class="dashboard-shortcut-copy">{% trans "Toxum ehtiyatını və əlavə qeydləri açın." %}</span>
-            </a>
-            <a href="{% url 'tools:tool_list' %}" class="dashboard-shortcut-card">
-                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-wrench"></i></span>
-                <span class="dashboard-shortcut-title">{% trans "Alətlər" %}</span>
-                <span class="dashboard-shortcut-copy">{% trans "İş alətlərinin sayını və vəziyyətini görün." %}</span>
-            </a>
-            <a href="{% url 'farm_products:product_list' %}" class="dashboard-shortcut-card">
-                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-warehouse"></i></span>
-                <span class="dashboard-shortcut-title">{% trans "Hazır məhsullar" %}</span>
-                <span class="dashboard-shortcut-copy">{% trans "Süd, yumurta, tərəvəz və digər məhsulları açın." %}</span>
-            </a>
-            <a href="{% url 'incomes:income_list' %}" class="dashboard-shortcut-card">
-                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-sack-dollar"></i></span>
-                <span class="dashboard-shortcut-title">{% trans "Gəlirlər" %}</span>
-                <span class="dashboard-shortcut-copy">{% trans "Bütün satış və gəlir qeydlərini görün." %}</span>
-            </a>
-            <a href="{% url 'expenses:expense_list' %}" class="dashboard-shortcut-card">
-                <span class="dashboard-shortcut-icon"><i class="fa-solid fa-wallet"></i></span>
-                <span class="dashboard-shortcut-title">{% trans "Xərclər" %}</span>
-                <span class="dashboard-shortcut-copy">{% trans "Yem, yanacaq və digər xərcləri yoxlayın." %}</span>
-            </a>
-        </div>
-    </section>
 </main>
 
 <style>

@@ -8,7 +8,7 @@
         <div class="header-top">
             <a href="{% url 'suppliers_list' %}" class="back-btn-box">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>{% if is_edit %}Təchizatçını Redaktə Et{% else %}Təchizatçı Əlavə Et{% endif %}</span>
+                <span>{% if is_edit %}{% trans "Təchizatçını Redaktə Et" %}{% else %}{% trans "Təchizatçı Əlavə Et" %}{% endif %}</span>
             </a>
         </div>
     </div>
@@ -21,12 +21,12 @@
             
             <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
-                    <label>Təchizatçı Adı <span style="color: #dc3545;">*</span></label>
+                    <label>{% trans "Təchizatçı Adı" %} <span style="color: #dc3545;">*</span></label>
                     <input type="text" name="name" class="custom-input click-focus" required placeholder="{% trans 'Məsələn: Əhməd Toxumçuluq' %}" value="{{ supplier.name|default:'' }}">
                 </div>
 
                 <div class="form-group">
-                    <label>Kateqoriya <span style="color: #dc3545;">*</span></label>
+                    <label>{% trans "Kateqoriya" %} <span style="color: #dc3545;">*</span></label>
                     <div class="click-focus">
                         <select name="category" id="supplier-category-select" class="custom-input" required>
                             <option value="" disabled {% if not supplier.category %}selected{% endif %}>{% trans "Kateqoriya seçin" %}</option>
@@ -50,7 +50,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Reytinq <span style="color: #dc3545;">*</span></label>
+                    <label>{% trans "Reytinq" %} <span style="color: #dc3545;">*</span></label>
                     <div class="click-focus">
                         <select name="rating" class="custom-input" required>
                             <option value="5" {% if supplier.rating|default:5 == 5 %}selected{% endif %}>⭐⭐⭐⭐⭐ (5/5)</option>
@@ -81,7 +81,7 @@
             </div>
 
             <button type="submit" class="add-expense-btn" style="margin-top: 30px;">
-                <i class="fa-solid fa-check"></i> {% if is_edit %}Yenilə{% else %}Yadda Saxla{% endif %}
+                <i class="fa-solid fa-check"></i> {% if is_edit %}{% trans "Yenilə" %}{% else %}{% trans "Yadda Saxla" %}{% endif %}
             </button>
         </form>
     </div>

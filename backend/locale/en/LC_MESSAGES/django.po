@@ -932,8 +932,110 @@ msgstr "Username or password is incorrect."
 msgid "Toxumlar"
 msgstr "Seeds"
 
+msgid "Heyvandarlıq"
+msgstr "Livestock"
+
+msgid "Bitkiçilik"
+msgstr "Crop farming"
+
+msgid "İşçi qüvvəsi"
+msgstr "Workforce"
+
+msgid "Texnika və Maşınlar"
+msgstr "Machinery and Equipment"
+
+msgid "İnfrastruktur"
+msgstr "Infrastructure"
+
+msgid "Logistika və Satış"
+msgstr "Logistics and Sales"
+
+msgid "Yem"
+msgstr "Feed"
+
+msgid "Baytar"
+msgstr "Veterinarian"
+
+msgid "Peyvəndləmə"
+msgstr "Vaccination"
+
+msgid "Heyvan alışı"
+msgstr "Animal purchase"
+
+msgid "Gübrə"
+msgstr "Fertilizer"
+
+msgid "Süd məhsulları"
+msgstr "Dairy products"
+
+msgid "Arıçılıq"
+msgstr "Beekeeping"
+
+msgid "Pesticidlər"
+msgstr "Pesticides"
+
+msgid "Suvarma"
+msgstr "Irrigation"
+
+msgid "Meyvə-Tərəvəz alışı"
+msgstr "Fruit and vegetable purchase"
+
+msgid "Taxıl alışı"
+msgstr "Grain purchase"
+
+msgid "Yem bitkisi alışı"
+msgstr "Forage crop purchase"
+
+msgid "Maaşlar"
+msgstr "Salaries"
+
+msgid "Sığorta"
+msgstr "Insurance"
+
+msgid "Yanacaq"
+msgstr "Fuel"
+
+msgid "Təmir və Baxım"
+msgstr "Repair and Maintenance"
+
+msgid "Texnika alışı"
+msgstr "Equipment purchase"
+
+msgid "Elektrik"
+msgstr "Electricity"
+
+msgid "Su"
+msgstr "Water"
+
+msgid "Tikinti"
+msgstr "Construction"
+
+msgid "Nəqliyyat"
+msgstr "Transport"
+
+msgid "Qablaşdırma"
+msgstr "Packaging"
+
 msgid "Heyvanlar"
 msgstr "Animals"
+
+msgid "Seçilmiş gün"
+msgstr "Selected day"
+
+msgid "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür."
+msgstr "All stock, sale, and expense activities for this day appear here."
+
+msgid "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək."
+msgstr "Today's activity is collected here. Newly added records will appear in this list."
+
+msgid "Qeyd sayı"
+msgstr "Record count"
+
+msgid "Bu gün üçün qeyd yoxdur"
+msgstr "No records for this day"
+
+msgid "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin."
+msgstr "Pick another day from the calendar or add a new stock, sale, or expense entry."
 
 msgid "Alətlər"
 msgstr "Tools"
@@ -1535,6 +1637,9 @@ msgstr "Irrigation Tools"
 msgid "Kənd Texnikası"
 msgstr "Farm Machinery"
 
+msgid "Kənd Təsərrüfatı Texnikası"
+msgstr "Farm Machinery"
+
 msgid "Baxım və Təmir"
 msgstr "Maintenance and Repair"
 
@@ -1817,6 +1922,60 @@ msgstr "Select the main category first"
 msgid "Heyvan Siyahısı"
 msgstr "Animal List"
 
+msgid "Siyahı yüklənir..."
+msgstr "Loading list..."
+
+msgid "Xərc Siyahısı"
+msgstr "Expense List"
+
+msgid "Satış Siyahısı"
+msgstr "Sales List"
+
+msgid "Alət Siyahısı"
+msgstr "Tool List"
+
+msgid "Məhsul Siyahısı"
+msgstr "Product List"
+
+msgid "Düzəliş"
+msgstr "Edit"
+
+msgid "Sil"
+msgstr "Delete"
+
+msgid "Tarix və saat"
+msgstr "Date and time"
+
+msgid "İndi"
+msgstr "Now"
+
+msgid "Şifrəni dəyiş"
+msgstr "Change password"
+
+msgid "Təsdiq"
+msgstr "Confirm"
+
+msgid "Bu stok haradan gəlib?"
+msgstr "Where did this stock come from?"
+
+msgid "Geri qayıt"
+msgstr "Go back"
+
+msgid "Satış Əlavə Et"
+msgstr "Add Sale"
+
+msgid "Stoku yenilə"
+msgstr "Update stock"
+
+msgid "Sayımdan sonra qalan miqdar"
+msgstr "Remaining quantity after counting"
+
+msgid "Sayım etdinizsə, hazırkı qalan miqdarı yazın."
+msgstr "If you counted it, enter the current remaining quantity."
+
+msgid "Silmək istədiyinizə əminsiniz?"
+msgstr "Are you sure you want to delete?"
+
 msgid "Heç bir heyvan tapılmadı"
 msgstr "No animals found"
 
@@ -2044,6 +2203,9 @@ msgstr "No income has been recorded yet"
 msgid "Filterə uyğun gəlir tapılmadı"
 msgstr "No income found for this filter"
 
+msgid "Filterə uyğun nəticə tapılmadı."
+msgstr "No results found for this filter."
+
 msgid "Alt məhsul seçin"
 msgstr "Select a sub-product"
 
@@ -2072,11 +2234,17 @@ msgstr "Recording audio"
 msgid "Danışın, sistem səsi dinləyir."
 msgstr "Speak, the system is listening."
 
+msgid "Dinlənilir... Bitirmək üçün “Yazını Bitir” düyməsinə basın."
+msgstr "Listening... Press “Stop Recording” to finish."
+
 msgid "Kod / ID"
 msgstr "Code / ID"
 
 msgid "Barkod kodunu yazın"
 msgstr "Enter the barcode"
+
+msgid "Kodu və ya ID-ni əl ilə yazın."
+msgstr "Enter the code or ID manually."
 
 msgid "Kodu Yoxla"
 msgstr "Check Code"
@@ -2086,6 +2254,15 @@ msgstr "Form"
 
 msgid "Scan olunan barkoda uyğun form açıldı."
 msgstr "The form matching the scanned barcode has been opened."
+
+msgid "Kamera açılır..."
+msgstr "Opening camera..."
+
+msgid "Barkodu kameraya yaxınlaşdırın."
+msgstr "Bring the barcode close to the camera."
+
+msgid "Skan dayandırıldı."
+msgstr "Scanning stopped."
 
 msgid "Alt Kateqoriya"
 msgstr "Subcategory"
@@ -2189,6 +2366,12 @@ msgstr "Processing audio..."
 
 msgid "Yazını Bitir"
 msgstr "Stop Recording"
+
+msgid "Bütün növlər"
+msgstr "All types"
+
+msgid "Növ seçin"
+msgstr "Select type"
 
 msgid "Barkod Yarat"
 msgstr "Create barcode"
@@ -2613,6 +2796,30 @@ msgstr "Sale form"
 msgid "Satış formu açıldı."
 msgstr "Sale form opened."
 
+msgid "Əl ilə toxum formu açıldı."
+msgstr "Seed form opened manually."
+
+msgid "Toxum məlumatlarını doldurun."
+msgstr "Fill in the seed details."
+
+msgid "Əl ilə heyvan formu açıldı."
+msgstr "Animal form opened manually."
+
+msgid "Heyvan məlumatlarını doldurun."
+msgstr "Fill in the animal details."
+
+msgid "Əl ilə məhsul formu açıldı."
+msgstr "Product form opened manually."
+
+msgid "Hazır məhsul məlumatlarını doldurun."
+msgstr "Fill in the finished product details."
+
+msgid "Əl ilə alət formu açıldı."
+msgstr "Tool form opened manually."
+
+msgid "Alət məlumatlarını doldurun."
+msgstr "Fill in the tool details."
+
 msgid "Tez sat"
 msgstr "Quick sale"
 
@@ -2635,3 +2842,66 @@ msgstr "What are you adding?"
 
 msgid "Satışı Saxla"
 msgstr "Save Sale"
+
+msgid "Hazır məhsul alışı"
+msgstr "Finished product purchase"
+
+msgid "Güzəşt olmasaydı ümumi dərəcə"
+msgstr "Total rate without exemption"
+
+msgid "Müqayisə üçün arayış məbləği"
+msgstr "Reference amount for comparison"
+
+msgid "Xərc istiqamətləri"
+msgstr "Expense breakdown"
+
+msgid "PDF kimi saxla / çap et"
+msgstr "Save as PDF / Print"
+
+msgid "Məktub"
+msgstr "Letter"
+
+msgid "Hazırlanma tarixi"
+msgstr "Report date"
+
+msgid "Mənbə"
+msgstr "Source"
+
+msgid "İnək südü"
+msgstr "Cow milk"
+
+msgid "Qaz yumurtası"
+msgstr "Goose egg"
+
+msgid "Süd satışı"
+msgstr "Milk sale"
+
+msgid "Bal satışı"
+msgstr "Honey sale"
+
+msgid "Yumurta satışı"
+msgstr "Egg sale"
+
+msgid "Qarpız"
+msgstr "Watermelon"
+
+msgid "Öküz"
+msgstr "Ox"
+
+msgid "Taxıl və Paxlalı Toxumları"
+msgstr "Grain and Legume Seeds"
+
+msgid "Tərəvəz və Bostan Toxumları"
+msgstr "Vegetable and Melon Seeds"
+
+msgid "Süd və süd məhsulları"
+msgstr "Milk and Dairy Products"
+
+msgid "Milk and Dairy Products"
+msgstr "Milk and Dairy Products"
+
+msgid "Meyvə-tərəvəz"
+msgstr "Fruits and Vegetables"
+
+msgid "Stok səhifəsindən düzəliş"
+msgstr "Adjusted from stock page"

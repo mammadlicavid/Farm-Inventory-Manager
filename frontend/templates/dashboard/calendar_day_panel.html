@@ -1,0 +1,75 @@
+{% load i18n %}
+{% load common_extras %}
+
+<div class="calendar-day-panel-head">
+    <p class="calendar-section-label">{% trans "Seçilmiş gün" %}</p>
+    <h2>{{ calendar_data.selected_day.label }}</h2>
+    <p class="calendar-day-panel-copy">
+        {% if calendar_data.selected_day.is_today %}
+        {% trans "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək." %}
+        {% else %}
+        {% trans "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür." %}
+        {% endif %}
+    </p>
+</div>
+
+<div class="calendar-day-stats">
+    <article class="calendar-day-stat">
+        <span>{% trans "Qeyd sayı" %}</span>
+        <strong>{{ calendar_data.selected_day.summary.total }}</strong>
+    </article>
+    <article class="calendar-day-stat calendar-day-stat--income">
+        <span>{% trans "Gəlir" %}</span>
+        <strong>{% money calendar_data.selected_day.income_total request.user %}</strong>
+    </article>
+    <article class="calendar-day-stat calendar-day-stat--expense">
+        <span>{% trans "Xərc" %}</span>
+        <strong>{% money calendar_data.selected_day.expense_total request.user %}</strong>
+    </article>
+</div>
+
+<div class="calendar-timeline">
+    {% for activity in calendar_data.selected_day.activities %}
+    <article class="calendar-activity-card calendar-activity-card--{{ activity.kind }}">
+        <span class="calendar-activity-icon">
+            <i class="fa-solid {{ activity.icon }}"></i>
+        </span>
+        <div class="calendar-activity-content">
+            <div class="calendar-activity-row">
+                <strong class="calendar-activity-title">{{ activity.title }}</strong>
+                <div class="calendar-activity-badges-inline">
+                    {% if activity.quantity is not None %}
+                    <span class="calendar-activity-qty calendar-activity-qty--{{ activity.kind }}">
+                        {{ activity.quantity_prefix }}{% display_measure activity.quantity activity.unit request.user %}
+                    </span>
+                    {% endif %}
+                    {% if activity.amount is not None %}
+                    <span class="calendar-activity-money calendar-activity-money--{{ activity.financial_role|default:activity.kind }}">
+                        {% money activity.amount request.user activity.amount_prefix %}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="calendar-activity-details">
+                <div class="calendar-activity-detail">
+                    <strong>{% trans "Əməliyyat" %}:</strong>
+                    <span>{{ activity.operation_label }}</span>
+                </div>
+                <div class="calendar-activity-detail">
+                    <strong>{% trans "Bölmə" %}:</strong>
+                    <span>{{ activity.subtitle }}</span>
+                </div>
+            </div>
+            {% if activity.note %}
+            <div class="calendar-activity-note">{{ activity.note }}</div>
+            {% endif %}
+        </div>
+    </article>
+    {% empty %}
+    <div class="calendar-empty-state">
+        <span class="calendar-empty-icon"><i class="fa-regular fa-calendar"></i></span>
+        <h3>{% trans "Bu gün üçün qeyd yoxdur" %}</h3>
+        <p>{% trans "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin." %}</p>
+    </div>
+    {% endfor %}
+</div>

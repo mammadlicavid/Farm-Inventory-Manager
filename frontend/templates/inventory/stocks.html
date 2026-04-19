@@ -100,8 +100,8 @@
                     <div class="product-subtitle">{{ item.subtitle }}</div>
                     {% if item.update_type == "animal_sub" or item.update_type == "animal_other" %}
                     <div class="product-subtitle" style="margin-top: 6px; font-weight: 600; color: #374151;">
-                        Erkək: {{ item.male_display }}<br>
-                        Dişi: {{ item.female_display }}
+                        {% trans "Erkək" %}: {{ item.male_display }}<br>
+                        {% trans "Dişi" %}: {{ item.female_display }}
                     </div>
                     {% endif %}
                 </div>
@@ -244,14 +244,13 @@
         background: #fff;
         border: 1.5px solid #c9d8ce;
         border-radius: 14px;
-        padding: 14px 14px;
+        position: relative;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+        align-items: stretch;
         color: #374151;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
     }
 
     .filter-input:focus-within {
@@ -262,14 +261,20 @@
     .filter-input select,
     .filter-input input {
         width: 100%;
+        min-height: 54px;
+        padding: 14px 44px 14px 14px;
         background: transparent;
         border: none;
+        border-radius: 14px;
         font-size: 16px;
         font-weight: 600;
         color: #374151;
         outline: none;
         appearance: none;
+        -webkit-appearance: none;
         cursor: text;
+        position: relative;
+        z-index: 1;
     }
 
     .filter-input select {
@@ -288,6 +293,12 @@
     .filter-input i {
         color: #7a8f81;
         font-size: 14px;
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        z-index: 2;
     }
 
     .stocks-reset-field {
@@ -669,16 +680,24 @@
         const selected = maps[lang];
         if (!selected) return;
 
+        function translateValue(value) {
+            const text = (value || "").trim();
+            if (!text) return text;
+            return selected.texts[text] || window.runtimeI18n?.translateInlineValue?.(text) || text;
+        }
+
         function translateTextNode(node) {
             const value = (node.textContent || "").trim();
-            if (selected.texts[value]) node.textContent = selected.texts[value];
+            const translated = translateValue(value);
+            if (translated && translated !== value) node.textContent = translated;
         }
 
         function translateOptionList(select) {
             if (!select) return;
             select.querySelectorAll("option").forEach((option) => {
                 const value = (option.textContent || "").trim();
-                if (selected.texts[value]) option.textContent = selected.texts[value];
+                const translated = translateValue(value);
+                if (translated && translated !== value) option.textContent = translated;
             });
         }
 
@@ -690,7 +709,10 @@
             const searchInput = document.getElementById("stocks-search");
             if (searchInput) {
                 const value = (searchInput.getAttribute("placeholder") || "").trim();
-                if (selected.placeholders[value]) searchInput.setAttribute("placeholder", selected.placeholders[value]);
+                searchInput.setAttribute(
+                    "placeholder",
+                    selected.placeholders[value] || window.runtimeI18n?.translateInlineValue?.(value) || value,
+                );
             }
 
             ["main-category-select", "subcategory-select", "stocks-sort"].forEach((id) => {
@@ -715,7 +737,7 @@
     <div class="modal">
         <div class="modal-title" id="modal-title">Məhsul</div>
         <div class="modal-subtitle" id="modal-subtitle"></div>
-        <form id="product-modal-form" action="{% url 'inventory:stocks_update_quantity' %}" method="POST" data-sync-entity="stock" data-sync-action="update" data-sync-reset="false" data-sync-keep-key="stocks_filters_keep_v1">
+        <form id="product-modal-form" action="{% url 'inventory:stocks_update_quantity' %}" method="POST" data-sync-entity="stock" data-sync-action="update" data-sync-reset="false" data-sync-keep-key="stocks_filters_keep_v1" data-sync-direct-online="true">
             {% csrf_token %}
             <input type="hidden" name="update_type" id="modal-update-type">
             <input type="hidden" name="update_id" id="modal-update-id">

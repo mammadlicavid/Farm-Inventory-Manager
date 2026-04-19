@@ -4,26 +4,38 @@ import os
 import tempfile
 from datetime import timedelta
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
+from django.db.utils import OperationalError, ProgrammingError
 from django.db.models import Case, DecimalField, F, IntegerField, Q, Sum, Value, When
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, resolve_url
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext as _T, gettext_lazy as _, override
 from django.views.decorators.http import require_POST
 
 from expenses.models import Expense, ExpenseCategory
 from incomes.models import Income
-from incomes.views import _build_category_payload
+from incomes.views import _build_category_payload, _get_income_icon
 
-from .models import ScanItem, UserBarcode
-
-from common.icons import get_animal_icon_by_name, get_seed_icon_by_name, get_tool_icon_by_name, get_farm_product_icon_by_name
+from common.formatting import format_currency
+from common.icons import (
+    get_animal_icon_by_name,
+    get_animal_icon_for_animal,
+    get_expense_icon,
+    get_farm_product_icon_by_name,
+    get_farm_product_icon_for_product,
+    get_seed_icon_by_name,
+    get_seed_icon_for_seed,
+    get_tool_icon_by_name,
+    get_tool_icon_for_tool,
+)
 from common.messages import add_crud_success_message
-from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES
+from common.zero_price_source import ZERO_PRICE_SOURCE_CHOICES, get_zero_price_source_label
+from common.expense_titles import translate_expense_title
 from animals.models import Animal, AnimalCategory, AnimalSubCategory
 from common.category_order import (
     ANIMAL_CATEGORY_ORDER,
@@ -36,16 +48,7 @@ from common.category_order import (
     TOOL_ITEM_ORDER,
     order_queryset_by_name_list,
 )
-from common.icons import (
-    get_animal_icon_by_name,
-    get_farm_product_icon_by_name,
-    get_seed_icon_by_name,
-    get_tool_icon_by_name,
-)
-from common.messages import add_crud_success_message
-from expenses.models import ExpenseCategory
 from farm_products.models import FarmProduct, FarmProductCategory, FarmProductItem
-from incomes.views import _build_category_payload
 from seeds.models import Seed, SeedCategory, SeedItem
 from tools.models import Tool, ToolCategory, ToolItem
 
@@ -54,6 +57,165 @@ from .models import ScanItem, UserBarcode
 ADD_PAGE_CATALOG_CACHE_KEY = "inventory:add-page-catalog:v1"
 ADD_PAGE_CATALOG_CACHE_TTL = 300
 STOCKS_PAGE_CACHE_TTL = 20
+ADD_PRODUCT_SIDE_LIST_LIMIT = 40
+
+FARM_PRODUCT_NAME_TRANSLATIONS = {
+    "en": {
+        "İnək südü": "Cow milk",
+        "Camış südü": "Buffalo milk",
+        "Keçi südü": "Goat milk",
+        "İnək pendiri": "Cow cheese",
+        "Camış pendiri": "Buffalo cheese",
+        "Keçi pendiri": "Goat cheese",
+        "Qatıq": "Yogurt",
+        "Ayran": "Ayran",
+        "Kərə yağı": "Butter",
+        "Qaymaq": "Cream",
+        "Toyuq yumurtası": "Chicken egg",
+        "Hinduşka yumurtası": "Turkey egg",
+        "Qaz yumurtası": "Goose egg",
+        "Ördək yumurtası": "Duck egg",
+        "Bildircin yumurtası": "Quail egg",
+        "Mal əti": "Beef",
+        "Camış əti": "Buffalo meat",
+        "Qoyun əti": "Sheep meat",
+        "Keçi əti": "Goat meat",
+        "Toyuq əti": "Chicken meat",
+        "Hinduşka əti": "Turkey meat",
+        "Qaz əti": "Goose meat",
+        "Ördək əti": "Duck meat",
+        "Bildircin əti": "Quail meat",
+        "Alma": "Apple",
+        "Armud": "Pear",
+        "Şaftalı": "Peach",
+        "Ərik": "Apricot",
+        "Albalı": "Cherry",
+        "Gilas": "Sweet cherry",
+        "Nar": "Pomegranate",
+        "Üzüm": "Grape",
+        "Gavalı": "Plum",
+        "Heyva": "Quince",
+        "Bibər": "Pepper",
+        "Badımcan": "Eggplant",
+        "Kahı": "Lettuce",
+        "İspanaq": "Spinach",
+        "Soğan": "Onion",
+        "Sarımsaq": "Garlic",
+        "Keşniş": "Coriander",
+        "Şüyüt": "Dill",
+        "Cəfəri": "Parsley",
+        "Yaşıl soğan": "Green onion",
+        "Reyhan": "Basil",
+        "Tərxun": "Tarragon",
+        "Çovdar": "Rye",
+        "Vələmir": "Oats",
+        "Çəltik": "Rice",
+        "Qarpız": "Watermelon",
+        "Yemiş": "Melon",
+        "Boranı": "Pumpkin",
+        "Bal": "Honey",
+        "Arı mumu": "Beeswax",
+        "Arı südü": "Royal jelly",
+        "Mal peyini": "Cow manure",
+        "Qoyun peyini": "Sheep manure",
+        "Keçi peyini": "Goat manure",
+        "Quş peyini": "Bird manure",
+        "Kompost": "Compost",
+        "Mineral gübrə": "Mineral fertilizer",
+    },
+    "ru": {
+        "İnək südü": "Коровье молоко",
+        "Camış südü": "Буйволиное молоко",
+        "Keçi südü": "Козье молоко",
+        "İnək pendiri": "Коровий сыр",
+        "Camış pendiri": "Буйволиный сыр",
+        "Keçi pendiri": "Козий сыр",
+        "Qatıq": "Йогурт",
+        "Ayran": "Айран",
+        "Kərə yağı": "Сливочное масло",
+        "Qaymaq": "Сливки",
+        "Toyuq yumurtası": "Куриное яйцо",
+        "Hinduşka yumurtası": "Яйцо индейки",
+        "Qaz yumurtası": "Гусиное яйцо",
+        "Ördək yumurtası": "Утиное яйцо",
+        "Bildircin yumurtası": "Перепелиное яйцо",
+        "Mal əti": "Говядина",
+        "Camış əti": "Мясо буйвола",
+        "Qoyun əti": "Баранина",
+        "Keçi əti": "Козлятина",
+        "Toyuq əti": "Куриное мясо",
+        "Hinduşka əti": "Мясо индейки",
+        "Qaz əti": "Гусиное мясо",
+        "Ördək əti": "Утиное мясо",
+        "Bildircin əti": "Мясо перепела",
+        "Alma": "Яблоко",
+        "Armud": "Груша",
+        "Şaftalı": "Персик",
+        "Ərik": "Абрикос",
+        "Albalı": "Вишня",
+        "Gilas": "Черешня",
+        "Nar": "Гранат",
+        "Üzüm": "Виноград",
+        "Gavalı": "Слива",
+        "Heyva": "Айва",
+        "Bibər": "Перец",
+        "Badımcan": "Баклажан",
+        "Kahı": "Латук",
+        "İspanaq": "Шпинат",
+        "Soğan": "Лук",
+        "Sarımsaq": "Чеснок",
+        "Keşniş": "Кинза",
+        "Şüyüt": "Укроп",
+        "Cəfəri": "Петрушка",
+        "Yaşıl soğan": "Зеленый лук",
+        "Reyhan": "Базилик",
+        "Tərxun": "Тархун",
+        "Çovdar": "Рожь",
+        "Vələmir": "Овес",
+        "Çəltik": "Рис",
+        "Qarpız": "Арбуз",
+        "Yemiş": "Дыня",
+        "Boranı": "Тыква",
+        "Bal": "Мед",
+        "Arı mumu": "Пчелиный воск",
+        "Arı südü": "Маточное молочко",
+        "Mal peyini": "Коровий навоз",
+        "Qoyun peyini": "Овечий навоз",
+        "Keçi peyini": "Козий навоз",
+        "Quş peyini": "Птичий помет",
+        "Kompost": "Компост",
+        "Mineral gübrə": "Минеральное удобрение",
+    },
+}
+
+GENERIC_OPTION_TRANSLATIONS = {
+    "en": {
+        "Taxıl və Paxlalı Toxumları": "Grain and legume seeds",
+        "Yem və Yağlı Bitki Toxumları": "Forage and oil crop seeds",
+        "Tərəvəz və Bostan Toxumları": "Vegetable and melon seeds",
+        "Meyvə Toxumları": "Fruit seeds",
+        "Taxıl toxumları": "Grain seeds",
+        "Paxlalı toxumları": "Legume seeds",
+        "Yem bitki toxumları": "Forage crop seeds",
+        "Yağlı bitki toxumları": "Oil crop seeds",
+        "Tərəvəz toxumları": "Vegetable seeds",
+        "Bostan toxumları": "Melon seeds",
+        "Meyvə toxumları": "Fruit seeds",
+    },
+    "ru": {
+        "Taxıl və Paxlalı Toxumları": "Зерновые и бобовые семена",
+        "Yem və Yağlı Bitki Toxumları": "Кормовые и масличные семена",
+        "Tərəvəz və Bostan Toxumları": "Семена овощей и бахчевых",
+        "Meyvə Toxumları": "Семена фруктов",
+        "Taxıl toxumları": "Семена зерновых",
+        "Paxlalı toxumları": "Семена бобовых",
+        "Yem bitki toxumları": "Семена кормовых культур",
+        "Yağlı bitki toxumları": "Семена масличных культур",
+        "Tərəvəz toxumları": "Семена овощей",
+        "Bostan toxumları": "Семена бахчевых",
+        "Meyvə toxumları": "Семена фруктов",
+    },
+}
 
 _whisper_model = None
 
@@ -159,9 +321,9 @@ def _build_add_page_catalog(lang_code="az"):
         expense_categories.append(
             {
                 "id": category.id,
-                "name": _(category.name),
+                "name": _translate_panel_label(category.name, lang_code),
                 "subcategories": _unique_rows([
-                    {"id": sub.id, "name": _(sub.name)}
+                    {"id": sub.id, "name": _translate_panel_label(sub.name, lang_code)}
                     for sub in category.subcategories.all()
                 ]),
             }
@@ -179,9 +341,9 @@ def _build_add_page_catalog(lang_code="az"):
         animal_categories.append(
             {
                 "id": category.id,
-                "name": _(category.name),
+                "name": _translate_panel_label(category.name, lang_code),
                 "subcategories": _unique_rows([
-                    {"id": sub.id, "name": _(sub.name)}
+                    {"id": sub.id, "name": _translate_panel_label(sub.name, lang_code)}
                     for sub in ordered_subcategories
                 ]),
             }
@@ -199,9 +361,9 @@ def _build_add_page_catalog(lang_code="az"):
         seed_categories.append(
             {
                 "id": category.id,
-                "name": _(category.name),
+                "name": _translate_panel_label(category.name, lang_code),
                 "items": _unique_rows([
-                    {"id": item.id, "name": _(item.name)}
+                    {"id": item.id, "name": _translate_panel_label(item.name, lang_code)}
                     for item in ordered_items
                 ]),
             }
@@ -219,9 +381,9 @@ def _build_add_page_catalog(lang_code="az"):
         tool_categories.append(
             {
                 "id": category.id,
-                "name": _(category.name),
+                "name": _translate_panel_label(category.name, lang_code),
                 "items": _unique_rows([
-                    {"id": item.id, "name": _(item.name)}
+                    {"id": item.id, "name": _translate_panel_label(item.name, lang_code)}
                     for item in ordered_items
                 ]),
             }
@@ -239,9 +401,9 @@ def _build_add_page_catalog(lang_code="az"):
         farm_categories.append(
             {
                 "id": category.id,
-                "name": _(category.name),
+                "name": _translate_panel_label(category.name, lang_code),
                 "items": _unique_rows([
-                    {"id": item.id, "name": _(item.name), "unit": item.unit or ""}
+                    {"id": item.id, "name": _translate_panel_label(item.name, lang_code), "unit": item.unit or ""}
                     for item in ordered_items
                 ]),
             }
@@ -253,12 +415,12 @@ def _build_add_page_catalog(lang_code="az"):
     income_categories = [row["name"] for row in income_categories]
 
     form_types = [
-        {"key": "seed", "label": _("Toxum")},
-        {"key": "animal", "label": _("Heyvan")},
-        {"key": "tool", "label": _("Alət")},
-        {"key": "farm", "label": _("Hazır məhsul")},
-        {"key": "expense", "label": _("Xərclər")},
-        {"key": "income", "label": _("Gəlirlər")},
+        {"key": "seed", "label": _translate_panel_label("Toxum", lang_code)},
+        {"key": "animal", "label": _translate_panel_label("Heyvan", lang_code)},
+        {"key": "tool", "label": _translate_panel_label("Alət", lang_code)},
+        {"key": "farm", "label": _translate_panel_label("Hazır məhsul", lang_code)},
+        {"key": "expense", "label": _translate_panel_label("Xərclər", lang_code)},
+        {"key": "income", "label": _translate_panel_label("Gəlirlər", lang_code)},
     ]
     payload = {
         "form_types": form_types,
@@ -303,15 +465,401 @@ def _build_add_page_context(request=None):
                     .get("total")
                     or Decimal("0")
                 )
+    enabled_form_types = ["seed", "animal", "tool", "farm"]
+    if add_page_mode == "income":
+        enabled_form_types = ["income"]
+    elif add_page_mode == "expense":
+        enabled_form_types = ["expense"]
+
+    catalog = _build_add_page_catalog(request.LANGUAGE_CODE if request else "az")
+    filtered_catalog = {
+        "form_types": [row for row in catalog.get("form_types", []) if row.get("key") in enabled_form_types],
+        "expense_categories": catalog.get("expense_categories", []) if "expense" in enabled_form_types else [],
+        "animal_categories": catalog.get("animal_categories", []) if "animal" in enabled_form_types else [],
+        "seed_categories": catalog.get("seed_categories", []) if "seed" in enabled_form_types else [],
+        "tool_categories": catalog.get("tool_categories", []) if "tool" in enabled_form_types else [],
+        "farm_categories": catalog.get("farm_categories", []) if "farm" in enabled_form_types else [],
+        "income_categories": catalog.get("income_categories", []) if "income" in enabled_form_types else [],
+        "income_category_data": catalog.get("income_category_data", {}) if "income" in enabled_form_types else {},
+    }
     return {
         "today": timezone.localdate(),
         "voice_input_language": voice_input_language,
         "add_page_mode": add_page_mode,
         "initial_form": initial_form,
         "add_page_weekly_total": add_page_weekly_total,
+        "enabled_form_types": enabled_form_types,
         "zero_price_source_choices": ZERO_PRICE_SOURCE_CHOICES,
-        **_build_add_page_catalog(request.LANGUAGE_CODE if request else "az"),
+        **filtered_catalog,
     }
+
+
+def _set_panel_display_time(item):
+    deferred_fields = set()
+    if hasattr(item, "get_deferred_fields"):
+        deferred_fields = item.get_deferred_fields()
+
+    raw_time = None
+    if "time" not in deferred_fields:
+        raw_time = getattr(item, "time", None)
+    if raw_time:
+        item.display_time = raw_time.strftime("%I:%M %p").lstrip("0")
+        return
+
+    created_at = getattr(item, "created_at", None)
+    if created_at:
+        local_created_at = timezone.localtime(created_at) if timezone.is_aware(created_at) else created_at
+        item.display_time = local_created_at.strftime("%I:%M %p").lstrip("0")
+        return
+
+    item.display_time = ""
+
+
+def _panel_option_sort_key(value: str) -> tuple[int, str]:
+    normalized = _normalized_text(value)
+    return (1 if normalized.lower() == str(_("Digər")).lower() else 0, normalized.lower())
+
+
+def _translate_panel_label(value, lang_code: str):
+    text = _normalized_text(value)
+    if not text:
+        return ""
+    with override(lang_code or "az"):
+        translated = _T(text)
+    lang = (lang_code or "az").split("-")[0]
+    if translated == text:
+        return (
+            FARM_PRODUCT_NAME_TRANSLATIONS.get(lang, {}).get(text)
+            or GENERIC_OPTION_TRANSLATIONS.get(lang, {}).get(text)
+            or translated
+        )
+    return translated
+
+
+def _panel_option_value(value: str) -> str:
+    return _normalized_text(value).lower()
+
+
+def _build_add_page_list_panel_context(user, form_type: str, include_time: bool = True, lang_code: str = "az"):
+    side_list_ordering = ["-date", "-updated_at", "-id"]
+    if include_time:
+        side_list_ordering = ["-date", "-time", "-updated_at", "-id"]
+
+    panel_title_map = {
+        "expense": "Xərc Siyahısı",
+        "income": "Satış Siyahısı",
+        "animal": "Heyvan Siyahısı",
+        "seed": "Toxum Siyahısı",
+        "tool": "Alət Siyahısı",
+        "farm": "Məhsul Siyahısı",
+    }
+    empty_message_map = {
+        "expense": _("Hələ heç bir xərc yoxdur."),
+        "income": _("Hələ heç bir satış yoxdur."),
+        "animal": _("Hələ heyvan yoxdur."),
+        "seed": _("Hələ toxum yoxdur."),
+        "tool": _("Hələ alət yoxdur."),
+        "farm": _("Hələ məhsul yoxdur."),
+    }
+    context = {
+        "panel_form_type": form_type,
+        "panel_title": panel_title_map.get(form_type, ""),
+        "panel_items": [],
+        "panel_category_options": [],
+        "panel_item_options": [],
+        "panel_items_by_category": {},
+        "panel_empty_message": empty_message_map.get(form_type, _("Məlumat tapılmadı.")),
+        "panel_return_path": f"{resolve_url('inventory:add_placeholder')}?{urlencode({'form': form_type})}" if form_type else "",
+    }
+
+    def finalize(items):
+        context["panel_items"] = items
+        catalog = _build_add_page_catalog(lang_code)
+        category_options = []
+        item_options = []
+        catalog_categories = []
+        child_key = ""
+
+        if form_type == "expense":
+            catalog_categories = catalog.get("expense_categories", [])
+            child_key = "subcategories"
+            category_options = [row.get("name", "") for row in catalog_categories]
+            item_options = [
+                row.get("name", "")
+                for category in catalog_categories
+                for row in category.get(child_key, [])
+            ]
+        elif form_type == "animal":
+            catalog_categories = catalog.get("animal_categories", [])
+            child_key = "subcategories"
+            category_options = [row.get("name", "") for row in catalog_categories]
+            item_options = [
+                row.get("name", "")
+                for category in catalog_categories
+                for row in category.get(child_key, [])
+            ]
+        elif form_type == "seed":
+            catalog_categories = catalog.get("seed_categories", [])
+            child_key = "items"
+            category_options = [row.get("name", "") for row in catalog_categories]
+            item_options = [
+                row.get("name", "")
+                for category in catalog_categories
+                for row in category.get(child_key, [])
+            ]
+        elif form_type == "tool":
+            catalog_categories = catalog.get("tool_categories", [])
+            child_key = "items"
+            category_options = [row.get("name", "") for row in catalog_categories]
+            item_options = [
+                row.get("name", "")
+                for category in catalog_categories
+                for row in category.get(child_key, [])
+            ]
+        elif form_type == "farm":
+            catalog_categories = catalog.get("farm_categories", [])
+            child_key = "items"
+            category_options = [row.get("name", "") for row in catalog_categories]
+            item_options = [
+                row.get("name", "")
+                for category in catalog_categories
+                for row in category.get(child_key, [])
+            ]
+        elif form_type == "income":
+            income_categories = catalog.get("income_categories", [])
+            income_category_data = catalog.get("income_category_data", {})
+            category_options = list(income_categories)
+            item_options = [
+                item["name"]
+                for category in income_categories
+                for item in income_category_data.get(category, {}).get("items", [])
+            ]
+
+        unique_categories = []
+        seen_categories = set()
+        for label in category_options:
+            normalized = _normalized_text(label)
+            if not normalized or normalized.lower() in seen_categories:
+                continue
+            seen_categories.add(normalized.lower())
+            unique_categories.append(normalized)
+
+        unique_items = []
+        seen_items = set()
+        for label in item_options:
+            normalized = _normalized_text(label)
+            if not normalized or normalized.lower() in seen_items:
+                continue
+            seen_items.add(normalized.lower())
+            unique_items.append(normalized)
+
+        context["panel_category_options"] = [
+            {"value": _panel_option_value(label), "label": label}
+            for label in sorted(unique_categories, key=_panel_option_sort_key)
+        ]
+        context["panel_item_options"] = [
+            {"value": _panel_option_value(label), "label": label}
+            for label in sorted(unique_items, key=_panel_option_sort_key)
+        ]
+        panel_items_by_category = {}
+        if form_type in {"expense", "animal", "seed", "tool", "farm"}:
+            for category in catalog_categories:
+                translated_category = _normalized_text(category.get("name"))
+                category_key = _panel_option_value(translated_category)
+                panel_items_by_category[category_key] = [
+                    {
+                        "value": _panel_option_value(_normalized_text(obj.get("name"))),
+                        "label": _normalized_text(obj.get("name")),
+                    }
+                    for obj in category.get(child_key, [])
+                ]
+        elif form_type == "income":
+            for category in income_categories:
+                translated_category = _translate_panel_label(category, lang_code)
+                category_key = _panel_option_value(translated_category)
+                panel_items_by_category[category_key] = [
+                    {
+                        "value": _panel_option_value(_translate_panel_label(obj["name"], lang_code)),
+                        "label": _translate_panel_label(obj["name"], lang_code),
+                    }
+                    for obj in income_category_data.get(category, {}).get("items", [])
+                ]
+        context["panel_items_by_category"] = panel_items_by_category
+        return context
+
+    if form_type == "expense":
+        expense_fields = [
+            "id", "title", "amount", "manual_name", "additional_info", "date", "updated_at", "created_at",
+            "content_type_id", "object_id", "subcategory__name", "subcategory__category__name",
+        ]
+        if include_time:
+            expense_fields.append("time")
+        queryset = (
+            Expense.objects.filter(created_by=user)
+            .select_related("subcategory", "subcategory__category")
+            .only(*expense_fields)
+            .order_by(*side_list_ordering)
+        )
+        items = list(queryset[:ADD_PRODUCT_SIDE_LIST_LIMIT])
+        if items:
+            from expenses.views import _attach_prefetched_expense_objects
+
+            _attach_prefetched_expense_objects(items)
+        for item in items:
+            item.icon_class = get_expense_icon(item)
+            if item.subcategory:
+                item.display_title = _translate_panel_label(item.subcategory.name, lang_code)
+            else:
+                item.display_title = _translate_panel_label(
+                    translate_expense_title(item.manual_name or item.title or ""),
+                    lang_code,
+                )
+            item.filter_item_key = _panel_option_value(item.display_title)
+            linked_object = getattr(item, "prefetched_content_object", None)
+            if (
+                linked_object is not None
+                and getattr(getattr(linked_object, "_meta", None), "app_label", "") == "farm_products"
+            ):
+                farm_name = getattr(getattr(linked_object, "item", None), "name", None) or getattr(linked_object, "manual_name", None)
+                if farm_name:
+                    item.display_title = f"{_translate_panel_label('Hazır məhsul alışı', lang_code)}: {_translate_panel_label(farm_name, lang_code)}"
+            item.display_category_name = (
+                _translate_panel_label(item.subcategory.category.name, lang_code) if item.subcategory and item.subcategory.category else _translate_panel_label("Digər", lang_code)
+            )
+            item.filter_category_key = _panel_option_value(item.display_category_name)
+            item.amount_display = format_currency(item.amount, 2)
+            _set_panel_display_time(item)
+        return finalize(items)
+
+    if form_type == "income":
+        income_fields = [
+            "id", "category", "item_name", "quantity", "unit", "amount", "gender",
+            "date", "additional_info", "updated_at", "created_at",
+        ]
+        if include_time:
+            income_fields.append("time")
+        queryset = (
+            Income.objects.filter(created_by=user)
+            .only(*income_fields)
+            .order_by(*side_list_ordering)
+        )
+        items = list(queryset[:ADD_PRODUCT_SIDE_LIST_LIMIT])
+        for item in items:
+            item.icon_class = _get_income_icon(item.category, item.item_name)
+            item.display_title = _translate_panel_label(item.item_name or "", lang_code)
+            item.display_category_name = _translate_panel_label(item.category or "Digər", lang_code)
+            item.filter_item_key = _panel_option_value(item.display_title)
+            item.filter_category_key = _panel_option_value(item.display_category_name)
+            item.amount_display = format_currency(item.amount, 2)
+            _set_panel_display_time(item)
+        return finalize(items)
+
+    if form_type == "animal":
+        animal_fields = [
+            "id", "quantity", "date", "weight", "gender", "identification_no", "manual_name",
+            "additional_info", "price", "updated_at", "zero_price_source", "created_at",
+            "subcategory__name", "subcategory__category__name",
+        ]
+        if include_time:
+            animal_fields.append("time")
+        queryset = (
+            Animal.objects.filter(created_by=user)
+            .exclude(quantity=0)
+            .exclude(additional_info__icontains="Gəlir stoku | income:")
+            .select_related("subcategory", "subcategory__category")
+            .only(*animal_fields)
+            .order_by(*side_list_ordering)
+        )
+        items = list(queryset[:ADD_PRODUCT_SIDE_LIST_LIMIT])
+        for item in items:
+            item.icon_class = get_animal_icon_for_animal(item)
+            item.display_title = _translate_panel_label(item.subcategory.name if item.subcategory else (item.manual_name or ""), lang_code)
+            item.display_category_name = (
+                _translate_panel_label(item.subcategory.category.name, lang_code) if item.subcategory and item.subcategory.category else _translate_panel_label("Digər", lang_code)
+            )
+            item.filter_item_key = _panel_option_value(item.display_title)
+            item.filter_category_key = _panel_option_value(item.display_category_name)
+            item.display_additional_info = str(item.additional_info or "").strip()
+            item.zero_price_source_label = get_zero_price_source_label(item)
+            _set_panel_display_time(item)
+        return finalize(items)
+
+    if form_type == "seed":
+        seed_fields = [
+            "id", "quantity", "unit", "price", "date", "manual_name", "additional_info",
+            "updated_at", "zero_price_source", "item__name", "item__category__name", "created_at",
+        ]
+        if include_time:
+            seed_fields.append("time")
+        queryset = (
+            Seed.objects.filter(created_by=user)
+            .select_related("item", "item__category")
+            .only(*seed_fields)
+            .order_by(*side_list_ordering)
+        )
+        items = list(queryset[:ADD_PRODUCT_SIDE_LIST_LIMIT])
+        for item in items:
+            item.icon_class = get_seed_icon_for_seed(item)
+            item.display_title = _translate_panel_label(item.item.name if item.item else (item.manual_name or ""), lang_code)
+            item.display_category_name = _translate_panel_label(item.item.category.name if item.item and item.item.category else "Digər", lang_code)
+            item.filter_item_key = _panel_option_value(item.display_title)
+            item.filter_category_key = _panel_option_value(item.display_category_name)
+            item.price_display = format_currency(abs(Decimal(item.price or 0)), 2)
+            item.zero_price_source_label = get_zero_price_source_label(item)
+            _set_panel_display_time(item)
+        return finalize(items)
+
+    if form_type == "tool":
+        tool_fields = [
+            "id", "quantity", "price", "date", "manual_name", "additional_info",
+            "updated_at", "zero_price_source", "item__name", "item__category__name", "created_at",
+        ]
+        if include_time:
+            tool_fields.append("time")
+        queryset = (
+            Tool.objects.filter(created_by=user)
+            .select_related("item", "item__category")
+            .only(*tool_fields)
+            .order_by(*side_list_ordering)
+        )
+        items = list(queryset[:ADD_PRODUCT_SIDE_LIST_LIMIT])
+        for item in items:
+            item.icon_class = get_tool_icon_for_tool(item)
+            item.display_title = _translate_panel_label(item.item.name if item.item else (item.manual_name or ""), lang_code)
+            item.display_category_name = _translate_panel_label(item.item.category.name if item.item and item.item.category else "Digər", lang_code)
+            item.filter_item_key = _panel_option_value(item.display_title)
+            item.filter_category_key = _panel_option_value(item.display_category_name)
+            item.price_display = format_currency(abs(Decimal(item.price or 0)), 2)
+            item.zero_price_source_label = get_zero_price_source_label(item)
+            _set_panel_display_time(item)
+        return finalize(items)
+
+    if form_type == "farm":
+        farm_fields = [
+            "id", "quantity", "unit", "price", "date", "manual_name", "additional_info",
+            "updated_at", "zero_price_source", "item__name", "item__category__name", "created_at",
+        ]
+        if include_time:
+            farm_fields.append("time")
+        queryset = (
+            FarmProduct.objects.filter(created_by=user)
+            .select_related("item", "item__category")
+            .only(*farm_fields)
+            .order_by(*side_list_ordering)
+        )
+        items = list(queryset[:ADD_PRODUCT_SIDE_LIST_LIMIT])
+        for item in items:
+            item.icon_class = get_farm_product_icon_for_product(item)
+            item.display_title = _translate_panel_label(item.item.name if item.item else (item.manual_name or ""), lang_code)
+            item.display_category_name = _translate_panel_label(item.item.category.name if item.item and item.item.category else "Digər", lang_code)
+            item.filter_item_key = _panel_option_value(item.display_title)
+            item.filter_category_key = _panel_option_value(item.display_category_name)
+            item.price_display = format_currency(abs(Decimal(item.price or 0)), 2)
+            item.zero_price_source_label = get_zero_price_source_label(item)
+            _set_panel_display_time(item)
+        return finalize(items)
+
+    return context
 
 
 def _resolve_voice_language(request, explicit_language: str | None = None):
@@ -358,7 +906,8 @@ def dashboard(request):
 @login_required
 def stocks_placeholder(request):
     user = request.user
-    cache_key = f"inventory:stocks-page:v3:user:{user.id}"
+    lang_code = get_language() or "az"
+    cache_key = f"inventory:stocks-page:v4:user:{user.id}:lang:{lang_code}"
     cached_context = cache.get(cache_key)
     if cached_context is not None:
         return render(request, "inventory/stocks.html", cached_context)
@@ -375,7 +924,7 @@ def stocks_placeholder(request):
 
     seed_total_expr = Sum(
         Case(
-            When(unit="kg", then=F("quantity")),
+            When(unit__in=["kg", "kq"], then=F("quantity")),
             When(unit="ton", then=F("quantity") * Value(Decimal("1000"))),
             When(unit="qram", then=F("quantity") / Value(Decimal("1000"))),
             default=F("quantity"),
@@ -418,7 +967,7 @@ def stocks_placeholder(request):
                 "subtitle": payload["category_name"],
                 "quantity": payload["total_kg"],
                 "quantity_display": qty_display,
-                "unit": "kg",
+                "unit": "kq",
                 "icon": get_seed_icon_by_name(payload["name"]),
                 "update_type": "seed",
                 "update_id": item_id,
@@ -565,7 +1114,7 @@ def stocks_placeholder(request):
                 "subtitle": "Toxumlar (Digər)",
                 "quantity": payload["total_kg"],
                 "quantity_display": qty_display,
-                "unit": "kg",
+                "unit": "kq",
                 "icon": get_seed_icon_by_name(payload["name"]),
                 "update_type": "seed_other",
                 "update_id": name,
@@ -788,6 +1337,10 @@ def stocks_placeholder(request):
         ),
     )
 
+    for item in sorted_items:
+        item["title"] = _translate_panel_label(item.get("title") or "", lang_code)
+        item["subtitle"] = _translate_panel_label(item.get("subtitle") or "", lang_code)
+
     context = {
         "seed_categories": seed_categories,
         "tool_categories": tool_categories,
@@ -825,7 +1378,7 @@ def update_stock_quantity(request):
         seed_qs = Seed.objects.filter(created_by=request.user, item_id=update_id)
         current_total = Decimal("0")
         for seed in seed_qs:
-            if seed.unit == "kg":
+            if seed.unit in {"kg", "kq"}:
                 current_total += Decimal(seed.quantity)
             elif seed.unit == "ton":
                 current_total += Decimal(seed.quantity) * Decimal("1000")
@@ -854,7 +1407,7 @@ def update_stock_quantity(request):
         ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
         current_total = Decimal("0")
         for seed in seed_qs:
-            if seed.unit == "kg":
+            if seed.unit in {"kg", "kq"}:
                 current_total += Decimal(seed.quantity)
             elif seed.unit == "ton":
                 current_total += Decimal(seed.quantity) * Decimal("1000")
@@ -1049,33 +1602,15 @@ def update_stock_quantity(request):
                 if remaining <= 0:
                     break
 
-        def add_negative_entry(count, gender_value):
-            if count <= 0:
-                return
-            payload = {
-                "gender": gender_value,
-                "quantity": -abs(int(count)),
-                "additional_info": "Stok azaldı",
-                "created_by": request.user,
-            }
-            if update_type == "animal_sub":
-                payload["subcategory_id"] = update_id
-            else:
-                payload["subcategory"] = None
-                payload["manual_name"] = update_id
-            Animal.objects.create(**payload)
-
         if male_delta > 0:
             create_animals(male_delta, "erkek")
         elif male_delta < 0:
             disable_animals(abs(male_delta), "erkek")
-            add_negative_entry(abs(male_delta), "erkek")
 
         if female_delta > 0:
             create_animals(female_delta, "disi")
         elif female_delta < 0:
             disable_animals(abs(female_delta), "disi")
-            add_negative_entry(abs(female_delta), "disi")
 
         if male_delta != 0 or female_delta != 0:
             add_crud_success_message(request, "Animal", "update")
@@ -1091,6 +1626,19 @@ def add_product(request):
     mode = (request.GET.get("mode") or "").strip().lower()
     context["combined_mode"] = mode == "combined"
     return render(request, "inventory/add_product.html", context)
+
+
+@login_required
+def add_product_list_panel(request):
+    form_type = (request.GET.get("form") or "").strip().lower()
+    lang_code = (getattr(request, "LANGUAGE_CODE", "") or get_language() or "az").split("-")[0]
+    try:
+        context = _build_add_page_list_panel_context(request.user, form_type, include_time=True, lang_code=lang_code)
+    except (OperationalError, ProgrammingError) as exc:
+        if "time" not in str(exc).lower():
+            raise
+        context = _build_add_page_list_panel_context(request.user, form_type, include_time=False, lang_code=lang_code)
+    return render(request, "inventory/partials/add_product_list_panel.html", context)
 
 
 @login_required

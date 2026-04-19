@@ -51,17 +51,15 @@ pip install -r requirements.txt
 3. Create a root-level `.env` file in the project directory:
 
 ```env
-SECRET_KEY=your-secret-key
+SECRET_KEY=37e9cd5c610d129ac2995aea4c91d865
 DEBUG=True
-
-PGDATABASE=your_database_name
-PGUSER=your_database_user
-PGPASSWORD=your_database_password
-PGHOST=your_database_host
-PGPORT=5432
-
 ALLOWED_HOSTS=127.0.0.1,localhost
-CSRF_TRUSTED_ORIGINS=
+
+PGHOST=ep-little-pine-agthlvz0-pooler.c-2.eu-central-1.aws.neon.tech
+PGDATABASE=neondb
+PGUSER=neondb_owner
+PGPASSWORD=npg_n7yoqzbECJF8
+PGPORT=5432
 ```
 
 Notes:
