@@ -74,20 +74,43 @@
 
         .report-toolbar {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 18px;
         }
 
+        .report-toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        .report-back-btn,
         .print-btn {
             display: inline-flex;
             align-items: center;
             gap: 10px;
             padding: 12px 18px;
             border-radius: 999px;
-            background: #1f6f5f;
-            color: #fff;
             text-decoration: none;
             font-weight: 800;
+        }
+
+        .report-back-btn {
+            background: #eef6f3;
+            color: #1f6f5f;
+        }
+
+        .print-btn {
+            background: #1f6f5f;
+            color: #fff;
+        }
+
+        .report-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .report-kpis {
@@ -187,6 +210,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 24px;
+            min-width: 640px;
         }
 
         th, td {
@@ -241,6 +265,148 @@
             padding: 18px 0;
         }
 
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .report-shell {
+                border-radius: 20px;
+            }
+
+            .report-hero {
+                padding: 20px 18px 18px;
+            }
+
+            .report-title {
+                font-size: 26px;
+                line-height: 1.15;
+                overflow-wrap: anywhere;
+            }
+
+            .report-meta {
+                gap: 8px;
+            }
+
+            .report-meta-pill {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .report-body {
+                padding: 18px;
+            }
+
+            .report-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .report-toolbar-actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-left: 0;
+            }
+
+            .report-back-btn,
+            .print-btn {
+                justify-content: center;
+                padding: 11px 14px;
+                font-size: 14px;
+                min-width: 0;
+                text-align: center;
+            }
+
+            .report-kpis,
+            .report-tax-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .report-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .report-panel,
+            .report-kpi,
+            .report-tax-card {
+                padding: 14px;
+            }
+
+            .report-panel h2 {
+                font-size: 18px;
+                overflow-wrap: anywhere;
+            }
+
+            .report-kpi strong {
+                font-size: 20px;
+            }
+
+            .report-kpi span,
+            .report-tax-card span,
+            .report-tax-card small,
+            th,
+            td {
+                font-size: 12px;
+            }
+
+            table {
+                min-width: 560px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .report-shell {
+                border-radius: 16px;
+            }
+
+            .report-hero {
+                padding: 16px 14px;
+            }
+
+            .report-title {
+                font-size: 22px;
+            }
+
+            .report-meta-pill {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .report-body {
+                padding: 14px;
+            }
+
+            .report-toolbar-actions,
+            .report-kpis,
+            .report-tax-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .report-back-btn,
+            .print-btn {
+                width: 100%;
+            }
+
+            .report-break-top,
+            .report-break-foot {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            table {
+                min-width: 500px;
+            }
+        }
+
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
@@ -259,6 +425,7 @@
                 border-radius: 0 !important;
             }
 
+            .report-back-btn,
             .print-btn {
                 display: none !important;
             }
@@ -291,9 +458,12 @@
 
         <section class="report-body">
             <div class="report-toolbar">
-                <a href="#" class="print-btn" onclick="window.print(); return false;">
-                    {% trans "PDF kimi saxla / çap et" %}
-                </a>
+                <a href="javascript:history.back()" class="report-back-btn">{% trans "Geri qayıt" %}</a>
+                <div class="report-toolbar-actions">
+                    <a href="#" class="print-btn" onclick="window.print(); return false;">
+                        {% trans "PDF kimi saxla / çap et" %}
+                    </a>
+                </div>
             </div>
 
             <div class="report-kpis">
@@ -346,32 +516,34 @@
             <div class="report-grid">
                 <section class="report-panel">
                     <h2>{% trans "Məhsul növlərinə görə müqayisə" %}</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>{% trans "Məhsul" %}</th>
-                                <th>{% trans "Kateqoriya" %}</th>
-                                <th>{% trans "Miqdar" %}</th>
-                                <th>{% trans "Gəlir" %}</th>
-                                <th>{% trans "Vergi" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in product_rows %}
-                            <tr>
-                                <td>{{ row.item_name }}</td>
-                                <td>{{ row.category }}</td>
-                                <td>{% display_measure row.quantity row.unit request.user %}</td>
-                                <td>{% money row.amount request.user "+" %}</td>
-                                <td>{% money row.tax_due request.user %}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="report-empty">{% trans "Bu tarix aralığında satış məlumatı yoxdur." %}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="report-table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Məhsul" %}</th>
+                                    <th>{% trans "Kateqoriya" %}</th>
+                                    <th>{% trans "Miqdar" %}</th>
+                                    <th>{% trans "Gəlir" %}</th>
+                                    <th>{% trans "Vergi" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in product_rows %}
+                                <tr>
+                                    <td>{{ row.item_name }}</td>
+                                    <td>{{ row.category }}</td>
+                                    <td>{% display_measure row.quantity row.unit request.user %}</td>
+                                    <td>{% money row.amount request.user "+" %}</td>
+                                    <td>{% money row.tax_due request.user %}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="report-empty">{% trans "Bu tarix aralığında satış məlumatı yoxdur." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
 
                 <section class="report-panel">
@@ -398,40 +570,42 @@
 
             <section class="report-panel">
                 <h2>{% trans "Əməliyyat jurnalı" %}</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>{% trans "Tarix" %}</th>
-                            <th>{% trans "Növ" %}</th>
-                            <th>{% trans "Mənbə" %}</th>
-                            <th>{% trans "Bölmə" %}</th>
-                            <th>{% trans "Məbləğ" %}</th>
-                            <th>{% trans "Vergi" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in transactions %}
-                        <tr>
-                            <td>{{ row.date|date:"d.m.Y" }}</td>
-                            <td>{{ row.type_label }}</td>
-                            <td>{{ row.line_name }}</td>
-                            <td>{{ row.group_name }}</td>
-                            <td>
-                                {% if row.type == "income" %}
-                                {% money row.amount request.user "+" %}
-                                {% else %}
-                                {% money row.amount request.user "-" %}
-                                {% endif %}
-                            </td>
-                            <td>{% if row.type == "income" %}{% money row.tax_due request.user %}{% else %}—{% endif %}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="report-empty">{% trans "Bu tarix aralığında heç bir əməliyyat tapılmadı." %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="report-table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{% trans "Tarix" %}</th>
+                                <th>{% trans "Növ" %}</th>
+                                <th>{% trans "Mənbə" %}</th>
+                                <th>{% trans "Bölmə" %}</th>
+                                <th>{% trans "Məbləğ" %}</th>
+                                <th>{% trans "Vergi" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in transactions %}
+                            <tr>
+                                <td>{{ row.date|date:"d.m.Y" }}</td>
+                                <td>{{ row.type_label }}</td>
+                                <td>{{ row.line_name }}</td>
+                                <td>{{ row.group_name }}</td>
+                                <td>
+                                    {% if row.type == "income" %}
+                                    {% money row.amount request.user "+" %}
+                                    {% else %}
+                                    {% money row.amount request.user "-" %}
+                                    {% endif %}
+                                </td>
+                                <td>{% if row.type == "income" %}{% money row.tax_due request.user %}{% else %}—{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="report-empty">{% trans "Bu tarix aralığında heç bir əməliyyat tapılmadı." %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </section>
     </div>

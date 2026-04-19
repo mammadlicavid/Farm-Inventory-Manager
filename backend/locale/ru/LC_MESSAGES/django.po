@@ -1937,6 +1937,12 @@ msgstr "Изменить пароль"
 msgid "Təsdiq"
 msgstr "Подтверждение"
 
+msgid "Bu stok haradan gəlib?"
+msgstr "Откуда этот остаток?"
+
+msgid "Geri qayıt"
+msgstr "Вернуться назад"
+
 msgid "Satış Əlavə Et"
 msgstr "Добавить продажу"
 

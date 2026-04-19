@@ -1937,6 +1937,12 @@ msgstr "Change password"
 msgid "Təsdiq"
 msgstr "Confirm"
 
+msgid "Bu stok haradan gəlib?"
+msgstr "Where did this stock come from?"
+
+msgid "Geri qayıt"
+msgstr "Go back"
+
 msgid "Satış Əlavə Et"
 msgstr "Add Sale"
 
