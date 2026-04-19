@@ -1,0 +1,73 @@
+{% load i18n %}
+{% load common_extras %}
+
+<div class="calendar-board" id="calendarBoard">
+    <div class="calendar-board-head">
+        <div>
+            <p class="calendar-section-label">{% trans "Aylıq görünüş" %}</p>
+            <h2>{% trans "Hər gün üzrə nə etdiyiniz görünür" %}</h2>
+        </div>
+        <div class="calendar-month-nav">
+            <a href="?month={{ calendar_data.prev_month_key }}" class="calendar-nav-btn" aria-label="{% trans 'Əvvəlki ay' %}">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <div class="calendar-month-nav-center">
+                <span class="calendar-month-label">{{ calendar_data.month_label }}</span>
+                <form method="get" class="calendar-month-picker" id="calendar-month-picker">
+                    <label for="calendar-month-input" class="calendar-month-picker-label">{% trans "Ay və il seçin" %}</label>
+                    <div class="calendar-month-picker-row">
+                        <input
+                            id="calendar-month-input"
+                            type="month"
+                            name="month"
+                            value="{{ calendar_data.active_month_key }}"
+                            class="calendar-month-input"
+                        >
+                    </div>
+                </form>
+                <a href="?month={{ calendar_data.today_month_key }}&day={{ calendar_data.today_iso }}" class="calendar-toolbar-link calendar-toolbar-link--primary">
+                    <i class="fa-solid fa-crosshairs"></i>
+                    <span>{% trans "Bu gün" %}</span>
+                </a>
+            </div>
+            <a href="?month={{ calendar_data.next_month_key }}" class="calendar-nav-btn" aria-label="{% trans 'Növbəti ay' %}">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="calendar-legend">
+        <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--stock-in"></span>{% trans "Stok əlavə" %}</span>
+        <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--income"></span>{% trans "Satış" %}</span>
+        <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--expense"></span>{% trans "Xərc" %}</span>
+        <span class="calendar-legend-item"><span class="calendar-legend-dot calendar-legend-dot--stock-out"></span>{% trans "Azalma" %}</span>
+    </div>
+
+    <div class="calendar-weekdays">
+        {% for weekday in calendar_data.weekday_labels %}
+        <span class="calendar-weekday">{{ weekday }}</span>
+        {% endfor %}
+    </div>
+
+    <div class="calendar-grid">
+        {% for week in calendar_data.weeks %}
+            {% for day in week %}
+            <a
+                href="?month={{ day.month_key }}&day={{ day.date_iso }}"
+                class="calendar-day-card{% if not day.in_month %} calendar-day-card--muted{% endif %}{% if day.is_today %} calendar-day-card--today{% endif %}{% if day.is_selected %} calendar-day-card--selected{% endif %}{% if day.summary.total %} calendar-day-card--active{% endif %}"
+            >
+                <div class="calendar-day-top">
+                    <span class="calendar-day-number">{{ day.day_number }}</span>
+                    <!-- Count bubble removed for minimalist look -->
+                </div>
+
+                <!-- Body removed for minimalist look as requested -->
+            </a>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<aside class="calendar-day-panel" id="calendarDayPanel">
+    {% include 'dashboard/calendar_day_panel.html' %}
+</aside>

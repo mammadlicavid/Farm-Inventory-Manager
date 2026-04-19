@@ -99,25 +99,71 @@
     return frame.top + ((frame.maxValue - value) / range) * frame.chartHeight
   }
 
-  function drawGrid(frame) {
-    const gridCount = 5
-    const range = frame.maxValue - frame.minValue || 1
+  function niceStep(range, targetTicks = 5) {
+    const safeRange = Math.max(Math.abs(range || 0), 1)
+    const roughStep = safeRange / Math.max(targetTicks, 1)
+    const power = Math.pow(10, Math.floor(Math.log10(roughStep)))
+    const normalized = roughStep / power
 
+    let multiplier = 1
+    if (normalized <= 1) multiplier = 1
+    else if (normalized <= 2) multiplier = 2
+    else if (normalized <= 2.5) multiplier = 2.5
+    else if (normalized <= 5) multiplier = 5
+    else multiplier = 10
+
+    return multiplier * power
+  }
+
+  function buildNiceScale(minValue, maxValue, tickCount = 5) {
+    const min = Number.isFinite(minValue) ? minValue : 0
+    const max = Number.isFinite(maxValue) ? maxValue : 0
+    if (min === max) {
+      const step = niceStep(Math.abs(max || 1), tickCount)
+      return {
+        minValue: min < 0 ? min - step : 0,
+        maxValue: max > 0 ? max + step : step,
+        ticks: Array.from({ length: tickCount + 1 }, (_, index) => (tickCount - index) * step),
+      }
+    }
+
+    const step = niceStep(max - min, tickCount)
+    let niceMin = Math.floor(min / step) * step
+    let niceMax = Math.ceil(max / step) * step
+
+    if (min >= 0) niceMin = 0
+    if (max <= 0) niceMax = 0
+    if (niceMin === niceMax) {
+      niceMax = niceMin + step
+    }
+
+    const ticks = []
+    for (let value = niceMax; value >= niceMin - step * 0.5; value -= step) {
+      ticks.push(Number(value.toFixed(8)))
+    }
+
+    return {
+      minValue: niceMin,
+      maxValue: niceMax,
+      ticks,
+    }
+  }
+
+  function drawGrid(frame) {
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.18)'
     ctx.lineWidth = 1
     ctx.fillStyle = '#64748b'
     ctx.font = '12px sans-serif'
     ctx.textAlign = 'right'
 
-    for (let index = 0; index <= gridCount; index += 1) {
-      const y = frame.top + (frame.chartHeight / gridCount) * index
-      const value = frame.maxValue - (range / gridCount) * index
+    frame.ticks.forEach((value) => {
+      const y = yFor(value, frame)
       ctx.beginPath()
       ctx.moveTo(frame.left, y)
       ctx.lineTo(frame.right, y)
       ctx.stroke()
       ctx.fillText(formatMoney(value), frame.left - 10, y + 4)
-    }
+    })
   }
 
   function roundedRect(x, y, width, height, radius) {
@@ -283,7 +329,12 @@
     const min = Math.min(...values, 0)
     const max = Math.max(...values, 0)
     const spread = max - min || 1
-    const margin = Math.max(spread * 0.18, 20)
+    const margin = Math.max(spread * 0.12, 10)
+    const scale = buildNiceScale(
+      min - (min < 0 ? margin : 0),
+      max + (max > 0 ? margin : 0),
+      5,
+    )
 
     const frame = {
       left: padding.left,
@@ -292,8 +343,9 @@
       bottom: height - padding.bottom,
       chartWidth: width - padding.left - padding.right,
       chartHeight: height - padding.top - padding.bottom,
-      minValue: min - (min < 0 ? margin * 0.5 : 0),
-      maxValue: max + margin,
+      minValue: scale.minValue,
+      maxValue: scale.maxValue,
+      ticks: scale.ticks,
     }
 
     drawGrid(frame)

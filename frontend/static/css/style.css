@@ -1691,12 +1691,14 @@ select.custom-input *,
     color: var(--primary-green);
 }
 
-.nav-item:hover {
-    color: var(--primary-green);
-}
+@media (hover: hover) {
+    .nav-item:hover {
+        color: var(--primary-green);
+    }
 
-.nav-item:hover i {
-    transform: translateY(-2px);
+    .nav-item:hover i {
+        transform: translateY(-2px);
+    }
 }
 
 .nav-item:active {

@@ -1,7 +1,8 @@
 {% load i18n %}
 {% load common_extras %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="az">
+<html lang="{{ LANGUAGE_CODE|default:'az' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -151,7 +152,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 18px;
-            margin-bottom: 22px;
+            margin: 22px 0;
         }
 
         .report-panel {
@@ -210,7 +211,8 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 24px;
-            min-width: 640px;
+            min-width: 0;
+            table-layout: fixed;
         }
 
         th, td {
@@ -219,6 +221,8 @@
             text-align: left;
             font-size: 13px;
             color: #334155;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         th {
@@ -304,19 +308,24 @@
 
             .report-toolbar-actions {
                 width: 100%;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+                display: flex;
+                flex-direction: column;
                 gap: 10px;
                 margin-left: 0;
             }
 
             .report-back-btn,
             .print-btn {
+                width: 100%;
                 justify-content: center;
-                padding: 11px 14px;
+                padding: 12px 14px;
                 font-size: 14px;
                 min-width: 0;
                 text-align: center;
+                box-sizing: border-box;
+                word-break: break-word;
+                white-space: normal;
+                line-height: 1.3;
             }
 
             .report-kpis,
@@ -354,7 +363,11 @@
             }
 
             table {
-                min-width: 560px;
+                min-width: 0;
+            }
+            th, td {
+                font-size: 11px;
+                padding: 8px 6px;
             }
         }
 
@@ -372,7 +385,10 @@
             }
 
             .report-title {
-                font-size: 22px;
+                font-size: 20px;
+            }
+            .report-panel h2 {
+                font-size: 16px;
             }
 
             .report-meta-pill {
@@ -394,20 +410,41 @@
             .report-back-btn,
             .print-btn {
                 width: 100%;
+                font-size: 13px;
+                padding: 12px 10px;
             }
 
             .report-break-top,
             .report-break-foot {
                 flex-direction: column;
-                align-items: flex-start;
+                align-items: stretch;
+                gap: 4px;
+            }
+
+            .report-break-top strong,
+            .report-break-foot span {
+                word-break: break-all;
+                overflow-wrap: anywhere;
             }
 
             table {
-                min-width: 500px;
+                min-width: 0;
+                display: block;
+                overflow-x: auto;
+            }
+            
+            th, td {
+                font-size: 10px;
+                padding: 6px 4px;
             }
         }
 
         @media print {
+            @page {
+                size: auto;
+                margin: 0mm;
+            }
+
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -416,23 +453,26 @@
 
             body {
                 background: #fff !important;
-                padding: 0 !important;
+                padding: 12mm !important;
                 margin: 0 !important;
             }
 
             .report-shell {
                 box-shadow: none !important;
                 border-radius: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
             }
 
             .report-back-btn,
-            .print-btn {
+            .print-btn,
+            .report-toolbar {
                 display: none !important;
             }
             
-            /* Add some page breaking rules so large reports look good */
             .report-panel {
                 break-inside: avoid;
+                margin-bottom: 15px;
             }
             table {
                 break-inside: auto;
@@ -461,7 +501,7 @@
                 <a href="javascript:history.back()" class="report-back-btn">{% trans "Geri qayıt" %}</a>
                 <div class="report-toolbar-actions">
                     <a href="#" class="print-btn" onclick="window.print(); return false;">
-                        {% trans "PDF kimi saxla / çap et" %}
+                        {{ "PDF kimi saxla / çap et"|t_var }}
                     </a>
                 </div>
             </div>
@@ -489,22 +529,22 @@
                 <div class="report-tax-card">
                     <span>{% trans "Standart ƏDV arayışı" %}</span>
                     <strong>{{ tax.reference_rate_display }}%</strong>
-                    <small>{% trans "Güzəşt olmasaydı ümumi dərəcə" %}</small>
+                    <small>{{ "Güzəşt olmasaydı ümumi dərəcə"|t_var }}</small>
                 </div>
                 <div class="report-tax-card">
                     <span>{% trans "Güzəşt olmasaydı ƏDV" %}</span>
                     <strong>{% money tax.reference_vat_amount request.user %}</strong>
-                    <small>{% trans "Müqayisə üçün arayış məbləği" %}</small>
+                    <small>{{ "Müqayisə üçün arayış məbləği"|t_var }}</small>
                 </div>
                 <div class="report-tax-card">
-                    <span>{% trans "Vergi qaydası" %}</span>
-                    <strong>{{ tax.agri_rule_label }}</strong>
-                    <small>{{ tax.agri_rule_period }}</small>
+                    <span>{{ "Vergi qaydası"|t_var }}</span>
+                    <strong>{{ tax.agri_rule_label|t_var }}</strong>
+                    <small>{{ tax.agri_rule_period|t_var }}</small>
                 </div>
                 <div class="report-tax-card">
-                    <span>{% trans "Torpaq vergisi" %}</span>
-                    <strong>{% trans "Ayrı hesablanır" %}</strong>
-                    <small>{{ tax.land_tax_note }}</small>
+                    <span>{{ "Torpaq vergisi"|t_var }}</span>
+                    <strong>{{ "Ayrı hesablanır"|t_var }}</strong>
+                    <small>{{ tax.land_tax_note|t_var }}</small>
                 </div>
             </div>
 
@@ -515,7 +555,7 @@
 
             <div class="report-grid">
                 <section class="report-panel">
-                    <h2>{% trans "Məhsul növlərinə görə müqayisə" %}</h2>
+                    <h2>{{ "Məhsul növlərinə görə müqayisə"|t_var }}</h2>
                     <div class="report-table-wrap">
                         <table>
                             <thead>
@@ -530,15 +570,15 @@
                             <tbody>
                                 {% for row in product_rows %}
                                 <tr>
-                                    <td>{{ row.item_name }}</td>
-                                    <td>{{ row.category }}</td>
+                                    <td>{{ row.item_name|t_var }}</td>
+                                    <td>{{ row.category|t_var }}</td>
                                     <td>{% display_measure row.quantity row.unit request.user %}</td>
                                     <td>{% money row.amount request.user "+" %}</td>
                                     <td>{% money row.tax_due request.user %}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="report-empty">{% trans "Bu tarix aralığında satış məlumatı yoxdur." %}</td>
+                                    <td colspan="5" class="report-empty">{{ "Bu tarix aralığında satış məlumatı yoxdur."|t_var }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -547,7 +587,7 @@
                 </section>
 
                 <section class="report-panel">
-                    <h2>{% trans "Xərc istiqamətləri" %}</h2>
+                    <h2>{{ "Xərc istiqamətləri"|t_var }}</h2>
                     {% for row in expense_breakdown %}
                     <div class="report-break-row">
                         <div class="report-break-top">
@@ -574,21 +614,21 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>{% trans "Tarix" %}</th>
-                                <th>{% trans "Növ" %}</th>
-                                <th>{% trans "Mənbə" %}</th>
-                                <th>{% trans "Bölmə" %}</th>
-                                <th>{% trans "Məbləğ" %}</th>
-                                <th>{% trans "Vergi" %}</th>
+                                <th>{{ "Tarix"|t_var }}</th>
+                                <th>{{ "Növ"|t_var }}</th>
+                                <th>{{ "Mənbə"|t_var }}</th>
+                                <th>{{ "Bölmə"|t_var }}</th>
+                                <th>{{ "Məbləğ"|t_var }}</th>
+                                <th>{{ "Vergi"|t_var }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in transactions %}
                             <tr>
                                 <td>{{ row.date|date:"d.m.Y" }}</td>
-                                <td>{{ row.type_label }}</td>
-                                <td>{{ row.line_name }}</td>
-                                <td>{{ row.group_name }}</td>
+                                <td>{{ row.type_label|t_var }}</td>
+                                <td>{{ row.line_name|t_var }}</td>
+                                <td>{{ row.group_name|t_var }}</td>
                                 <td>
                                     {% if row.type == "income" %}
                                     {% money row.amount request.user "+" %}
@@ -600,7 +640,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="report-empty">{% trans "Bu tarix aralığında heç bir əməliyyat tapılmadı." %}</td>
+                                <td colspan="6" class="report-empty">{{ "Bu tarix aralığında heç bir əməliyyat tapılmadı."|t_var }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

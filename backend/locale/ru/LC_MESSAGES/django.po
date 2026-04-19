@@ -2837,3 +2837,24 @@ msgstr "Покупка инструмента"
 
 msgid "Hazır məhsul alışı"
 msgstr "Покупка готовой продукции"
+
+msgid "Seçilmiş gün"
+msgstr "Выбранный день"
+
+msgid "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür."
+msgstr "Здесь показаны все складские, продажные и расходные операции за этот день."
+
+msgid "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək."
+msgstr "Здесь собраны сегодняшние действия. Новые записи будут появляться в этом списке."
+
+msgid "Qeyd sayı"
+msgstr "Количество записей"
+
+msgid "Bu gün üçün qeyd yoxdur"
+msgstr "На этот день записей нет"
+
+msgid "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin."
+msgstr "Выберите другой день в календаре или добавьте новую запись о складе, продаже или расходе."
+
+msgid "Stok səhifəsindən düzəliş"
+msgstr "Исправлено со страницы склада"

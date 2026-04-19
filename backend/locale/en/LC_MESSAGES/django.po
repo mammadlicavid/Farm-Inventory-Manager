@@ -1019,6 +1019,24 @@ msgstr "Packaging"
 msgid "Heyvanlar"
 msgstr "Animals"
 
+msgid "Seçilmiş gün"
+msgstr "Selected day"
+
+msgid "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür."
+msgstr "All stock, sale, and expense activities for this day appear here."
+
+msgid "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək."
+msgstr "Today's activity is collected here. Newly added records will appear in this list."
+
+msgid "Qeyd sayı"
+msgstr "Record count"
+
+msgid "Bu gün üçün qeyd yoxdur"
+msgstr "No records for this day"
+
+msgid "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin."
+msgstr "Pick another day from the calendar or add a new stock, sale, or expense entry."
+
 msgid "Alətlər"
 msgstr "Tools"
 
@@ -2825,11 +2843,65 @@ msgstr "What are you adding?"
 msgid "Satışı Saxla"
 msgstr "Save Sale"
 
-msgid "Toxum alışı"
-msgstr "Seed purchase"
-
-msgid "Alət alışı"
-msgstr "Tool purchase"
-
 msgid "Hazır məhsul alışı"
 msgstr "Finished product purchase"
+
+msgid "Güzəşt olmasaydı ümumi dərəcə"
+msgstr "Total rate without exemption"
+
+msgid "Müqayisə üçün arayış məbləği"
+msgstr "Reference amount for comparison"
+
+msgid "Xərc istiqamətləri"
+msgstr "Expense breakdown"
+
+msgid "PDF kimi saxla / çap et"
+msgstr "Save as PDF / Print"
+
+msgid "Məktub"
+msgstr "Letter"
+
+msgid "Hazırlanma tarixi"
+msgstr "Report date"
+
+msgid "Mənbə"
+msgstr "Source"
+
+msgid "İnək südü"
+msgstr "Cow milk"
+
+msgid "Qaz yumurtası"
+msgstr "Goose egg"
+
+msgid "Süd satışı"
+msgstr "Milk sale"
+
+msgid "Bal satışı"
+msgstr "Honey sale"
+
+msgid "Yumurta satışı"
+msgstr "Egg sale"
+
+msgid "Qarpız"
+msgstr "Watermelon"
+
+msgid "Öküz"
+msgstr "Ox"
+
+msgid "Taxıl və Paxlalı Toxumları"
+msgstr "Grain and Legume Seeds"
+
+msgid "Tərəvəz və Bostan Toxumları"
+msgstr "Vegetable and Melon Seeds"
+
+msgid "Süd və süd məhsulları"
+msgstr "Milk and Dairy Products"
+
+msgid "Milk and Dairy Products"
+msgstr "Milk and Dairy Products"
+
+msgid "Meyvə-tərəvəz"
+msgstr "Fruits and Vegetables"
+
+msgid "Stok səhifəsindən düzəliş"
+msgstr "Adjusted from stock page"

@@ -8,6 +8,7 @@
           menuToggle.addEventListener('click', (e) => {
             e.preventDefault()
             body.classList.toggle('drawer-open')
+            menuToggle.blur()
           })
       
           // Close drawer when clicking outside (optional but good practice)

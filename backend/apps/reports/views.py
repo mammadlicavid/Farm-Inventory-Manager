@@ -13,13 +13,14 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import get_language, gettext_lazy as _
+from django.utils.translation import get_language, gettext as _T, gettext_lazy as _, override
 from common.expense_titles import translate_expense_title
 from common.view_cache import get_reports_bust_value
 
 from common.formatting import format_currency
 from expenses.models import Expense, ExpenseSubCategory
 from incomes.models import Income
+from inventory.views import FARM_PRODUCT_NAME_TRANSLATIONS, GENERIC_OPTION_TRANSLATIONS
 
 try:
     from reportlab.lib import colors
@@ -130,6 +131,23 @@ def _normalized_text(value) -> str:
     return str(value or "").strip().lower()
 
 
+def _translate_report_label(value, lang_code: str | None = None) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    language = (lang_code or get_language() or "az").lower()
+    with override(language):
+        translated = _T(text)
+    language_base = language.split("-")[0]
+    if translated == text:
+        return (
+            FARM_PRODUCT_NAME_TRANSLATIONS.get(language_base, {}).get(text)
+            or GENERIC_OPTION_TRANSLATIONS.get(language_base, {}).get(text)
+            or translated
+        )
+    return translated
+
+
 def _parse_date_param(raw_value: str | None, fallback: date) -> date:
     raw = str(raw_value or "").strip()
     if not raw:
@@ -167,7 +185,7 @@ def _report_context_cache_key(request) -> str:
     today_key = timezone.localdate().isoformat()
     normalized_query = urlencode(sorted(request.GET.lists()), doseq=True)
     query_hash = hashlib.md5(normalized_query.encode("utf-8")).hexdigest()
-    return f"reports:context:v1:{user.pk}:{bust_value}:{language_code}:{today_key}:{query_hash}"
+    return f"reports:context:v3:{user.pk}:{bust_value}:{language_code}:{today_key}:{query_hash}"
 
 
 def _get_cached_report_context(request):
@@ -247,10 +265,10 @@ def _build_expense_subcategory_lookup() -> dict[str, ExpenseSubCategory]:
     return lookup
 
 
-def _expense_category_name(expense: Expense, subcat_lookup: dict[str, ExpenseSubCategory]) -> str:
+def _expense_category_name(expense: Expense, subcat_lookup: dict[str, ExpenseSubCategory], lang_code: str | None = None) -> str:
     category_name = getattr(getattr(expense.subcategory, "category", None), "name", None)
     if category_name:
-        return str(category_name).strip()
+        return _translate_report_label(category_name, lang_code)
 
     def resolve_subcategory(name: str | None):
         return subcat_lookup.get(_normalized_text(name))
@@ -271,22 +289,22 @@ def _expense_category_name(expense: Expense, subcat_lookup: dict[str, ExpenseSub
                     break
 
     if match and match.category:
-        return str(match.category.name).strip()
+        return _translate_report_label(match.category.name, lang_code)
 
     if expense.manual_name:
-        return str(expense.manual_name).strip()
-    return str(_("Digər"))
+        return _translate_report_label(expense.manual_name, lang_code)
+    return _translate_report_label(_("Digər"), lang_code)
 
 
-def _expense_line_name(expense: Expense) -> str:
+def _expense_line_name(expense: Expense, lang_code: str | None = None) -> str:
     title = str(expense.title or "").strip()
     if title:
-        return translate_expense_title(title)
+        return _translate_report_label(translate_expense_title(title), lang_code)
     if expense.manual_name:
-        return translate_expense_title(str(expense.manual_name).strip())
+        return _translate_report_label(translate_expense_title(str(expense.manual_name).strip()), lang_code)
     if expense.subcategory:
-        return str(expense.subcategory.name).strip()
-    return str(_("Xərc"))
+        return _translate_report_label(expense.subcategory.name, lang_code)
+    return _translate_report_label(_("Xərc"), lang_code)
 
 
 def _profit_tone(value: Decimal) -> str:
@@ -797,6 +815,7 @@ def _build_preset_query(date_from: date, date_to: date, purpose: str, group_by: 
 
 def _report_context(request):
     user = request.user
+    lang_code = (get_language() or "az").lower()
     today = timezone.localdate()
     date_from, date_to = _normalize_date_range(
         request.GET.get("date_from"),
@@ -944,8 +963,8 @@ def _report_context(request):
             str(income.unit or "").strip(),
         )
         row = product_map[key]
-        row["category"] = str(income.category or _("Digər")).strip()
-        row["item_name"] = str(income.item_name or _("Məhsul")).strip()
+        row["category"] = _translate_report_label(str(income.category or _("Digər")).strip(), lang_code)
+        row["item_name"] = _translate_report_label(str(income.item_name or _("Məhsul")).strip(), lang_code)
         row["unit"] = str(income.unit or "").strip()
         row["quantity"] += _safe_decimal(income.quantity)
         row["amount"] += _safe_decimal(income.amount)
@@ -966,7 +985,7 @@ def _report_context(request):
 
     expense_map = defaultdict(Decimal)
     for expense in expenses:
-        expense_map[_expense_category_name(expense, expense_subcat_lookup)] += _safe_decimal(expense.amount)
+        expense_map[_expense_category_name(expense, expense_subcat_lookup, lang_code)] += _safe_decimal(expense.amount)
 
     expense_breakdown = []
     for category_name, amount in sorted(expense_map.items(), key=lambda item: item[1], reverse=True):
@@ -989,9 +1008,9 @@ def _report_context(request):
             {
                 "date": income.date,
                 "type": "income",
-                "type_label": str(_("Gəlir")),
-                "line_name": str(income.item_name or _("Satış")).strip(),
-                "group_name": str(income.category or _("Digər")).strip(),
+                "type_label": _("Gəlir"),
+                "line_name": _translate_report_label(str(income.item_name or _("Satış")).strip(), lang_code),
+                "group_name": _translate_report_label(str(income.category or _("Digər")).strip(), lang_code),
                 "quantity": _safe_decimal(income.quantity),
                 "unit": str(income.unit or "").strip(),
                 "amount": _safe_decimal(income.amount),
@@ -1010,8 +1029,8 @@ def _report_context(request):
                 "date": expense.date,
                 "type": "expense",
                 "type_label": str(_("Xərc")),
-                "line_name": _expense_line_name(expense),
-                "group_name": _expense_category_name(expense, expense_subcat_lookup),
+                "line_name": _expense_line_name(expense, lang_code),
+                "group_name": _expense_category_name(expense, expense_subcat_lookup, lang_code),
                 "quantity": None,
                 "unit": "",
                 "amount": _safe_decimal(expense.amount),
@@ -1035,16 +1054,14 @@ def _report_context(request):
         "reference_vat_amount_display": format_currency(total_reference_vat, 2),
         "savings_amount": tax_savings,
         "savings_amount_display": format_currency(tax_savings, 2),
-        "agri_rule_label": str(_("Kənd təsərrüfatı satış güzəşti")),
-        "agri_rule_period": str(_("1 Yanvar 2014 - 1 Yanvar 2027")),
-        "agri_rule_note": str(
-            _(
-                "İlkin formada olan kənd təsərrüfatı satışları üçün 0 vergi, digər satışlar üçün standart ƏDV arayışı hesablanır."
-            )
+        "agri_rule_label": _("Kənd təsərrüfatı satış güzəşti"),
+        "agri_rule_period": _("1 Yanvar 2014 - 1 Yanvar 2027"),
+        "agri_rule_note": _(
+            "İlkin formada olan kənd təsərrüfatı satışları üçün 0 vergi, digər satışlar üçün standart ƏDV arayışı hesablanır."
         ),
-        "land_tax_note": str(_("Torpaq vergisi və ƏDV qeydiyyatı həddi bu hesabatda ayrıca hesablanmır.")),
-        "source_note": str(
-            _("Dövlət Vergi Xidmətinin sual-cavab izahı və güzəşt məlumatları əsasında hazırlanmış arayış hesabıdır.")
+        "land_tax_note": _("Torpaq vergisi və ƏDV qeydiyyatı həddi bu hesabatda ayrıca hesablanmır."),
+        "source_note": _(
+            "Dövlət Vergi Xidmətinin sual-cavab izahı və güzəşt məlumatları əsasında hazırlanmış arayış hesabıdır."
         ),
     }
 

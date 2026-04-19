@@ -13,6 +13,100 @@ EXCHANGE_RATES = {
     "EUR": Decimal("1.85"),
 }
 
+MANUAL_TRANSLATIONS = {
+    "en": {
+        "Güzəşt olmasaydı ümumi dərəcə": "Total rate without exemption",
+        "Müqayisə üçün arayış məbləği": "Reference amount for comparison",
+        "Xərc istiqamətləri": "Expense breakdown",
+        "Məhsul növlərinə görə müqayisə": "Comparison by product type",
+        "PDF kimi saxla / çap et": "Save as PDF / Print",
+        "Hesabatın hazırlanma tarixi": "Report date",
+        "Hazırlanma tarixi": "Report date",
+        "Qruplaşdırma": "Grouping",
+        "Tarix": "Date",
+        "Növ": "Type",
+        "Mənbə": "Source",
+        "Bölmə": "Section",
+        "Məbləğ": "Amount",
+        "Vergi": "Tax",
+        "Digər": "Other",
+        "İnək südü": "Cow milk",
+        "Qaz yumurtası": "Goose egg",
+        "Süd satışı": "Milk sale",
+        "Bal satışı": "Honey sale",
+        "Yumurta satışı": "Egg sale",
+        "Qarpız": "Watermelon",
+        "Öküz": "Ox",
+        "Taxıl və Paxlalı Toxumları": "Grain and Legume Seeds",
+        "Tərəvəz və Bostan Toxumları": "Vegetable and Melon Seeds",
+        "Süd və süd məhsulları": "Milk and Dairy Products",
+        "Bitkiçilik": "Crop production",
+        "Texnika və Maşınlar": "Machinery and Equipment",
+        "İşçi qüvvəsi": "Labor force",
+        "Heyvandarlıq": "Livestock",
+        "Torpaq vergisi": "Land tax",
+        "Ayrı hesablanır": "Calculated separately",
+        "Vergi qaydası": "Tax rule",
+        "Hazırlanma tarixi": "Report date",
+        "Bu tarix aralığında satış məlumatı yoxdur.": "No sales data available for this date range.",
+        "Bu tarix aralığında xərc məlumatı yoxdur.": "No expense data available for this date range.",
+        "Bu tarix aralığında heç bir əməliyyat tapılmadı.": "No transactions found for this date range.",
+        "Toxum alışı": "Seed purchase",
+        "Alət alışı": "Tool purchase",
+        "Heyvan alışı": "Animal purchase",
+        "Texnika alışı": "Equipment purchase",
+        "Hazır məhsul alışı": "Finished product purchase",
+        "Şaftalı": "Peach",
+        "Yonca toxumu": "Alfalfa seed",
+        "Şəkər çuğunduru toxumu": "Sugar beet seed",
+        "Alfalfa seed": "Alfalfa seed",
+        "Sugar beet seed": "Sugar beet seed",
+        "Peach": "Peach",
+        "Yem": "Feed",
+        "Gidalar": "Food/Feed",
+        "Yanacaq": "Fuel",
+        "Gübrə": "Fertilizer",
+        "Dərman": "Medicine/Pesticide",
+        "Satış": "Sale",
+        "Gəlir": "Income",
+        "Xərc": "Expense",
+        "Yoxdur": "None",
+        "Finished product purchase": "Finished product purchase",
+        "Seed purchase": "Seed purchase",
+        "Animal purchase": "Animal purchase",
+        "Tool purchase": "Tool purchase",
+        "Equipment purchase": "Equipment purchase",
+    },
+    "ru": {
+        "Torpaq vergisi": "Земельный налог",
+        "Ayrı hesablanır": "Рассчитывается отдельно",
+        "Güzəşt olmasaydı ümumi dərəcə": "Общая ставка без льгот",
+        "Müqayisə üçün arayış məbləği": "Справочная сумма для сравнения",
+        "Xərc istiqamətləri": "Направления расходов",
+        "Məhsul növlərinə görə müqayisə": "Сравнение по видам продукции",
+        "PDF kimi saxla / çap et": "Сохранить как PDF / Печать",
+        "Hazırlanma tarixi": "Дата подготовки",
+        "Qruplaşdırma": "Группировка",
+        "Tarix": "Дата",
+        "Növ": "Тип",
+        "Mənbə": "Источник",
+        "Bölmə": "Раздел",
+        "Məbləğ": "Сумма",
+        "Vergi": "Налог",
+        "Toxum alışı": "Покупка семян",
+        "Alət alışı": "Покупка инструмента",
+        "Heyvan alışı": "Покупка животных",
+        "Texnika alışı": "Покупка техники",
+        "Hazır məhsul alışı": "Покупка готовой продукции",
+        "Şaftalı": "Персик",
+        "Yonca toxumu": "Семена люцерны",
+        "Şəkər çuğunduru toxumu": "Семена сахарной свеклы",
+        "Yem": "Корм",
+        "Yanacaq": "Топливо",
+        "Gübrə": "Удобрение",
+    }
+}
+
 
 def _user_settings(user):
     if not user or not getattr(user, "is_authenticated", False):
@@ -65,6 +159,8 @@ def _unit_label(unit):
             "ml": "millilitr",
             "xidmət": "xidmət",
             "service": "xidmət",
+            "ədəd": "ədəd",
+            "pcs": "ədəd",
         },
         "en": {
             "kg": "kg",
@@ -75,6 +171,8 @@ def _unit_label(unit):
             "ml": "milliliter",
             "xidmət": "service",
             "service": "service",
+            "ədəd": "pcs",
+            "pcs": "pcs",
         },
         "ru": {
             "kg": "кг",
@@ -85,6 +183,8 @@ def _unit_label(unit):
             "ml": "миллилитр",
             "xidmət": "услуга",
             "service": "услуга",
+            "ədəd": "шт",
+            "pcs": "шт",
         },
     }
     lang = (get_language() or "az").split("-")[0]
@@ -176,9 +276,23 @@ from django.utils.translation import gettext as _T
 
 @register.filter
 def t_var(value):
-    if isinstance(value, str):
-        return _T(value)
-    return value
+    if not isinstance(value, str):
+        return value
+    
+    text = value.strip()
+    lang = (get_language() or "az").split("-")[0]
+    
+    def translate_snippet(snippet):
+        snippet = snippet.strip()
+        if lang in MANUAL_TRANSLATIONS and snippet in MANUAL_TRANSLATIONS[lang]:
+            return MANUAL_TRANSLATIONS[lang][snippet]
+        return _T(snippet)
+
+    if ":" in text:
+        parts = [p.strip() for p in text.split(":", 1)]
+        return ": ".join([translate_snippet(p) for p in parts])
+
+    return translate_snippet(text)
 
 
 @register.filter
