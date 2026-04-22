@@ -99,23 +99,77 @@ document.addEventListener("DOMContentLoaded", function () {
         tool: "{% trans 'Səsdən alət formu dolduruldu.' %}",
         farm: "{% trans 'Səsdən məhsul formu dolduruldu.' %}",
     };
-    const voiceAcceptedMessages = {
-        expense: "{% trans 'Səs qəbul olundu və xərc formu dolduruldu.' %}",
-        income: "{% trans 'Səs qəbul olundu və satış formu dolduruldu.' %}",
-        animal: "{% trans 'Səs qəbul olundu və heyvan formu dolduruldu.' %}",
-        seed: "{% trans 'Səs qəbul olundu və toxum formu dolduruldu.' %}",
-        tool: "{% trans 'Səs qəbul olundu və alət formu dolduruldu.' %}",
-        farm: "{% trans 'Səs qəbul olundu və məhsul formu dolduruldu.' %}",
+    const voiceResultLabelMap = {
+        az: { heard: "Deyilən:", detected: "Təxmin edilən:" },
+        en: { heard: "Heard:", detected: "Detected:" },
+        ru: { heard: "Сказано:", detected: "Определено:" },
     };
     const todayIso = "{{ today|date:'Y-m-d' }}";
     const currentYear = Number("{{ today|date:'Y' }}");
     const currentMonth = Number("{{ today|date:'m' }}");
     const voiceInputLanguage = "{{ voice_input_language|default:'system'|escapejs }}";
     const activeVoiceLanguage = voiceInputLanguage === "system" ? "{{ request.LANGUAGE_CODE|default:'az'|escapejs }}".split("-")[0] : voiceInputLanguage;
-    const voiceResultLabelMap = {
-        az: { heard: "Deyilən:", detected: "Təxmin edilən:" },
-        en: { heard: "Heard:", detected: "Detected:" },
-        ru: { heard: "Сказано:", detected: "Определено:" },
+    const voiceSummaryI18n = {
+        az: {
+            formLabels: { expense: "Xərc əlavə et", income: "Gəlir əlavə et", animal: "Heyvan əlavə et", seed: "Toxum əlavə et", tool: "Alət əlavə et", farm: "Məhsul əlavə et" },
+            quantity: "Miqdar",
+            weight: "Çəki",
+            amount: "Məbləğ",
+            additionalInfo: "Əlavə məlumat:",
+            note: "Qeyd:",
+            unitPiece: "ədəd",
+            unitKilo: "kilo",
+            currency: "manat",
+            today: "Bu gün",
+            yesterday: "Dünən",
+            tomorrow: "Sabah",
+            tokens: {
+                gelir: "Gəlir", xerc: "Xərc", heyvan: "Heyvan", toxum: "Toxum", alet: "Alət", mehsul: "Məhsul",
+                elave: "əlavə", et: "et", inek: "İnək", disi: "Dişi", erkek: "Erkək", bugda: "Buğda", arpa: "Arpa", yonca: "Yonca",
+                qiymet: "qiymət", mebleg: "məbləğ", miqdar: "miqdar", ceki: "çəki", dunen: "Dünən", bugun: "Bu gün", sabah: "Sabah",
+                evvel: "əvvəl", gun: "gün", manat: "manat", qram: "qram", ton: "ton", kiloqram: "kiloqram", kilo: "kilo", kq: "kilo", kg: "kilo",
+            },
+        },
+        en: {
+            formLabels: { expense: "Add expense", income: "Add income", animal: "Add animal", seed: "Add seed", tool: "Add tool", farm: "Add product" },
+            quantity: "Quantity",
+            weight: "Weight",
+            amount: "Amount",
+            additionalInfo: "Additional info:",
+            note: "Note:",
+            unitPiece: "pieces",
+            unitKilo: "kg",
+            currency: "manat",
+            today: "Today",
+            yesterday: "Yesterday",
+            tomorrow: "Tomorrow",
+            tokens: {
+                gelir: "Income", xerc: "Expense", heyvan: "Animal", toxum: "Seed", alet: "Tool", mehsul: "Product",
+                elave: "add", et: "", inek: "Cow", disi: "Female", erkek: "Male", bugda: "Wheat", arpa: "Barley", yonca: "Alfalfa",
+                qiymet: "price", mebleg: "amount", miqdar: "quantity", ceki: "weight", dunen: "Yesterday", bugun: "Today", sabah: "Tomorrow",
+                evvel: "ago", gun: "day", manat: "manat", qram: "gram", ton: "ton", kiloqram: "kilogram", kilo: "kg", kq: "kg", kg: "kg",
+            },
+        },
+        ru: {
+            formLabels: { expense: "Добавить расход", income: "Добавить доход", animal: "Добавить животное", seed: "Добавить семена", tool: "Добавить инструмент", farm: "Добавить продукт" },
+            quantity: "Количество",
+            weight: "Вес",
+            amount: "Сумма",
+            additionalInfo: "Доп. информация:",
+            note: "Заметка:",
+            unitPiece: "шт.",
+            unitKilo: "кг",
+            currency: "манат",
+            today: "Сегодня",
+            yesterday: "Вчера",
+            tomorrow: "Завтра",
+            tokens: {
+                gelir: "Доход", xerc: "Расход", heyvan: "Животное", toxum: "Семена", alet: "Инструмент", mehsul: "Продукт",
+                elave: "добавить", et: "", inek: "Корова", disi: "Самка", erkek: "Самец", bugda: "Пшеница", arpa: "Ячмень", yonca: "Люцерна",
+                qiymet: "цена", mebleg: "сумма", miqdar: "количество", ceki: "вес", dunen: "Вчера", bugun: "Сегодня", sabah: "Завтра",
+                evvel: "назад", gun: "день", manat: "манат", qram: "грамм", ton: "тонна", kiloqram: "килограмм", kilo: "кг", kq: "кг", kg: "кг",
+            },
+        },
     };
     const voiceLanguagePhraseMap = {
         en: {
@@ -123,6 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "income add": "gelir elave et",
             "add expense": "xerc elave et",
             "expense add": "xerc elave et",
+            "at animal": "heyvan elave et",
             "no paid in cash": "qeyd paid in cash",
             "no cash payment": "qeyd cash payment",
             "no cash": "qeyd cash",
@@ -817,6 +872,27 @@ document.addEventListener("DOMContentLoaded", function () {
         resultBox.classList.toggle("is-error", Boolean(isError));
     }
 
+    function translateInlineLabel(value) {
+        const text = String(value || "").trim();
+        if (!text) return text;
+        return window.runtimeI18n?.translateInlineValue?.(text) || text;
+    }
+
+    function translateLabelForVoiceLanguage(value) {
+        const text = String(value || "").trim();
+        if (!text) return text;
+        return window.runtimeI18n?.translateInlineValueForLanguage?.(text, activeVoiceLanguage)
+            || (activeVoiceLanguage === currentLanguage ? window.runtimeI18n?.translateInlineValue?.(text) : "")
+            || text;
+    }
+
+    function scrollToVisibleSection(element) {
+        if (!element) return;
+        window.requestAnimationFrame(() => {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    }
+
     function handleBlockedBarcode(formType) {
         let message = "";
         if (addPageMode === "income") {
@@ -853,7 +929,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return true;
     }
 
-    function setVoiceResult(message) {
+    function setVoiceResult(message, variant = "default") {
         voiceResult.hidden = !message;
         if (!message) {
             voiceResult.innerHTML = "";
@@ -872,7 +948,7 @@ document.addEventListener("DOMContentLoaded", function () {
         voiceResult.innerHTML = lines.map((line) => {
             const lineClass = line.startsWith(heardPrefix)
                 ? "voice-result-line voice-result-line-heard"
-                : (line.startsWith(detectedPrefix)
+                : (line.startsWith(detectedPrefix) || variant === "guess"
                     ? "voice-result-line voice-result-line-guess"
                     : "voice-result-line");
             if (line.startsWith(heardPrefix)) {
@@ -886,10 +962,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function formatVoiceResultMessage(transcript, prettyGuess = "") {
-        const voiceResultLabels = voiceResultLabelMap[activeVoiceLanguage] || voiceResultLabelMap.az;
-        const lines = [`${voiceResultLabels.heard} ${transcript}`];
-        if (prettyGuess) lines.push(`${voiceResultLabels.detected} ${prettyGuess}`);
-        return lines.join("\n");
+        const guessText = String(prettyGuess || "").trim();
+        return guessText;
     }
 
     function syncVoiceButtonLabel() {
@@ -968,6 +1042,17 @@ document.addEventListener("DOMContentLoaded", function () {
             .split(" ")
             .filter(Boolean)
             .map((part) => part.charAt(0).toLocaleUpperCase("az") + part.slice(1))
+            .join(" ");
+    }
+
+    function titleCaseForVoiceLanguage(value) {
+        const text = String(value || "").trim();
+        if (!text) return "";
+        const locale = activeVoiceLanguage === "ru" ? "ru" : activeVoiceLanguage === "en" ? "en" : "az";
+        return text
+            .split(" ")
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toLocaleUpperCase(locale) + part.slice(1))
             .join(" ");
     }
 
@@ -1312,14 +1397,30 @@ document.addEventListener("DOMContentLoaded", function () {
     ];
     const leadingEntityNoiseTokens = new Set([
         "elave", "et", "ed", "evvel", "evve", "qabaq", "sonra", "tarix", "qeyd",
-        "heyvan", "gelir", "xerc", "satis", "toxum", "alet", "mehsul",
+        "heyvan", "gelir", "xerc", "satis", "toxum", "alet", "mehsul", "disi", "erkek",
     ]);
     const entityBoundaryTokens = new Set([
         "miqdar", "say", "eded", "dene", "mebleg", "qiymet", "ceki", "tarix", "cinsiyyet",
         "id", "identifikasiya", "elave", "qeyd", "kateqoriya", "novu", "manat", "ton",
         "qram", "kiloqram", "kilogram", "kilo", "cilo", "kq", "kg", "litr", "ml",
-        "gun", "evvel", "qabaq", "sonra", "bugun", "dunen", "sabah",
+        "gun", "evvel", "qabaq", "sonra", "bugun", "dunen", "sabah", "disi", "erkek",
     ]);
+    const numericFieldBoundaryKeywords = [
+        "miqdar", "say", "eded", "dene",
+        "mebleg", "qiymet", "ceki",
+        "tarix", "cinsiyyet", "id", "identifikasiya",
+        "elave melumat", "qeyd", "kateqoriya", "novu",
+        "dunen", "bugun", "sabah",
+    ];
+    const rawNumericFieldKeywordVariants = {
+        ceki: ["ceki", "çəki", "çeki", "seki", "teki", "deki"],
+        mebleg: ["mebleg", "məbləğ", "məbləg", "məbləq", "mebleq", "meblev", "mablag", "meblag"],
+        qiymet: ["qiymet", "qiymət", "qimet", "gimet", "geymet", "qeymet"],
+        miqdar: ["miqdar", "miqdarı", "miqdari", "mikdar", "miktar", "miqtar"],
+        say: ["say"],
+        eded: ["eded", "ədəd"],
+        dene: ["dene", "dənə"],
+    };
 
     const voiceKeywordAliases = {
         "xerc": "xerc", "xerca": "xerc", "xerci": "xerc", "xerce": "xerc", "xercl": "xerc", "xerj": "xerc", "herc": "xerc", "xercin": "xerc", "xercg": "xerc", "sarc": "xerc", "serc": "xerc", "xeraci": "xerc", "iserc": "xerc", "dserc": "xerc", "xelcele": "xerc", "xelceleve": "xerc", "xelce": "xerc", "helcele": "xerc",
@@ -1327,17 +1428,17 @@ document.addEventListener("DOMContentLoaded", function () {
         "elave": "elave", "elavi": "elave", "elavii": "elave", "elavı": "elave", "elav": "elave", "elaf": "elave", "elaveyet": "elave et", "elaveyat": "elave et", "alave": "elave", "elawa": "elave", "ilawe": "elave", "ilafe": "elave", "olave": "elave", "ilave": "elave",
         "et": "et", "it": "et", "ed": "et", "evid": "et", "edid": "et", "td": "et", "ad": "et", "at": "et",
         "cibre": "gubre", "cubre": "gubre", "cubra": "gubre", "cubreye": "gubre", "cubreni": "gubre", "cubren": "gubre", "gubre": "gubre", "gubra": "gubre", "qubre": "gubre", "kubre": "gubre", "pubre": "gubre", "dubre": "gubre",
-        "mebleg": "mebleg", "mebeleg": "mebleg", "mebeleq": "mebleg", "mebelegi": "mebleg", "mebeleqi": "mebleg", "mebleq": "mebleg", "meblegi": "mebleg", "mablag": "mebleg", "meblag": "mebleg", "mevleg": "mebleg", "mevlaq": "mebleg", "mebleyi": "mebleg", "meblegh": "mebleg",
+        "mebleg": "mebleg", "mebeleg": "mebleg", "mebeleq": "mebleg", "mebelegi": "mebleg", "mebeleqi": "mebleg", "mebleq": "mebleg", "meblegi": "mebleg", "mablag": "mebleg", "meblag": "mebleg", "mevleg": "mebleg", "mevlaq": "mebleg", "mebleyi": "mebleg", "meblegh": "mebleg", "meblar": "mebleg", "mebler": "mebleg", "meblev": "mebleg",
         "qiymet": "qiymet", "qimet": "qiymet", "gimet": "qiymet", "geymet": "qiymet", "giymet": "qiymet", "qiyma": "qiymet", "qeymet": "qiymet", "qiymeti": "qiymet", "qimeti": "qiymet", "kiymet": "qiymet", "dimet": "qiymet",
-        "ceki": "ceki", "cekin": "ceki", "ceksi": "ceki", "seki": "ceki", "ceci": "ceki", "caki": "ceki", "cekisi": "ceki", "cek": "ceki", "ciyek": "ceki", "teki": "ceki", "deki": "ceki",
+        "ceki": "ceki", "cekin": "ceki", "ceksi": "ceki", "seki": "ceki", "ceci": "ceki", "caki": "ceki", "cekisi": "ceki", "cek": "ceki", "ciyek": "ceki", "teki": "ceki", "deki": "ceki", "teci": "ceki",
         "miqdar": "miqdar", "miqtar": "miqdar", "mikdar": "miqdar", "miktar": "miqdar", "miqra": "miqdar", "miqti": "miqdar", "miqdari": "miqdar", "diqdar": "miqdar",
         "toxum": "toxum", "tohum": "toxum", "toxmu": "toxum", "toxm": "toxum", "toxma": "toxum", "toxumu": "toxum", "doksum": "toxum",
         "alet": "alet", "alat": "alet", "aletd": "alet", "aleti": "alet", "aladh": "alet", "dadet": "alet",
         "heyvan": "heyvan", "hevan": "heyvan", "eyvan": "heyvan", "ayvan": "heyvan", "heyfan": "heyvan", "heyvani": "heyvan", "deyvan": "heyvan",
         "mehsul": "mehsul", "mexsul": "mehsul", "mesul": "mehsul", "mehs": "mehsul", "mehsulu": "mehsul", "dehsul": "mehsul",
         "bugda": "bugda", "buxta": "bugda", "buhta": "bugda", "bogda": "bugda", "bugta": "bugda", "bugde": "bugda", "buxda": "bugda", "pugda": "bugda", "taxil": "bugda", "buqda": "bugda", "dugda": "bugda",
-        "inek": "inek", "inec": "inek", "inac": "inek", "inay": "inek", "ineh": "inek", "inekde": "inek", "ineyi": "inek", "idek": "inek", "anek": "inek", "ineksi": "inek", "iyin": "inek", "inane": "inek", "inaki": "inek", "ines": "inek", "ineci": "inek", "ineki": "inek", "iniki": "inek", "inki": "inek", "ini": "inek",
-        "disi": "disi", "dis": "disi", "dishi": "disi", "tisi": "disi", "pisi": "disi", "disileri": "disi", "disiler": "disi", "disi": "disi",
+        "inek": "inek", "inec": "inek", "inac": "inek", "inay": "inek", "ineh": "inek", "inekde": "inek", "ineyi": "inek", "idek": "inek", "anek": "inek", "ineksi": "inek", "iyin": "inek", "inane": "inek", "inaki": "inek", "ines": "inek", "ineci": "inek", "ineki": "inek", "iniki": "inek", "inki": "inek", "ini": "inek", "inej": "inek", "ineq": "inek", "ineg": "inek", "inex": "inek", "inez": "inek", "inenc": "inek", "ineng": "inek", "inerc": "inek", "inerci": "inek", "inerce": "inek", "inercde": "inek",
+        "disi": "disi", "dis": "disi", "dishi": "disi", "tisi": "disi", "tishi": "disi", "tis": "disi", "pisi": "disi", "disileri": "disi", "disiler": "disi",
         "erkek": "erkek", "erkey": "erkek", "erkeh": "erkek", "arkak": "erkek", "erkeyi": "erkek", "darkey": "erkek", "erkekleri": "erkek", "erkeği": "erkek", "erkegin": "erkek",
         "at": "at", "ata": "at", "ati": "at", "atı": "at", "atin": "at", "atını": "at",
         "sud": "sud", "sudu": "sud", "sudun": "sud", "sut": "sud", "sutu": "sud", "shut": "sud",
@@ -1354,20 +1455,26 @@ document.addEventListener("DOMContentLoaded", function () {
         "qabaq": "qabaq", "qabax": "qabaq", "qabak": "qabaq", "kabaq": "qabaq",
         "sonra": "sonra", "sonrsa": "sonra",
         "dekabir": "dekabr", "dekabr": "dekabr", "deqabr": "dekabr", "dikabr": "dekabr",
-        "kilo": "kilo", "ulo": "kilo", "kulo": "kilo", "qilo": "kilo", "kilu": "kilo", "kili": "kilo", "dilo": "kilo",
+        "kilo": "kilo", "ulo": "kilo", "kulo": "kilo", "qilo": "kilo", "kilu": "kilo", "kili": "kilo", "dilo": "kilo", "sula": "kilo", "sulo": "kilo", "cula": "kilo",
         "kiloqram": "kiloqram", "kilaqram": "kiloqram", "kilogram": "kiloqram", "kiliqram": "kiloqram",
         "kq": "kq", "kaqe": "kq", "keko": "kq", "dq": "kq",
-        "manat": "manat", "manatd": "manat", "manad": "manat", "manot": "manat", "mana": "manat", "man": "manat", "manati": "manat", "danat": "manat",
+        "manat": "manat", "manatd": "manat", "manad": "manat", "manot": "manat", "menot": "manat", "menat": "manat", "anad": "manat", "anadin": "manat", "anadi": "manat", "anadim": "manat", "mana": "manat", "man": "manat", "manati": "manat", "danat": "manat",
+        "suvarma": "suvarma", "subarma": "suvarma", "suarma": "suvarma", "suvama": "suvarma", "suarma": "suvarma", "subar ma": "suvarma",
+        "elde": "elli", "eldi": "elli", "eldi̇": "elli", "eldii": "elli", "eldiye": "elli", "ellim": "elli", "ellin": "elli",
+        "eldeman": "elli manat", "eldemanadi": "elli manat", "elde man": "elli manat", "elde manadi": "elli manat", "elde man adi": "elli manat",
         "elimanat": "elli manat", "elmanat": "elli manat", "ellimanat": "elli manat",
         "elli": "elli", "eli": "elli", "evli": "elli", "avli": "elli", "ellii": "elli", "delli": "elli",
         "onc": "on", "oncu": "on", "once": "on", "oncesi": "on", "don": "on",
         "bir": "bir", "biri": "bir", "pir": "bir", "biy": "bir", "dir": "bir",
-        "iki": "iki", "ik": "iki", "iyi": "iki", "igi": "iki", "idi": "iki",
+        "idi": "idi",
+        "iki": "iki", "ik": "iki", "iyi": "iki", "igi": "iki",
         "uc": "uc", "ush": "uc", "us": "uc", "uc": "uc",
         "dord": "dord", "tort": "dord", "dort": "dord", "dor": "dord",
         "bes": "bes", "bash": "bes", "bas": "bes", "bes": "bes",
         "alti": "alti", "alt": "alti", "altdi": "alti", "dalti": "alti",
-        "yeddi": "yeddi", "yedi": "yeddi", "yeti": "yeddi", "yetdi": "yeddi", "dedi": "yeddi",
+        "yeddi": "yeddi", "yedi": "yeddi", "yeti": "yeddi", "yetdi": "yeddi", "yettim": "yeddi", "yetim": "yeddi", "yedim": "yeddi", "ettim": "yeddi", "dedi": "yeddi",
+        "armut": "armud", "armod": "armud",
+        "dortizonyi": "dord yuz on", "dortizoni": "dord yuz on", "dortuzonyi": "dord yuz on", "dordizonyi": "dord yuz on",
         "sekkiz": "sekkiz", "sekiz": "sekkiz", "sekgiz": "sekkiz", "segiz": "sekkiz", "dekiz": "sekkiz",
         "doqquz": "doqquz", "doquz": "doqquz", "dogguz": "doqquz", "togquz": "doqquz", "doqus": "doqquz",
         "iyirmi": "iyirmi", "yirmi": "iyirmi", "ikirmi": "iyirmi", "igirmi": "iyirmi", "iyirimi": "iyirmi", "igirimi": "iyirmi", "dirmi": "iyirmi",
@@ -1377,9 +1484,60 @@ document.addEventListener("DOMContentLoaded", function () {
         "yetmis": "yetmis", "yetmisd": "yetmis", "demis": "yetmis",
         "seksen": "seksen", "saxsan": "seksen", "seksan": "seksen", "saksan": "seksen", "daksan": "seksen",
         "doxsan": "doxsan", "duxsan": "doxsan", "toksan": "doxsan", "doksan": "doxsan", "doxdan": "doxsan",
-        "yuz": "yuz", "yus": "yuz", "duz": "yuz",
+        "yuz": "yuz", "yus": "yuz", "duz": "yuz", "yusle": "yuz", "yusla": "yuz", "yuzle": "yuz", "yuzla": "yuz",
         "min": "min", "mim": "min", "dim": "min"
     };
+
+    voiceKeywordAliases.monat = "manat";
+    voiceKeywordAliases.minbesiz = "min bes yuz";
+    voiceKeywordAliases.minbesuz = "min bes yuz";
+    voiceKeywordAliases.minbesyuz = "min bes yuz";
+    voiceKeywordAliases.minbeshuz = "min bes yuz";
+    voiceKeywordAliases.minbesyus = "min bes yuz";
+    voiceKeywordAliases.munbesiz = "min bes yuz";
+    voiceKeywordAliases.munbesuz = "min bes yuz";
+    voiceKeywordAliases.munbesyuz = "min bes yuz";
+    voiceKeywordAliases.munbeshuz = "min bes yuz";
+    voiceKeywordAliases.munbesyus = "min bes yuz";
+    voiceKeywordAliases.munbesus = "min bes yuz";
+    voiceKeywordAliases.munbeshus = "min bes yuz";
+    voiceKeywordAliases.minbesus = "min bes yuz";
+    voiceKeywordAliases.minbeshus = "min bes yuz";
+
+    function expandAliasedSpokenNumberToken(normalizedToken) {
+        const aliasValue = voiceKeywordAliases[normalizedToken];
+        if (!aliasValue || !aliasValue.includes(" ")) return [];
+        return aliasValue
+            .split(" ")
+            .filter(Boolean)
+            .flatMap((part) => expandSpokenNumberToken(part))
+            .filter(Boolean);
+    }
+
+    function expandCompositeSpokenNumberToken(normalizedToken) {
+        if (!normalizedToken || /^\d+(?:[.,]\d+)?$/.test(normalizedToken)) return [];
+
+        const aliasedTokens = expandAliasedSpokenNumberToken(normalizedToken);
+        if (aliasedTokens.length) return aliasedTokens;
+
+        if (normalizedToken.startsWith("min") && normalizedToken.length > 3) {
+            const tail = normalizedToken.slice(3);
+            const tailTokens = expandCompositeSpokenNumberToken(tail);
+            if (tailTokens.length) return ["min", ...tailTokens];
+            const tailCandidate = bestSpokenNumberCandidate(tail);
+            if (tailCandidate && tailCandidate !== "min") return ["min", tailCandidate];
+        }
+
+        const fusedHundredsMatch = normalizedToken.match(/^([a-z]+?)(?:yuz|yus|yusle|yusla|yuzle|yuzla|iz|is)$/);
+        if (fusedHundredsMatch) {
+            const prefixCandidate = bestSpokenNumberCandidate(fusedHundredsMatch[1]);
+            if (prefixCandidate && prefixCandidate !== "yuz" && prefixCandidate !== "min") {
+                return [prefixCandidate, "yuz"];
+            }
+        }
+
+        return [];
+    }
 
     function collectVoiceVocabulary() {
         if (voiceVocabularyReady) return;
@@ -1495,6 +1653,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function normalizeCompoundEntityText(value) {
         return String(value || "")
+            .replace(/\b(mal|camis|qoyun|keci|toyuq|hinduska|qaz|ordek|bildircin)\s*et\s*i\b/g, "$1 eti")
+            .replace(/\b(mal|camis|qoyun|keci|toyuq|hinduska|qaz|ordek|bildircin)eti\b/g, "$1 eti")
             .replace(/\b([a-z0-9]+?)(?:\s+)?(?:etli|ətli|eti|əti)\b/g, "$1 eti")
             .replace(/\b([a-z0-9]+?)(?:\s+)?(?:sudu|südü|sudlu|südlü)\b/g, "$1 sudu")
             .replace(/\b([a-z0-9]+?)(?:\s+)?(?:yumurtasi|yumurtası)\b/g, "$1 yumurtasi")
@@ -1513,8 +1673,22 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/\belaveyet\b/g, "elave et")
             .replace(/\belaveyat\b/g, "elave et")
             .replace(/\belaveyət\b/g, "elave et")
+            .replace(/\b(bir|iki|uc|dord|bes|alti|yeddi|sekkiz|doqquz|on|iyirmi|otuz|qirx|elli|altmis|yetmis|seksen|doxsan|yuz|min)\s*man(?:\s+ad(?:i)?)?\b/g, "$1 manat")
+            .replace(/\b(bir|iki|uc|dord|bes|alti|yeddi|sekkiz|doqquz|on|iyirmi|otuz|qirx|elli|altmis|yetmis|seksen|doxsan|yuz|min)\s*manad\b/g, "$1 manat")
+            .replace(/\b(bir|iki|uc|dord|bes|alti|yeddi|sekkiz|doqquz|on|iyirmi|otuz|qirx|elli|altmis|yetmis|seksen|doxsan|yuz|min)\s*menat\b/g, "$1 manat")
+            .replace(/\b(\d+(?:[.,]\d+)?)\s+(?:at|ad|aat|az)\b/g, "$1 manat")
+            .replace(/\bman\s+ad(?:i)?\b/g, "manat")
             .replace(/\bmanada\b/g, "manat")
             .replace(/\bmanatda\b/g, "manat")
+            .replace(/\belde\s+man(?:\s+adi)?\b/g, "elli manat")
+            .replace(/\beldeman(?:\s+adi)?\b/g, "elli manat")
+            .replace(/\beldi\s+manat\b/g, "elli manat")
+            .replace(/\beldi\s+menat\b/g, "elli manat")
+            .replace(/\belde\s+menat\b/g, "elli manat")
+            .replace(/\bellim\s+anadi?n\b/g, "elli manat")
+            .replace(/\bellim\s+manat\b/g, "elli manat")
+            .replace(/\bel\s+l+\b/g, "elli")
+            .replace(/\bel\s+li\b/g, "elli")
             .replace(/\beli\s*manat\b/g, "elli manat")
             .replace(/\belimanat\b/g, "elli manat")
             .replace(/\belli\s*manat\b/g, "elli manat")
@@ -1555,7 +1729,18 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/\btarixi\b/g, "tarix")
             .replace(/\bxerci\b/g, "xerc")
             .replace(/\bmehsulu\b/g, "mehsul")
+            .replace(/\btoxumu\b/g, "toxum")
             .replace(/\btohumu\b/g, "toxum")
+            .replace(/\bburada\s+toxum\b/g, "bugda toxum")
+            .replace(/\bbugada\s+toxum\b/g, "bugda toxum")
+            .replace(/\bbugde\s+toxum\b/g, "bugda toxum")
+            .replace(/\bonc\s+(ulo|kulo|qilo|cilo|kilo)\b/g, "on uc kilo")
+            .replace(/\boncilo\b/g, "on kilo")
+            .replace(/\bonculo\b/g, "on kilo")
+            .replace(/\bonculu\b/g, "on kilo")
+            .replace(/\birin\s+birs\b/g, "iyirmi bes")
+            .replace(/\birinbirs\b/g, "iyirmi bes")
+            .replace(/\birin\s+bes\b/g, "iyirmi bes")
             .replace(/\baleti\b/g, "alet")
             .replace(/\bheyvani\b/g, "heyvan")
             .replace(/\belave it\b/g, "elave et")
@@ -1609,6 +1794,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         const aliased = voiceKeywordAliases[normalized] || normalized;
         if (spokenNumberTokens.has(aliased)) return aliased;
+        if (normalized.length <= 2) return "";
 
         let best = "";
         let bestScore = 0;
@@ -1630,8 +1816,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!normalized) return [];
         if (/^\d+(?:[.,]\d+)?$/.test(normalized)) return [normalized];
 
+        const aliasedTokens = expandAliasedSpokenNumberToken(normalized);
+        if (aliasedTokens.length) return aliasedTokens;
+
         const direct = bestSpokenNumberCandidate(normalized);
         if (direct && spokenNumberTokens.has(direct)) return [direct];
+
+        const compositeTokens = expandCompositeSpokenNumberToken(normalized);
+        if (compositeTokens.length) return compositeTokens;
+
         const simpleParts = [];
         const specialTokens = ["yuz", "min"];
         for (const specialToken of specialTokens) {
@@ -1795,47 +1988,87 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function prettifyCanonicalText(value) {
-        return String(value || "")
-            .replace(/\bgelir\b/g, "Gəlir")
-            .replace(/\bxerc\b/g, "Xərc")
-            .replace(/\bheyvan\b/g, "Heyvan")
-            .replace(/\btoxum\b/g, "Toxum")
-            .replace(/\balet\b/g, "Alət")
-            .replace(/\bmehsul\b/g, "Məhsul")
-            .replace(/\belave\b/g, "əlavə")
-            .replace(/\bet\b/g, "et")
-            .replace(/\binek\b/g, "İnək")
-            .replace(/\bdisi\b/g, "Dişi")
-            .replace(/\berkek\b/g, "Erkək")
-            .replace(/\bbugda\b/g, "Buğda")
-            .replace(/\barpa\b/g, "Arpa")
-            .replace(/\byonca\b/g, "Yonca")
-            .replace(/\bqiymet\b/g, "qiymət")
-            .replace(/\bmebleg\b/g, "məbləğ")
-            .replace(/\bmiqdar\b/g, "miqdar")
-            .replace(/\bceki\b/g, "çəki")
-            .replace(/\bdunen\b/g, "Dünən")
-            .replace(/\bbugun\b/g, "Bu gün")
-            .replace(/\bsabah\b/g, "Sabah")
-            .replace(/\bevvel\b/g, "əvvəl")
-            .replace(/\bgun\b/g, "gün")
-            .replace(/\bmanat\b/g, "manat")
-            .replace(/\bqram\b/g, "qram")
-            .replace(/\bton\b/g, "ton")
-            .replace(/\bkiloqram\b/g, "kiloqram")
-            .replace(/\bkilo\b/g, "kilo")
-            .replace(/\bkq\b/g, "kilo")
-            .replace(/\bkg\b/g, "kilo");
+        let result = String(value || "");
+        const dictionary = voiceSummaryI18n[activeVoiceLanguage] || voiceSummaryI18n.az;
+        Object.entries(dictionary.tokens).forEach(([source, target]) => {
+            result = result.replace(new RegExp(`\\b${escapeRegex(source)}\\b`, "g"), target);
+        });
+        return result.replace(/\s+/g, " ").trim();
     }
 
     function prettyUnitLabel(unitValue, unitLabel) {
-        if (unitLabel) return prettifyCanonicalText(unitLabel);
-        return prettifyCanonicalText(unitValue);
+        const rawUnitLabel = String(unitLabel || unitValue || "").trim();
+        if (!rawUnitLabel) return "";
+
+        const normalizedUnitLabel = normalizeVoiceText(rawUnitLabel);
+        const summaryText = voiceSummaryI18n[activeVoiceLanguage] || voiceSummaryI18n.az;
+
+        if (normalizedUnitLabel === "eded" || rawUnitLabel === "ədəd") {
+            return summaryText.unitPiece;
+        }
+        if (normalizedUnitLabel === "deste" || rawUnitLabel === "dəstə") {
+            if (activeVoiceLanguage === "en") return "bundles";
+            if (activeVoiceLanguage === "ru") return "связки";
+            return "dəstə";
+        }
+        if (normalizedUnitLabel === "baglama" || rawUnitLabel === "bağlama") {
+            if (activeVoiceLanguage === "en") return "packs";
+            if (activeVoiceLanguage === "ru") return "упаковки";
+            return "bağlama";
+        }
+
+        return translateLabelForVoiceLanguage(rawUnitLabel) || prettifyCanonicalText(rawUnitLabel);
+    }
+
+    function detectAdditionalInfoSummaryLabelKey(transcript) {
+        const nativeText = normalizeNativeVoiceText(transcript);
+        const normalized = canonicalizeVoiceText(transcript);
+        const hasNativePhrase = (phrases) => phrases.some((phrase) => nativeText.includes(phrase));
+
+        if (activeVoiceLanguage === "en") {
+            if (hasNativePhrase(["note", "notes"]) || /\bqeyd\b/.test(normalized)) return "note";
+            if (hasNativePhrase(["additional info", "additional information"]) || /\belave melumat\b/.test(normalized)) return "additionalInfo";
+            return "additionalInfo";
+        }
+
+        if (activeVoiceLanguage === "ru") {
+            if (hasNativePhrase(["заметка", "заметки"]) || /\bqeyd\b/.test(normalized)) return "note";
+            if (hasNativePhrase(["дополнительная информация", "доп информация"]) || /\belave melumat\b/.test(normalized)) return "additionalInfo";
+            return "additionalInfo";
+        }
+
+        if (/\bqeyd\b/.test(normalized)) return "note";
+        if (/\belave melumat\b/.test(normalized)) return "additionalInfo";
+        return "additionalInfo";
+    }
+
+    function formatAdditionalInfoForVoiceSummary(value, transcript = "") {
+        const text = String(value || "").trim();
+        if (!text) return "";
+        const summaryText = voiceSummaryI18n[activeVoiceLanguage] || voiceSummaryI18n.az;
+        const labelKey = detectAdditionalInfoSummaryLabelKey(transcript);
+        const label = summaryText[labelKey] || summaryText.additionalInfo;
+        return `${label} ${prettifyCanonicalText(text)}`.trim();
+    }
+
+    function formatVoiceAmountSummary(value, draft, summaryText) {
+        if (value == null || value === "") return "";
+        const explicitAmountLabel = Boolean(draft?.amountExplicit || draft?.priceExplicit);
+        const explicitCurrencyLabel = Boolean(draft?.currencyExplicit);
+        return `${explicitAmountLabel ? `${summaryText.amount} ` : ""}${value}${explicitCurrencyLabel ? ` ${summaryText.currency}` : ""}`.trim();
+    }
+
+    function formatVoiceQuantitySummary(value, draft, summaryText) {
+        if (value == null || value === "") return "";
+        const quantityValue = `${value}${draft?.unit ? ` ${prettyUnitLabel(draft.unit, draft.unitLabel)}` : ""}`.trim();
+        if (draft?.formType === "animal") return `${summaryText.quantity} ${value}`;
+        return draft?.quantityExplicit ? `${summaryText.quantity} ${quantityValue}` : quantityValue;
     }
 
     function summaryFieldOrder(draft, transcript) {
         const normalized = canonicalizeVoiceText(transcript);
         const entries = [];
+        const summaryText = voiceSummaryI18n[activeVoiceLanguage] || voiceSummaryI18n.az;
 
         function addEntry(text, patterns, fallbackOrder) {
             if (!text) return;
@@ -1847,62 +2080,86 @@ document.addEventListener("DOMContentLoaded", function () {
             entries.push({ text, order: index !== Number.POSITIVE_INFINITY ? index : fallbackOrder });
         }
 
-        const entityLabel =
+        const rawEntityLabel =
             draft.item?.name ||
             draft.subcategory?.name ||
             draft.category?.name ||
             draft.categoryName ||
             "";
-        const entityPatterns = entityLabel
-            ? canonicalizeVoiceText(entityLabel).split(" ").filter(Boolean).map((token) => new RegExp(`\\b${escapeRegex(token)}\\b`))
+        const entityLabel = translateLabelForVoiceLanguage(rawEntityLabel) || rawEntityLabel;
+        const entityPatterns = rawEntityLabel
+            ? canonicalizeVoiceText(rawEntityLabel).split(" ").filter(Boolean).map((token) => new RegExp(`\\b${escapeRegex(token)}\\b`))
             : [];
 
-        addEntry(entityLabel ? titleCaseAz(entityLabel) : "", entityPatterns, 20);
-        addEntry(draft.gender ? titleCaseAz(prettifyCanonicalText(draft.gender)) : "", [/\bdisi\b/, /\berkek\b/], 30);
+        addEntry(entityLabel ? titleCaseForVoiceLanguage(entityLabel) : "", entityPatterns, 20);
+        addEntry(draft.gender ? titleCaseForVoiceLanguage(prettifyCanonicalText(draft.gender)) : "", [/\bdisi\b/, /\berkek\b/], 30);
 
         if (draft.quantity != null && draft.quantity !== "") {
-            const quantityText = draft.formType === "animal"
-                ? `Miqdar ${draft.quantity}`
-                : `${draft.quantity}${draft.unit ? ` ${prettyUnitLabel(draft.unit, draft.unitLabel)}` : ""}`;
+            const quantityText = formatVoiceQuantitySummary(draft.quantity, draft, summaryText);
             addEntry(quantityText, [/\bmiqdar\b/, /\bsay\b/, /\beded\b/, /\bdene\b/, /\blitr\b/, /\bqram\b/, /\bg\b/, /\bton\b/, /\bkiloqram\b/, /\bkilogram\b/, /\bkilo\b/, /\bcilo\b/, /\bkq\b/, /\bkg\b/, /\bml\b/], 40);
         }
 
         if (draft.weight != null && draft.weight !== "") {
-            const weightText = draft.formType === "animal" ? `Çəki ${draft.weight}` : `${draft.weight} kilo`;
+            const weightText = draft.formType === "animal" ? `${summaryText.weight} ${draft.weight}` : `${draft.weight} ${summaryText.unitKilo}`;
             addEntry(weightText, [/\bceki\b/, /\bteki\b/, /\bdeki\b/], 50);
         }
 
-        if (draft.amount != null && draft.amount !== "") addEntry(`${draft.amountExplicit ? "Məbləğ " : ""}${draft.amount} manat`, [/\bmebleg\b/, /\bmanat\b/], 60);
-        else if (draft.price != null && draft.price !== "") addEntry(`${draft.priceExplicit ? "Məbləğ " : ""}${draft.price} manat`, [/\bqiymet\b/, /\bmanat\b/], 60);
+        if (draft.amount != null && draft.amount !== "") {
+            const amountPatterns = draft.currencyExplicit ? [/\bmebleg\b/, /\bmanat\b/] : [/\bmebleg\b/];
+            addEntry(formatVoiceAmountSummary(draft.amount, draft, summaryText), amountPatterns, 60);
+        } else if (draft.price != null && draft.price !== "") {
+            const pricePatterns = draft.currencyExplicit ? [/\bqiymet\b/, /\bmanat\b/] : [/\bqiymet\b/];
+            addEntry(formatVoiceAmountSummary(draft.price, draft, summaryText), pricePatterns, 60);
+        }
 
         if (draft.date) {
+            const localizedDateLabel = draft.dateLabel
+                ? translateLabelForVoiceLanguage(draft.dateLabel)
+                : formatSummaryDate(draft.date);
             addEntry(
-                draft.dateLabel || formatSummaryDate(draft.date),
+                localizedDateLabel,
                 [/\bdunen\b/, /\bbugun\b/, /\bsabah\b/, /\bgun\b/, /\bhefte\b/, /\bevvel\b/, /\bqabaq\b/, /\bsonra\b/],
                 70,
+            );
+        }
+
+        if (draft.additionalInfo) {
+            addEntry(
+                formatAdditionalInfoForVoiceSummary(draft.additionalInfo, transcript),
+                [/\belave melumat\b/, /\bqeyd\b/],
+                80,
             );
         }
 
         return entries.sort((left, right) => left.order - right.order).map((entry) => entry.text);
     }
 
+    function shouldIncludeFormLabelInSummary(formType, transcript) {
+        const normalized = canonicalizeVoiceText(transcript);
+        if (!formType || !normalized) return false;
+        const explicitIntentPatterns = {
+            expense: [/\bxerc elave et\b/, /\bxerc elave ed\b/],
+            income: [/\bgelir elave et\b/, /\bgelir elave ed\b/, /\bsatis elave et\b/, /\bsatis elave ed\b/],
+            animal: [/\bheyvan elave et\b/, /\bheyvan elave ed\b/],
+            seed: [/\btoxum elave et\b/, /\btoxum elave ed\b/],
+            tool: [/\balet elave et\b/, /\balet elave ed\b/],
+            farm: [/\bmehsul elave et\b/, /\bmehsul elave ed\b/],
+        };
+        return (explicitIntentPatterns[formType] || []).some((pattern) => pattern.test(normalized));
+    }
+
     function buildPrettyVoiceSummary(draft, transcript) {
         const parts = [];
-        const formLabels = {
-            expense: "Xərc əlavə et",
-            income: "Gəlir əlavə et",
-            animal: "Heyvan əlavə et",
-            seed: "Toxum əlavə et",
-            tool: "Alət əlavə et",
-            farm: "Məhsul əlavə et",
-        };
-        if (draft.formType && formLabels[draft.formType]) parts.push(formLabels[draft.formType]);
+        const formLabels = (voiceSummaryI18n[activeVoiceLanguage] || voiceSummaryI18n.az).formLabels;
+        if (draft.formType && formLabels[draft.formType] && shouldIncludeFormLabelInSummary(draft.formType, transcript)) {
+            parts.push(formLabels[draft.formType]);
+        }
         parts.push(...summaryFieldOrder(draft, transcript));
 
         const sentence = parts.filter(Boolean).join(", ");
         if (sentence) return `${sentence}.`;
         const fallback = prettifyCanonicalText(canonicalizeVoiceText(transcript));
-        return fallback ? `${titleCaseAz(fallback)}.` : "";
+        return fallback ? `${titleCaseForVoiceLanguage(fallback)}.` : "";
     }
 
     function selectedOptionText(elementId) {
@@ -1917,24 +2174,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function formatSummaryDate(date) {
+        const summaryText = voiceSummaryI18n[activeVoiceLanguage] || voiceSummaryI18n.az;
         if (!date) return "";
-        if (date === todayIso) return "Bu gün";
-        if (date === shiftToday(-1)) return "Dünən";
-        if (date === shiftToday(1)) return "Sabah";
+        if (date === todayIso) return summaryText.today;
+        if (date === shiftToday(-1)) return summaryText.yesterday;
+        if (date === shiftToday(1)) return summaryText.tomorrow;
         return date;
     }
 
     function buildPrettyVoiceSummaryFromForm(formType, transcript, draft) {
         const parts = [];
-        const formLabels = {
-            expense: "Xərc əlavə et",
-            income: "Gəlir əlavə et",
-            animal: "Heyvan əlavə et",
-            seed: "Toxum əlavə et",
-            tool: "Alət əlavə et",
-            farm: "Məhsul əlavə et",
-        };
-        if (formLabels[formType]) parts.push(formLabels[formType]);
+        const summaryText = voiceSummaryI18n[activeVoiceLanguage] || voiceSummaryI18n.az;
+        const formLabels = summaryText.formLabels;
+        if (formLabels[formType] && shouldIncludeFormLabelInSummary(formType, transcript)) parts.push(formLabels[formType]);
 
         let entityLabel = "";
         if (formType === "income") entityLabel = selectedOptionText("income-item") || document.getElementById("income-manual-name")?.value || selectedOptionText("income-category");
@@ -1944,59 +2196,72 @@ document.addEventListener("DOMContentLoaded", function () {
         else if (formType === "farm") entityLabel = selectedOptionText("farm-item") || document.getElementById("farm-manual-name")?.value || selectedOptionText("farm-category");
         else if (formType === "expense") entityLabel = selectedOptionText("expense-subcategory") || document.getElementById("expense-manual-name")?.value || selectedOptionText("expense-category");
 
-        if (entityLabel) parts.push(titleCaseAz(entityLabel));
+        entityLabel = translateLabelForVoiceLanguage(entityLabel) || entityLabel;
+        if (entityLabel) parts.push(titleCaseForVoiceLanguage(entityLabel));
 
         if (formType === "income") {
             const quantity = fieldValue("income-quantity");
-            const unit = selectedOptionText("income-unit") || fieldValue("income-unit");
+            const unit = prettyUnitLabel(fieldValue("income-unit"), translateLabelForVoiceLanguage(selectedOptionText("income-unit")) || selectedOptionText("income-unit"));
             const amount = fieldValue("income-amount") || draft?.amount || draft?.price || "";
             const date = fieldValue("income-date") || draft?.date || "";
-            if (quantity) parts.push(unit ? `${quantity} ${unit}` : quantity);
-            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
+            const additionalInfo = fieldValue("income-additional-info") || draft?.additionalInfo || "";
+            if (quantity) parts.push(formatVoiceQuantitySummary(quantity, { ...draft, unit: fieldValue("income-unit") || draft?.unit, unitLabel: unit || draft?.unitLabel, formType }, summaryText));
+            if (amount) parts.push(formatVoiceAmountSummary(amount, draft, summaryText));
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
+            if (additionalInfo) parts.push(formatAdditionalInfoForVoiceSummary(additionalInfo, transcript));
         } else if (formType === "animal") {
             const quantity = fieldValue("animal-quantity");
             const weight = fieldValue("animal-weight") || draft?.weight || "";
             const amount = fieldValue("animal-price") || draft?.price || draft?.amount || "";
             const date = fieldValue("animal-date") || draft?.date || "";
-            if (quantity && quantity !== "1") parts.push(`${quantity} ədəd`);
-            if (weight) parts.push(`${weight} kilo`);
-            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
+            const additionalInfo = fieldValue("animal-additional-info") || draft?.additionalInfo || "";
+            if (quantity && quantity !== "1") parts.push(`${summaryText.quantity} ${quantity}`);
+            if (weight) parts.push(`${summaryText.weight} ${weight}`);
+            if (amount) parts.push(formatVoiceAmountSummary(amount, draft, summaryText));
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
+            if (additionalInfo) parts.push(formatAdditionalInfoForVoiceSummary(additionalInfo, transcript));
         } else if (formType === "expense") {
             const amount = fieldValue("expense-amount") || draft?.amount || "";
             const date = fieldValue("expense-date") || draft?.date || "";
-            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
+            const additionalInfo = fieldValue("expense-additional-info") || draft?.additionalInfo || "";
+            if (amount) parts.push(formatVoiceAmountSummary(amount, draft, summaryText));
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
+            if (additionalInfo) parts.push(formatAdditionalInfoForVoiceSummary(additionalInfo, transcript));
         } else if (formType === "seed") {
             const quantity = fieldValue("seed-quantity");
-            const unit = selectedOptionText("seed-unit") || fieldValue("seed-unit");
+            const unit = prettyUnitLabel(fieldValue("seed-unit"), translateLabelForVoiceLanguage(selectedOptionText("seed-unit")) || selectedOptionText("seed-unit"));
             const amount = fieldValue("seed-price") || draft?.price || draft?.amount || "";
             const date = fieldValue("seed-date") || draft?.date || "";
-            if (quantity) parts.push(unit ? `${quantity} ${unit}` : quantity);
-            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
+            const additionalInfo = fieldValue("seed-additional-info") || draft?.additionalInfo || "";
+            if (quantity) parts.push(formatVoiceQuantitySummary(quantity, { ...draft, unit: fieldValue("seed-unit") || draft?.unit, unitLabel: unit || draft?.unitLabel, formType }, summaryText));
+            if (amount) parts.push(formatVoiceAmountSummary(amount, draft, summaryText));
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
+            if (additionalInfo) parts.push(formatAdditionalInfoForVoiceSummary(additionalInfo, transcript));
         } else if (formType === "tool") {
             const quantity = fieldValue("tool-quantity");
             const amount = fieldValue("tool-price") || draft?.price || draft?.amount || "";
             const date = fieldValue("tool-date") || draft?.date || "";
-            if (quantity) parts.push(`${quantity} ədəd`);
-            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
+            const additionalInfo = fieldValue("tool-additional-info") || draft?.additionalInfo || "";
+            if (quantity) parts.push(formatVoiceQuantitySummary(quantity, { ...draft, unit: "eded", unitLabel: summaryText.unitPiece, formType }, summaryText));
+            if (amount) parts.push(formatVoiceAmountSummary(amount, draft, summaryText));
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
+            if (additionalInfo) parts.push(formatAdditionalInfoForVoiceSummary(additionalInfo, transcript));
         } else if (formType === "farm") {
             const quantity = fieldValue("farm-quantity");
-            const unit = selectedOptionText("farm-unit") || fieldValue("farm-unit");
+            const unit = prettyUnitLabel(fieldValue("farm-unit"), translateLabelForVoiceLanguage(selectedOptionText("farm-unit")) || selectedOptionText("farm-unit"));
             const amount = fieldValue("farm-price") || draft?.price || draft?.amount || "";
             const date = fieldValue("farm-date") || draft?.date || "";
-            if (quantity) parts.push(unit ? `${quantity} ${unit}` : quantity);
-            if (amount) parts.push(`${draft?.amountExplicit || draft?.priceExplicit ? "Məbləğ " : ""}${amount} manat`);
+            const additionalInfo = fieldValue("farm-additional-info") || draft?.additionalInfo || "";
+            if (quantity) parts.push(formatVoiceQuantitySummary(quantity, { ...draft, unit: fieldValue("farm-unit") || draft?.unit, unitLabel: unit || draft?.unitLabel, formType }, summaryText));
+            if (amount) parts.push(formatVoiceAmountSummary(amount, draft, summaryText));
             const prettyDate = formatSummaryDate(date);
             if (prettyDate) parts.push(prettyDate);
+            if (additionalInfo) parts.push(formatAdditionalInfoForVoiceSummary(additionalInfo, transcript));
         }
 
         const sentence = parts.filter(Boolean).join(", ");
@@ -2045,11 +2310,43 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/\bdek abr\b/g, "dekabr");
     }
 
+    function parseVoiceDigitString(rawValue) {
+        const compact = String(rawValue || "").trim().replace(/\s+/g, "");
+        if (!compact) return null;
+        if (/^-?\d{1,3}(?:[.,]\d{3})+[.,]\d+$/.test(compact)) {
+            const lastSeparatorIndex = Math.max(compact.lastIndexOf("."), compact.lastIndexOf(","));
+            const integerPart = compact.slice(0, lastSeparatorIndex).replace(/[.,]/g, "");
+            const fractionalPart = compact.slice(lastSeparatorIndex + 1);
+            return Number(`${integerPart}.${fractionalPart}`);
+        }
+        if (/^-?\d{1,3}(?:[.,]\d{3})+$/.test(compact) || /^-?\d+[.,]\d{3}$/.test(compact)) {
+            return Number(compact.replace(/[.,]/g, ""));
+        }
+        if (/^-?\d+(?:[.,]\d+)?$/.test(compact)) {
+            return Number(compact.replace(",", "."));
+        }
+        return null;
+    }
+
     function parseNumberWords(segment) {
         const units = { sifir: 0, bir: 1, iki: 2, uc: 3, dord: 4, bes: 5, alti: 6, yeddi: 7, sekkiz: 8, doqquz: 9 };
         const tens = { on: 10, iyirmi: 20, otuz: 30, qirx: 40, elli: 50, altmis: 60, yetmis: 70, seksen: 80, doxsan: 90 };
         const tokens = normalizeSpokenNumberTokens(segment);
         if (!tokens.length) return null;
+
+        const leadingDigitGroups = [];
+        for (const token of tokens) {
+            if (!/^\d+$/.test(token)) break;
+            leadingDigitGroups.push(token);
+        }
+        if (
+            leadingDigitGroups.length >= 2
+            && /^\d{1,3}$/.test(leadingDigitGroups[0])
+            && leadingDigitGroups.slice(1).every((token) => /^\d{3}$/.test(token))
+        ) {
+            const groupedNumeric = parseVoiceDigitString(leadingDigitGroups.join(" "));
+            if (groupedNumeric != null) return groupedNumeric;
+        }
 
         let total = 0;
         let current = 0;
@@ -2074,6 +2371,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     continue;
                 }
                 break;
+            }
+            if (/^\d+(?:[.,]\d+)?$/.test(token)) {
+                const parsedDigitToken = parseVoiceDigitString(token);
+                if (parsedDigitToken != null) {
+                    current += parsedDigitToken;
+                    matched = true;
+                    continue;
+                }
             }
             if (token in tens) {
                 current += tens[token];
@@ -2106,9 +2411,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function parseSpokenNumber(segment) {
         if (!segment) return null;
-        const digitMatch = segment.match(/-?\d+(?:[.,]\d+)?/);
+        const normalizedSegment = canonicalizeVoiceText(segment);
+        const groupedDigitMatch = normalizedSegment.match(/-?\d{1,3}(?:\s+\d{3})+(?:[.,]\d+)?/);
+        if (groupedDigitMatch) {
+            const groupedNumeric = parseVoiceDigitString(groupedDigitMatch[0]);
+            if (groupedNumeric != null) return groupedNumeric;
+        }
+        const wordValue = parseNumberWords(normalizedSegment);
+        if (wordValue != null) return Number(wordValue);
+        const digitMatch = String(segment || "").match(/-?\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d+)?|-?\d+(?:[.,]\d+)?/);
         if (digitMatch) {
-            const numeric = Number(digitMatch[0].replace(",", "."));
+            const numeric = parseVoiceDigitString(digitMatch[0]);
+            if (numeric == null) return null;
             const trailing = canonicalizeVoiceText(segment.slice(digitMatch.index + digitMatch[0].length));
             const trailingTokens = trailing.split(" ").filter(Boolean);
             const pureTrailingNumberPhrase = [];
@@ -2120,8 +2434,64 @@ document.addEventListener("DOMContentLoaded", function () {
             if (trailingWordValue != null && trailingWordValue < 1000) return numeric + Number(trailingWordValue);
             return numeric;
         }
-        const wordValue = parseNumberWords(segment);
-        return wordValue == null ? null : Number(wordValue);
+        return null;
+    }
+
+    function extractLiteralNumberValue(segment) {
+        const rawSegment = String(segment || "").trim();
+        if (!rawSegment) return null;
+
+        const digitMatch = rawSegment.match(/-?\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d+)?|-?\d+(?:[.,]\d+)?/);
+        if (!digitMatch) return null;
+
+        const numeric = parseVoiceDigitString(digitMatch[0]);
+        if (numeric == null) return null;
+
+        const trailing = canonicalizeVoiceText(rawSegment.slice((digitMatch.index || 0) + digitMatch[0].length));
+        const trailingTokens = trailing.split(" ").filter(Boolean);
+        if (!trailingTokens.length) return numeric;
+
+        const allowedTrailingTokens = new Set([
+            "manat", "kilo", "cilo", "kiloqram", "kilogram", "kq", "kg",
+            "qram", "g", "ton", "litr", "l", "ml",
+            "eded", "dene", "deste", "baglama",
+        ]);
+        return trailingTokens.every((token) => allowedTrailingTokens.has(token)) ? numeric : null;
+    }
+
+    function extractDirectDigitField(text, keywords) {
+        const source = String(text || "").toLocaleLowerCase("az");
+        if (!source) return null;
+
+        const unitPattern = "(?:manat|kiloqram|kilogram|kilo|kq|kg|qram|g|ton|litr|l|ml|eded|ədəd|dene|dənə|deste|dəstə|baglama|bağlama)";
+        const allowedTrailingTokens = new Set([
+            "manat", "kiloqram", "kilogram", "kilo", "cilo", "kq", "kg",
+            "qram", "g", "ton", "litr", "l", "ml",
+            "eded", "dene", "deste", "baglama",
+        ]);
+        const numberPattern = "(-?\\d{1,3}(?:[.,\\s]\\d{3})+(?:[.,]\\d+)?|-?\\d+(?:[.,]\\d+)?)";
+
+        for (const keyword of keywords) {
+            const variants = rawNumericFieldKeywordVariants[keyword] || [keyword];
+            const keywordPattern = variants.map((variant) => escapeRegex(variant)).join("|");
+            const regex = new RegExp(
+                `(?:^|\\s)(?:${keywordPattern})(?:si|i|u|ü|a|ə|e|ye|ya)?\\s+${numberPattern}(?=(?:\\s+${unitPattern})?(?:\\s|$|[,;:]))`,
+                "i",
+            );
+            const match = source.match(regex);
+            if (!match || !match[1]) continue;
+
+            const trailingText = canonicalizeVoiceText(source.slice((match.index || 0) + match[0].length));
+            const trailingToken = trailingText.split(" ").filter(Boolean)[0] || "";
+            if (trailingToken && isSpokenNumberToken(trailingToken) && !allowedTrailingTokens.has(trailingToken)) {
+                continue;
+            }
+
+            const numeric = parseVoiceDigitString(match[1]);
+            if (numeric != null) return numeric;
+        }
+
+        return null;
     }
 
     function extractFieldSegment(text, keywords, stopKeywords) {
@@ -2177,6 +2547,9 @@ document.addEventListener("DOMContentLoaded", function () {
             farm: ["mehsul elave et", "mehsul elave ed", "mehsul"],
         };
 
+        let bestEntity = "";
+        let bestScore = -1;
+
         for (const chunk of chunks) {
             let cleaned = canonicalizeVoiceText(chunk);
             (prefixes[formType] || []).forEach((prefix) => {
@@ -2184,16 +2557,72 @@ document.addEventListener("DOMContentLoaded", function () {
                 else if (cleaned === prefix) cleaned = "";
             });
             const entityTokens = sanitizeEntityTokens(cleaned.split(" "));
-            if (entityTokens.length) return entityTokens.join(" ");
+            if (!entityTokens.length) continue;
+            const entityText = entityTokens.join(" ").trim();
+            const score = (entityTokens.length * 100) + entityText.length;
+            if (score > bestScore) {
+                bestEntity = entityText;
+                bestScore = score;
+            }
         }
+
+        if (bestEntity) return bestEntity;
 
         const subject = extractSubjectSegment(text, formType);
         return sanitizeEntityTokens(subject.split(" ")).join(" ").trim();
     }
 
+    function extractExpenseShortEntitySegment(text) {
+        let subject = canonicalizeVoiceText(text);
+        ["xerc elave et", "xerc elave ed", "xerc"].forEach((prefix) => {
+            if (subject.startsWith(`${prefix} `)) subject = subject.slice(prefix.length).trim();
+            else if (subject === prefix) subject = "";
+        });
+        const tokens = subject.split(" ").filter(Boolean);
+        if (!tokens.length) return "";
+        const firstToken = normalizeVoiceToken(tokens[0]);
+        const secondToken = normalizeVoiceToken(tokens[1] || "");
+        if (firstToken !== "et") return "";
+        if (!secondToken) return "";
+        if (!isSpokenNumberToken(secondToken) && !["manat", "mebleg", "qiymet"].includes(secondToken)) return "";
+        return "et";
+    }
+
+    function isLikelyNumericEntitySegment(value) {
+        const tokens = String(value || "").trim().split(/\s+/).filter(Boolean);
+        if (!tokens.length) return false;
+        return tokens.every((token) => {
+            const normalized = normalizeVoiceToken(token);
+            return isSpokenNumberToken(normalized) || ["manat", "mebleg", "qiymet"].includes(normalized);
+        });
+    }
+
     function extractNumericField(text, keywords) {
+        const directLiteralValue = extractDirectDigitField(text, keywords);
+        if (directLiteralValue != null) return directLiteralValue;
+
+        const explicitSegment = extractFieldSegment(text, keywords, numericFieldBoundaryKeywords);
+        const literalValue = extractLiteralNumberValue(explicitSegment);
+        if (literalValue != null) return literalValue;
+        const explicitValue = parseSpokenNumber(explicitSegment);
+        if (explicitValue != null) return explicitValue;
+
         const segment = extractNumberSegmentAfterKeyword(text, keywords);
         return parseSpokenNumber(segment);
+    }
+
+    function extractAnimalWeightValue(text) {
+        const explicit = extractNumericField(text, ["ceki"]);
+        if (explicit != null) return explicit;
+
+        const normalized = canonicalizeVoiceText(text);
+        if (!/\b(mebleg|qiymet|manat)\b/.test(normalized)) return null;
+
+        const fallbackSegment = extractNumberSegmentAfterKeyword(text, ["satis"]);
+        if (!fallbackSegment) return null;
+
+        const parsed = parseSpokenNumber(fallbackSegment);
+        return parsed != null ? parsed : null;
     }
 
     function hasExplicitAmountLabel(text) {
@@ -2201,10 +2630,20 @@ document.addEventListener("DOMContentLoaded", function () {
         return /\b(mebleg|qiymet)\b/.test(normalized);
     }
 
+    function hasExplicitQuantityLabel(text) {
+        const normalized = canonicalizeVoiceText(text);
+        return /\b(miqdar|say|eded|dene)\b/.test(normalized);
+    }
+
+    function hasExplicitCurrencyLabel(text) {
+        const normalized = canonicalizeVoiceText(text);
+        return /\bmanat\b/.test(normalized);
+    }
+
     function extractAmountValue(text) {
         if (activeVoiceLanguage === "en") {
             const native = normalizeNativeVoiceText(text);
-            const nativeMatch = native.match(/(\d+(?:[.,]\d+)?)\s+(manat|menat|monat|monod|monot|minute|minutes)\b/);
+            const nativeMatch = native.match(/(\d+(?:[.,]\d+)?)\s+(manat|menat|menot|monat|monod|monot|minute|minutes)\b/);
             if (nativeMatch) return Number(nativeMatch[1].replace(",", "."));
         }
         if (activeVoiceLanguage === "ru") {
@@ -2222,6 +2661,22 @@ document.addEventListener("DOMContentLoaded", function () {
         const normalized = canonicalizeVoiceText(text);
         const match = normalized.match(/(\d+(?:[.,]\d+)?)\s+manat\b/);
         return match ? Number(match[1].replace(",", ".")) : null;
+    }
+
+    function normalizeAdditionalInfoSegment(segment, fullText = "") {
+        let normalized = canonicalizeVoiceText(segment);
+        if (!normalized) return "";
+
+        const rawText = normalizeVoiceText(fullText);
+        if (/\bidi\b/.test(rawText)) {
+            normalized = normalized
+                .replace(/\bet\s+(yeddi|yetdi|yeddi)\b$/, "et idi")
+                .replace(/\b(iki|ile|ila|iyul|iyil|iyile|iyla|yla|yle|yeddi|yetdi|yeddi)\b$/, "idi");
+        } else {
+            normalized = normalized.replace(/\b(ile|ila|iyile|iyla|yla|yle)\b$/, "idi");
+        }
+
+        return normalized.trim();
     }
 
     function extractQuantityValue(text) {
@@ -2249,7 +2704,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function extractGender(text) {
         const normalized = canonicalizeVoiceText(text);
-        if (/\bdisi\b/.test(normalized)) return "disi";
+        if (/\b(disi|tisi|dishi|tishi|pisi)\b/.test(normalized)) return "disi";
         if (/\berkek\b/.test(normalized)) return "erkek";
         return "";
     }
@@ -2270,11 +2725,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function extractAdditionalInfo(text) {
         const segment = extractFieldSegment(text, ["elave melumat", "qeyd"], ["miqdar", "mebleg", "qiymet", "ceki", "tarix", "cinsiyyet", "id", "identifikasiya", "kateqoriya"]);
-        if (segment) return segment;
+        if (segment) return normalizeAdditionalInfoSegment(segment, text);
         if (activeVoiceLanguage === "en") {
             const normalized = canonicalizeVoiceText(text);
             const fallbackMatch = normalized.match(/\bno\s+(.+)$/);
-            if (fallbackMatch && fallbackMatch[1]) return fallbackMatch[1].trim();
+            if (fallbackMatch && fallbackMatch[1]) return normalizeAdditionalInfoSegment(fallbackMatch[1], text);
         }
         return segment || "";
     }
@@ -2484,13 +2939,20 @@ document.addEventListener("DOMContentLoaded", function () {
     function bestExactNormalizedLabelMatch(rows, text, labelFn) {
         const normalized = canonicalizeVoiceText(text);
         const collapsedNormalized = normalized.replace(/\s+/g, "");
+        const normalizedTokens = normalized.split(" ").filter(Boolean);
         let best = null;
         let bestLength = 0;
         rows.forEach((row) => {
             const label = canonicalizeVoiceText(labelFn(row));
             if (!label) return;
             const collapsedLabel = label.replace(/\s+/g, "");
-            if ((normalized.includes(label) || collapsedNormalized.includes(collapsedLabel)) && label.length > bestLength) {
+            const labelTokens = label.split(" ").filter(Boolean);
+            const isShortSingleToken = labelTokens.length === 1 && labelTokens[0].length <= 3;
+            const hasTokenMatch = labelTokens.length === 1
+                ? normalizedTokens.includes(labelTokens[0])
+                : normalized.includes(label);
+            const hasCollapsedMatch = !isShortSingleToken && collapsedNormalized.includes(collapsedLabel);
+            if ((hasTokenMatch || hasCollapsedMatch) && label.length > bestLength) {
                 best = row;
                 bestLength = label.length;
             }
@@ -2498,8 +2960,63 @@ document.addEventListener("DOMContentLoaded", function () {
         return best;
     }
 
+    function collectEntityHints(...values) {
+        const hints = [];
+        const seen = new Set();
+
+        values.forEach((value) => {
+            const rawText = String(value || "").trim();
+            if (!rawText) return;
+
+            const normalized = canonicalizeVoiceText(rawText);
+            const sanitized = sanitizeEntityTokens(normalized.split(" ")).join(" ").trim();
+
+            [sanitized, normalized].forEach((candidate) => {
+                const key = canonicalizeVoiceText(candidate).trim();
+                if (!key || seen.has(key) || isLikelyNumericEntitySegment(key)) return;
+                seen.add(key);
+                hints.push(candidate);
+            });
+        });
+
+        return hints;
+    }
+
+    function matchRowByHints(rows, hints, labelFn) {
+        const preparedHints = collectEntityHints(...hints);
+        for (const hint of preparedHints) {
+            const exactMatch = bestExactNormalizedLabelMatch(rows, hint, labelFn);
+            if (exactMatch) return exactMatch;
+        }
+        for (const hint of preparedHints) {
+            const fuzzyMatch = bestMatchByLabel(rows, hint, labelFn);
+            if (fuzzyMatch) return fuzzyMatch;
+        }
+        return null;
+    }
+
     function getIncomeItemRows() {
         return incomeCategories.flatMap((categoryName) => (incomeData[categoryName]?.items || []).map((item) => ({ ...item, categoryName })));
+    }
+
+    function getExpenseSubcategoryRows() {
+        return expenseData.flatMap((row) => (row.subcategories || []).map((sub) => ({ ...sub, categoryId: row.id })));
+    }
+
+    function resolveExpensePrefill(label) {
+        const expenseLabel = String(label || "").trim();
+        const subRows = getExpenseSubcategoryRows();
+        const matchedSubcategory = bestExactNormalizedLabelMatch(subRows, expenseLabel, (row) => row.name)
+            || bestMatchByLabel(subRows, expenseLabel, (row) => row.name);
+        const matchedCategory = matchedSubcategory
+            ? expenseData.find((row) => String(row.id) === String(matchedSubcategory.categoryId))
+            : bestExactNormalizedLabelMatch(expenseData, expenseLabel, (row) => row.name)
+                || bestMatchByLabel(expenseData, expenseLabel, (row) => row.name);
+        return {
+            category: matchedCategory || null,
+            subcategory: matchedSubcategory || null,
+            manualName: matchedSubcategory || matchedCategory ? "" : expenseLabel,
+        };
     }
 
     function resolveIncomePrefill(label, fallbackUnit = "") {
@@ -2530,18 +3047,53 @@ document.addEventListener("DOMContentLoaded", function () {
         };
     }
 
-    function coerceDraftForPageMode(draft) {
+    function coerceDraftForPageMode(draft, transcript = "") {
+        const normalizedTranscript = canonicalizeVoiceText(transcript);
+        if (addPageMode === "expense" && draft.formType !== "expense") {
+            const hasExplicitOtherIntent = /\b(gelir|satis|heyvan|toxum|alet|mehsul)\b/.test(normalizedTranscript);
+            const shouldKeepExpenseMode = /\bxerc\b/.test(normalizedTranscript) || !hasExplicitOtherIntent;
+            if (!shouldKeepExpenseMode) return draft;
+            const expenseShortEntity = extractExpenseShortEntitySegment(transcript);
+            const leadExpenseEntity = extractLeadEntitySegment(transcript, "expense");
+            const subjectExpenseEntity = extractSubjectSegment(transcript, "expense");
+            const entityLabel =
+                draft.subcategory?.name
+                || draft.category?.name
+                || draft.item?.name
+                || draft.categoryName
+                || draft.manualName
+                || expenseShortEntity
+                || (isLikelyNumericEntitySegment(leadExpenseEntity) ? "" : leadExpenseEntity)
+                || (isLikelyNumericEntitySegment(subjectExpenseEntity) ? "" : subjectExpenseEntity)
+                || "";
+            const prefill = resolveExpensePrefill(entityLabel);
+            return {
+                ...draft,
+                formType: "expense",
+                category: prefill.category,
+                subcategory: prefill.subcategory,
+                manualName: prefill.manualName || entityLabel,
+            };
+        }
         if (addPageMode !== "income" || draft.formType === "income" || draft.formType === "expense") {
             return draft;
         }
-        const entityLabel = draft.item?.name || draft.subcategory?.name || draft.category?.name || draft.categoryName || "";
+        const entityLabel =
+            draft.item?.name
+            || draft.subcategory?.name
+            || draft.category?.name
+            || draft.categoryName
+            || extractNativeEntitySegment(transcript, "income")
+            || extractLeadEntitySegment(transcript, "income")
+            || extractSubjectSegment(transcript, "income")
+            || "";
         const prefill = resolveIncomePrefill(entityLabel, draft.unit || "");
         return {
             ...draft,
             formType: "income",
             categoryName: prefill.categoryName,
             item: prefill.itemName ? { name: prefill.itemName, unit: prefill.unit || draft.unit || "" } : null,
-            manualName: prefill.manualName || entityLabel,
+            manualName: prefill.manualName,
             unit: draft.unit || prefill.unit || "",
         };
     }
@@ -2608,11 +3160,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const draft = {
             formType,
             quantity: extractQuantityValue(text),
+            quantityExplicit: hasExplicitQuantityLabel(text),
             amount: extractAmountValue(text),
             amountExplicit: hasExplicitAmountLabel(text),
+            currencyExplicit: hasExplicitCurrencyLabel(text),
             price: extractNumericField(normalized, ["qiymet"]),
             priceExplicit: /\bqiymet\b/.test(normalized),
-            weight: extractNumericField(normalized, ["ceki"]),
+            weight: formType === "animal" ? extractAnimalWeightValue(text) : extractNumericField(normalized, ["ceki"]),
             date: dateDetails.value,
             dateLabel: dateDetails.label,
             gender: extractGender(text),
@@ -2623,21 +3177,36 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         if (formType === "expense") {
-            draft.category = bestExactNormalizedLabelMatch(expenseData, leadEntitySegment || normalized, (row) => row.name)
-                || bestMatchByLabel(expenseData, leadEntitySegment || normalized, (row) => row.name);
+            const expenseShortEntity = extractExpenseShortEntitySegment(text);
+            const expenseEntityHints = [
+                expenseShortEntity,
+                isLikelyNumericEntitySegment(leadEntitySegment) ? "" : leadEntitySegment,
+                isLikelyNumericEntitySegment(subjectSegment) ? "" : subjectSegment,
+                nativeEntitySegment,
+                normalized,
+            ];
+            draft.category = matchRowByHints(expenseData, expenseEntityHints, (row) => row.name);
             const subRows = expenseData.flatMap((row) => (row.subcategories || []).map((sub) => ({ ...sub, categoryId: row.id })));
-            draft.subcategory = bestExactNormalizedLabelMatch(subRows, leadEntitySegment || subjectSegment || normalized, (row) => row.name)
-                || bestMatchByLabel(subRows, leadEntitySegment || subjectSegment || normalized, (row) => row.name);
+            draft.subcategory = matchRowByHints(subRows, expenseEntityHints, (row) => row.name);
             if (!draft.category && draft.subcategory) draft.category = expenseData.find((row) => String(row.id) === String(draft.subcategory.categoryId));
         } else if (formType === "animal") {
-            draft.category = bestMatchByLabel(animalData, leadEntitySegment || normalized, (row) => row.name);
+            const animalEntityHints = [
+                isLikelyNumericEntitySegment(leadEntitySegment) ? "" : leadEntitySegment,
+                isLikelyNumericEntitySegment(subjectSegment) ? "" : subjectSegment,
+                nativeEntitySegment,
+                normalized,
+            ];
+            draft.category = matchRowByHints(animalData, animalEntityHints, (row) => row.name);
             const subRows = animalData.flatMap((row) => (row.subcategories || []).map((sub) => ({ ...sub, categoryId: row.id })));
-            draft.subcategory = bestMatchByLabel(subRows, leadEntitySegment || subjectSegment || normalized, (row) => row.name);
+            draft.subcategory = matchRowByHints(subRows, animalEntityHints, (row) => row.name);
             if (!draft.category && draft.subcategory) draft.category = animalData.find((row) => String(row.id) === String(draft.subcategory.categoryId));
         } else if (formType === "seed") {
-            draft.category = bestMatchByLabel(seedData, leadEntitySegment || normalized, (row) => row.name);
+            const seedEntityHint = leadEntitySegment || subjectSegment || normalized;
+            draft.category = bestExactNormalizedLabelMatch(seedData, seedEntityHint, (row) => row.name)
+                || bestMatchByLabel(seedData, seedEntityHint, (row) => row.name);
             const itemRows = seedData.flatMap((row) => (row.items || []).map((item) => ({ ...item, categoryId: row.id })));
-            draft.item = bestMatchByLabel(itemRows, leadEntitySegment || subjectSegment || normalized, (row) => row.name);
+            draft.item = bestExactNormalizedLabelMatch(itemRows, seedEntityHint, (row) => row.name)
+                || bestMatchByLabel(itemRows, seedEntityHint, (row) => row.name);
             if (!draft.category && draft.item) draft.category = seedData.find((row) => String(row.id) === String(draft.item.categoryId));
         } else if (formType === "tool") {
             draft.category = bestMatchByLabel(toolData, leadEntitySegment || normalized, (row) => row.name);
@@ -3002,6 +3571,8 @@ document.addEventListener("DOMContentLoaded", function () {
             window.farmSync?.showToast?.(entry.text, entry.type);
         });
 
+        await window.farmSync?.noteDirectOnlineSuccess?.();
+
         return responseMessages;
     }
 
@@ -3026,6 +3597,8 @@ document.addEventListener("DOMContentLoaded", function () {
             window.farmSync?.showToast?.(entry.text, entry.type);
         });
 
+        await window.farmSync?.noteDirectOnlineSuccess?.();
+
         return responseMessages;
     }
 
@@ -3049,8 +3622,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 await submitAddProductFormOnline(form);
                 form.reset();
                 reinitializeFormState(formType);
+                resetAssistInputState();
                 await refreshActiveListPanel(formType);
-                setAsyncResultMessage("{% trans 'Əməliyyat tamamlandı.' %}");
                 return;
             }
 
@@ -3063,13 +3636,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     onQueued: async ({ online }) => {
                         form.reset();
                         reinitializeFormState(formType);
+                        resetAssistInputState();
                         if (!online) {
                             setAsyncResultMessage("{% trans 'Offline saxlanıldı. İnternet gələndə göndəriləcək.' %}");
                         }
                     },
                     onSuccess: async () => {
+                        resetAssistInputState();
                         await refreshActiveListPanel(formType);
-                        setAsyncResultMessage("{% trans 'Əməliyyat tamamlandı.' %}");
                     },
                     onFailure: () => {
                         setAsyncResultMessage("{% trans 'Əməliyyat alınmadı.' %}", true);
@@ -3181,7 +3755,10 @@ document.addEventListener("DOMContentLoaded", function () {
         formShell.hidden = false;
         document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = panel.dataset.formPanel !== formType; });
         activeFormTitle.textContent = panelTitles[formType] || "Form";
-        activeFormSubtitle.textContent = subtitle || "{% trans 'Seçilən əməliyyata uyğun form açıldı.' %}";
+        if (activeFormSubtitle) {
+            activeFormSubtitle.textContent = "";
+            activeFormSubtitle.hidden = true;
+        }
         syncManualPanelSelection(formType);
         syncZeroPriceSourceField(formType);
         loadListPanel(formType);
@@ -3192,6 +3769,10 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll("[data-form-panel] form").forEach((form) => form.reset());
         initializedFormTypes.clear();
         formShell.hidden = true;
+        if (activeFormSubtitle) {
+            activeFormSubtitle.textContent = "";
+            activeFormSubtitle.hidden = true;
+        }
         document.querySelectorAll("[data-form-panel]").forEach((panel) => { panel.hidden = true; });
         if (listColumn) listColumn.hidden = true;
         if (listPanelContent) listPanelContent.innerHTML = "";
@@ -3201,6 +3782,18 @@ document.addEventListener("DOMContentLoaded", function () {
         syncManualPanelSelection(null);
         syncAllRequiredStars();
         syncAllZeroPriceSourceFields();
+    }
+
+    function resetAssistInputState() {
+        manualCodeInput.value = "";
+        manualCodeWrapper.hidden = true;
+        scannerWrapper.hidden = true;
+        setVoiceResult("");
+        setResultMessage("");
+        setVoiceRecorderVisible(false);
+        setActionState(null);
+        syncBarcodeButtonLabel();
+        syncVoiceButtonLabel();
     }
 
     formShell?.addEventListener("submit", (event) => {
@@ -3410,6 +4003,47 @@ document.addEventListener("DOMContentLoaded", function () {
         unitSelect.value = preferred && normalizedUnits.includes(preferred) ? preferred : (normalizedUnits[0] || "");
     }
 
+    function animalWeightUnitLabel() {
+        return displayUnitLabel("kq");
+    }
+
+    function syncAnimalWeightUnitLabel() {
+        const suffix = document.getElementById("animal-weight-unit");
+        if (!suffix) return;
+        suffix.textContent = animalWeightUnitLabel();
+    }
+
+    function formatConvertedWeightValue(rawValue, inverse = false) {
+        const numericValue = parseFloat(rawValue || "");
+        if (!Number.isFinite(numericValue)) return rawValue == null ? "" : String(rawValue);
+
+        let convertedValue = numericValue;
+        if (weightUnitSystem === "lb") {
+            convertedValue = inverse
+                ? numericValue * KG_PER_POUND
+                : numericValue / KG_PER_POUND;
+        }
+        return String(Number(convertedValue.toFixed(4)));
+    }
+
+    function setAnimalWeightForDisplay(rawValue) {
+        const weightInput = document.getElementById("animal-weight");
+        if (!weightInput) return;
+        if (rawValue == null || rawValue === "") {
+            weightInput.value = "";
+            return;
+        }
+        weightInput.value = formatConvertedWeightValue(rawValue);
+    }
+
+    function normalizeAnimalWeightForSubmit(weightInput) {
+        if (!weightInput) return;
+        const rawValue = parseFloat(weightInput.value || "");
+        if (!Number.isFinite(rawValue)) return;
+        if (weightUnitSystem !== "lb") return;
+        weightInput.value = formatConvertedWeightValue(rawValue, true);
+    }
+
     function normalizeQuantityForSubmit(quantityInput, unitSelect) {
         if (!quantityInput || !unitSelect || unitSelect.disabled) return;
         const rawValue = parseFloat(quantityInput.value || "");
@@ -3484,6 +4118,7 @@ document.addEventListener("DOMContentLoaded", function () {
             fillOptions(document.getElementById("animal-category"), animalData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             updateAnimalSubcategories();
             syncAnimalIdentificationState();
+            syncAnimalWeightUnitLabel();
         } else if (formType === "seed") {
             fillOptions(document.getElementById("seed-category"), seedData, "{% trans 'Kateqoriya seçin' %}", (row) => ({ value: row.id, label: row.name }));
             setUnitSelectOptions("seed-unit", weightUnits, document.getElementById("seed-unit")?.value || weightUnits[0]);
@@ -3502,7 +4137,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function applyExpenseRecord(item) {
-        showPanel("expense", `${item.label} üçün xərc formu açıldı.`);
+        showPanel("expense", "{% trans 'Xərc formu açıldı.' %}");
         if (item.metadata?.category_id) {
             document.getElementById("expense-category").value = String(item.metadata.category_id);
             updateExpenseSubcategories(item.metadata.subcategory_id);
@@ -3518,7 +4153,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function applyAnimalRecord(item) {
-        showPanel("animal", `${item.label} üçün heyvan formu açıldı.`);
+        showPanel("animal", "{% trans 'Heyvan formu açıldı.' %}");
         if (item.metadata?.category_id) {
             document.getElementById("animal-category").value = String(item.metadata.category_id);
             updateAnimalSubcategories(item.metadata.subcategory_id);
@@ -3532,7 +4167,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("animal-id").value = item.metadata?.identification_no || "";
         syncAnimalIdentificationState();
         document.getElementById("animal-gender").value = item.metadata?.gender || "erkek";
-        document.getElementById("animal-weight").value = item.metadata?.weight || "";
+        setAnimalWeightForDisplay(item.metadata?.weight || "");
         document.getElementById("animal-price").value = item.metadata?.price || "";
         document.getElementById("animal-zero-price-source").value = item.metadata?.zero_price_source || "";
         document.getElementById("animal-date").value = item.metadata?.date || "{{ today|date:'Y-m-d' }}";
@@ -3541,7 +4176,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function applySeedRecord(item) {
-        showPanel("seed", `${item.label} üçün toxum formu açıldı.`);
+        showPanel("seed", "{% trans 'Toxum formu açıldı.' %}");
         if (item.metadata?.category_id) {
             document.getElementById("seed-category").value = String(item.metadata.category_id);
             updateSeedItems(item.metadata.item_id);
@@ -3561,7 +4196,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function applyToolRecord(item) {
-        showPanel("tool", `${item.label} üçün alət formu açıldı.`);
+        showPanel("tool", "{% trans 'Alət formu açıldı.' %}");
         if (item.metadata?.category_id) {
             document.getElementById("tool-category").value = String(item.metadata.category_id);
             updateToolItems(item.metadata.item_id);
@@ -3580,7 +4215,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function applyFarmRecord(item) {
-        showPanel("farm", `${item.label} üçün təsərrüfat formu açıldı.`);
+        showPanel("farm", "{% trans 'Məhsul formu açıldı.' %}");
         if (item.metadata?.category_id) {
             document.getElementById("farm-category").value = String(item.metadata.category_id);
             updateFarmItems(item.metadata.item_id);
@@ -3600,7 +4235,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function applyIncomeRecord(item) {
-        showPanel("income", `${item.label} üçün gəlir formu açıldı.`);
+        showPanel("income", "{% trans 'Satış formu açıldı.' %}");
+        const manualWrap = document.getElementById("income-manual-wrap");
+        const manualInput = document.getElementById("income-manual-name");
         const categoryName = item.metadata?.category_name || "";
         if (categoryName) {
             document.getElementById("income-category").value = categoryName;
@@ -3609,8 +4246,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (item.metadata?.item_name) document.getElementById("income-item").value = item.metadata.item_name;
         if (item.metadata?.unit) document.getElementById("income-unit").value = item.metadata.unit;
         if (item.target_type === "manual" || item.metadata?.manual_name) {
-            document.getElementById("income-manual-wrap").hidden = false;
-            document.getElementById("income-manual-name").value = item.metadata?.manual_name || item.label || "";
+            manualWrap.hidden = false;
+            manualInput.value = item.metadata?.manual_name || item.label || "";
+        } else {
+            manualWrap.hidden = true;
+            manualInput.value = "";
         }
         document.getElementById("income-quantity").value = item.metadata?.quantity || "";
         document.getElementById("income-gender").value = item.metadata?.gender || "";
@@ -3620,8 +4260,9 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("income-additional-info").value = item.metadata?.additional_info || "";
     }
 
-    function applyVoiceDraft(draft, transcript) {
-        draft = coerceDraftForPageMode(draft);
+    function applyVoiceDraft(draft, displayTranscript, parsingTranscript = "") {
+        const effectiveTranscript = (parsingTranscript || displayTranscript || "").trim();
+        draft = coerceDraftForPageMode(draft, effectiveTranscript);
         if (!draft.formType) {
             setResultMessage("Səsdən uyğun form seçmək alınmadı. Məsələn, “xərc əlavə et...” kimi deyin.", true);
             return;
@@ -3643,19 +4284,28 @@ document.addEventListener("DOMContentLoaded", function () {
                 updateExpenseSubcategories(draft.subcategory?.id);
             }
             if (draft.subcategory) document.getElementById("expense-subcategory").value = String(draft.subcategory.id);
+            if (draft.manualName) {
+                document.getElementById("expense-manual-wrap").hidden = false;
+                document.getElementById("expense-manual-name").value = draft.manualName;
+            }
             if (amountValue !== "") document.getElementById("expense-amount").value = amountValue;
             document.getElementById("expense-date").value = dateValue;
             if (draft.additionalInfo) document.getElementById("expense-additional-info").value = draft.additionalInfo;
         } else if (draft.formType === "income") {
             showPanel("income", voiceFormFilledSubtitles.income);
+            const manualWrap = document.getElementById("income-manual-wrap");
+            const manualInput = document.getElementById("income-manual-name");
             if (draft.categoryName) {
                 document.getElementById("income-category").value = draft.categoryName;
                 updateIncomeItems(draft.item?.name || "");
             }
             if (draft.item) document.getElementById("income-item").value = draft.item.name;
             if (draft.manualName) {
-                document.getElementById("income-manual-wrap").hidden = false;
-                document.getElementById("income-manual-name").value = draft.manualName;
+                manualWrap.hidden = false;
+                manualInput.value = draft.manualName;
+            } else {
+                manualWrap.hidden = true;
+                manualInput.value = "";
             }
             if (quantityValue !== "") document.getElementById("income-quantity").value = quantityValue;
             if (draft.unit) document.getElementById("income-unit").value = draft.unit;
@@ -3675,7 +4325,7 @@ document.addEventListener("DOMContentLoaded", function () {
             syncAnimalIdentificationState();
             if (draft.identificationNo) document.getElementById("animal-id").value = draft.identificationNo;
             if (draft.gender) document.getElementById("animal-gender").value = draft.gender;
-            if (weightValue !== "") document.getElementById("animal-weight").value = weightValue;
+            setAnimalWeightForDisplay(weightValue);
             if (priceValue !== "" || amountValue !== "") document.getElementById("animal-price").value = priceValue || amountValue;
             syncZeroPriceSourceField("animal");
             document.getElementById("animal-date").value = dateValue;
@@ -3720,22 +4370,23 @@ document.addEventListener("DOMContentLoaded", function () {
             if (draft.additionalInfo) document.getElementById("farm-additional-info").value = draft.additionalInfo;
         }
 
-        const prettyGuess = buildPrettyVoiceSummary(draft, transcript);
+        const prettyGuess = buildPrettyVoiceSummary(draft, effectiveTranscript);
         if (prettyGuess) {
-            setVoiceResult(formatVoiceResultMessage(transcript, prettyGuess));
+            setVoiceResult(formatVoiceResultMessage(displayTranscript, prettyGuess), "guess");
         } else {
-            setVoiceResult(formatVoiceResultMessage(transcript));
+            setVoiceResult(formatVoiceResultMessage(displayTranscript), "guess");
         }
-        setResultMessage(voiceAcceptedMessages[draft.formType] || "{% trans 'Səs qəbul olundu və form dolduruldu.' %}");
+        setResultMessage("");
     }
 
-    function handleVoiceTranscript(transcript) {
+    function handleVoiceTranscript(transcript, parsingTranscript = "") {
         const cleaned = (transcript || "").trim();
+        const corrected = (parsingTranscript || transcript || "").trim();
         if (!cleaned) {
             setResultMessage("Səs başa düşülmədi. Bir az daha aydın danışın.", true);
             return;
         }
-        applyVoiceDraft(buildVoiceDraft(cleaned), cleaned);
+        applyVoiceDraft(buildVoiceDraft(corrected), cleaned, corrected);
     }
 
     function cleanupVoiceStream() {
@@ -3814,8 +4465,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const mimeType = mediaRecorder?.mimeType || "audio/webm";
             const audioBlob = new Blob(voiceChunks, { type: mimeType });
             const payload = await sendVoiceForTranscription(audioBlob);
-            setVoiceResult(formatVoiceResultMessage(payload.transcript));
-            handleVoiceTranscript(payload.transcript);
+            setVoiceResult(formatVoiceResultMessage(payload.transcript), "guess");
+            handleVoiceTranscript(payload.transcript, payload.normalized_transcript || payload.transcript);
         } catch (error) {
             setActionState(null);
             setResultMessage(error.message || "{% trans 'Səs emalı zamanı xəta oldu.' %}", true);
@@ -3863,7 +4514,8 @@ document.addEventListener("DOMContentLoaded", function () {
             manualCodeWrapper.hidden = true;
             setActionState("voice");
             setVoiceResult("");
-            setVoiceRecorderVisible(true, "Danışın, sistem səsi dinləyir.");
+            setVoiceRecorderVisible(true, "{% trans 'Danışın, sistem səsi dinləyir.' %}");
+            scrollToVisibleSection(voiceRecorderPanel);
 
             voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             startVoiceLevelMeter(voiceStream);
@@ -3882,7 +4534,7 @@ document.addEventListener("DOMContentLoaded", function () {
             listening = true;
             syncVoiceButtonLabel();
             setResultMessage("{% trans 'Dinlənilir... Bitirmək üçün “Yazını Bitir” düyməsinə basın.' %}");
-            setVoiceResult("Mikrofon aktivdir.");
+            setVoiceResult("{% trans 'Mikrofon aktivdir.' %}");
         } catch (error) {
             listening = false;
             setActionState(null);
@@ -3914,13 +4566,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function fillProductData(scannedCode) {
-        setResultMessage(`{% trans 'Kod oxundu:' %} ${scannedCode}`);
         const response = await fetch("{% url 'inventory:scan_lookup' %}?code=" + encodeURIComponent(scannedCode));
         const data = await response.json();
         if (!data.success) {
-            const warningMessage = data.message || "Kod tapılmadı.";
+            const warningMessage = data.message || "{% trans 'Kod tapılmadı.' %}";
             setResultMessage(warningMessage, true);
-            window.alert(warningMessage);
             return;
         }
         const item = data.item;
@@ -3929,7 +4579,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
             applyIncomeRecord(item);
-            setResultMessage(`Tapıldı: ${item.label} (${item.code})`);
+            setResultMessage("");
             return;
         }
         if (addPageMode === "expense") {
@@ -3937,7 +4587,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
             applyExpenseRecord(item);
-            setResultMessage(`Tapıldı: ${item.label} (${item.code})`);
+            setResultMessage("");
             return;
         }
         if (handleBlockedForm(item.form_type)) {
@@ -3950,7 +4600,7 @@ document.addEventListener("DOMContentLoaded", function () {
         else if (item.form_type === "tool") applyToolRecord(item);
         else if (item.form_type === "farm") applyFarmRecord(item);
         else if (item.form_type === "income") applyIncomeRecord(item);
-        setResultMessage(`Tapıldı: ${item.label} (${item.code})`);
+        setResultMessage("");
     }
 
     async function submitManualCode() {
@@ -3985,6 +4635,7 @@ document.addEventListener("DOMContentLoaded", function () {
             manualCodeWrapper.hidden = true;
             scannerWrapper.hidden = false;
             setActionState("scan");
+            scrollToVisibleSection(scannerWrapper);
             setResultMessage("{% trans 'Kamera açılır...' %}");
             await ensureBarcodeLibraryLoaded();
             codeReader = new ZXingBrowser.BrowserMultiFormatReader();
@@ -4025,6 +4676,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("income-category")?.addEventListener("change", () => updateIncomeItems());
     document.getElementById("income-item")?.addEventListener("change", () => updateIncomeItems(document.getElementById("income-item")?.value));
     document.getElementById("income-form")?.addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("income-quantity"), document.getElementById("income-unit")));
+    document.getElementById("animal-form")?.addEventListener("submit", () => normalizeAnimalWeightForSubmit(document.getElementById("animal-weight")));
     document.getElementById("seed-form")?.addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("seed-quantity"), document.getElementById("seed-unit")));
     document.getElementById("farm-form")?.addEventListener("submit", () => normalizeQuantityForSubmit(document.getElementById("farm-quantity"), document.getElementById("farm-unit")));
     zeroPriceSourceConfigs.forEach((config) => {

@@ -43,6 +43,14 @@ document.addEventListener("DOMContentLoaded", function () {
         tool: "{% trans 'Alət formu' %}",
         farm: "{% trans 'Təsərrüfat formu' %}",
     };
+    const barcodePreviewTitles = {
+        expense: "{% trans 'Xərc formu üçün barkod' %}",
+        income: "{% trans 'Gəlir formu üçün barkod' %}",
+        animal: "{% trans 'Heyvan formu üçün barkod' %}",
+        seed: "{% trans 'Toxum formu üçün barkod' %}",
+        tool: "{% trans 'Alət formu üçün barkod' %}",
+        farm: "{% trans 'Təsərrüfat formu üçün barkod' %}",
+    };
 
     function translateDynamicLabel(value) {
         const text = String(value || "");
@@ -506,7 +514,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!data.success) return;
         previewSection.hidden = false;
         previewTitle.textContent = data.barcode.label;
-        previewText.textContent = `${panelTitles[data.barcode.form_type] || data.barcode.form_type} {% trans 'üçün barkod' %}`;
+        previewText.textContent = barcodePreviewTitles[data.barcode.form_type]
+            || `${panelTitles[data.barcode.form_type] || data.barcode.form_type} {% trans 'üçün barkod' %}`;
         barcodeCodeText.textContent = data.barcode.code;
         barcodeDownloadName = `${slugify(data.barcode.label)}-${data.barcode.code}`;
         JsBarcode("#barcode-svg", data.barcode.code, { format: "CODE128", displayValue: true, fontSize: 16, margin: 12, height: 68 });

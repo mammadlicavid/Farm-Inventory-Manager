@@ -1,6 +1,6 @@
 (function () {
   const lang = (document.documentElement.lang || "az").trim().toLowerCase();
-  if (!lang || lang === "az") return;
+  const shouldAutoTranslatePage = Boolean(lang && lang !== "az");
 
   const exact = {
     en: {
@@ -37,6 +37,8 @@
       "Səs Yazılır": "Recording audio",
       "Danışın, sistem səsi dinləyir.": "Speak, the system is listening.",
       "Form": "Form",
+      "Əvvəl növü seçin. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin.": "First select the type. Then enter the information manually, by voice, or by barcode.",
+      "Əvvəl növü Select. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin.": "First select the type. Then enter the information manually, by voice, or by barcode.",
       "Scan olunan barkoda uyğun form açıldı.": "The form matching the scanned barcode has been opened.",
       "Form yalnız barkod scan olunandan sonra görünəcək.": "The form will appear only after the barcode is scanned.",
       "Deyilən:": "Heard:",
@@ -604,6 +606,12 @@
       "Toxum formu": "Seed form",
       "Alət formu": "Tool form",
       "Təsərrüfat formu": "Farm form",
+      "Expense form üçün barkod": "Barcode for expense form",
+      "Income form üçün barkod": "Barcode for income form",
+      "Animal form üçün barkod": "Barcode for animal form",
+      "Seed form üçün barkod": "Barcode for seed form",
+      "Tool form üçün barkod": "Barcode for tool form",
+      "Farm form üçün barkod": "Barcode for farm form",
       "Miqdar ±1 olmadıqda ID yazılmır": "ID is not entered when quantity is not ±1",
       "Kamera açılır...": "Opening camera...",
       "Barkodu kameraya yaxınlaşdırın.": "Bring the barcode close to the camera.",
@@ -747,6 +755,8 @@
       "Səs Yazılır": "Идет запись",
       "Danışın, sistem səsi dinləyir.": "Говорите, система слушает.",
       "Form": "Форма",
+      "Əvvəl növü seçin. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin.": "Сначала выберите тип. Затем введите информацию вручную, голосом или по штрихкоду.",
+      "Əvvəl növü Select. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin.": "Сначала выберите тип. Затем введите информацию вручную, голосом или по штрихкоду.",
       "Scan olunan barkoda uyğun form açıldı.": "Открыта форма для отсканированного штрихкода.",
       "Form yalnız barkod scan olunandan sonra görünəcək.": "Форма появится только после сканирования штрихкода.",
       "Deyilən:": "Сказано:",
@@ -1234,6 +1244,12 @@
       "Toxum formu": "Форма семян",
       "Alət formu": "Форма инструмента",
       "Təsərrüfat formu": "Форма фермы",
+      "Expense form üçün barkod": "Штрихкод для формы расхода",
+      "Income form üçün barkod": "Штрихкод для формы дохода",
+      "Animal form üçün barkod": "Штрихкод для формы животного",
+      "Seed form üçün barkod": "Штрихкод для формы семян",
+      "Tool form üçün barkod": "Штрихкод для формы инструмента",
+      "Farm form üçün barkod": "Штрихкод для формы фермы",
       "Kamera açılır...": "Камера открывается...",
       "Barkodu kameraya yaxınlaşdırın.": "Поднесите штрихкод к камере.",
       "Skan dayandırıldı.": "Сканирование остановлено.",
@@ -1409,21 +1425,7 @@
     ]
   };
 
-  const activeExact = exact[lang] || {};
-  const activePatterns = patterns[lang] || [];
-  const exactEntries = Object.entries(activeExact);
-  const normalizedExact = new Map(
-    exactEntries.map(([source, target]) => [normalizeLookupValue(source), target]),
-  );
-  const sortedExactEntries = exactEntries
-    .filter(([source]) => source && source.length >= 3)
-    .sort((left, right) => right[0].length - left[0].length);
-  const inlineReplaceEntries = sortedExactEntries.map(([source, target]) => ({
-    regex: buildInlineReplaceRegex(source),
-    target,
-  }));
-  const valueCache = new Map();
-  const inlineValueCache = new Map();
+  const translationStateCache = new Map();
 
   function normalizeLookupValue(value) {
     return String(value || "")
@@ -1445,6 +1447,45 @@
     return new RegExp(escaped, "giu");
   }
 
+  function normalizeTargetLang(targetLang) {
+    const normalized = String(targetLang || "az")
+      .trim()
+      .toLowerCase()
+      .split("-")[0];
+    return normalized && (exact[normalized] || patterns[normalized]) ? normalized : "az";
+  }
+
+  function getLanguageState(targetLang) {
+    const normalizedLang = normalizeTargetLang(targetLang);
+    if (translationStateCache.has(normalizedLang)) return translationStateCache.get(normalizedLang);
+
+    const exactMap = exact[normalizedLang] || {};
+    const patternList = patterns[normalizedLang] || [];
+    const exactEntries = Object.entries(exactMap);
+    const normalizedExact = new Map(
+      exactEntries.map(([source, target]) => [normalizeLookupValue(source), target]),
+    );
+    const sortedExactEntries = exactEntries
+      .filter(([source]) => source && source.length >= 3)
+      .sort((left, right) => right[0].length - left[0].length);
+    const inlineReplaceEntries = sortedExactEntries.map(([source, target]) => ({
+      regex: buildInlineReplaceRegex(source),
+      target,
+    }));
+
+    const state = {
+      lang: normalizedLang,
+      exactMap,
+      patternList,
+      normalizedExact,
+      inlineReplaceEntries,
+      valueCache: new Map(),
+      inlineValueCache: new Map(),
+    };
+    translationStateCache.set(normalizedLang, state);
+    return state;
+  }
+
   function translateWithDjangoCatalog(value) {
     if (!value || typeof window.gettext !== "function") return value;
     try {
@@ -1455,34 +1496,36 @@
     }
   }
 
-  function translateValue(value) {
+  function translateValueWithState(value, state, allowCatalog = false) {
     if (!value) return value;
-    if (valueCache.has(value)) return valueCache.get(value);
+    if (state.valueCache.has(value)) return state.valueCache.get(value);
     let translated = value;
-    if (activeExact[value]) {
-      translated = activeExact[value];
-      valueCache.set(value, translated);
+    if (state.exactMap[value]) {
+      translated = state.exactMap[value];
+      state.valueCache.set(value, translated);
       return translated;
     }
     const normalizedValue = normalizeLookupValue(value);
-    if (normalizedExact.has(normalizedValue)) {
-      translated = normalizedExact.get(normalizedValue);
-      valueCache.set(value, translated);
+    if (state.normalizedExact.has(normalizedValue)) {
+      translated = state.normalizedExact.get(normalizedValue);
+      state.valueCache.set(value, translated);
       return translated;
     }
-    const catalogTranslated = translateWithDjangoCatalog(value);
-    if (catalogTranslated && catalogTranslated !== value) {
-      valueCache.set(value, catalogTranslated);
-      return catalogTranslated;
+    if (allowCatalog) {
+      const catalogTranslated = translateWithDjangoCatalog(value);
+      if (catalogTranslated && catalogTranslated !== value) {
+        state.valueCache.set(value, catalogTranslated);
+        return catalogTranslated;
+      }
     }
-    for (const [pattern, replacement] of activePatterns) {
+    for (const [pattern, replacement] of state.patternList) {
       if (pattern.test(value)) {
         translated = value.replace(pattern, replacement);
-        valueCache.set(value, translated);
+        state.valueCache.set(value, translated);
         return translated;
       }
     }
-    valueCache.set(value, translated);
+    state.valueCache.set(value, translated);
     return translated;
   }
 
@@ -1491,32 +1534,56 @@
     return /[\d:(),/%+|/-]/.test(value) || value.includes("•") || value.includes("—");
   }
 
-  function translateInlineValue(value) {
+  function translateInlineValueWithState(value, state, allowCatalog = false) {
     if (!value) return value;
-    if (inlineValueCache.has(value)) return inlineValueCache.get(value);
-    const direct = translateValue(value);
+    if (state.inlineValueCache.has(value)) return state.inlineValueCache.get(value);
+    const direct = translateValueWithState(value, state, allowCatalog);
     const normalizedValue = normalizeLookupValue(value);
-    const hasExactMatch = normalizedExact.has(normalizedValue);
+    const hasExactMatch = state.normalizedExact.has(normalizedValue);
     if (hasExactMatch || direct !== value || !shouldAttemptInlineTranslation(value)) {
-      inlineValueCache.set(value, direct);
+      state.inlineValueCache.set(value, direct);
       return direct;
     }
 
     let result = value;
 
-    inlineReplaceEntries.forEach(({ regex, target }) => {
+    state.inlineReplaceEntries.forEach(({ regex, target }) => {
       result = result.replace(regex, (match, prefix, token) => {
         if (typeof token === "string") return `${prefix || ""}${target}`;
         return target;
       });
     });
 
-    for (const [pattern, replacement] of activePatterns) {
+    for (const [pattern, replacement] of state.patternList) {
       if (pattern.test(result)) result = result.replace(pattern, replacement);
     }
 
-    inlineValueCache.set(value, result);
+    state.inlineValueCache.set(value, result);
     return result;
+  }
+
+  function shouldUseDjangoCatalog(targetLang) {
+    return shouldAutoTranslatePage && normalizeTargetLang(targetLang) === normalizeTargetLang(lang);
+  }
+
+  function translateValueForLanguage(value, targetLang) {
+    const normalizedLang = normalizeTargetLang(targetLang);
+    if (normalizedLang === "az") return value;
+    return translateValueWithState(value, getLanguageState(normalizedLang), shouldUseDjangoCatalog(normalizedLang));
+  }
+
+  function translateInlineValueForLanguage(value, targetLang) {
+    const normalizedLang = normalizeTargetLang(targetLang);
+    if (normalizedLang === "az") return value;
+    return translateInlineValueWithState(value, getLanguageState(normalizedLang), shouldUseDjangoCatalog(normalizedLang));
+  }
+
+  function translateValue(value) {
+    return translateValueForLanguage(value, lang);
+  }
+
+  function translateInlineValue(value) {
+    return translateInlineValueForLanguage(value, lang);
   }
 
   function replacePreservingWhitespace(source, translated) {
@@ -1584,6 +1651,7 @@
   }
 
   function boot() {
+    if (!shouldAutoTranslatePage) return;
     document.title = translateValue(document.title);
     translateTree(document.body);
   }
@@ -1591,7 +1659,7 @@
   let observerStarted = false;
 
   function startObserver() {
-    if (observerStarted || !document.body) return;
+    if (!shouldAutoTranslatePage || observerStarted || !document.body) return;
     observerStarted = true;
     observer.observe(document.body, {
       childList: true,
@@ -1604,8 +1672,10 @@
 
   function initializeRuntimeI18n() {
     if (!document.body) return;
-    boot();
-    startObserver();
+    if (shouldAutoTranslatePage) {
+      boot();
+      startObserver();
+    }
     if (window.__releaseI18nPending) {
       window.__releaseI18nPending();
     } else {
@@ -1615,7 +1685,9 @@
 
   window.runtimeI18n = {
     translateValue,
+    translateValueForLanguage,
     translateInlineValue,
+    translateInlineValueForLanguage,
     translateTree,
   };
 

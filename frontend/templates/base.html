@@ -392,8 +392,8 @@
     </script>
     {% if LANGUAGE_CODE != 'az' %}
       <script src="{% url 'javascript-catalog' %}"></script>
-      <script src="{% static 'js/runtime_i18n.js' %}" onerror="window.__releaseI18nPending && window.__releaseI18nPending()"></script>
     {% endif %}
+    <script src="{% static 'js/runtime_i18n.js' %}" onerror="window.__releaseI18nPending && window.__releaseI18nPending()"></script>
 
     {% if user.is_authenticated %}
       <script>

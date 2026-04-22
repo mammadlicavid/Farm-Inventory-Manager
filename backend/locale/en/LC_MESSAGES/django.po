@@ -248,8 +248,7 @@ msgstr "Amount is not valid."
 msgid "Kateqoriya"
 msgstr "Category"
 
-#: apps/farm_products/forms.py:29 apps/seeds/forms.py:28
-#: apps/tools/forms.py:27
+#: apps/farm_products/forms.py:29 apps/seeds/forms.py:28 apps/tools/forms.py:27
 msgid "Qiymət (₼)"
 msgstr "Price (₼)"
 
@@ -506,11 +505,10 @@ msgstr ""
 "other sales."
 
 #: apps/reports/views.py:616
-msgid ""
-"Torpaq vergisi və ƏDV qeydiyyatı həddi bu hesabatda ayrıca hesablanmır."
+msgid "Torpaq vergisi və ƏDV qeydiyyatı həddi bu hesabatda ayrıca hesablanmır."
 msgstr ""
-"Land tax and the VAT registration threshold are not calculated separately in"
-" this report."
+"Land tax and the VAT registration threshold are not calculated separately in "
+"this report."
 
 #: apps/reports/views.py:618
 msgid ""
@@ -550,7 +548,8 @@ msgstr "All income and expenses in the selected period"
 
 #: apps/reports/views.py:633
 msgid "Seçilmiş dövr üzrə ümumi gəlir və xərc ayrıca göstərilir."
-msgstr "Total income and expenses are shown separately for the selected period."
+msgstr ""
+"Total income and expenses are shown separately for the selected period."
 
 #: apps/reports/views.py:634
 msgid ""
@@ -560,8 +559,7 @@ msgstr ""
 
 #: apps/reports/views.py:628
 msgid ""
-"CSV və PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda "
-"hazırlanır."
+"CSV və PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda hazırlanır."
 msgstr ""
 "CSV and PDF exports are prepared in a cleaner format for sharing and "
 "presentations."
@@ -1025,8 +1023,11 @@ msgstr "Selected day"
 msgid "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür."
 msgstr "All stock, sale, and expense activities for this day appear here."
 
-msgid "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək."
-msgstr "Today's activity is collected here. Newly added records will appear in this list."
+msgid ""
+"Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək."
+msgstr ""
+"Today's activity is collected here. Newly added records will appear in this "
+"list."
 
 msgid "Qeyd sayı"
 msgstr "Record count"
@@ -1034,8 +1035,11 @@ msgstr "Record count"
 msgid "Bu gün üçün qeyd yoxdur"
 msgstr "No records for this day"
 
-msgid "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin."
-msgstr "Pick another day from the calendar or add a new stock, sale, or expense entry."
+msgid ""
+"Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin."
+msgstr ""
+"Pick another day from the calendar or add a new stock, sale, or expense "
+"entry."
 
 msgid "Alətlər"
 msgstr "Tools"
@@ -1228,8 +1232,8 @@ msgstr ""
 "and note expenses."
 
 msgid ""
-"Salam, %(name)s. Buradan stok əlavə edə, qalığa baxa, satış yaza və xərcləri"
-" qeyd edə bilərsiniz."
+"Salam, %(name)s. Buradan stok əlavə edə, qalığa baxa, satış yaza və xərcləri "
+"qeyd edə bilərsiniz."
 msgstr ""
 "Hello, %(name)s. From here you can add stock, view balance, record sales, "
 "and note expenses."
@@ -1335,11 +1339,11 @@ msgstr ""
 "understand the program."
 
 msgid ""
-"Hər gün eyni axınla işləyin: əvvəl əlavə edin, sonra izləyin, sonda satış və"
-" xərci yazın."
+"Hər gün eyni axınla işləyin: əvvəl əlavə edin, sonra izləyin, sonda satış və "
+"xərci yazın."
 msgstr ""
-"Work with the same flow every day: first add, then track, and finally record"
-" sales and expenses."
+"Work with the same flow every day: first add, then track, and finally record "
+"sales and expenses."
 
 msgid "Əvvəl stok əlavə edin"
 msgstr "First add stock"
@@ -1535,19 +1539,13 @@ msgstr "Farm management"
 msgid "Nə əlavə etmək istəyirsiniz?"
 msgstr "What do you want to add?"
 
-msgid ""
-"Əvvəl növü seçin. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin."
-msgstr ""
-"First select the type. Then enter the information manually, by voice or "
-"barcode."
-
 msgid "Süd, yumurta, tərəvəz və digər hazır məhsulu əlavə edin."
 msgstr "Add milk, eggs, vegetables, and other finished products."
 
 msgid "Ən sadə yol: yuxarıdan növü seçin. Form aşağıda dərhal açılacaq."
 msgstr ""
-"The simplest way: choose the type from above. The form will open immediately"
-" below."
+"The simplest way: choose the type from above. The form will open immediately "
+"below."
 
 msgid "Daxiletmə üsulu"
 msgstr "Input method"
@@ -1570,6 +1568,12 @@ msgstr "Record a new animal purchase or addition."
 
 msgid "Ferma üçün alınan və ya əlavə olunan aləti yazın."
 msgstr "Record tools purchased or added for the farm."
+
+msgid "Səsdən heyvan formu dolduruldu."
+msgstr "The animal form was filled from voice input."
+
+msgid "Səs qəbul olundu və heyvan formu dolduruldu."
+msgstr "Voice input was accepted and the animal form was filled."
 
 msgid "Taxıl toxumları"
 msgstr "Grain seeds"
@@ -1949,6 +1953,12 @@ msgstr "Date and time"
 msgid "İndi"
 msgstr "Now"
 
+msgid "Kod göndərilməyib."
+msgstr "Code was not sent."
+
+msgid "Əvvəl növü seçin. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin."
+msgstr "First select the type. Then enter the information manually, by voice, or by barcode."
+
 msgid "Şifrəni dəyiş"
 msgstr "Change password"
 
@@ -1963,6 +1973,9 @@ msgstr "Go back"
 
 msgid "Satış Əlavə Et"
 msgstr "Add Sale"
+
+msgid "İndi Sinxron Et"
+msgstr "Sync Now"
 
 msgid "Stoku yenilə"
 msgstr "Update stock"
@@ -2349,6 +2362,24 @@ msgstr "Tool form"
 msgid "Təsərrüfat formu"
 msgstr "Farm form"
 
+msgid "Xərc formu üçün barkod"
+msgstr "Barcode for expense form"
+
+msgid "Gəlir formu üçün barkod"
+msgstr "Barcode for income form"
+
+msgid "Heyvan formu üçün barkod"
+msgstr "Barcode for animal form"
+
+msgid "Toxum formu üçün barkod"
+msgstr "Barcode for seed form"
+
+msgid "Alət formu üçün barkod"
+msgstr "Barcode for tool form"
+
+msgid "Təsərrüfat formu üçün barkod"
+msgstr "Barcode for farm form"
+
 msgid "Skanı Dayandır"
 msgstr "Stop Scanning"
 
@@ -2396,8 +2427,8 @@ msgstr "Barcode"
 msgid "Kopyala"
 msgstr "Copy"
 
-msgid "Download JPG"
-msgstr "Download JPG"
+msgid "Barkodu yüklə"
+msgstr "Download barcode"
 
 msgid "Hamısı"
 msgstr "All"
@@ -2905,3 +2936,201 @@ msgstr "Fruits and Vegetables"
 
 msgid "Stok səhifəsindən düzəliş"
 msgstr "Adjusted from stock page"
+
+msgid "Add inventory form selector"
+msgstr "Add inventory form selector"
+
+msgid "Tez xərc"
+msgstr "Quick expense"
+
+msgid "Təsərrüfat Məhsulu"
+msgstr "Farm product"
+
+msgid "Saat"
+msgstr "Time"
+
+msgid "Heyvan Növü"
+msgstr "Animal type"
+
+msgid "Heyvan növünü seçin"
+msgstr "Select animal type"
+
+msgid "Məbləğ 0 olduqda mənbəni seçin."
+msgstr "Select the source when amount is 0."
+
+msgid "Heyvan Əlavə Et"
+msgstr "Add animal"
+
+msgid "Toxum Əlavə Et"
+msgstr "Add seed"
+
+msgid "Alət növü"
+msgstr "Tool type"
+
+msgid "Alət Əlavə Et"
+msgstr "Add tool"
+
+msgid "Məhsul Əlavə Et"
+msgstr "Add product"
+
+msgid "Səsdən xərc formu dolduruldu."
+msgstr "The expense form was filled from voice input."
+
+msgid "Səsdən satış formu dolduruldu."
+msgstr "The sales form was filled from voice input."
+
+msgid "Səsdən toxum formu dolduruldu."
+msgstr "The seed form was filled from voice input."
+
+msgid "Səsdən alət formu dolduruldu."
+msgstr "The tool form was filled from voice input."
+
+msgid "Səsdən məhsul formu dolduruldu."
+msgstr "The product form was filled from voice input."
+
+msgid "Səs qəbul olundu və xərc formu dolduruldu."
+msgstr "Voice input was accepted and the expense form was filled."
+
+msgid "Səs qəbul olundu və satış formu dolduruldu."
+msgstr "Voice input was accepted and the sales form was filled."
+
+msgid "Səs qəbul olundu və toxum formu dolduruldu."
+msgstr "Voice input was accepted and the seed form was filled."
+
+msgid "Səs qəbul olundu və alət formu dolduruldu."
+msgstr "Voice input was accepted and the tool form was filled."
+
+msgid "Səs qəbul olundu və məhsul formu dolduruldu."
+msgstr "Voice input was accepted and the product form was filled."
+
+msgid "Bu səhifədə yalnız satış barkodları oxunur."
+msgstr "Only sales barcodes can be scanned on this page."
+
+msgid "Bu səhifədə yalnız xərc barkodları oxunur."
+msgstr "Only expense barcodes can be scanned on this page."
+
+msgid "Satış barkodu bu səhifə üçün deyil."
+msgstr "This sales barcode is not for this page."
+
+msgid "Xərc barkodu bu səhifə üçün deyil."
+msgstr "This expense barcode is not for this page."
+
+msgid "Bu səhifə satış üçündür. Satış forması açıq saxlanıldı."
+msgstr "This page is for sales. The sales form was kept open."
+
+msgid "Bu səhifə xərc üçündür. Xərc forması açıq saxlanıldı."
+msgstr "This page is for expenses. The expense form was kept open."
+
+msgid "Satış bu səhifədə deyil. “Məhsul sat” bölməsindən istifadə edin."
+msgstr "Sales are not on this page. Use the “Sell product” section."
+
+msgid "Xərc bu səhifədə deyil. “Xərc yaz” bölməsindən istifadə edin."
+msgstr "Expenses are not on this page. Use the “Add expense” section."
+
+msgid "Scanner kitabxanası yüklənmədi."
+msgstr "The scanner library failed to load."
+
+msgid "Əməliyyat alınmadı."
+msgstr "The operation failed."
+
+msgid "Silmə alınmadı."
+msgstr "Delete failed."
+
+msgid "Əməliyyat tamamlandı."
+msgstr "Operation completed."
+
+msgid "Offline saxlanıldı. İnternet gələndə göndəriləcək."
+msgstr "Saved offline. It will be sent when the internet is back."
+
+msgid "Qeyd silindi."
+msgstr "Record deleted."
+
+msgid "Seçilən əməliyyata uyğun form açıldı."
+msgstr "The matching form for the selected action was opened."
+
+msgid "Vahid seçin"
+msgstr "Select unit"
+
+msgid "Səs qəbul olundu və form dolduruldu."
+msgstr "Voice input was accepted and the form was filled."
+
+msgid "Səs servisi JSON cavabı pozaq qaytardı."
+msgstr "The voice service returned malformed JSON."
+
+msgid "CSRF xətası var. Səhifəni yeniləyib yenə yoxlayın."
+msgstr "There is a CSRF error. Refresh the page and try again."
+
+msgid "Sessiya bitib. Yenidən daxil olun."
+msgstr "The session has expired. Sign in again."
+
+msgid "Səs servisi HTML xəta səhifəsi qaytardı. Server logunu yoxlayın."
+msgstr "The voice service returned an HTML error page. Check the server log."
+
+msgid "Səs servisindən gözlənilməyən cavab gəldi."
+msgstr "The voice service returned an unexpected response."
+
+msgid "Səs transkripsiyası alınmadı."
+msgstr "Voice transcription was not received."
+
+msgid "Səs yazısı boş oldu."
+msgstr "The voice recording was empty."
+
+msgid "Səs emalı zamanı xəta oldu."
+msgstr "An error occurred while processing voice input."
+
+msgid "Bu cihazda səs yazısı dəstəklənmir."
+msgstr "Voice recording is not supported on this device."
+
+msgid "Əvvəlki səs hələ emal olunur."
+msgstr "The previous voice input is still being processed."
+
+msgid "Mikrofona icazə verin."
+msgstr "Allow microphone access."
+
+msgid "Səs yazısını başlatmaq olmadı."
+msgstr "Could not start voice recording."
+
+msgid "Kod oxundu:"
+msgstr "Code read:"
+
+msgid "Kodu yazın."
+msgstr "Enter the code."
+
+msgid "Bu cihazda kamera dəstəklənmir."
+msgstr "Camera is not supported on this device."
+
+msgid "Kamera tapılmadı."
+msgstr "No camera found."
+
+msgid "Scanner başlatmaq olmadı."
+msgstr "Could not start the scanner."
+
+msgid "Form açıldı. Məlumatları doldurun."
+msgstr "The form was opened. Fill in the details."
+
+msgid "Form açıqdır."
+msgstr "The form is open."
+
+msgid "Heyvan formu açıldı."
+msgstr "Animal form opened."
+
+msgid "Toxum formu açıldı."
+msgstr "Seed form opened."
+
+msgid "Alət formu açıldı."
+msgstr "Tool form opened."
+
+msgid "Məhsul formu açıldı."
+msgstr "Product form opened."
+
+msgid "Siyahı yüklənmədi."
+msgstr "The list failed to load."
+
+msgid "Mikrofon aktivdir."
+msgstr "Microphone is active."
+
+msgid "Tapıldı:"
+msgstr "Found:"
+
+msgid "Kod tapılmadı."
+msgstr "Code not found."

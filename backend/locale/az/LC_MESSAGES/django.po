@@ -1208,10 +1208,8 @@ msgstr ""
 msgid "Toxumu Saxla"
 msgstr ""
 
-#: frontend/templates/inventory/add_product.html:305
-#: frontend/templates/inventory/barcode_builder.html:102
 msgid "Alət növü"
-msgstr ""
+msgstr "Alət növü"
 
 #: frontend/templates/inventory/add_product.html:307
 #: frontend/templates/inventory/barcode_builder.html:102
@@ -1323,7 +1321,7 @@ msgid "Kopyala"
 msgstr ""
 
 #: frontend/templates/inventory/barcode_builder.html:137
-msgid "Download JPG"
+msgid "Barkodu yüklə"
 msgstr ""
 
 #: frontend/templates/inventory/stocks.html:24
@@ -1593,6 +1591,12 @@ msgstr ""
 #: frontend/templates/sidebar_menu/help.html:70
 msgid "Stoka yeni məhsul necə əlavə edilir?"
 msgstr ""
+
+msgid "Səsdən heyvan formu dolduruldu."
+msgstr "Səsdən heyvan formu dolduruldu."
+
+msgid "Səs qəbul olundu və heyvan formu dolduruldu."
+msgstr "Səs qəbul olundu və heyvan formu dolduruldu."
 
 #: frontend/templates/sidebar_menu/help.html:74
 msgid "Alt naviqasiyada mərkəzdəki"
@@ -1907,3 +1911,237 @@ msgstr ""
 #: frontend/templates/tools/tool_list.html:477
 msgid "Seçin..."
 msgstr ""
+
+msgid "Əl ilə toxum formu açıldı."
+msgstr "Əl ilə toxum formu açıldı."
+
+msgid "Toxum məlumatlarını doldurun."
+msgstr "Toxum məlumatlarını doldurun."
+
+msgid "Əl ilə heyvan formu açıldı."
+msgstr "Əl ilə heyvan formu açıldı."
+
+msgid "Heyvan məlumatlarını doldurun."
+msgstr "Heyvan məlumatlarını doldurun."
+
+msgid "Əl ilə məhsul formu açıldı."
+msgstr "Əl ilə məhsul formu açıldı."
+
+msgid "Hazır məhsul məlumatlarını doldurun."
+msgstr "Hazır məhsul məlumatlarını doldurun."
+
+msgid "Əl ilə alət formu açıldı."
+msgstr "Əl ilə alət formu açıldı."
+
+msgid "Alət məlumatlarını doldurun."
+msgstr "Alət məlumatlarını doldurun."
+
+msgid "Add inventory form selector"
+msgstr "Stok əlavə etmə forma seçicisi"
+
+msgid "Saat"
+msgstr "Saat"
+
+msgid "Heyvan Növü"
+msgstr "Heyvan Növü"
+
+msgid "Heyvan növünü seçin"
+msgstr "Heyvan növünü seçin"
+
+msgid "Məbləğ 0 olduqda mənbəni seçin."
+msgstr "Məbləğ 0 olduqda mənbəni seçin."
+
+msgid "Heyvan Əlavə Et"
+msgstr "Heyvan Əlavə Et"
+
+msgid "Toxum Əlavə Et"
+msgstr "Toxum Əlavə Et"
+
+msgid "Alət Əlavə Et"
+msgstr "Alət Əlavə Et"
+
+msgid "Məhsul Əlavə Et"
+msgstr "Məhsul Əlavə Et"
+
+msgid "Səsdən xərc formu dolduruldu."
+msgstr "Səsdən xərc formu dolduruldu."
+
+msgid "Səsdən satış formu dolduruldu."
+msgstr "Səsdən satış formu dolduruldu."
+
+msgid "Səsdən toxum formu dolduruldu."
+msgstr "Səsdən toxum formu dolduruldu."
+
+msgid "Səsdən alət formu dolduruldu."
+msgstr "Səsdən alət formu dolduruldu."
+
+msgid "Səsdən məhsul formu dolduruldu."
+msgstr "Səsdən məhsul formu dolduruldu."
+
+msgid "Səs qəbul olundu və xərc formu dolduruldu."
+msgstr "Səs qəbul olundu və xərc formu dolduruldu."
+
+msgid "Səs qəbul olundu və satış formu dolduruldu."
+msgstr "Səs qəbul olundu və satış formu dolduruldu."
+
+msgid "Səs qəbul olundu və toxum formu dolduruldu."
+msgstr "Səs qəbul olundu və toxum formu dolduruldu."
+
+msgid "Səs qəbul olundu və alət formu dolduruldu."
+msgstr "Səs qəbul olundu və alət formu dolduruldu."
+
+msgid "Səs qəbul olundu və məhsul formu dolduruldu."
+msgstr "Səs qəbul olundu və məhsul formu dolduruldu."
+
+msgid "Bu səhifədə yalnız satış barkodları oxunur."
+msgstr "Bu səhifədə yalnız satış barkodları oxunur."
+
+msgid "Bu səhifədə yalnız xərc barkodları oxunur."
+msgstr "Bu səhifədə yalnız xərc barkodları oxunur."
+
+msgid "Satış barkodu bu səhifə üçün deyil."
+msgstr "Satış barkodu bu səhifə üçün deyil."
+
+msgid "Xərc barkodu bu səhifə üçün deyil."
+msgstr "Xərc barkodu bu səhifə üçün deyil."
+
+msgid "Bu səhifə satış üçündür. Satış forması açıq saxlanıldı."
+msgstr "Bu səhifə satış üçündür. Satış forması açıq saxlanıldı."
+
+msgid "Bu səhifə xərc üçündür. Xərc forması açıq saxlanıldı."
+msgstr "Bu səhifə xərc üçündür. Xərc forması açıq saxlanıldı."
+
+msgid "Satış bu səhifədə deyil. “Məhsul sat” bölməsindən istifadə edin."
+msgstr "Satış bu səhifədə deyil. “Məhsul sat” bölməsindən istifadə edin."
+
+msgid "Xərc bu səhifədə deyil. “Xərc yaz” bölməsindən istifadə edin."
+msgstr "Xərc bu səhifədə deyil. “Xərc yaz” bölməsindən istifadə edin."
+
+msgid "Scanner kitabxanası yüklənmədi."
+msgstr "Scanner kitabxanası yüklənmədi."
+
+msgid "Əməliyyat alınmadı."
+msgstr "Əməliyyat alınmadı."
+
+msgid "Silmə alınmadı."
+msgstr "Silmə alınmadı."
+
+msgid "Əməliyyat tamamlandı."
+msgstr "Əməliyyat tamamlandı."
+
+msgid "Offline saxlanıldı. İnternet gələndə göndəriləcək."
+msgstr "Offline saxlanıldı. İnternet gələndə göndəriləcək."
+
+msgid "Qeyd silindi."
+msgstr "Qeyd silindi."
+
+msgid "Seçilən əməliyyata uyğun form açıldı."
+msgstr "Seçilən əməliyyata uyğun form açıldı."
+
+msgid "Vahid seçin"
+msgstr "Vahid seçin"
+
+msgid "Səs qəbul olundu və form dolduruldu."
+msgstr "Səs qəbul olundu və form dolduruldu."
+
+msgid "Səs servisi JSON cavabı pozaq qaytardı."
+msgstr "Səs servisi JSON cavabı pozaq qaytardı."
+
+msgid "CSRF xətası var. Səhifəni yeniləyib yenə yoxlayın."
+msgstr "CSRF xətası var. Səhifəni yeniləyib yenə yoxlayın."
+
+msgid "Sessiya bitib. Yenidən daxil olun."
+msgstr "Sessiya bitib. Yenidən daxil olun."
+
+msgid "Səs servisi HTML xəta səhifəsi qaytardı. Server logunu yoxlayın."
+msgstr "Səs servisi HTML xəta səhifəsi qaytardı. Server logunu yoxlayın."
+
+msgid "Səs servisindən gözlənilməyən cavab gəldi."
+msgstr "Səs servisindən gözlənilməyən cavab gəldi."
+
+msgid "Səs transkripsiyası alınmadı."
+msgstr "Səs transkripsiyası alınmadı."
+
+msgid "Səs yazısı boş oldu."
+msgstr "Səs yazısı boş oldu."
+
+msgid "Səs emalı zamanı xəta oldu."
+msgstr "Səs emalı zamanı xəta oldu."
+
+msgid "Bu cihazda səs yazısı dəstəklənmir."
+msgstr "Bu cihazda səs yazısı dəstəklənmir."
+
+msgid "Əvvəlki səs hələ emal olunur."
+msgstr "Əvvəlki səs hələ emal olunur."
+
+msgid "Dinlənilir... Bitirmək üçün “Yazını Bitir” düyməsinə basın."
+msgstr "Dinlənilir... Bitirmək üçün “Yazını Bitir” düyməsinə basın."
+
+msgid "Mikrofona icazə verin."
+msgstr "Mikrofona icazə verin."
+
+msgid "Səs yazısını başlatmaq olmadı."
+msgstr "Səs yazısını başlatmaq olmadı."
+
+msgid "Kod oxundu:"
+msgstr "Kod oxundu:"
+
+msgid "Kodu yazın."
+msgstr "Kodu yazın."
+
+msgid "Skan dayandırıldı."
+msgstr "Skan dayandırıldı."
+
+msgid "Bu cihazda kamera dəstəklənmir."
+msgstr "Bu cihazda kamera dəstəklənmir."
+
+msgid "Kamera açılır..."
+msgstr "Kamera açılır..."
+
+msgid "Kamera tapılmadı."
+msgstr "Kamera tapılmadı."
+
+msgid "Barkodu kameraya yaxınlaşdırın."
+msgstr "Barkodu kameraya yaxınlaşdırın."
+
+msgid "Scanner başlatmaq olmadı."
+msgstr "Scanner başlatmaq olmadı."
+
+msgid "Form açıldı. Məlumatları doldurun."
+msgstr "Form açıldı. Məlumatları doldurun."
+
+msgid "Kodu və ya ID-ni əl ilə yazın."
+msgstr "Kodu və ya ID-ni əl ilə yazın."
+
+msgid "Form açıqdır."
+msgstr "Form açıqdır."
+
+msgid "Satış formu açıldı."
+msgstr "Satış formu açıldı."
+
+msgid "Xərc formu açıldı."
+msgstr "Xərc formu açıldı."
+
+msgid "Heyvan formu açıldı."
+msgstr "Heyvan formu açıldı."
+
+msgid "Toxum formu açıldı."
+msgstr "Toxum formu açıldı."
+
+msgid "Alət formu açıldı."
+msgstr "Alət formu açıldı."
+
+msgid "Məhsul formu açıldı."
+msgstr "Məhsul formu açıldı."
+
+msgid "Siyahı yüklənmədi."
+msgstr "Siyahı yüklənmədi."
+
+msgid "Mikrofon aktivdir."
+msgstr "Mikrofon aktivdir."
+
+msgid "Tapıldı:"
+msgstr "Tapıldı:"
+
+msgid "Kod tapılmadı."
+msgstr "Kod tapılmadı."
