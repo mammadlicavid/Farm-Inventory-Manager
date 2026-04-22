@@ -559,10 +559,9 @@ msgstr ""
 
 #: apps/reports/views.py:628
 msgid ""
-"CSV və PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda hazırlanır."
+"PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda hazırlanır."
 msgstr ""
-"CSV and PDF exports are prepared in a cleaner format for sharing and "
-"presentations."
+"PDF exports are prepared in a cleaner format for sharing and presentations."
 
 #: apps/reports/views.py:632
 msgid "Gəlirin sabitliyi və xalis qazanc kredit təqdimatı üçün önə çıxarılıb."
