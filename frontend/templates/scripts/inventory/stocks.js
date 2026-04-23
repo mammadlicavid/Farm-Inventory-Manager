@@ -313,6 +313,7 @@
         }
         const firstMessage = responseMessages[0];
         if (firstMessage) showToast(firstMessage.text, firstMessage.type);
+        await window.farmSync?.noteDirectOnlineSuccess?.();
         return responseMessages;
     }
 

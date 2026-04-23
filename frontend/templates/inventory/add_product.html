@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load common_extras %}
 {% load i18n %}
+{% unit_system request.user as weight_unit_system %}
 
 {% block content %}
 <header class="main-header">
@@ -148,7 +149,7 @@
     <section id="dynamic-form-shell" class="dynamic-form-shell" hidden>
         <div class="section-head">
             <h3 id="active-form-title">{% trans "Form" %}</h3>
-            <p id="active-form-subtitle">{% trans "Scan olunan barkoda uyğun form açıldı." %}</p>
+            <p id="active-form-subtitle" hidden></p>
 
             {% if combined_mode %}
                 <div class="form-switch-row" aria-label="{% trans 'Add inventory form selector' %}">
@@ -328,7 +329,10 @@
                     </div>
                     <div class="input-group">
                         <label>{% trans "Çəki" %}</label>
-                        <input id="animal-weight" name="weight" type="number" step="0.1" class="custom-input" placeholder="0.0">
+                        <div class="input-with-suffix">
+                            <input id="animal-weight" name="weight" type="number" step="0.1" class="custom-input input-with-suffix-field" placeholder="0.0">
+                            <span id="animal-weight-unit" class="input-suffix">{% if weight_unit_system == "lb" %}pound{% else %}{% trans "kq" %}{% endif %}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="two-col">
@@ -781,6 +785,26 @@
     .form-card { margin-top: 14px; border-top: 1px solid rgba(46, 139, 87, 0.14); padding-top: 14px; }
     .input-group { margin-bottom: 14px; }
     .input-group label { display: block; font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 8px; }
+    .input-with-suffix { position: relative; }
+    .input-with-suffix-field { padding-right: 92px; }
+    .input-suffix {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 48px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        color: #475569;
+        font-size: 13px;
+        font-weight: 800;
+        pointer-events: none;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+    }
     .required-star { color: #dc3545; margin-left: 4px; }
     /* Input differentiation (match global theme, but keep page sizing) */
     .custom-input {

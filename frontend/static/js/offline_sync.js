@@ -148,6 +148,13 @@
     }
   }
 
+  async function noteDirectOnlineSuccess(value = null) {
+    const timestamp = value || new Date().toISOString()
+    setLastSync(timestamp)
+    await emitStatus({ lastError: '' })
+    return timestamp
+  }
+
   function getLastRemoteCursor() {
     return localStorage.getItem(scopedKey(LAST_REMOTE_CURSOR_KEY)) || null
   }
@@ -403,6 +410,11 @@
     })
 
     cache.last.forEach((element) => {
+      if (detail.pendingCount > 0) {
+        const tr = i18n()
+        element.textContent = tr?.waitingSync ? tr.waitingSync(detail.pendingCount) : `${detail.pendingCount} sinxronizasiya gözləyir`
+        return
+      }
       element.textContent = detail.lastSync ? relativeTimeLabel(detail.lastSync) : 'Heç vaxt'
     })
 
@@ -963,6 +975,7 @@
     fetchServerStatus,
     getDeviceId,
     getPendingCount,
+    noteDirectOnlineSuccess,
     queueFormOperation,
     showToast,
     syncNow: () => syncPendingOperations(),

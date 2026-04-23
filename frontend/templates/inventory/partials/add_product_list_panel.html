@@ -64,12 +64,19 @@
                 {% elif panel_form_type == "animal" %}
                 <p><strong>{% trans "Miqdar" %}:</strong> {{ item.quantity }} {% trans "ədəd" %}</p>
                 {% if item.gender %}<p><strong>{% trans "Cinsiyyət" %}:</strong> {{ item.get_gender_display }}</p>{% endif %}
-                {% if item.weight %}<p><strong>{% trans "Çəki" %}:</strong> {% display_measure item.weight 'kg' request.user %}</p>{% endif %}
+                {% if item.weight %}
+                {% display_quantity item.weight 'kg' request.user as animal_weight_value %}
+                {% display_unit_for_user item.weight 'kg' request.user as animal_weight_unit %}
+                <p><strong>{% trans "Çəki" %}:</strong> {{ animal_weight_value }} {{ animal_weight_unit }}</p>
+                {% endif %}
                 {% if item.identification_no %}<p><strong>{% trans "İdentifikasiya No" %}:</strong> {{ item.identification_no }}</p>{% endif %}
                 {% elif panel_form_type == "seed" or panel_form_type == "farm" %}
                 <p><strong>{% trans "Miqdar" %}:</strong> {% display_measure item.quantity item.unit request.user %}</p>
                 {% elif panel_form_type == "tool" %}
                 <p><strong>{% trans "Miqdar" %}:</strong> {{ item.quantity }} {% trans "ədəd" %}</p>
+                {% endif %}
+                {% if item.display_additional_info %}
+                <p><strong>{% trans "Əlavə məlumat" %}:</strong> {{ item.display_additional_info }}</p>
                 {% endif %}
             </div>
             <div class="add-list-side">

@@ -1,9 +1,14 @@
 import hashlib
+import inspect
 import json
 import os
+import re
 import tempfile
+import unicodedata
+from collections import Counter
 from datetime import timedelta
 from decimal import Decimal
+from difflib import SequenceMatcher
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -58,6 +63,219 @@ ADD_PAGE_CATALOG_CACHE_KEY = "inventory:add-page-catalog:v1"
 ADD_PAGE_CATALOG_CACHE_TTL = 300
 STOCKS_PAGE_CACHE_TTL = 20
 ADD_PRODUCT_SIDE_LIST_LIMIT = 40
+VOICE_PHRASE_CATALOG_CACHE_KEY = "inventory:voice-phrase-catalog:v1"
+VOICE_HOTWORDS_CACHE_KEY = "inventory:voice-hotwords:v1"
+VOICE_COMPARE_PUNCTUATION_RE = re.compile(r"[^\w\s]+", re.UNICODE)
+VOICE_COMPARE_SPACES_RE = re.compile(r"\s+")
+
+VOICE_COMMAND_PHRASES = {
+    "az": [
+        "xərc",
+        "xərc əlavə et",
+        "gəlir",
+        "gəlir əlavə et",
+        "satış",
+        "satış əlavə et",
+        "heyvan",
+        "heyvan əlavə et",
+        "toxum",
+        "toxum əlavə et",
+        "alət",
+        "alət əlavə et",
+        "məhsul",
+        "məhsul əlavə et",
+        "miqdar",
+        "məbləğ",
+        "qiymət",
+        "çəki",
+        "tarix",
+        "cinsiyyət",
+        "identifikasiya",
+        "əlavə məlumat",
+        "qeyd",
+        "ədəd",
+        "dəstə",
+        "bağlama",
+        "qram",
+        "kilo",
+        "kiloqram",
+        "kq",
+        "ton",
+        "litr",
+        "ml",
+        "manat",
+        "dünən",
+        "bu gün",
+        "sabah",
+        "həftə",
+        "əvvəl",
+        "sonra",
+        "yanvar",
+        "fevral",
+        "mart",
+        "aprel",
+        "may",
+        "iyun",
+        "iyul",
+        "avqust",
+        "sentyabr",
+        "oktyabr",
+        "noyabr",
+        "dekabr",
+        "sıfır",
+        "bir",
+        "iki",
+        "üç",
+        "dörd",
+        "beş",
+        "altı",
+        "yeddi",
+        "səkkiz",
+        "doqquz",
+        "on",
+        "iyirmi",
+        "otuz",
+        "qırx",
+        "əlli",
+        "altmış",
+        "yetmiş",
+        "səksən",
+        "doxsan",
+        "yüz",
+        "min",
+    ],
+    "en": [
+        "expense",
+        "add expense",
+        "income",
+        "add income",
+        "sale",
+        "animal",
+        "add animal",
+        "seed",
+        "add seed",
+        "tool",
+        "add tool",
+        "product",
+        "add product",
+        "quantity",
+        "amount",
+        "price",
+        "weight",
+        "date",
+        "gender",
+        "identification",
+        "additional info",
+        "note",
+        "piece",
+        "bundle",
+        "pack",
+        "gram",
+        "kilogram",
+        "kg",
+        "ton",
+        "liter",
+        "ml",
+        "manat",
+        "yesterday",
+        "today",
+        "tomorrow",
+    ],
+    "ru": [
+        "расход",
+        "добавить расход",
+        "доход",
+        "добавить доход",
+        "продажа",
+        "животное",
+        "добавить животное",
+        "семена",
+        "добавить семена",
+        "инструмент",
+        "добавить инструмент",
+        "продукт",
+        "добавить продукт",
+        "количество",
+        "сумма",
+        "цена",
+        "вес",
+        "дата",
+        "пол",
+        "идентификация",
+        "дополнительная информация",
+        "заметка",
+        "штука",
+        "пучок",
+        "упаковка",
+        "грамм",
+        "килограмм",
+        "кг",
+        "тонна",
+        "литр",
+        "мл",
+        "манат",
+        "вчера",
+        "сегодня",
+        "завтра",
+    ],
+}
+
+VOICE_COMMAND_ALIASES = {
+    "az": {
+        "xerca": "xərc",
+        "xerci": "xərc",
+        "xerce": "xərc",
+        "herc": "xərc",
+        "xerj": "xərc",
+        "gelr": "gəlir",
+        "jelir": "gəlir",
+        "qelir": "gəlir",
+        "elave": "əlavə",
+        "elavi": "əlavə",
+        "ilave": "əlavə",
+        "et": "et",
+        "ed": "et",
+        "it": "et",
+        "miqdar": "miqdar",
+        "mikdar": "miqdar",
+        "miktar": "miqdar",
+        "mebleg": "məbləğ",
+        "mebleq": "məbləğ",
+        "mablag": "məbləğ",
+        "qiymet": "qiymət",
+        "qimet": "qiymət",
+        "geymet": "qiymət",
+        "ceki": "çəki",
+        "seki": "çəki",
+        "tişi": "dişi",
+        "tisi": "dişi",
+        "tishi": "dişi",
+        "dishi": "dişi",
+        "tarix": "tarix",
+        "cinsiyet": "cinsiyyət",
+        "cinsiyyet": "cinsiyyət",
+        "eded": "ədəd",
+        "deste": "dəstə",
+        "baglama": "bağlama",
+        "qram": "qram",
+        "kilo": "kilo",
+        "kilogram": "kiloqram",
+        "kiloqram": "kiloqram",
+        "inec": "inək",
+        "inac": "inək",
+        "ineci": "inək",
+        "inerc": "inək",
+        "inerci": "inək",
+        "inerce": "inək",
+        "manad": "manat",
+        "manot": "manat",
+        "menat": "manat",
+        "dunen": "dünən",
+        "bugun": "bu gün",
+        "hefte": "həftə",
+        "evvel": "əvvəl",
+    },
+}
 
 FARM_PRODUCT_NAME_TRANSLATIONS = {
     "en": {
@@ -217,14 +435,430 @@ GENERIC_OPTION_TRANSLATIONS = {
     },
 }
 
-_whisper_model = None
+_whisper_models = {}
 
-def _get_whisper_model():
-    global _whisper_model
-    if _whisper_model is None:
+
+def _voice_compare_text(value) -> str:
+    text = str(value or "").strip().lower()
+    if not text:
+        return ""
+
+    replacements = {
+        "ə": "e",
+        "ı": "i",
+        "ö": "o",
+        "ü": "u",
+        "ş": "s",
+        "ç": "c",
+        "ğ": "g",
+        "ё": "е",
+    }
+    for source, target in replacements.items():
+        text = text.replace(source, target)
+
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = VOICE_COMPARE_PUNCTUATION_RE.sub(" ", text)
+    return VOICE_COMPARE_SPACES_RE.sub(" ", text).strip()
+
+
+def _voice_text_similarity(source: str, target: str) -> float:
+    left = _voice_compare_text(source)
+    right = _voice_compare_text(target)
+    if not left or not right:
+        return 0.0
+    if left == right:
+        return 1.0
+    joined_ratio = SequenceMatcher(None, left, right).ratio()
+    prefix_len = len(os.path.commonprefix([left, right]))
+    prefix_ratio = prefix_len / max(len(left), len(right), 1)
+
+    def skeleton(value: str) -> str:
+        value = (
+            value.replace("ph", "f")
+            .replace("ck", "k")
+            .replace("qu", "k")
+            .replace("q", "k")
+            .replace("x", "h")
+            .replace("c", "j")
+            .replace("v", "w")
+            .replace("y", "i")
+            .replace("z", "s")
+        )
+        value = re.sub(r"(.)\1+", r"\1", value)
+        return re.sub(r"[aeiou]", "", value)
+
+    skeleton_ratio = SequenceMatcher(None, skeleton(left), skeleton(right)).ratio()
+    return max(joined_ratio, prefix_ratio * 0.92, skeleton_ratio * 0.96)
+
+
+def _voice_compare_token(value: str) -> str:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return ""
+    if re.fullmatch(r"[a-zа-яəöüşçğıё0-9]+(?:[.,:/-][a-zа-яəöüşçğıё0-9]+)+", raw, flags=re.IGNORECASE):
+        return raw
+    return _voice_compare_text(raw).replace(" ", "")
+
+
+def _voice_phrase_threshold(token_count: int) -> float:
+    if token_count <= 1:
+        return 0.88
+    if token_count == 2:
+        return 0.8
+    if token_count == 3:
+        return 0.76
+    return 0.74
+
+
+def _voice_phrase_match_score(window_tokens: list[str], candidate_tokens: list[str]) -> float:
+    if len(window_tokens) != len(candidate_tokens) or not window_tokens:
+        return 0.0
+
+    scores = []
+    strong_hits = 0
+    exact_hits = 0
+    for source, target in zip(window_tokens, candidate_tokens):
+        token_score = _voice_text_similarity(source, target)
+        scores.append(token_score)
+        if source == target:
+            exact_hits += 1
+        if token_score >= 0.72:
+            strong_hits += 1
+
+    if len(window_tokens) > 1 and strong_hits < max(1, len(window_tokens) - 1):
+        return 0.0
+
+    average = sum(scores) / len(scores)
+    joined = _voice_text_similarity(" ".join(window_tokens), " ".join(candidate_tokens)) * 0.98
+    exact_bonus = (exact_hits / len(window_tokens)) * 0.05
+    return max(average, joined) + exact_bonus
+
+
+def _voice_catalog_labels_for_language(lang_code: str) -> list[str]:
+    labels = []
+
+    def add_label(value):
+        text = _normalized_text(value)
+        if text:
+            labels.append(text)
+
+    languages = ["az"]
+    if lang_code not in languages:
+        languages.append(lang_code)
+
+    for catalog_lang in languages:
+        catalog = _build_add_page_catalog(catalog_lang)
+        for bucket in ("expense_categories", "animal_categories", "seed_categories", "tool_categories", "farm_categories"):
+            for category in catalog.get(bucket, []):
+                add_label(category.get("name"))
+                for row in category.get("subcategories", []) + category.get("items", []):
+                    add_label(row.get("name"))
+
+        for category_name in catalog.get("income_categories", []):
+            add_label(category_name)
+            for row in catalog.get("income_category_data", {}).get(category_name, {}).get("items", []):
+                add_label(row.get("name"))
+
+    unique_labels = []
+    seen = set()
+    for label in labels:
+        compare = _voice_compare_text(label)
+        if not compare or compare in seen:
+            continue
+        seen.add(compare)
+        unique_labels.append(label)
+    return unique_labels
+
+
+def _build_voice_phrase_catalog(lang_code: str) -> dict[int, list[dict[str, object]]]:
+    cache_key = f"{VOICE_PHRASE_CATALOG_CACHE_KEY}:{lang_code}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    phrases = []
+    for base_lang in ("az", lang_code):
+        phrases.extend(VOICE_COMMAND_PHRASES.get(base_lang, []))
+    phrases.extend(_voice_catalog_labels_for_language(lang_code))
+
+    buckets: dict[int, list[dict[str, object]]] = {}
+    seen = set()
+    for phrase in phrases:
+        display_text = _normalized_text(phrase)
+        compare_text = _voice_compare_text(display_text)
+        if not compare_text or compare_text in seen:
+            continue
+        seen.add(compare_text)
+        tokens = compare_text.split()
+        bucket = buckets.setdefault(len(tokens), [])
+        bucket.append({
+            "display": display_text,
+            "compare_tokens": tokens,
+        })
+
+    for token_count in buckets:
+        buckets[token_count].sort(key=lambda item: (-len(item["compare_tokens"]), -len(str(item["display"]))))
+
+    cache.set(cache_key, buckets, ADD_PAGE_CATALOG_CACHE_TTL)
+    return buckets
+
+
+def _apply_voice_alias_fallback(token: str, lang_code: str) -> str:
+    compare = _voice_compare_token(token)
+    alias = VOICE_COMMAND_ALIASES.get(lang_code, {}).get(compare)
+    return alias or token
+
+
+def _normalize_voice_transcript(text: str, lang_code: str) -> str:
+    cleaned_text = _normalized_text(text)
+    if not cleaned_text:
+        return ""
+
+    raw_tokens = [segment for segment in cleaned_text.split() if segment]
+    compare_tokens = [_voice_compare_token(token) for token in raw_tokens]
+    if not compare_tokens:
+        return cleaned_text
+
+    phrase_catalog = _build_voice_phrase_catalog(lang_code)
+    max_phrase_size = max(phrase_catalog.keys(), default=1)
+
+    resolved_tokens: list[str] = []
+    pointer = 0
+    while pointer < len(compare_tokens):
+        best_match = None
+        best_score = 0.0
+
+        for window_size in range(min(max_phrase_size, len(compare_tokens) - pointer), 0, -1):
+            compare_window = compare_tokens[pointer:pointer + window_size]
+            if any(not token for token in compare_window):
+                continue
+            if all(re.fullmatch(r"\d+(?:[.,:/-]\d+)*", token or "") for token in compare_window):
+                continue
+
+            for candidate in phrase_catalog.get(window_size, []):
+                candidate_tokens = candidate["compare_tokens"]
+                score = _voice_phrase_match_score(compare_window, candidate_tokens)
+                if score < _voice_phrase_threshold(window_size):
+                    continue
+                if score > best_score:
+                    best_match = candidate
+                    best_score = score
+
+            if best_match:
+                break
+
+        if best_match:
+            resolved_tokens.append(str(best_match["display"]))
+            pointer += len(best_match["compare_tokens"])
+            continue
+
+        resolved_tokens.append(_apply_voice_alias_fallback(raw_tokens[pointer], lang_code))
+        pointer += 1
+
+    normalized = _normalized_text(" ".join(resolved_tokens))
+    if _voice_compare_text(normalized) == _voice_compare_text(cleaned_text):
+        return cleaned_text
+    return normalized
+
+
+def _build_voice_hotwords(lang_code: str) -> str:
+    cache_key = f"{VOICE_HOTWORDS_CACHE_KEY}:{lang_code}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    prioritized = []
+    for base_lang in ("az", lang_code):
+        prioritized.extend(VOICE_COMMAND_PHRASES.get(base_lang, []))
+    prioritized.extend(_voice_catalog_labels_for_language(lang_code))
+
+    selected = []
+    seen = set()
+    total_chars = 0
+    for phrase in prioritized:
+        text = _normalized_text(phrase)
+        compare = _voice_compare_text(text)
+        if not text or not compare or compare in seen:
+            continue
+        next_total = total_chars + len(text) + (2 if selected else 0)
+        if len(selected) >= 96 or next_total > 1800:
+            break
+        seen.add(compare)
+        selected.append(text)
+        total_chars = next_total
+
+    hotwords = ", ".join(selected)
+    cache.set(cache_key, hotwords, ADD_PAGE_CATALOG_CACHE_TTL)
+    return hotwords
+
+
+def _build_voice_initial_prompt(lang_code: str) -> str:
+    prompts = {
+        "az": (
+            "Ferma inventarı üçün Azərbaycan dilində qısa səs əmrləri. "
+            "Terminlər: xərc, gəlir, satış, heyvan, toxum, alət, məhsul, miqdar, məbləğ, qiymət, çəki, tarix."
+        ),
+        "en": (
+            "Short farm inventory voice commands. "
+            "Terms: expense, income, sale, animal, seed, tool, product, quantity, amount, price, weight, date."
+        ),
+        "ru": (
+            "Короткие голосовые команды для инвентаря фермы. "
+            "Термины: расход, доход, продажа, животное, семена, инструмент, продукт, количество, сумма, цена, вес, дата."
+        ),
+    }
+    return prompts.get(lang_code, prompts["az"])
+
+
+def _voice_number_token_set() -> set[str]:
+    return {
+        "sifir", "bir", "iki", "uc", "dord", "bes", "alti", "yeddi",
+        "sekkiz", "doqquz", "on", "iyirmi", "otuz", "qirx", "elli",
+        "altmis", "yetmis", "seksen", "doxsan", "yuz", "min",
+    }
+
+
+def _voice_amount_keyword_set() -> set[str]:
+    return {"mebleg", "qiymet", "manat"}
+
+
+def _voice_transcript_tokens(text: str) -> list[str]:
+    return [token for token in _voice_compare_text(text).split() if token]
+
+
+def _voice_has_amount_without_number(tokens: list[str]) -> bool:
+    amount_keywords = _voice_amount_keyword_set()
+    number_tokens = _voice_number_token_set()
+    for index, token in enumerate(tokens):
+        if token not in amount_keywords:
+            continue
+        window = tokens[index + 1:index + 5]
+        if any(part in number_tokens or re.fullmatch(r"\d+(?:[.,]\d+)?", part or "") for part in window):
+            return False
+        return True
+    return False
+
+
+def _voice_repeated_run_length(tokens: list[str]) -> int:
+    best = 1
+    current = 1
+    for index in range(1, len(tokens)):
+        if tokens[index] == tokens[index - 1]:
+            current += 1
+            best = max(best, current)
+        else:
+            current = 1
+    return best
+
+
+def _voice_transcript_quality_score(text: str) -> float:
+    tokens = _voice_transcript_tokens(text)
+    if not tokens:
+        return float("-inf")
+
+    repeated_run = _voice_repeated_run_length(tokens)
+    unique_ratio = len(set(tokens)) / len(tokens)
+    repeated_keywords = sum(
+        count - 1
+        for token, count in Counter(tokens).items()
+        if token in _voice_amount_keyword_set() and count > 1
+    )
+
+    score = unique_ratio * 2.4
+    score += min(len(tokens), 24) * 0.03
+    score -= max(0, repeated_run - 2) * 0.42
+    score -= repeated_keywords * 0.14
+    if _voice_has_amount_without_number(tokens):
+        score -= 0.45
+    if text.rstrip().endswith((",", ";", ":", "-")):
+        score -= 0.2
+    if len(tokens[-1]) <= 2:
+        score -= 0.15
+    return score
+
+
+def _is_suspicious_voice_transcript(text: str) -> bool:
+    tokens = _voice_transcript_tokens(text)
+    if len(tokens) < 6:
+        return False
+
+    repeated_run = _voice_repeated_run_length(tokens)
+    unique_ratio = len(set(tokens)) / len(tokens)
+    repeated_amount_keywords = any(
+        count >= 4
+        for token, count in Counter(tokens).items()
+        if token in _voice_amount_keyword_set()
+    )
+
+    return (
+        repeated_run >= 4
+        or (unique_ratio < 0.58 and repeated_amount_keywords)
+        or _voice_has_amount_without_number(tokens)
+    )
+
+
+def _get_primary_whisper_model_name(lang_code: str) -> str:
+    if lang_code == "az":
+        return (
+            os.getenv("INVENTORY_VOICE_WHISPER_MODEL_AZ")
+            or os.getenv("INVENTORY_VOICE_WHISPER_MODEL")
+            or "small"
+        )
+    return os.getenv("INVENTORY_VOICE_WHISPER_MODEL") or "base"
+
+
+def _get_retry_whisper_model_names(lang_code: str) -> list[str]:
+    candidates = [
+        os.getenv(f"INVENTORY_VOICE_WHISPER_RETRY_MODEL_{lang_code.upper()}"),
+        os.getenv("INVENTORY_VOICE_WHISPER_RETRY_MODEL"),
+    ]
+    primary = _get_primary_whisper_model_name(lang_code)
+    if lang_code == "az":
+        candidates.extend(["small", "base", primary])
+    else:
+        candidates.extend([primary, "base"])
+
+    ordered = []
+    seen = set()
+    for candidate in candidates:
+        if not candidate or candidate in seen:
+            continue
+        seen.add(candidate)
+        ordered.append(candidate)
+    return ordered
+
+
+def _get_whisper_transcribe_options(lang_code: str, retry_mode: bool = False) -> dict[str, object]:
+    options: dict[str, object] = {
+        "beam_size": int(os.getenv("INVENTORY_VOICE_BEAM_SIZE_RETRY" if retry_mode else "INVENTORY_VOICE_BEAM_SIZE", "9" if retry_mode else "7")),
+        "best_of": int(os.getenv("INVENTORY_VOICE_BEST_OF_RETRY" if retry_mode else "INVENTORY_VOICE_BEST_OF", "6" if retry_mode else "5")),
+        "temperature": float(os.getenv("INVENTORY_VOICE_TEMPERATURE_RETRY" if retry_mode else "INVENTORY_VOICE_TEMPERATURE", "0.2" if retry_mode else "0")),
+        "condition_on_previous_text": False,
+        "vad_filter": True,
+        "initial_prompt": _build_voice_initial_prompt(lang_code),
+        "repetition_penalty": float(os.getenv("INVENTORY_VOICE_REPETITION_PENALTY", "1.15")),
+        "no_repeat_ngram_size": int(os.getenv("INVENTORY_VOICE_NO_REPEAT_NGRAM", "2")),
+        "compression_ratio_threshold": float(os.getenv("INVENTORY_VOICE_COMPRESSION_RATIO_THRESHOLD", "2.0")),
+        "log_prob_threshold": float(os.getenv("INVENTORY_VOICE_LOG_PROB_THRESHOLD", "-0.8")),
+        "no_speech_threshold": float(os.getenv("INVENTORY_VOICE_NO_SPEECH_THRESHOLD", "0.45")),
+        "hallucination_silence_threshold": float(os.getenv("INVENTORY_VOICE_HALLUCINATION_SILENCE_THRESHOLD", "0.35")),
+    }
+    hotwords = _build_voice_hotwords(lang_code)
+    if hotwords:
+        options["hotwords"] = hotwords
+    return options
+
+
+def _get_whisper_model(model_name: str | None = None):
+    model_name = model_name or "base"
+    device = os.getenv("INVENTORY_VOICE_WHISPER_DEVICE", "cpu")
+    compute_type = os.getenv("INVENTORY_VOICE_WHISPER_COMPUTE_TYPE", "int8")
+    cache_key = (model_name, device, compute_type)
+    if cache_key not in _whisper_models:
         from faster_whisper import WhisperModel
-        _whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
-    return _whisper_model
+        _whisper_models[cache_key] = WhisperModel(model_name, device=device, compute_type=compute_type)
+    return _whisper_models[cache_key]
 
 
 def _is_forage_item(name: str) -> bool:
@@ -702,7 +1336,7 @@ def _build_add_page_list_panel_context(user, form_type: str, include_time: bool 
         )
         items = list(queryset[:ADD_PRODUCT_SIDE_LIST_LIMIT])
         if items:
-            from expenses.views import _attach_prefetched_expense_objects
+            from expenses.views import _attach_prefetched_expense_objects, _get_display_additional_info
 
             _attach_prefetched_expense_objects(items)
         for item in items:
@@ -728,6 +1362,7 @@ def _build_add_page_list_panel_context(user, form_type: str, include_time: bool 
             )
             item.filter_category_key = _panel_option_value(item.display_category_name)
             item.amount_display = format_currency(item.amount, 2)
+            item.display_additional_info = _get_display_additional_info(item)
             _set_panel_display_time(item)
         return finalize(items)
 
@@ -751,6 +1386,7 @@ def _build_add_page_list_panel_context(user, form_type: str, include_time: bool 
             item.filter_item_key = _panel_option_value(item.display_title)
             item.filter_category_key = _panel_option_value(item.display_category_name)
             item.amount_display = format_currency(item.amount, 2)
+            item.display_additional_info = str(item.additional_info or "").strip()
             _set_panel_display_time(item)
         return finalize(items)
 
@@ -805,6 +1441,7 @@ def _build_add_page_list_panel_context(user, form_type: str, include_time: bool 
             item.filter_item_key = _panel_option_value(item.display_title)
             item.filter_category_key = _panel_option_value(item.display_category_name)
             item.price_display = format_currency(abs(Decimal(item.price or 0)), 2)
+            item.display_additional_info = str(item.additional_info or "").strip()
             item.zero_price_source_label = get_zero_price_source_label(item)
             _set_panel_display_time(item)
         return finalize(items)
@@ -830,6 +1467,7 @@ def _build_add_page_list_panel_context(user, form_type: str, include_time: bool 
             item.filter_item_key = _panel_option_value(item.display_title)
             item.filter_category_key = _panel_option_value(item.display_category_name)
             item.price_display = format_currency(abs(Decimal(item.price or 0)), 2)
+            item.display_additional_info = str(item.additional_info or "").strip()
             item.zero_price_source_label = get_zero_price_source_label(item)
             _set_panel_display_time(item)
         return finalize(items)
@@ -855,6 +1493,7 @@ def _build_add_page_list_panel_context(user, form_type: str, include_time: bool 
             item.filter_item_key = _panel_option_value(item.display_title)
             item.filter_category_key = _panel_option_value(item.display_category_name)
             item.price_display = format_currency(abs(Decimal(item.price or 0)), 2)
+            item.display_additional_info = str(item.additional_info or "").strip()
             item.zero_price_source_label = get_zero_price_source_label(item)
             _set_panel_display_time(item)
         return finalize(items)
@@ -878,6 +1517,67 @@ def _resolve_voice_language(request, explicit_language: str | None = None):
     if not candidate:
         candidate = (getattr(request, "LANGUAGE_CODE", "") or "").split("-")[0].lower()
     return candidate if candidate in allowed else "az"
+
+
+def _transcribe_with_supported_options(model, audio_path: str, lang_code: str, retry_mode: bool = False):
+    options = _get_whisper_transcribe_options(lang_code, retry_mode=retry_mode)
+    if lang_code in {"az", "en", "ru"}:
+        options["language"] = lang_code
+
+    try:
+        supported = set(inspect.signature(model.transcribe).parameters.keys())
+    except (TypeError, ValueError):
+        supported = set()
+
+    if supported:
+        options = {
+            key: value
+            for key, value in options.items()
+            if key in supported and value not in ("", None)
+        }
+    else:
+        options = {
+            key: value
+            for key, value in options.items()
+            if key in {"language", "beam_size"} and value not in ("", None)
+        }
+
+    return model.transcribe(audio_path, **options)
+
+
+def _segments_to_transcript_text(segments) -> str:
+    return _normalized_text(" ".join(getattr(segment, "text", "") for segment in segments))
+
+
+def _transcribe_voice_text(audio_path: str, lang_code: str) -> str:
+    attempts: list[tuple[float, str]] = []
+
+    primary_model_name = _get_primary_whisper_model_name(lang_code)
+    retry_model_names = _get_retry_whisper_model_names(lang_code)
+
+    for model_name, retry_mode in [(primary_model_name, False)] + [(name, True) for name in retry_model_names]:
+        try:
+            model = _get_whisper_model(model_name)
+            segments, _info = _transcribe_with_supported_options(model, audio_path, lang_code, retry_mode=retry_mode)
+            text = _segments_to_transcript_text(segments)
+        except Exception:
+            if retry_mode:
+                continue
+            raise
+
+        if not text:
+            continue
+
+        attempts.append((_voice_transcript_quality_score(text), text))
+        if not retry_mode and not _is_suspicious_voice_transcript(text):
+            return text
+        if retry_mode and not _is_suspicious_voice_transcript(text):
+            return text
+
+    if attempts:
+        attempts.sort(key=lambda item: item[0], reverse=True)
+        return attempts[0][1]
+    return ""
 
 
 def home(request):
@@ -1651,7 +2351,7 @@ def lookup_scan_code(request):
     code = request.GET.get("code", "").strip()
 
     if not code:
-        return JsonResponse({"success": False, "message": "Kod göndərilməyib."}, status=400)
+        return JsonResponse({"success": False, "message": _T("Kod göndərilməyib.")}, status=400)
 
     barcode = UserBarcode.objects.filter(code=code).first()
     if barcode:
@@ -1672,7 +2372,7 @@ def lookup_scan_code(request):
     try:
         item = ScanItem.objects.get(code=code, is_active=True)
     except ScanItem.DoesNotExist:
-        return JsonResponse({"success": False, "message": "Kod tapılmadı."}, status=404)
+        return JsonResponse({"success": False, "message": _T("Kod tapılmadı.")}, status=404)
 
     category_to_form_type = {
         "toxumlar": "seed",
@@ -1721,19 +2421,17 @@ def transcribe_voice_input(request):
             temp_path = temp_file.name
 
         lang = _resolve_voice_language(request, request.POST.get("language"))
-        if lang not in {"az", "en", "ru"}:
-            lang = None
-
-        model = _get_whisper_model()
-        segments, info = model.transcribe(temp_path, language=lang, beam_size=5)
-        text = " ".join([segment.text for segment in segments]).strip()
+        text = _transcribe_voice_text(temp_path, lang)
 
         if not text:
             return JsonResponse({"success": False, "message": "Səs tanınmadı"}, status=422)
 
+        normalized_text = _normalize_voice_transcript(text, lang)
+
         return JsonResponse({
             "success": True,
             "transcript": text,
+            "normalized_transcript": normalized_text,
         })
 
     except Exception as e:

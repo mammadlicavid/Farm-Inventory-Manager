@@ -248,8 +248,7 @@ msgstr "Сумма указана неверно."
 msgid "Kateqoriya"
 msgstr "Категория"
 
-#: apps/farm_products/forms.py:29 apps/seeds/forms.py:28
-#: apps/tools/forms.py:27
+#: apps/farm_products/forms.py:29 apps/seeds/forms.py:28 apps/tools/forms.py:27
 msgid "Qiymət (₼)"
 msgstr "Цена (₼)"
 
@@ -469,8 +468,8 @@ msgid ""
 "İlkin formada təqdim edilən kənd təsərrüfatı məhsulu və ya diri heyvan "
 "satışı 1 Yanvar 2027-dək vergidən azaddır."
 msgstr ""
-"Реализация сельхозпродукции или живых животных в первичной форме освобождена"
-" от налога до 1 января 2027 г."
+"Реализация сельхозпродукции или живых животных в первичной форме освобождена "
+"от налога до 1 января 2027 г."
 
 #: apps/reports/views.py:322 apps/reports/views.py:812
 #: apps/reports/views.py:1033
@@ -506,8 +505,7 @@ msgstr ""
 "остальных."
 
 #: apps/reports/views.py:616
-msgid ""
-"Torpaq vergisi və ƏDV qeydiyyatı həddi bu hesabatda ayrıca hesablanmır."
+msgid "Torpaq vergisi və ƏDV qeydiyyatı həddi bu hesabatda ayrıca hesablanmır."
 msgstr ""
 "Земельный налог и порог обязательной регистрации по НДС в этом отчете "
 "отдельно не рассчитываются."
@@ -558,11 +556,9 @@ msgstr ""
 
 #: apps/reports/views.py:628
 msgid ""
-"CSV və PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda "
-"hazırlanır."
+"PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda hazırlanır."
 msgstr ""
-"Экспорт CSV и PDF подготовлен в более аккуратном формате для презентаций и "
-"обмена."
+"Экспорт PDF подготовлен в более аккуратном формате для презентаций и обмена."
 
 #: apps/reports/views.py:632
 msgid "Gəlirin sabitliyi və xalis qazanc kredit təqdimatı üçün önə çıxarılıb."
@@ -1206,8 +1202,8 @@ msgstr ""
 "остаток, записать продажи и отметить расходы."
 
 msgid ""
-"Salam, %(name)s. Buradan stok əlavə edə, qalığa baxa, satış yaza və xərcləri"
-" qeyd edə bilərsiniz."
+"Salam, %(name)s. Buradan stok əlavə edə, qalığa baxa, satış yaza və xərcləri "
+"qeyd edə bilərsiniz."
 msgstr ""
 "Здравствуйте, %(name)s. Отсюда вы можете добавить запасы, посмотреть "
 "остаток, записать продажи и отметить расходы."
@@ -1226,8 +1222,7 @@ msgstr "Что вы можете сделать на этой странице?"
 
 msgid "Ən vacib işlər birbaşa açılır. Kateqoriya axtarmağa ehtiyac yoxdur."
 msgstr ""
-"Самые важные задачи открываются напрямую. Нет необходимости искать "
-"категорию."
+"Самые важные задачи открываются напрямую. Нет необходимости искать категорию."
 
 msgid "Stok əlavə et"
 msgstr "Добавить сток"
@@ -1263,8 +1258,7 @@ msgid ""
 "Hesabat hazırlamaq və təchizatçı siyahısını idarə etmək üçün bu bölmələri "
 "açın."
 msgstr ""
-"Откройте эти разделы для подготовки отчетов и управления списком "
-"поставщиков."
+"Откройте эти разделы для подготовки отчетов и управления списком поставщиков."
 
 msgid "Hesabatlar"
 msgstr "Отчеты"
@@ -1314,12 +1308,11 @@ msgid ""
 "İlk dəfə istifadə edirsinizsə, aşağıdakı addımlar proqramı ilk 10 saniyədə "
 "başa düşməyə kömək edəcək."
 msgstr ""
-"Если вы используете его впервые, следующие шаги помогут вам понять "
-"программу."
+"Если вы используете его впервые, следующие шаги помогут вам понять программу."
 
 msgid ""
-"Hər gün eyni axınla işləyin: əvvəl əlavə edin, sonra izləyin, sonda satış və"
-" xərci yazın."
+"Hər gün eyni axınla işləyin: əvvəl əlavə edin, sonra izləyin, sonda satış və "
+"xərci yazın."
 msgstr ""
 "Каждый день работайте по одной и той же схеме: сначала добавьте, затем "
 "отследите, в конце запишите продажи и расходы."
@@ -1518,12 +1511,6 @@ msgstr "Управление фермой"
 msgid "Nə əlavə etmək istəyirsiniz?"
 msgstr "Что вы хотите добавить?"
 
-msgid ""
-"Əvvəl növü seçin. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin."
-msgstr ""
-"Сначала выберите тип. Затем введите информацию вручную, голосом или "
-"штрихкодом."
-
 msgid "Süd, yumurta, tərəvəz və digər hazır məhsulu əlavə edin."
 msgstr "Добавьте молоко, яйца, овощи и другие готовые продукты."
 
@@ -1552,6 +1539,12 @@ msgstr "Запишите покупку или добавление нового
 
 msgid "Ferma üçün alınan və ya əlavə olunan aləti yazın."
 msgstr "Запишите инструменты, купленные или добавленные для фермы."
+
+msgid "Səsdən heyvan formu dolduruldu."
+msgstr "Форма животного заполнена голосом."
+
+msgid "Səs qəbul olundu və heyvan formu dolduruldu."
+msgstr "Голос принят, и форма животного заполнена."
 
 msgid "Taxıl toxumları"
 msgstr "Семена зерновых"
@@ -1931,6 +1924,12 @@ msgstr "Дата и время"
 msgid "İndi"
 msgstr "Сейчас"
 
+msgid "Kod göndərilməyib."
+msgstr "Код не был отправлен."
+
+msgid "Əvvəl növü seçin. Sonra məlumatı əl ilə, səs ilə və ya barkodla daxil edin."
+msgstr "Сначала выберите тип. Затем введите информацию вручную, голосом или по штрихкоду."
+
 msgid "Şifrəni dəyiş"
 msgstr "Изменить пароль"
 
@@ -1945,6 +1944,9 @@ msgstr "Вернуться назад"
 
 msgid "Satış Əlavə Et"
 msgstr "Добавить продажу"
+
+msgid "İndi Sinxron Et"
+msgstr "Синхронизировать сейчас"
 
 msgid "Stoku yenilə"
 msgstr "Обновить остаток"
@@ -2331,6 +2333,24 @@ msgstr "Форма инструмента"
 msgid "Təsərrüfat formu"
 msgstr "Форма фермы"
 
+msgid "Xərc formu üçün barkod"
+msgstr "Штрихкод для формы расхода"
+
+msgid "Gəlir formu üçün barkod"
+msgstr "Штрихкод для формы дохода"
+
+msgid "Heyvan formu üçün barkod"
+msgstr "Штрихкод для формы животного"
+
+msgid "Toxum formu üçün barkod"
+msgstr "Штрихкод для формы семян"
+
+msgid "Alət formu üçün barkod"
+msgstr "Штрихкод для формы инструмента"
+
+msgid "Təsərrüfat formu üçün barkod"
+msgstr "Штрихкод для формы фермы"
+
 msgid "Skanı Dayandır"
 msgstr "Остановить сканирование"
 
@@ -2379,8 +2399,8 @@ msgstr "Штрихкод"
 msgid "Kopyala"
 msgstr "Копировать"
 
-msgid "Download JPG"
-msgstr "Скачать JPG"
+msgid "Barkodu yüklə"
+msgstr "Скачать штрихкод"
 
 msgid "Hamısı"
 msgstr "Все"
@@ -2812,8 +2832,8 @@ msgstr "Как вы хотите ввести расход?"
 
 msgid "Xərci əl ilə yazın və ya barkod, kod, səs ilə sürətli doldurun."
 msgstr ""
-"Введите расход вручную или используйте штрих-код, код или голос для быстрого"
-" ввода."
+"Введите расход вручную или используйте штрих-код, код или голос для быстрого "
+"ввода."
 
 msgid "Satışı necə daxil etmək istəyirsiniz?"
 msgstr "Как вы хотите ввести продажу?"
@@ -2842,10 +2862,14 @@ msgid "Seçilmiş gün"
 msgstr "Выбранный день"
 
 msgid "Bu gün üçün bütün stok, satış və xərc hərəkətləri burada görünür."
-msgstr "Здесь показаны все складские, продажные и расходные операции за этот день."
+msgstr ""
+"Здесь показаны все складские, продажные и расходные операции за этот день."
 
-msgid "Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək."
-msgstr "Здесь собраны сегодняшние действия. Новые записи будут появляться в этом списке."
+msgid ""
+"Bugünkü işlər burada toplanır. Yeni qeyd etdikləriniz bu siyahıya düşəcək."
+msgstr ""
+"Здесь собраны сегодняшние действия. Новые записи будут появляться в этом "
+"списке."
 
 msgid "Qeyd sayı"
 msgstr "Количество записей"
@@ -2853,8 +2877,211 @@ msgstr "Количество записей"
 msgid "Bu gün üçün qeyd yoxdur"
 msgstr "На этот день записей нет"
 
-msgid "Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin."
-msgstr "Выберите другой день в календаре или добавьте новую запись о складе, продаже или расходе."
+msgid ""
+"Təqvimdən başqa bir gün seçin və ya yeni stok, satış və xərc əlavə edin."
+msgstr ""
+"Выберите другой день в календаре или добавьте новую запись о складе, продаже "
+"или расходе."
 
 msgid "Stok səhifəsindən düzəliş"
 msgstr "Исправлено со страницы склада"
+
+msgid "Add inventory form selector"
+msgstr "Селектор формы добавления в склад"
+
+msgid "Tez xərc"
+msgstr "Быстрый расход"
+
+msgid "Təsərrüfat Məhsulu"
+msgstr "Продукт хозяйства"
+
+msgid "Saat"
+msgstr "Время"
+
+msgid "Heyvan Növü"
+msgstr "Вид животного"
+
+msgid "Heyvan növünü seçin"
+msgstr "Выберите вид животного"
+
+msgid "Məbləğ 0 olduqda mənbəni seçin."
+msgstr "Выберите источник, если сумма равна 0."
+
+msgid "Heyvan Əlavə Et"
+msgstr "Добавить животное"
+
+msgid "Toxum Əlavə Et"
+msgstr "Добавить семена"
+
+msgid "Alət növü"
+msgstr "Тип инструмента"
+
+msgid "Alət Əlavə Et"
+msgstr "Добавить инструмент"
+
+msgid "Məhsul Əlavə Et"
+msgstr "Добавить продукт"
+
+msgid "Səsdən xərc formu dolduruldu."
+msgstr "Форма расхода заполнена голосом."
+
+msgid "Səsdən satış formu dolduruldu."
+msgstr "Форма продажи заполнена голосом."
+
+msgid "Səsdən toxum formu dolduruldu."
+msgstr "Форма семян заполнена голосом."
+
+msgid "Səsdən alət formu dolduruldu."
+msgstr "Форма инструмента заполнена голосом."
+
+msgid "Səsdən məhsul formu dolduruldu."
+msgstr "Форма продукта заполнена голосом."
+
+msgid "Səs qəbul olundu və xərc formu dolduruldu."
+msgstr "Голос принят, и форма расхода заполнена."
+
+msgid "Səs qəbul olundu və satış formu dolduruldu."
+msgstr "Голос принят, и форма продажи заполнена."
+
+msgid "Səs qəbul olundu və toxum formu dolduruldu."
+msgstr "Голос принят, и форма семян заполнена."
+
+msgid "Səs qəbul olundu və alət formu dolduruldu."
+msgstr "Голос принят, и форма инструмента заполнена."
+
+msgid "Səs qəbul olundu və məhsul formu dolduruldu."
+msgstr "Голос принят, и форма продукта заполнена."
+
+msgid "Bu səhifədə yalnız satış barkodları oxunur."
+msgstr "На этой странице считываются только штрихкоды продаж."
+
+msgid "Bu səhifədə yalnız xərc barkodları oxunur."
+msgstr "На этой странице считываются только штрихкоды расходов."
+
+msgid "Satış barkodu bu səhifə üçün deyil."
+msgstr "Этот штрихкод продажи не для этой страницы."
+
+msgid "Xərc barkodu bu səhifə üçün deyil."
+msgstr "Этот штрихкод расхода не для этой страницы."
+
+msgid "Bu səhifə satış üçündür. Satış forması açıq saxlanıldı."
+msgstr ""
+"Эта страница предназначена для продаж. Форма продажи оставлена открытой."
+
+msgid "Bu səhifə xərc üçündür. Xərc forması açıq saxlanıldı."
+msgstr ""
+"Эта страница предназначена для расходов. Форма расхода оставлена открытой."
+
+msgid "Satış bu səhifədə deyil. “Məhsul sat” bölməsindən istifadə edin."
+msgstr "Продажи не на этой странице. Используйте раздел «Продать продукт»."
+
+msgid "Xərc bu səhifədə deyil. “Xərc yaz” bölməsindən istifadə edin."
+msgstr "Расходы не на этой странице. Используйте раздел «Добавить расход»."
+
+msgid "Scanner kitabxanası yüklənmədi."
+msgstr "Библиотека сканера не загрузилась."
+
+msgid "Əməliyyat alınmadı."
+msgstr "Операция не выполнена."
+
+msgid "Silmə alınmadı."
+msgstr "Удаление не удалось."
+
+msgid "Əməliyyat tamamlandı."
+msgstr "Операция завершена."
+
+msgid "Offline saxlanıldı. İnternet gələndə göndəriləcək."
+msgstr "Сохранено офлайн. Будет отправлено, когда появится интернет."
+
+msgid "Qeyd silindi."
+msgstr "Запись удалена."
+
+msgid "Seçilən əməliyyata uyğun form açıldı."
+msgstr "Открыта форма, соответствующая выбранному действию."
+
+msgid "Vahid seçin"
+msgstr "Выберите единицу"
+
+msgid "Səs qəbul olundu və form dolduruldu."
+msgstr "Голос принят, и форма заполнена."
+
+msgid "Səs servisi JSON cavabı pozaq qaytardı."
+msgstr "Сервис голоса вернул некорректный JSON."
+
+msgid "CSRF xətası var. Səhifəni yeniləyib yenə yoxlayın."
+msgstr "Ошибка CSRF. Обновите страницу и попробуйте снова."
+
+msgid "Sessiya bitib. Yenidən daxil olun."
+msgstr "Сессия истекла. Войдите снова."
+
+msgid "Səs servisi HTML xəta səhifəsi qaytardı. Server logunu yoxlayın."
+msgstr "Сервис голоса вернул HTML-страницу ошибки. Проверьте логи сервера."
+
+msgid "Səs servisindən gözlənilməyən cavab gəldi."
+msgstr "От сервиса голоса пришёл неожиданный ответ."
+
+msgid "Səs transkripsiyası alınmadı."
+msgstr "Транскрипция голоса не получена."
+
+msgid "Səs yazısı boş oldu."
+msgstr "Голосовая запись оказалась пустой."
+
+msgid "Səs emalı zamanı xəta oldu."
+msgstr "Произошла ошибка при обработке голоса."
+
+msgid "Bu cihazda səs yazısı dəstəklənmir."
+msgstr "На этом устройстве запись голоса не поддерживается."
+
+msgid "Əvvəlki səs hələ emal olunur."
+msgstr "Предыдущий голосовой ввод ещё обрабатывается."
+
+msgid "Mikrofona icazə verin."
+msgstr "Разрешите доступ к микрофону."
+
+msgid "Səs yazısını başlatmaq olmadı."
+msgstr "Не удалось начать запись голоса."
+
+msgid "Kod oxundu:"
+msgstr "Код считан:"
+
+msgid "Kodu yazın."
+msgstr "Введите код."
+
+msgid "Bu cihazda kamera dəstəklənmir."
+msgstr "Камера не поддерживается на этом устройстве."
+
+msgid "Kamera tapılmadı."
+msgstr "Камера не найдена."
+
+msgid "Scanner başlatmaq olmadı."
+msgstr "Не удалось запустить сканер."
+
+msgid "Form açıldı. Məlumatları doldurun."
+msgstr "Форма открыта. Заполните данные."
+
+msgid "Form açıqdır."
+msgstr "Форма открыта."
+
+msgid "Heyvan formu açıldı."
+msgstr "Форма животного открыта."
+
+msgid "Toxum formu açıldı."
+msgstr "Форма семян открыта."
+
+msgid "Alət formu açıldı."
+msgstr "Форма инструмента открыта."
+
+msgid "Məhsul formu açıldı."
+msgstr "Форма продукта открыта."
+
+msgid "Siyahı yüklənmədi."
+msgstr "Список не загрузился."
+
+msgid "Mikrofon aktivdir."
+msgstr "Микрофон активен."
+
+msgid "Tapıldı:"
+msgstr "Найдено:"
+
+msgid "Kod tapılmadı."
+msgstr "Код не найден."

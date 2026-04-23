@@ -1071,7 +1071,7 @@ def _report_context(request):
         purpose_insights = [
             _("Seçilmiş dövr üzrə ümumi gəlir və xərc ayrıca göstərilir."),
             _("Vergi blokunda satış üzrə ödəniləcək məbləğ və güzəşt ayrıca göstərilir."),
-            _("CSV və PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda hazırlanır."),
+            _("PDF çıxarışı təqdimat və paylaşım üçün daha təmiz formatda hazırlanır."),
         ]
     else:
         purpose_insights = [
