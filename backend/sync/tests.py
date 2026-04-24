@@ -193,7 +193,7 @@ class SyncPushTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         seed.refresh_from_db()
-        self.assertEqual(str(seed.quantity), "7.00")
+        self.assertEqual(str(seed.quantity), "7.0000")
 
     def test_sync_push_deletes_seed(self):
         category = SeedCategory.objects.create(name="Taxıl toxumları")
@@ -272,6 +272,6 @@ class SyncPushTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         seed.refresh_from_db()
-        self.assertEqual(str(seed.quantity), "6.00")
+        self.assertEqual(str(seed.quantity), "6.0000")
         self.assertEqual(response.json()["results"][0]["status"], "failed")
         self.assertIn("Conflict", response.json()["results"][0]["error"])

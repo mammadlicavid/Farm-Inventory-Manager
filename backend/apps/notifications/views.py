@@ -9,6 +9,7 @@ import json
 from common.view_cache import bust_dashboard_related_caches
 from .models import Notification, StockAlertRule
 from .services import (
+    build_stock_alerts,
     build_stock_alert_rule_list,
     build_stock_rule_catalog,
     get_default_threshold_for_item,
