@@ -5,6 +5,10 @@ backend/venv/
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+
+# Compiled translations (regenerated via compilemessages)
+*.mo
 
 # Django local DB
 db.sqlite3
@@ -17,4 +21,12 @@ backend/db.sqlite3
 .DS_Store
 Thumbs.db
 
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Static collection output
 staticfiles/

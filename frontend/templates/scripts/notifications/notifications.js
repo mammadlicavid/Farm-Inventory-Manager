@@ -101,7 +101,7 @@
     selectedCategory.items.forEach((item) => {
       const option = document.createElement('option');
       option.value = item.item_key;
-      option.textContent = `${item.label} • ${item.total_display} ${item.unit}`;
+      option.textContent = `${item.label} • ${item.total_display} ${item.unit_label || item.unit}`;
       itemSelect.appendChild(option);
     });
     itemSelect.disabled = false;
