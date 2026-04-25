@@ -66,6 +66,7 @@ class SyncOperation(models.Model):
         indexes = [
             models.Index(fields=["user", "device_id", "operation_id"]),
             models.Index(fields=["user", "status", "received_at"]),
+            models.Index(fields=["user", "status", "-processed_at"]),
             models.Index(fields=["user", "processed_at"]),
         ]
 

@@ -89,6 +89,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'common.middleware.UserLanguageMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'common.middleware.AjaxRedirectMessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -140,7 +141,7 @@ else:
       }
     }
 
-    DATABASES["default"]["CONN_MAX_AGE"] = 60
+    DATABASES["default"]["CONN_MAX_AGE"] = 600
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -199,6 +200,22 @@ MEDIA_ROOT = os.path.join(BASE_DIR, '../media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ── Cache ──────────────────────────────────────────────────────────
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "farm-inventory-main",
+        "OPTIONS": {
+            "MAX_ENTRIES": 3000,
+        },
+        "TIMEOUT": 300,
+    },
+}
+
+# ── Sessions (cache-backed with DB fallback = fast + reliable) ────
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_CACHE_ALIAS = "default"
+
 # Login 
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
@@ -208,3 +225,8 @@ LOGOUT_REDIRECT_URL = "/login/"
 SESSION_COOKIE_AGE = 60 * 60 * 2  # 2 hours
 SESSION_SAVE_EVERY_REQUEST = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# ── WhiteNoise static file compression / caching ──────────────────
+if not DEBUG:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days

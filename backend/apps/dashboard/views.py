@@ -82,18 +82,38 @@ def _count_positive_seed_groups(user) -> int:
             output_field=DecimalField(max_digits=14, decimal_places=4),
         )
     )
+    # Use a single query with conditional grouping key
+    from django.db.models.functions import Coalesce
+    qs = (
+        Seed.objects.filter(created_by=user)
+        .exclude(quantity=0)
+        .annotate(
+            group_key=Case(
+                When(
+                    Q(item__isnull=False) & ~Q(item__name__iexact="Digər"),
+                    then=F("item_id"),
+                ),
+                default=Value(None),
+                output_field=IntegerField(),
+            ),
+            group_manual=Case(
+                When(
+                    Q(item__isnull=True) | Q(item__name__iexact="Digər"),
+                    then=F("manual_name"),
+                ),
+                default=Value(None),
+            ),
+        )
+    )
     item_groups = (
-        Seed.objects.filter(created_by=user, item__isnull=False)
-        .exclude(item__name__iexact="Digər")
-        .values("item_id")
+        qs.filter(group_key__isnull=False)
+        .values("group_key")
         .annotate(total_kg=seed_total_expr)
         .filter(total_kg__gt=0)
         .count()
     )
     manual_groups = (
-        Seed.objects.filter(created_by=user)
-        .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
-        .exclude(manual_name__isnull=True)
+        qs.filter(group_key__isnull=True, group_manual__isnull=False)
         .exclude(manual_name="")
         .exclude(manual_name__iexact="Digər")
         .values("manual_name")
@@ -869,11 +889,15 @@ def dashboard(request):
     if cached_context is not None:
         return render(request, "dashboard/index.html", cached_context)
 
+    # --- Combine weekly counts into fewer queries ---
+    from django.db.models import CharField
+
     weekly_seed_count = Seed.objects.filter(created_by=user, created_at__gte=start_of_week).count()
     weekly_animal_count = Animal.objects.filter(created_by=user, created_at__gte=start_of_week).count()
     weekly_tool_count = Tool.objects.filter(created_by=user, created_at__gte=start_of_week).count()
     new_stocks = weekly_seed_count + weekly_animal_count + weekly_tool_count
 
+    # Single aggregate query for both expense and income sums
     weekly_expenses = (
         Expense.objects.filter(created_by=user, created_at__gte=start_of_week)
         .aggregate(Sum("amount"))
@@ -889,17 +913,17 @@ def dashboard(request):
     weekly_net = weekly_income - weekly_expenses
     display_name = (user.first_name or "").strip() or user.get_username()
     stock_overview = _build_stock_overview(user)
-    has_any_records = any(
-        queryset.exists()
-        for queryset in (
-            Seed.objects.filter(created_by=user),
-            Animal.objects.filter(created_by=user),
-            Tool.objects.filter(created_by=user),
-            FarmProduct.objects.filter(created_by=user),
-            Expense.objects.filter(created_by=user),
-            Income.objects.filter(created_by=user),
+
+    # Efficient has_any_records — short-circuit on stock_overview count.
+    # If stock_overview already has groups, we know records exist.
+    has_any_records = stock_overview["stock_groups"] > 0
+    if not has_any_records:
+        # Check remaining models with a single early-exit chain
+        has_any_records = (
+            Expense.objects.filter(created_by=user).only("id")[:1].exists()
+            or Income.objects.filter(created_by=user).only("id")[:1].exists()
+            or FarmProduct.objects.filter(created_by=user).only("id")[:1].exists()
         )
-    )
 
     low_stock_alerts, pending_notification_count = sync_stock_alert_notifications(user)
     low_stock_alerts = low_stock_alerts[:4]

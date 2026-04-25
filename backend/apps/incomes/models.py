@@ -81,6 +81,7 @@ class Income(models.Model):
             models.Index(fields=["created_by", "category"]),
             models.Index(fields=["created_by", "item_name"]),
             models.Index(fields=["created_by", "date"]),
+            models.Index(fields=["created_by", "created_at"]),
             models.Index(fields=["created_by", "updated_at"]),
             models.Index(fields=["content_type", "object_id"]),
         ]

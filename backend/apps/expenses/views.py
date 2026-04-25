@@ -39,7 +39,6 @@ def _expense_list_cache_bust_value(user_id: int) -> str:
 
 def _bust_expense_list_cache(user_id: int) -> None:
     cache.set(_expense_list_bust_key(user_id), timezone.now().isoformat(), EXPENSE_LIST_BUST_TTL)
-    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
     bust_dashboard_related_caches(user_id)
 
 

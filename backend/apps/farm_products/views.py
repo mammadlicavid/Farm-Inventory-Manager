@@ -48,7 +48,6 @@ def _farm_list_cache_bust_value(user_id: int) -> str:
 
 def _bust_farm_list_cache(user_id: int) -> None:
     cache.set(_farm_list_bust_key(user_id), timezone.now().isoformat(), FARM_LIST_BUST_TTL)
-    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
     bust_dashboard_related_caches(user_id)
 
 
@@ -131,6 +130,8 @@ def _farm_form_context(product):
 
 
 def _farm_stock_base(user, item, manual_name: str | None, base_unit: str) -> Decimal:
+    from django.db.models import Case, DecimalField, F, Sum, Value, When
+
     if item:
         qs = FarmProduct.objects.filter(created_by=user, item=item)
     else:
@@ -138,25 +139,46 @@ def _farm_stock_base(user, item, manual_name: str | None, base_unit: str) -> Dec
             Q(item__isnull=True) | Q(item__name__iexact="Digər"),
             manual_name=manual_name,
         )
-    total = Decimal("0")
-    for product in qs:
-        if base_unit == "bağlama":
-            if product.unit != "bağlama":
-                continue
-            total += Decimal(product.quantity)
-        elif base_unit == "kq":
-            if product.unit not in {"kq", "ton", "qram"}:
-                continue
-            total += _farm_to_base(Decimal(product.quantity), product.unit, "kq")
-        elif base_unit == "litr":
-            if product.unit not in {"litr", "ml"}:
-                continue
-            total += _farm_to_base(Decimal(product.quantity), product.unit, "litr")
-        else:
-            if product.unit != base_unit:
-                continue
-            total += Decimal(product.quantity)
-    return total
+
+    if base_unit == "bağlama":
+        return (
+            qs.filter(unit="bağlama")
+            .aggregate(total=Sum("quantity"))
+            .get("total")
+        ) or Decimal("0")
+    elif base_unit == "kq":
+        expr = Sum(
+            Case(
+                When(unit="ton", then=F("quantity") * Value(Decimal("1000"))),
+                When(unit="qram", then=F("quantity") / Value(Decimal("1000"))),
+                When(unit="kq", then=F("quantity")),
+                output_field=DecimalField(max_digits=14, decimal_places=4),
+            )
+        )
+        return (
+            qs.filter(unit__in=["kq", "ton", "qram"])
+            .aggregate(total=expr)
+            .get("total")
+        ) or Decimal("0")
+    elif base_unit == "litr":
+        expr = Sum(
+            Case(
+                When(unit="ml", then=F("quantity") / Value(Decimal("1000"))),
+                When(unit="litr", then=F("quantity")),
+                output_field=DecimalField(max_digits=14, decimal_places=4),
+            )
+        )
+        return (
+            qs.filter(unit__in=["litr", "ml"])
+            .aggregate(total=expr)
+            .get("total")
+        ) or Decimal("0")
+    else:
+        return (
+            qs.filter(unit=base_unit)
+            .aggregate(total=Sum("quantity"))
+            .get("total")
+        ) or Decimal("0")
 
 
 def _parse_date(value: str | None):

@@ -1,7 +1,8 @@
 import json
 import traceback
-from datetime import date, datetime, timezone as dt_timezone
+from datetime import date, datetime, time, timezone as dt_timezone
 from decimal import Decimal, InvalidOperation
+from functools import lru_cache
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -20,8 +21,27 @@ from seeds.models import Seed, SeedItem
 from suppliers.models import Supplier
 from tools.models import Tool, ToolItem
 from common.text import normalize_manual_label
+from common.view_cache import bust_dashboard_related_caches
+from common.zero_price_source import is_blank_or_zero_price, normalize_zero_price_source
 
 from .models import DeviceSyncState, SyncOperation
+
+
+# ── Cached helpers (per-process; ContentType rows rarely change) ───
+_content_type_cache: dict[type, ContentType] = {}
+
+
+def _cached_ct(model):
+    """Return the ContentType for *model*, caching across requests."""
+    ct = _content_type_cache.get(model)
+    if ct is None:
+        ct = ContentType.objects.get_for_model(model)
+        _content_type_cache[model] = ct
+    return ct
+
+
+_farm_unit_cache: dict | None = None
+_farm_unit_cache_ts: float = 0
 
 
 SYNC_MODELS = {
@@ -51,6 +71,16 @@ def _parse_date(value):
         return date.fromisoformat(value)
     except ValueError as exc:
         raise ValueError("Tarix düzgün deyil.") from exc
+
+
+def _parse_time(value):
+    value = _blank_to_none(value)
+    if not value:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
+    try:
+        return time.fromisoformat(value)
+    except ValueError:
+        return timezone.localtime().time().replace(second=0, microsecond=0)
 
 
 def _parse_datetime(value):
@@ -151,7 +181,28 @@ def _set_expense_date(expense, entry_date):
         expense.save(update_fields=["date"])
 
 
-def _merge_manual_seed_record(user, manual_name, quantity, unit, price, additional_info, entry_date):
+def _set_expense_date_time(expense, entry_date, entry_time):
+    update_fields = []
+    if expense.date != entry_date:
+        expense.date = entry_date
+        update_fields.append("date")
+    if hasattr(expense, "time") and expense.time != entry_time:
+        expense.time = entry_time
+        update_fields.append("time")
+    if update_fields:
+        expense.save(update_fields=update_fields)
+
+
+def _zero_price_source_for_stock(quantity, price, data):
+    zero_price_source = normalize_zero_price_source(data.get("zero_price_source"))
+    if quantity > 0 and is_blank_or_zero_price(price) and not zero_price_source:
+        raise ValueError("Məbləğ 0 olduqda bu stokun haradan gəldiyini seçin.")
+    if quantity <= 0 or not is_blank_or_zero_price(price):
+        return None
+    return zero_price_source
+
+
+def _merge_manual_seed_record(user, manual_name, quantity, unit, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         Seed.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name)
@@ -163,7 +214,7 @@ def _merge_manual_seed_record(user, manual_name, quantity, unit, price, addition
 
     total_kg = _seed_to_kg(Decimal(str(existing.quantity)), existing.unit) + _seed_to_kg(Decimal(str(quantity)), unit)
     if total_kg == 0:
-        seed_type = ContentType.objects.get_for_model(Seed)
+        seed_type = _cached_ct(Seed)
         Expense.objects.filter(content_type=seed_type, object_id=existing.id).delete()
         Income.objects.filter(content_type=seed_type, object_id=existing.id).delete()
         existing.delete()
@@ -174,13 +225,15 @@ def _merge_manual_seed_record(user, manual_name, quantity, unit, price, addition
     existing.quantity = total_kg
     existing.unit = "kg"
     existing.price = price
+    existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     return existing
 
 
-def _merge_manual_tool_record(user, manual_name, quantity, price, additional_info, entry_date):
+def _merge_manual_tool_record(user, manual_name, quantity, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         Tool.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name)
@@ -191,7 +244,7 @@ def _merge_manual_tool_record(user, manual_name, quantity, price, additional_inf
         return None
     total_qty = int(existing.quantity) + int(quantity)
     if total_qty == 0:
-        tool_type = ContentType.objects.get_for_model(Tool)
+        tool_type = _cached_ct(Tool)
         Expense.objects.filter(content_type=tool_type, object_id=existing.id).delete()
         Income.objects.filter(content_type=tool_type, object_id=existing.id).delete()
         existing.delete()
@@ -200,13 +253,15 @@ def _merge_manual_tool_record(user, manual_name, quantity, price, additional_inf
     existing.manual_name = manual_name
     existing.quantity = total_qty
     existing.price = price
+    existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     return existing
 
 
-def _merge_manual_farm_record(user, manual_name, quantity, unit, price, additional_info, entry_date):
+def _merge_manual_farm_record(user, manual_name, quantity, unit, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         FarmProduct.objects.filter(created_by=user)
         .filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"), manual_name__iexact=manual_name, unit=unit)
@@ -217,7 +272,7 @@ def _merge_manual_farm_record(user, manual_name, quantity, unit, price, addition
         return None
     total_qty = Decimal(str(existing.quantity)) + Decimal(str(quantity))
     if total_qty == 0:
-        model_type = ContentType.objects.get_for_model(FarmProduct)
+        model_type = _cached_ct(FarmProduct)
         Expense.objects.filter(content_type=model_type, object_id=existing.id).delete()
         Income.objects.filter(content_type=model_type, object_id=existing.id).delete()
         existing.delete()
@@ -227,13 +282,15 @@ def _merge_manual_farm_record(user, manual_name, quantity, unit, price, addition
     existing.quantity = total_qty
     existing.unit = unit
     existing.price = price
+    existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     return existing
 
 
-def _merge_manual_animal_record(user, manual_name, gender, quantity, weight, price, additional_info, entry_date):
+def _merge_manual_animal_record(user, manual_name, gender, quantity, weight, price, zero_price_source, additional_info, entry_date, entry_time):
     existing = (
         Animal.objects.filter(created_by=user, gender=gender, identification_no__isnull=True)
         .filter((Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər")), manual_name__iexact=manual_name)
@@ -244,7 +301,7 @@ def _merge_manual_animal_record(user, manual_name, gender, quantity, weight, pri
         return None
     total_qty = int(existing.quantity) + int(quantity)
     if total_qty == 0:
-        model_type = ContentType.objects.get_for_model(Animal)
+        model_type = _cached_ct(Animal)
         Expense.objects.filter(content_type=model_type, object_id=existing.id).delete()
         existing.delete()
         return "deleted"
@@ -253,13 +310,15 @@ def _merge_manual_animal_record(user, manual_name, gender, quantity, weight, pri
     existing.quantity = total_qty
     existing.weight = weight
     existing.price = price
+    existing.zero_price_source = zero_price_source
     existing.additional_info = additional_info
     existing.date = entry_date
+    existing.time = entry_time
     existing.save()
     return existing
 
 
-def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, gender: str | None = None):
+def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, gender: str | None = None, entry_date=None, entry_time=None):
     normalized_name = (item_name or "").strip()
     if not normalized_name or quantity == 0:
         return None
@@ -287,6 +346,8 @@ def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note
             quantity=int(quantity),
             price=price if price is not None else 0,
             additional_info=note,
+            date=entry_date or timezone.now().date(),
+            time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
             created_by=user,
         )
 
@@ -301,6 +362,8 @@ def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note
             quantity=int(quantity),
             price=price if price is not None else 0,
             additional_info=note,
+            date=entry_date or timezone.now().date(),
+            time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
             created_by=user,
         )
 
@@ -311,6 +374,8 @@ def _adjust_other_stock(user, item_name: str, quantity: Decimal, unit: str, note
         unit=unit,
         price=price if price is not None else 0,
         additional_info=note,
+        date=entry_date or timezone.now().date(),
+        time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
         created_by=user,
     )
 
@@ -323,6 +388,8 @@ def _create_seed(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity, price, data)
 
     if not (item_id or manual_name):
         raise ValueError("Toxum və ya xüsusi ad tələb olunur.")
@@ -345,7 +412,7 @@ def _create_seed(user, data):
         if available_kg < needed_kg:
             raise ValueError("Stokda kifayət qədər toxum yoxdur.")
 
-    merged = _merge_manual_seed_record(user, manual_value, quantity, unit, price, additional_info, entry_date) if manual_value else None
+    merged = _merge_manual_seed_record(user, manual_value, quantity, unit, price, zero_price_source, additional_info, entry_date, entry_time) if manual_value else None
     if merged:
         return merged if merged != "deleted" else None
 
@@ -355,8 +422,10 @@ def _create_seed(user, data):
         quantity=quantity,
         unit=unit,
         price=price,
+        zero_price_source=zero_price_source,
         additional_info=additional_info,
         date=entry_date,
+        time=entry_time,
         created_by=user,
     )
 
@@ -384,6 +453,7 @@ def _create_seed(user, data):
             amount=amount_val,
             additional_info=additional_info,
             date=entry_date,
+            time=entry_time,
             created_by=user,
             content_object=seed,
         )
@@ -396,10 +466,12 @@ def _create_seed(user, data):
             subcategory=expense_sub,
             manual_name="" if expense_sub else "Toxum alışı",
             additional_info=additional_info,
+            date=entry_date,
+            time=entry_time,
             created_by=user,
             content_object=seed,
         )
-        _set_expense_date(expense, entry_date)
+        _set_expense_date_time(expense, entry_date, entry_time)
 
     return seed
 
@@ -411,6 +483,8 @@ def _create_tool(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity, price, data)
 
     if not (item_id or manual_name):
         raise ValueError("Alət və ya xüsusi ad tələb olunur.")
@@ -430,7 +504,7 @@ def _create_tool(user, data):
         if available < abs(quantity):
             raise ValueError("Stokda kifayət qədər alət yoxdur.")
 
-    merged = _merge_manual_tool_record(user, manual_value, quantity, price, additional_info, entry_date) if manual_value else None
+    merged = _merge_manual_tool_record(user, manual_value, quantity, price, zero_price_source, additional_info, entry_date, entry_time) if manual_value else None
     if merged:
         return merged if merged != "deleted" else None
 
@@ -439,8 +513,10 @@ def _create_tool(user, data):
         manual_name=manual_value,
         quantity=quantity,
         price=price,
+        zero_price_source=zero_price_source,
         additional_info=additional_info,
         date=entry_date,
+        time=entry_time,
         created_by=user,
     )
 
@@ -458,6 +534,7 @@ def _create_tool(user, data):
             amount=amount_val,
             additional_info=additional_info,
             date=entry_date,
+            time=entry_time,
             created_by=user,
             content_object=tool,
         )
@@ -470,10 +547,12 @@ def _create_tool(user, data):
             subcategory=expense_sub,
             manual_name="" if expense_sub else "Alət alışı (Digər)",
             additional_info=additional_info,
+            date=entry_date,
+            time=entry_time,
             created_by=user,
             content_object=tool,
         )
-        _set_expense_date(expense, entry_date)
+        _set_expense_date_time(expense, entry_date, entry_time)
 
     return tool
 
@@ -488,6 +567,8 @@ def _create_animal(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     manual_name = normalize_manual_label(_blank_to_none(data.get("manual_name")))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity, price, data)
 
     if not (subcategory_id or manual_name):
         raise ValueError("Alt kateqoriya və ya xüsusi ad tələb olunur.")
@@ -511,7 +592,7 @@ def _create_animal(user, data):
 
     manual_value = manual_name if (not subcategory or subcategory.name == "Digər") else None
 
-    merged = _merge_manual_animal_record(user, manual_value, gender, quantity, weight, price, additional_info, entry_date) if manual_value and not identification_no else None
+    merged = _merge_manual_animal_record(user, manual_value, gender, quantity, weight, price, zero_price_source, additional_info, entry_date, entry_time) if manual_value and not identification_no else None
     if merged:
         return merged if merged != "deleted" else None
 
@@ -523,8 +604,10 @@ def _create_animal(user, data):
         gender=gender,
         weight=weight,
         price=price,
+        zero_price_source=zero_price_source,
         quantity=quantity,
         date=entry_date,
+        time=entry_time,
         created_by=user,
     )
 
@@ -536,10 +619,12 @@ def _create_animal(user, data):
             subcategory=expense_sub,
             manual_name="" if expense_sub else "Heyvan alışı (Digər)",
             additional_info=additional_info,
+            date=entry_date,
+            time=entry_time,
             created_by=user,
             content_object=animal,
         )
-        _set_expense_date(expense, entry_date)
+        _set_expense_date_time(expense, entry_date, entry_time)
 
     return animal
 
@@ -551,6 +636,7 @@ def _create_expense(user, data):
     subcategory_id = _blank_to_none(data.get("subcategory"))
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
 
     if amount <= 0:
         raise ValueError("Məbləğ düzgün deyil.")
@@ -581,7 +667,7 @@ def _create_expense(user, data):
             existing.manual_name = final_title
             existing.additional_info = additional_info
             existing.save()
-            _set_expense_date(existing, entry_date)
+            _set_expense_date_time(existing, entry_date, entry_time)
             return existing
 
     expense = Expense.objects.create(
@@ -590,9 +676,11 @@ def _create_expense(user, data):
         subcategory=subcategory,
         manual_name=None if subcategory else final_title,
         additional_info=additional_info,
+        date=entry_date,
+        time=entry_time,
         created_by=user,
     )
-    _set_expense_date(expense, entry_date)
+    _set_expense_date_time(expense, entry_date, entry_time)
     return expense
 
 
@@ -696,11 +784,18 @@ def _category_type(category: str) -> str:
 
 
 def _farm_unit_lookup():
+    global _farm_unit_cache, _farm_unit_cache_ts
+    import time as _time
+    now = _time.monotonic()
+    if _farm_unit_cache is not None and now - _farm_unit_cache_ts < 120:
+        return _farm_unit_cache
     lookup = {}
-    for item in FarmProductItem.objects.select_related("category").all():
+    for item in FarmProductItem.objects.only("name", "unit").all():
         key = (item.name or "").strip().lower()
         if key and key not in lookup:
             lookup[key] = item.unit
+    _farm_unit_cache = lookup
+    _farm_unit_cache_ts = now
     return lookup
 
 
@@ -771,7 +866,7 @@ def _resolve_farm_expense_subcategory(category_name: str | None):
 
 
 def _sync_farm_product_links(user, product, quantity_val: Decimal):
-    product_type = ContentType.objects.get_for_model(FarmProduct)
+    product_type = _cached_ct(FarmProduct)
     linked_income = Income.objects.filter(content_type=product_type, object_id=product.id).first()
     linked_expense = Expense.objects.filter(content_type=product_type, object_id=product.id).first()
 
@@ -791,6 +886,7 @@ def _sync_farm_product_links(user, product, quantity_val: Decimal):
                 linked_income.amount = amount_val
                 linked_income.additional_info = product.additional_info
                 linked_income.date = product.date
+                linked_income.time = product.time
                 linked_income.save()
             else:
                 linked_income.delete()
@@ -803,6 +899,7 @@ def _sync_farm_product_links(user, product, quantity_val: Decimal):
                 amount=amount_val,
                 additional_info=product.additional_info,
                 date=product.date,
+                time=product.time,
                 created_by=user,
                 content_object=product,
             )
@@ -825,6 +922,8 @@ def _sync_farm_product_links(user, product, quantity_val: Decimal):
                 linked_expense.amount = product.price
                 linked_expense.title = title
                 linked_expense.additional_info = product.additional_info
+                linked_expense.date = product.date
+                linked_expense.time = product.time
                 linked_expense.subcategory = subcat
                 linked_expense.manual_name = None if subcat else title
                 linked_expense.save()
@@ -835,6 +934,8 @@ def _sync_farm_product_links(user, product, quantity_val: Decimal):
                     subcategory=subcat,
                     manual_name=None if subcat else title,
                     additional_info=product.additional_info,
+                    date=product.date,
+                    time=product.time,
                     created_by=user,
                     content_object=product,
                 )
@@ -852,6 +953,8 @@ def _create_farm_product(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity_val, price, data)
 
     if not (item_id or manual_name) or not unit:
         raise ValueError("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -886,7 +989,7 @@ def _create_farm_product(user, data):
         if available_base < needed_base:
             raise ValueError("Stokda kifayət qədər məhsul yoxdur.")
 
-    merged = _merge_manual_farm_record(user, effective_manual, quantity_val, effective_unit, price, additional_info, entry_date) if effective_manual else None
+    merged = _merge_manual_farm_record(user, effective_manual, quantity_val, effective_unit, price, zero_price_source, additional_info, entry_date, entry_time) if effective_manual else None
     if merged:
         if merged != "deleted":
             _sync_farm_product_links(user, merged, Decimal(str(merged.quantity)))
@@ -899,8 +1002,10 @@ def _create_farm_product(user, data):
         quantity=quantity_val,
         unit=effective_unit,
         price=price,
+        zero_price_source=zero_price_source,
         additional_info=additional_info,
         date=entry_date,
+        time=entry_time,
         created_by=user,
     )
     _sync_farm_product_links(user, product, quantity_val)
@@ -920,6 +1025,8 @@ def _update_farm_product(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity_val, price, data)
 
     if not (item_id or manual_name) or not unit:
         raise ValueError("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -962,8 +1069,10 @@ def _update_farm_product(user, data):
     product.quantity = quantity_val
     product.unit = effective_unit
     product.price = price
+    product.zero_price_source = zero_price_source
     product.additional_info = additional_info
     product.date = entry_date
+    product.time = entry_time
     product.save()
 
     _sync_farm_product_links(user, product, quantity_val)
@@ -975,7 +1084,7 @@ def _delete_farm_product(user, data):
     if not product:
         raise ValueError("Məhsul tapılmadı.")
     _assert_record_version(product, data)
-    product_type = ContentType.objects.get_for_model(FarmProduct)
+    product_type = _cached_ct(FarmProduct)
     Expense.objects.filter(content_type=product_type, object_id=product.id).delete()
     Income.objects.filter(content_type=product_type, object_id=product.id).delete()
     deleted_id = product.id
@@ -985,6 +1094,8 @@ def _delete_farm_product(user, data):
 
 def _create_quick_expense(user, data):
     action = _blank_to_none(data.get("action")) or "quick_add"
+    entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
 
     if action == "quick_add":
         name = (_blank_to_none(data.get("name")) or "").strip()
@@ -1000,6 +1111,8 @@ def _create_quick_expense(user, data):
             amount=amount_val,
             subcategory=subcat,
             manual_name=name if not subcat else None,
+            date=entry_date,
+            time=entry_time,
             created_by=user,
         )
 
@@ -1011,6 +1124,8 @@ def _create_quick_expense(user, data):
             amount=amount_val,
             subcategory=subcat,
             manual_name=None,
+            date=entry_date,
+            time=entry_time,
             created_by=user,
         )
 
@@ -1028,6 +1143,8 @@ def _create_quick_expense(user, data):
             amount=amount_val,
             subcategory=original.subcategory,
             manual_name=original.manual_name,
+            date=entry_date,
+            time=entry_time,
             created_by=user,
         )
 
@@ -1036,6 +1153,8 @@ def _create_quick_expense(user, data):
 
 def _create_quick_income(user, data):
     action = _blank_to_none(data.get("action")) or "quick_add"
+    entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
 
     if action == "quick_add":
         amount_raw = _blank_to_none(data.get("custom_amount")) or data.get("amount")
@@ -1050,6 +1169,8 @@ def _create_quick_income(user, data):
             "gender": data.get("gender") or "",
             "identification_no": data.get("identification_no") or "",
             "additional_info": data.get("additional_info") or "",
+            "date": str(entry_date),
+            "time": entry_time.strftime("%H:%M"),
         }
         return _create_income(user, payload)
 
@@ -1061,6 +1182,8 @@ def _create_quick_income(user, data):
             quantity=1,
             unit="ədəd",
             amount=amount_val,
+            date=entry_date,
+            time=entry_time,
             created_by=user,
         )
 
@@ -1081,6 +1204,8 @@ def _create_quick_income(user, data):
             "amount": str(amount_val),
             "gender": original.gender or "",
             "additional_info": original.additional_info or "",
+            "date": str(entry_date),
+            "time": entry_time.strftime("%H:%M"),
         }
         return _create_income(user, payload)
 
@@ -1130,7 +1255,7 @@ def _farm_stock_base(user, item_name: str, base_unit: str) -> Decimal:
     return total
 
 
-def _adjust_seed_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, entry_date=None):
+def _adjust_seed_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, entry_date=None, entry_time=None):
     if quantity == 0:
         return None
     item = SeedItem.objects.filter(name=item_name).first()
@@ -1143,10 +1268,11 @@ def _adjust_seed_stock(user, item_name: str, quantity: Decimal, unit: str, note:
         additional_info=note,
         created_by=user,
         date=entry_date or timezone.now().date(),
+        time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
     )
 
 
-def _adjust_farm_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, entry_date=None):
+def _adjust_farm_stock(user, item_name: str, quantity: Decimal, unit: str, note: str, price: Decimal | None = None, entry_date=None, entry_time=None):
     if quantity == 0:
         return None
     item = FarmProductItem.objects.filter(name=item_name).first()
@@ -1159,6 +1285,7 @@ def _adjust_farm_stock(user, item_name: str, quantity: Decimal, unit: str, note:
         additional_info=note,
         created_by=user,
         date=entry_date or timezone.now().date(),
+        time=entry_time or timezone.localtime().time().replace(second=0, microsecond=0),
     )
 
 
@@ -1179,6 +1306,7 @@ def _create_income(user, data):
     identification_no = (_blank_to_none(data.get("identification_no")) or "").strip()
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
 
     if not category or not unit:
         raise ValueError("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -1233,17 +1361,18 @@ def _create_income(user, data):
         gender=gender if ctype == "animal" else None,
         additional_info=additional_info,
         date=entry_date,
+        time=entry_time,
         created_by=user,
     )
 
     note = "Gəlir satışı"
     if ctype == "seed":
-        stock_item = _adjust_seed_stock(user, item_name, -abs(quantity), unit, note, amount_val, entry_date)
+        stock_item = _adjust_seed_stock(user, item_name, -abs(quantity), unit, note, amount_val, entry_date, entry_time)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
     elif ctype == "farm":
-        stock_item = _adjust_farm_stock(user, item_name, -abs(quantity), unit, note, amount_val, entry_date)
+        stock_item = _adjust_farm_stock(user, item_name, -abs(quantity), unit, note, amount_val, entry_date, entry_time)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
@@ -1274,13 +1403,14 @@ def _create_income(user, data):
             additional_info=f"Gəlir satışı | income:{income.id}",
             created_by=user,
             date=entry_date,
+            time=entry_time,
         )
         if identification_no:
             target_animal.delete()
         income.content_object = display_animal
         income.save(update_fields=["content_type", "object_id"])
     elif category.lower() == "digər" or (_blank_to_none(data.get("item_name")) or "").strip().lower() == "digər":
-        stock_item = _adjust_other_stock(user, item_name, -abs(quantity), unit, note, amount_val, gender or None)
+        stock_item = _adjust_other_stock(user, item_name, -abs(quantity), unit, note, amount_val, gender or None, entry_date, entry_time)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
@@ -1301,6 +1431,8 @@ def _update_seed(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity_val, price, data)
 
     if not (item_id or manual_name) or not unit:
         raise ValueError("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -1314,6 +1446,7 @@ def _update_seed(user, data):
     seed.unit = unit
     seed.additional_info = additional_info
     seed.date = entry_date
+    seed.time = entry_time
     if item_id:
         item = SeedItem.objects.filter(id=item_id).first()
         if not item:
@@ -1326,6 +1459,7 @@ def _update_seed(user, data):
         seed.manual_name = manual_name
         seed.item = None
     seed.price = price
+    seed.zero_price_source = zero_price_source
 
     if quantity_val < 0:
         prev_total = _seed_to_kg(prev_quantity, prev_unit)
@@ -1338,7 +1472,7 @@ def _update_seed(user, data):
 
     seed.save()
 
-    seed_type = ContentType.objects.get_for_model(Seed)
+    seed_type = _cached_ct(Seed)
     linked_income = Income.objects.filter(content_type=seed_type, object_id=seed.id).first()
     if quantity_val < 0:
         try:
@@ -1366,6 +1500,7 @@ def _update_seed(user, data):
                 linked_income.amount = amount_val
                 linked_income.additional_info = seed.additional_info
                 linked_income.date = seed.date
+                linked_income.time = seed.time
                 linked_income.save()
             else:
                 linked_income.delete()
@@ -1378,6 +1513,7 @@ def _update_seed(user, data):
                 amount=amount_val,
                 additional_info=seed.additional_info,
                 date=seed.date,
+                time=seed.time,
                 created_by=user,
                 content_object=seed,
             )
@@ -1390,6 +1526,8 @@ def _update_seed(user, data):
             linked_expense.amount = seed.price
             linked_expense.title = f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}"
             linked_expense.additional_info = seed.additional_info
+            linked_expense.date = seed.date
+            linked_expense.time = seed.time
             linked_expense.save()
         else:
             linked_expense.delete()
@@ -1401,6 +1539,8 @@ def _update_seed(user, data):
             subcategory=expense_sub,
             manual_name="" if expense_sub else "Toxum alışı",
             additional_info=seed.additional_info,
+            date=seed.date,
+            time=seed.time,
             created_by=user,
             content_object=seed,
         )
@@ -1412,7 +1552,7 @@ def _delete_seed(user, data):
     if not seed:
         raise ValueError("Toxum tapılmadı.")
     _assert_record_version(seed, data)
-    seed_type = ContentType.objects.get_for_model(Seed)
+    seed_type = _cached_ct(Seed)
     Expense.objects.filter(content_type=seed_type, object_id=seed.id).delete()
     Income.objects.filter(content_type=seed_type, object_id=seed.id).delete()
     deleted_id = seed.id
@@ -1432,6 +1572,8 @@ def _update_tool(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     additional_info = _blank_to_none(data.get("additional_info"))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity_val, price, data)
 
     if not (item_id or manual_name):
         raise ValueError("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -1443,6 +1585,7 @@ def _update_tool(user, data):
     tool.quantity = quantity_val
     tool.additional_info = additional_info
     tool.date = entry_date
+    tool.time = entry_time
     if item_id:
         item = ToolItem.objects.filter(id=item_id).first()
         if not item:
@@ -1455,6 +1598,7 @@ def _update_tool(user, data):
         tool.manual_name = manual_name
         tool.item = None
     tool.price = price
+    tool.zero_price_source = zero_price_source
 
     if quantity_val < 0:
         available = _tool_stock_total(
@@ -1469,7 +1613,7 @@ def _update_tool(user, data):
 
     tool.save()
 
-    tool_type = ContentType.objects.get_for_model(Tool)
+    tool_type = _cached_ct(Tool)
     linked_income = Income.objects.filter(content_type=tool_type, object_id=tool.id).first()
     if quantity_val < 0:
         try:
@@ -1485,6 +1629,7 @@ def _update_tool(user, data):
                 linked_income.amount = amount_val
                 linked_income.additional_info = tool.additional_info
                 linked_income.date = tool.date
+                linked_income.time = tool.time
                 linked_income.save()
             else:
                 linked_income.delete()
@@ -1497,6 +1642,7 @@ def _update_tool(user, data):
                 amount=amount_val,
                 additional_info=tool.additional_info,
                 date=tool.date,
+                time=tool.time,
                 created_by=user,
                 content_object=tool,
             )
@@ -1509,6 +1655,8 @@ def _update_tool(user, data):
             linked_expense.amount = tool.price
             linked_expense.title = f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}"
             linked_expense.additional_info = tool.additional_info
+            linked_expense.date = tool.date
+            linked_expense.time = tool.time
             linked_expense.save()
         else:
             linked_expense.delete()
@@ -1520,6 +1668,8 @@ def _update_tool(user, data):
             subcategory=expense_sub,
             manual_name="" if expense_sub else "Alət alışı (Digər)",
             additional_info=tool.additional_info,
+            date=tool.date,
+            time=tool.time,
             created_by=user,
             content_object=tool,
         )
@@ -1531,7 +1681,7 @@ def _delete_tool(user, data):
     if not tool:
         raise ValueError("Alət tapılmadı.")
     _assert_record_version(tool, data)
-    tool_type = ContentType.objects.get_for_model(Tool)
+    tool_type = _cached_ct(Tool)
     Expense.objects.filter(content_type=tool_type, object_id=tool.id).delete()
     Income.objects.filter(content_type=tool_type, object_id=tool.id).delete()
     deleted_id = tool.id
@@ -1554,6 +1704,8 @@ def _update_animal(user, data):
     price = _blank_to_none(data.get("price")) or "0"
     manual_name = normalize_manual_label(_blank_to_none(data.get("manual_name")))
     entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
+    zero_price_source = _zero_price_source_for_stock(quantity, price, data)
 
     if not (subcategory_id or manual_name) or not gender:
         raise ValueError("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -1570,6 +1722,7 @@ def _update_animal(user, data):
     animal.additional_info = additional_info
     animal.gender = gender
     animal.date = entry_date
+    animal.time = entry_time
     if subcategory_id:
         subcategory = AnimalSubCategory.objects.filter(id=subcategory_id).first()
         if not subcategory:
@@ -1584,15 +1737,18 @@ def _update_animal(user, data):
 
     animal.weight = weight
     animal.price = price
+    animal.zero_price_source = zero_price_source
     animal.save()
 
-    animal_type = ContentType.objects.get_for_model(Animal)
+    animal_type = _cached_ct(Animal)
     linked_expense = Expense.objects.filter(content_type=animal_type, object_id=animal.id).first()
     if linked_expense:
         if animal.price and float(animal.price) > 0:
             linked_expense.amount = animal.price
             linked_expense.title = f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}"
             linked_expense.additional_info = animal.additional_info
+            linked_expense.date = animal.date
+            linked_expense.time = animal.time
             linked_expense.save()
         else:
             linked_expense.delete()
@@ -1604,6 +1760,8 @@ def _update_animal(user, data):
             subcategory=expense_sub,
             manual_name="" if expense_sub else "Heyvan alışı (Digər)",
             additional_info=animal.additional_info,
+            date=animal.date,
+            time=animal.time,
             created_by=user,
             content_object=animal,
         )
@@ -1615,7 +1773,7 @@ def _delete_animal(user, data):
     if not animal:
         raise ValueError("Heyvan tapılmadı.")
     _assert_record_version(animal, data)
-    animal_type = ContentType.objects.get_for_model(Animal)
+    animal_type = _cached_ct(Animal)
     Expense.objects.filter(content_type=animal_type, object_id=animal.id).delete()
     deleted_id = animal.id
     animal.delete()
@@ -1632,6 +1790,8 @@ def _update_expense(user, data):
     subcategory_id = _blank_to_none(data.get("subcategory"))
     manual_name = normalize_manual_label(_blank_to_none(data.get("manual_name")))
     additional_info = _blank_to_none(data.get("additional_info"))
+    entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
 
     subcategory = ExpenseSubCategory.objects.filter(id=subcategory_id).first() if subcategory_id else None
     if not (subcategory or manual_name):
@@ -1642,6 +1802,8 @@ def _update_expense(user, data):
     expense.subcategory = subcategory
     expense.manual_name = None if subcategory else normalize_manual_label(title if title else manual_name)
     expense.additional_info = additional_info
+    expense.date = entry_date
+    expense.time = entry_time
     expense.save()
 
     if expense.content_object:
@@ -1652,6 +1814,10 @@ def _update_expense(user, data):
             item.amount = expense.amount
         if hasattr(item, "additional_info"):
             item.additional_info = additional_info
+        if hasattr(item, "date"):
+            item.date = entry_date
+        if hasattr(item, "time"):
+            item.time = entry_time
         item.save()
     return expense
 
@@ -1738,6 +1904,7 @@ def _update_income(user, data):
     identification_no = (_blank_to_none(data.get("identification_no")) or "").strip()
     additional_info = _blank_to_none(data.get("additional_info"))
     date_value = _parse_date(data.get("date"))
+    time_value = _parse_time(data.get("time"))
 
     if not category or not unit:
         raise ValueError("Zəhmət olmasa, bütün məcburi xanaları (*) doldurun.")
@@ -1793,23 +1960,24 @@ def _update_income(user, data):
     income.gender = gender if ctype == "animal" else None
     income.additional_info = additional_info
     income.date = date_value
+    income.time = time_value
     income.save()
 
     note = "Gəlir düzəlişi"
     if prev_type == "seed":
-        _adjust_seed_stock(user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount, date_value)
+        _adjust_seed_stock(user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount, date_value, time_value)
     elif prev_type == "farm":
-        _adjust_farm_stock(user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount, date_value)
+        _adjust_farm_stock(user, prev_item, abs(prev_quantity), prev_unit, note, prev_amount, date_value, time_value)
     elif prev_type == "animal":
         _delete_income_animals(user, income.id)
 
     if new_type == "seed":
-        stock_item = _adjust_seed_stock(user, item_name, -abs(quantity), unit, note, amount_val, date_value)
+        stock_item = _adjust_seed_stock(user, item_name, -abs(quantity), unit, note, amount_val, date_value, time_value)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
     elif new_type == "farm":
-        stock_item = _adjust_farm_stock(user, item_name, -abs(quantity), unit, note, amount_val, date_value)
+        stock_item = _adjust_farm_stock(user, item_name, -abs(quantity), unit, note, amount_val, date_value, time_value)
         if stock_item:
             income.content_object = stock_item
             income.save(update_fields=["content_type", "object_id"])
@@ -1836,6 +2004,7 @@ def _update_income(user, data):
             additional_info=f"Gəlir satışı | income:{income.id}",
             created_by=user,
             date=date_value,
+            time=time_value,
         )
         if identification_no:
             target_animal.delete()
@@ -1856,9 +2025,9 @@ def _delete_income(user, data):
     note = "Gəlir silindi"
     ctype = _category_type(income.category)
     if ctype == "seed":
-        _adjust_seed_stock(user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)), income.date)
+        _adjust_seed_stock(user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)), income.date, income.time)
     elif ctype == "farm":
-        _adjust_farm_stock(user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)), income.date)
+        _adjust_farm_stock(user, income.item_name, abs(Decimal(str(income.quantity))), income.unit, note, Decimal(str(income.amount)), income.date, income.time)
     elif ctype == "animal":
         _delete_income_animals(user, income.id)
     deleted_id = income.id
@@ -1871,6 +2040,8 @@ def _update_stock(user, data):
     update_id = _blank_to_none(data.get("update_id"))
     target_raw = data.get("target_quantity")
     note = "Stok səhifəsindən düzəliş"
+    entry_date = _parse_date(data.get("date"))
+    entry_time = _parse_time(data.get("time"))
 
     if not update_type or not update_id:
         raise ValueError("Məlumatlar natamamdır.")
@@ -1883,7 +2054,16 @@ def _update_stock(user, data):
             current_total += _seed_to_kg(Decimal(seed.quantity), seed.unit)
         delta = target_value - current_total
         if delta != 0:
-            return Seed.objects.create(item_id=update_id, quantity=delta, unit="kg", price=0, additional_info=note, created_by=user)
+            return Seed.objects.create(
+                item_id=update_id,
+                quantity=delta,
+                unit="kg",
+                price=0,
+                additional_info=note,
+                date=entry_date,
+                time=entry_time,
+                created_by=user,
+            )
         return None
 
     if update_type == "seed_other":
@@ -1894,7 +2074,17 @@ def _update_stock(user, data):
             current_total += _seed_to_kg(Decimal(seed.quantity), seed.unit)
         delta = target_value - current_total
         if delta != 0:
-            return Seed.objects.create(item=None, manual_name=update_id, quantity=delta, unit="kg", price=0, additional_info=note, created_by=user)
+            return Seed.objects.create(
+                item=None,
+                manual_name=update_id,
+                quantity=delta,
+                unit="kg",
+                price=0,
+                additional_info=note,
+                date=entry_date,
+                time=entry_time,
+                created_by=user,
+            )
         return None
 
     if update_type == "tool":
@@ -1905,7 +2095,15 @@ def _update_stock(user, data):
         current_total = sum(int(t.quantity) for t in tool_qs)
         delta = int(target_value) - current_total
         if delta != 0:
-            return Tool.objects.create(item_id=update_id, quantity=delta, price=0, additional_info=note, created_by=user)
+            return Tool.objects.create(
+                item_id=update_id,
+                quantity=delta,
+                price=0,
+                additional_info=note,
+                date=entry_date,
+                time=entry_time,
+                created_by=user,
+            )
         return None
 
     if update_type == "tool_other":
@@ -1916,7 +2114,16 @@ def _update_stock(user, data):
         current_total = sum(int(t.quantity) for t in tool_qs)
         delta = int(target_value) - current_total
         if delta != 0:
-            return Tool.objects.create(item=None, manual_name=update_id, quantity=delta, price=0, additional_info=note, created_by=user)
+            return Tool.objects.create(
+                item=None,
+                manual_name=update_id,
+                quantity=delta,
+                price=0,
+                additional_info=note,
+                date=entry_date,
+                time=entry_time,
+                created_by=user,
+            )
         return None
 
     if update_type == "farm_product":
@@ -1940,7 +2147,16 @@ def _update_stock(user, data):
         unit_value = unit_key or base_unit
         delta = target_value - current_total
         if delta != 0:
-            return FarmProduct.objects.create(item_id=item_id, quantity=delta, unit=unit_value, price=0, additional_info=note, created_by=user)
+            return FarmProduct.objects.create(
+                item_id=item_id,
+                quantity=delta,
+                unit=unit_value,
+                price=0,
+                additional_info=note,
+                date=entry_date,
+                time=entry_time,
+                created_by=user,
+            )
         return None
 
     if update_type == "farm_product_other":
@@ -1954,7 +2170,17 @@ def _update_stock(user, data):
             current_total += Decimal(product.quantity)
         delta = target_value - current_total
         if delta != 0:
-            return FarmProduct.objects.create(item=None, manual_name=name_key, quantity=delta, unit=unit_key, price=0, additional_info=note, created_by=user)
+            return FarmProduct.objects.create(
+                item=None,
+                manual_name=name_key,
+                quantity=delta,
+                unit=unit_key,
+                price=0,
+                additional_info=note,
+                date=entry_date,
+                time=entry_time,
+                created_by=user,
+            )
         return None
 
     if update_type in {"animal_sub", "animal_other"}:
@@ -1976,12 +2202,19 @@ def _update_stock(user, data):
             nonlocal created_any
             if count <= 0:
                 return
-            payload = {"gender": gender_value, "additional_info": note, "created_by": user, "quantity": count}
+            payload = {
+                "gender": gender_value,
+                "additional_info": note,
+                "created_by": user,
+                "quantity": count,
+            }
             if update_type == "animal_sub":
                 payload["subcategory_id"] = update_id
             else:
                 payload["subcategory"] = None
                 payload["manual_name"] = update_id
+            payload["date"] = entry_date
+            payload["time"] = entry_time
             created_any = Animal.objects.create(**payload)
 
         def disable_animals(count, gender_value):
@@ -1994,11 +2227,15 @@ def _update_stock(user, data):
                     remaining -= qty_val
                     animal.quantity = 0
                     animal.additional_info = note
-                    animal.save(update_fields=["quantity", "additional_info"])
+                    animal.date = entry_date
+                    animal.time = entry_time
+                    animal.save(update_fields=["quantity", "additional_info", "date", "time"])
                 else:
                     animal.quantity = qty_val - remaining
                     animal.additional_info = note
-                    animal.save(update_fields=["quantity", "additional_info"])
+                    animal.date = entry_date
+                    animal.time = entry_time
+                    animal.save(update_fields=["quantity", "additional_info", "date", "time"])
                     remaining = 0
                 if remaining <= 0:
                     break
@@ -2082,11 +2319,14 @@ def sync_status(request):
     if device_id:
         state = DeviceSyncState.objects.filter(user=request.user, device_id=device_id).first()
 
-    latest_cursor = None
-    for model in SYNC_MODELS.values():
-        candidate = _latest_change_for_model(model, request.user)
-        if candidate and (latest_cursor is None or candidate > latest_cursor):
-            latest_cursor = candidate
+    # Use latest SyncOperation as cursor instead of scanning every model table
+    latest_op = (
+        SyncOperation.objects.filter(user=request.user, status=SyncOperation.STATUS_COMPLETED)
+        .order_by("-processed_at")
+        .values_list("processed_at", flat=True)
+        .first()
+    )
+    latest_cursor = latest_op
 
     return JsonResponse(
         {
@@ -2265,6 +2505,9 @@ def sync_push(request):
 
     if synced_any:
         state.last_synced_at = timezone.now()
+        # Invalidate dashboard / calendar / stocks caches so the next page
+        # load picks up the changes made via sync.
+        bust_dashboard_related_caches(request.user.pk)
     state.last_error = first_error
     state.save(update_fields=["last_synced_at", "last_error", "updated_at"])
 

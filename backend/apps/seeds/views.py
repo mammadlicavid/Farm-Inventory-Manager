@@ -31,6 +31,7 @@ from common.category_order import (
 )
 from common.icons import get_seed_icon_for_seed
 from expenses.models import Expense, ExpenseSubCategory
+from common.expense_subcategory_cache import get_expense_subcategory
 from incomes.models import Income
 
 SEED_ITEM_TO_CATEGORY = {
@@ -73,7 +74,6 @@ def _seed_list_cache_bust_value(user_id: int) -> str:
 
 def _bust_seed_list_cache(user_id: int) -> None:
     cache.set(_seed_list_bust_key(user_id), timezone.now().isoformat(), SEED_LIST_BUST_TTL)
-    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
     bust_dashboard_related_caches(user_id)
 
 
@@ -101,6 +101,17 @@ def _seed_to_kg(value: Decimal, unit: str) -> Decimal:
 
 
 def _seed_stock_kg(user, item, manual_name: str | None) -> Decimal:
+    from django.db.models import Case, DecimalField, F, Sum, Value, When
+
+    seed_total_expr = Sum(
+        Case(
+            When(unit__in=["kg", "kq"], then=F("quantity")),
+            When(unit="ton", then=F("quantity") * Value(Decimal("1000"))),
+            When(unit="qram", then=F("quantity") / Value(Decimal("1000"))),
+            default=F("quantity"),
+            output_field=DecimalField(max_digits=14, decimal_places=4),
+        )
+    )
     if item:
         qs = Seed.objects.filter(created_by=user, item=item)
     else:
@@ -108,10 +119,7 @@ def _seed_stock_kg(user, item, manual_name: str | None) -> Decimal:
             Q(item__isnull=True) | Q(item__name__iexact="Digər"),
             manual_name=manual_name,
         )
-    total = Decimal("0")
-    for seed in qs:
-        total += _seed_to_kg(Decimal(seed.quantity), seed.unit)
-    return total
+    return qs.aggregate(total=seed_total_expr).get("total") or Decimal("0")
 
 
 def _parse_date(value: str | None):
@@ -284,7 +292,7 @@ def _sync_seed_related_records(user, seed):
         price_val = 0
 
     if quantity_val > 0 and price_val > 0:
-        expense_sub = ExpenseSubCategory.objects.filter(name__icontains='Toxum').first()
+        expense_sub = get_expense_subcategory('Toxum', icontains=True)
         if linked_expense:
             linked_expense.amount = seed.price
             linked_expense.title = f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}"
@@ -466,7 +474,7 @@ def seed_create(request):
             if quantity_val > 0 and price and float(price) > 0:
                 try:
                     # Try to find 'Toxumlar' subcategory
-                    expense_sub = ExpenseSubCategory.objects.filter(name__icontains='Toxum').first()
+                    expense_sub = get_expense_subcategory('Toxum', icontains=True)
                     if expense_sub:
                         Expense.objects.create(
                             title=f"Toxum alışı: {item.name if item else manual_name}",
@@ -634,7 +642,7 @@ def seed_update(request, pk):
                 linked_expense.delete()
         elif quantity_val > 0 and seed.price and float(seed.price) > 0:
             # Create new expense if price was previously 0 or null
-            expense_sub = ExpenseSubCategory.objects.filter(name__icontains='Toxum').first()
+            expense_sub = get_expense_subcategory('Toxum', icontains=True)
             if expense_sub:
                 Expense.objects.create(
                     title=f"Toxum alışı: {seed.item.name if seed.item else seed.manual_name}",

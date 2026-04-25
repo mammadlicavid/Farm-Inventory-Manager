@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 
+from common.templatetags.common_extras import display_quantity
+from common.templatetags.common_extras import display_unit_for_user
 from common.view_cache import get_dashboard_bust_value
 from animals.models import Animal
 from animals.models import AnimalSubCategory
@@ -96,7 +98,18 @@ def get_header_notification_count(user) -> int:
     if cached_count is not None:
         return int(cached_count)
 
-    _alerts, count = sync_stock_alert_notifications(user)
+    from .models import Notification
+
+    alerts, _stock_items, _rule_map = build_stock_alerts(user)
+    pending_manual_count = Notification.objects.filter(
+        created_by=user,
+        is_completed=False,
+    ).exclude(
+        is_system_generated=True,
+        category="ehtiyat",
+    ).count()
+    count = len(alerts) + pending_manual_count
+    set_cached_header_notification_count(user.pk, count)
     return count
 
 
@@ -154,6 +167,23 @@ def _manual_category_label():
     return _("Digər")
 
 
+def _uses_manual_inventory_name(linked_name, manual_name):
+    return bool(manual_name) and (not linked_name or str(linked_name).strip().lower() == "digər")
+
+
+def _resolve_inventory_item_name(linked_name, manual_name, fallback_name):
+    if _uses_manual_inventory_name(linked_name, manual_name):
+        return manual_name
+    return linked_name or manual_name or fallback_name
+
+
+def _resolve_inventory_item_key(source_type, linked_id, linked_name, manual_name, unit):
+    item_identifier = linked_id
+    if _uses_manual_inventory_name(linked_name, manual_name):
+        item_identifier = manual_name
+    return f"{source_type}:{item_identifier or manual_name or linked_name}:{unit}"
+
+
 def _category_sort_key(label):
     normalized = str(label or "").strip().lower()
     other_labels = {
@@ -185,8 +215,14 @@ def get_stock_items_for_user(user):
         .annotate(total=Sum("quantity"))
     )
     for row in seed_rows:
-        item_name = row["item__name"] or row["manual_name"] or "Toxum"
-        item_key = f"seed:{row['item_id'] or row['manual_name'] or item_name}:{row['unit'] or 'kg'}"
+        item_name = _resolve_inventory_item_name(row["item__name"], row["manual_name"], "Toxum")
+        item_key = _resolve_inventory_item_key(
+            StockAlertRule.SOURCE_SEED,
+            row["item_id"],
+            row["item__name"],
+            row["manual_name"],
+            row["unit"] or "kg",
+        )
         stock_item = _serialize_stock_item(
             source_type=StockAlertRule.SOURCE_SEED,
             item_key=item_key,
@@ -204,8 +240,14 @@ def get_stock_items_for_user(user):
         .annotate(total=Sum("quantity"))
     )
     for row in tool_rows:
-        item_name = row["item__name"] or row["manual_name"] or "Alət"
-        item_key = f"tool:{row['item_id'] or row['manual_name'] or item_name}:ədəd"
+        item_name = _resolve_inventory_item_name(row["item__name"], row["manual_name"], "Alət")
+        item_key = _resolve_inventory_item_key(
+            StockAlertRule.SOURCE_TOOL,
+            row["item_id"],
+            row["item__name"],
+            row["manual_name"],
+            "ədəd",
+        )
         stock_item = _serialize_stock_item(
             source_type=StockAlertRule.SOURCE_TOOL,
             item_key=item_key,
@@ -223,8 +265,14 @@ def get_stock_items_for_user(user):
         .annotate(total=Sum("quantity"))
     )
     for row in animal_rows:
-        item_name = row["subcategory__name"] or row["manual_name"] or "Heyvan"
-        item_key = f"animal:{row['subcategory_id'] or row['manual_name'] or item_name}:ədəd"
+        item_name = _resolve_inventory_item_name(row["subcategory__name"], row["manual_name"], "Heyvan")
+        item_key = _resolve_inventory_item_key(
+            StockAlertRule.SOURCE_ANIMAL,
+            row["subcategory_id"],
+            row["subcategory__name"],
+            row["manual_name"],
+            "ədəd",
+        )
         stock_item = _serialize_stock_item(
             source_type=StockAlertRule.SOURCE_ANIMAL,
             item_key=item_key,
@@ -278,9 +326,15 @@ def get_stock_items_for_user(user):
         .annotate(total=Sum("quantity"))
     )
     for row in farm_rows:
-        item_name = row["item__name"] or row["manual_name"] or "Məhsul"
+        item_name = _resolve_inventory_item_name(row["item__name"], row["manual_name"], "Məhsul")
         unit = row["unit"] or "kq"
-        item_key = f"farm:{row['item_id'] or row['manual_name'] or item_name}:{unit}"
+        item_key = _resolve_inventory_item_key(
+            StockAlertRule.SOURCE_FARM,
+            row["item_id"],
+            row["item__name"],
+            row["manual_name"],
+            unit,
+        )
         stock_item = _serialize_stock_item(
             source_type=StockAlertRule.SOURCE_FARM,
             item_key=item_key,
@@ -336,7 +390,7 @@ def get_stock_items_for_user(user):
     return result
 
 
-def build_stock_rule_catalog(stock_items):
+def build_stock_rule_catalog(stock_items, user=None):
     source_map = {}
 
     for item in stock_items:
@@ -363,7 +417,8 @@ def build_stock_rule_catalog(stock_items):
                 "item_key": item["item_key"],
                 "label": item["item_name"],
                 "unit": item["unit"],
-                "total_display": item["total_display"],
+                "unit_label": display_unit_for_user(item.get("total_display"), item["unit"], user),
+                "total_display": display_quantity(item.get("total_display"), item["unit"], user),
             }
         )
 
@@ -371,7 +426,13 @@ def build_stock_rule_catalog(stock_items):
     for source in sorted(source_map.values(), key=lambda value: value["label"].lower()):
         categories = []
         for category in sorted(source["categories"].values(), key=lambda value: _category_sort_key(value["label"])):
-            category["items"].sort(key=lambda value: value["label"].lower())
+            category["items"] = [
+                item for item in category["items"]
+                if str(item.get("label") or "").strip().lower() != "digər"
+            ]
+            category["items"].sort(key=lambda value: _category_sort_key(value["label"]))
+            if not category["items"]:
+                continue
             categories.append(category)
         source["categories"] = categories
         sources.append(source)

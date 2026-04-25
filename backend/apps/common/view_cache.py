@@ -29,10 +29,22 @@ def get_reports_bust_value(user_id: int) -> str:
     return get_user_view_bust_value("reports", user_id)
 
 
+def bust_stocks_page_cache(user_id: int) -> None:
+    """Invalidate the stocks page cache for a user.
+
+    Centralised here so every CRUD view uses the same key version.
+    """
+    from django.utils.translation import get_language
+
+    lang_code = get_language() or "az"
+    cache.delete(f"inventory:stocks-page:v4:user:{user_id}:lang:{lang_code}")
+
+
 def bust_dashboard_related_caches(user_id: int) -> None:
     bust_user_view_scope("dashboard", user_id)
     bust_user_view_scope("calendar", user_id)
     bust_user_view_scope("reports", user_id)
+    bust_stocks_page_cache(user_id)
     from notifications.services import invalidate_notification_header_count_cache
 
     invalidate_notification_header_count_cache(user_id)
