@@ -11,7 +11,7 @@
   const SYNC_URL = '/sync/push/'
   const STATUS_URL = '/sync/status/'
   const PULL_STATUS_URL = '/sync/pull-status/'
-  const RETRY_INTERVAL_MS = 30000
+  const RETRY_INTERVAL_MS = 60000
   const HISTORY_LIMIT = 20
   const PENDING_TOAST_KEY = 'farm_pending_toast'
 
@@ -20,6 +20,11 @@
   let pendingSyncRequested = false
   let indicatorCache = null
   const pendingOperationEffects = new Map()
+
+  function preserveScrollForNextNavigation(targetUrl, reason) {
+    if (typeof window.__farmPreserveScrollForNextNavigation !== 'function') return
+    window.__farmPreserveScrollForNextNavigation(targetUrl || window.location.href, reason)
+  }
 
   const I18N = {
     en: {
@@ -482,7 +487,7 @@
     container.appendChild(toast)
 
     setTimeout(() => {
-      toast.style.transition = 'opacity 0.25s ease-out, transform 0.25s ease-out'
+      toast.style.transition = 'opacity 0.2s ease-out, transform 0.2s ease-out'
       toast.style.opacity = '0'
       toast.style.transform = 'translateY(8px)'
       setTimeout(() => {
@@ -490,8 +495,8 @@
         if (!container.hasChildNodes()) {
           container.remove()
         }
-      }, 300)
-    }, 2200)
+      }, 250)
+    }, 1800)
   }
 
   function queueToast(message, type = 'info') {
@@ -512,6 +517,19 @@
     container.id = 'toast-container'
     document.body.appendChild(container)
     return container
+  }
+
+  function currentLocalDateTimeParts() {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    return {
+      date: `${year}-${month}-${day}`,
+      time: `${hours}:${minutes}`,
+    }
   }
 
   function scheduleBackgroundTask(callback, timeout = 150) {
@@ -561,12 +579,14 @@
 
       if (effect.successRedirect) {
         queueToast(effect.successMessage || 'Uğurla əlavə edildi.', 'success')
+        preserveScrollForNextNavigation(effect.successRedirect, 'sync-success-redirect')
         window.location.assign(effect.successRedirect)
         return { navigated: true, handledFailure, handledSuccess }
       }
 
       if (effect.reloadOnSuccess) {
         queueToast(effect.successMessage || 'Uğurla əlavə edildi.', 'success')
+        preserveScrollForNextNavigation(window.location.href, 'sync-success-reload')
         window.location.reload()
         return { navigated: true, handledFailure, handledSuccess }
       }
@@ -585,6 +605,14 @@
       if (key === 'csrfmiddlewaretoken') return
       data[key] = typeof value === 'string' ? value : value.name
     })
+
+    const currentDateTime = currentLocalDateTimeParts()
+    if (!data.date) {
+      data.date = currentDateTime.date
+    }
+    if (!data.time) {
+      data.time = currentDateTime.time
+    }
 
     return data
   }
@@ -824,6 +852,7 @@
         if (options.successMessage) {
           queueToast(options.successMessage, 'success')
         }
+        preserveScrollForNextNavigation(window.location.href, 'sync-operation-reload')
         window.location.reload()
         return { syncedIds, failedIds }
       }
@@ -857,6 +886,10 @@
   }
 
   async function handleSyncFormSubmit(event) {
+    if (event.defaultPrevented) {
+      return
+    }
+
     const form = event.target
     if (!(form instanceof HTMLFormElement) || !form.matches('form[data-sync-entity]')) {
       return
@@ -896,6 +929,7 @@
         if (navigator.onLine) {
           syncPendingOperations({ silentSuccess: true })
         }
+        preserveScrollForNextNavigation(form.dataset.syncRedirectAfterQueue, 'sync-queued-redirect')
         window.location.assign(form.dataset.syncRedirectAfterQueue)
         return
       }
@@ -968,7 +1002,7 @@
       if (navigator.onLine) {
         triggerBackgroundSync({ silentSuccess: true })
       }
-    }, 400)
+    }, 100)
   }
 
   window.farmSync = {

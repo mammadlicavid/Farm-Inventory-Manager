@@ -1,8 +1,0 @@
-{
-  "scripts": {
-    "responsive": "node test_responsive.js"
-  },
-  "dependencies": {
-    "puppeteer": "^24.37.5"
-  }
-}

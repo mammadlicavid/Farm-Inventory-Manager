@@ -31,6 +31,7 @@ from common.category_order import (
 )
 from common.icons import get_animal_icon_for_animal
 from expenses.models import Expense, ExpenseSubCategory
+from common.expense_subcategory_cache import get_expense_subcategory
 
 ANIMAL_FORM_CATALOG_CACHE_KEY = "animals:form-catalog:v1"
 ANIMAL_FORM_CATALOG_TTL = 3600
@@ -48,7 +49,6 @@ def _animal_list_cache_bust_value(user_id: int) -> str:
 
 def _bust_animal_list_cache(user_id: int) -> None:
     cache.set(_animal_list_bust_key(user_id), timezone.now().isoformat(), ANIMAL_LIST_BUST_TTL)
-    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
     bust_dashboard_related_caches(user_id)
 
 
@@ -148,7 +148,7 @@ def _sync_animal_related_records(user, animal):
         price_val = 0
 
     if animal.quantity > 0 and price_val > 0:
-        expense_sub = ExpenseSubCategory.objects.filter(name='Heyvan alışı').first()
+        expense_sub = get_expense_subcategory('Heyvan alışı')
         if linked_expense:
             linked_expense.amount = animal.price
             linked_expense.title = f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}"
@@ -428,23 +428,12 @@ def animal_update(request, pk):
                 linked_expense.delete()
         elif animal.price and float(animal.price) > 0:
             # Create new expense if price was previously 0 or null
-            try:
-                expense_sub = ExpenseSubCategory.objects.get(name='Heyvan alışı')
-                Expense.objects.create(
+            expense_sub = get_expense_subcategory('Heyvan alışı')
+            Expense.objects.create(
                     title=f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}",
                     amount=animal.price,
                     subcategory=expense_sub,
-                    additional_info=animal.additional_info,
-                    date=animal.date,
-                    time=animal.time,
-                    created_by=request.user,
-                    content_object=animal
-                )
-            except ExpenseSubCategory.DoesNotExist:
-                Expense.objects.create(
-                    title=f"Heyvan alışı: {animal.subcategory.name if animal.subcategory else animal.manual_name}",
-                    amount=animal.price,
-                    manual_name="Heyvan alışı (Digər)",
+                    manual_name=None if expense_sub else "Heyvan alışı (Digər)",
                     additional_info=animal.additional_info,
                     date=animal.date,
                     time=animal.time,

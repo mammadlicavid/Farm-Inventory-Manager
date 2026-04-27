@@ -31,39 +31,28 @@ def backfill_units(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    """
-    The database table already contains `weight_unit` and `volume_unit` columns.
-    This migration only updates Django's state to match the existing schema.
-    """
-
     dependencies = [
         ("sidebar_menu", "0004_alter_usersettings_unit"),
     ]
 
     operations = [
-        migrations.SeparateDatabaseAndState(
-            database_operations=[],
-            state_operations=[
-                migrations.AddField(
-                    model_name="usersettings",
-                    name="volume_unit",
-                    field=models.CharField(
-                        choices=[("litr", "litr"), ("gallon", "gallon")],
-                        default="litr",
-                        max_length=10,
-                    ),
-                ),
-                migrations.AddField(
-                    model_name="usersettings",
-                    name="weight_unit",
-                    field=models.CharField(
-                        choices=[("kg", "kq"), ("lb", "pound")],
-                        default="kg",
-                        max_length=10,
-                    ),
-                ),
-            ],
+        migrations.AddField(
+            model_name="usersettings",
+            name="volume_unit",
+            field=models.CharField(
+                choices=[("litr", "litr"), ("gallon", "gallon")],
+                default="litr",
+                max_length=10,
+            ),
+        ),
+        migrations.AddField(
+            model_name="usersettings",
+            name="weight_unit",
+            field=models.CharField(
+                choices=[("kg", "kq"), ("lb", "pound")],
+                default="kg",
+                max_length=10,
+            ),
         ),
         migrations.RunPython(backfill_units, migrations.RunPython.noop),
     ]
-

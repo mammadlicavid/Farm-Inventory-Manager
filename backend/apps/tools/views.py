@@ -30,6 +30,7 @@ from common.category_order import (
 )
 from common.icons import get_tool_icon_for_tool
 from expenses.models import Expense, ExpenseSubCategory
+from common.expense_subcategory_cache import get_expense_subcategory
 from incomes.models import Income
 
 TOOL_FORM_CATALOG_CACHE_KEY = "tools:form-catalog:v1"
@@ -48,7 +49,6 @@ def _tool_list_cache_bust_value(user_id: int) -> str:
 
 def _bust_tool_list_cache(user_id: int) -> None:
     cache.set(_tool_list_bust_key(user_id), timezone.now().isoformat(), TOOL_LIST_BUST_TTL)
-    cache.delete(f"inventory:stocks-page:v3:user:{user_id}")
     bust_dashboard_related_caches(user_id)
 
 
@@ -68,6 +68,8 @@ def _redirect_with_refresh(target) -> object:
 
 
 def _tool_stock_total(user, item, manual_name: str | None) -> int:
+    from django.db.models import Sum
+
     if item:
         qs = Tool.objects.filter(created_by=user, item=item)
     else:
@@ -75,10 +77,7 @@ def _tool_stock_total(user, item, manual_name: str | None) -> int:
             Q(item__isnull=True) | Q(item__name__iexact="Digər"),
             manual_name=manual_name,
         )
-    total = 0
-    for tool in qs:
-        total += int(tool.quantity)
-    return total
+    return qs.aggregate(total=Sum("quantity")).get("total") or 0
 
 
 def _parse_date(value: str | None):
@@ -187,7 +186,7 @@ def _sync_tool_related_records(user, tool):
         price_val = 0
 
     if quantity_val > 0 and price_val > 0:
-        expense_sub = ExpenseSubCategory.objects.filter(name='Texnika alışı').first()
+        expense_sub = get_expense_subcategory('Texnika alışı')
         if linked_expense:
             linked_expense.amount = tool.price
             linked_expense.title = f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}"
@@ -360,26 +359,12 @@ def tool_create(request):
 
             # Automatic Expense Integration
             if quantity_val > 0 and price and float(price) > 0:
-                try:
-                    # 'Texnika alışı' is a suitable subcategory, or 'Təmir və Baxım'
-                    # But if it's a new tool, 'Texnika alışı' is better.
-                    expense_sub = ExpenseSubCategory.objects.get(name='Texnika alışı')
+                    expense_sub = get_expense_subcategory('Texnika alışı')
                     Expense.objects.create(
                         title=f"Alət alışı: {item.name if item else manual_name}",
                         amount=price,
                         subcategory=expense_sub,
-                        additional_info=additional_info,
-                        date=entry_date,
-                        time=entry_time,
-                        created_by=request.user,
-                        content_object=tool
-                    )
-                except ExpenseSubCategory.DoesNotExist:
-                    # Fallback
-                    Expense.objects.create(
-                        title=f"Alət alışı: {item.name if item else manual_name}",
-                        amount=price,
-                        manual_name="Alət alışı (Digər)",
+                        manual_name=None if expense_sub else "Alət alışı (Digər)",
                         additional_info=additional_info,
                         date=entry_date,
                         time=entry_time,
@@ -522,23 +507,12 @@ def tool_update(request, pk):
                 linked_expense.delete()
         elif quantity_val > 0 and tool.price and float(tool.price) > 0:
             # Create new expense if price was previously 0 or null
-            try:
-                expense_sub = ExpenseSubCategory.objects.get(name='Texnika alışı')
-                Expense.objects.create(
+            expense_sub = get_expense_subcategory('Texnika alışı')
+            Expense.objects.create(
                     title=f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}",
                     amount=tool.price,
                     subcategory=expense_sub,
-                    additional_info=tool.additional_info,
-                    date=tool.date,
-                    time=tool.time,
-                    created_by=request.user,
-                    content_object=tool
-                )
-            except ExpenseSubCategory.DoesNotExist:
-                Expense.objects.create(
-                    title=f"Alət alışı: {tool.item.name if tool.item else tool.manual_name}",
-                    amount=tool.price,
-                    manual_name="Alət alışı (Digər)",
+                    manual_name=None if expense_sub else "Alət alışı (Digər)",
                     additional_info=tool.additional_info,
                     date=tool.date,
                     time=tool.time,

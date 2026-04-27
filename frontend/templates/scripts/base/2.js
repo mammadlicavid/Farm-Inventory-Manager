@@ -41,7 +41,7 @@
           }, TOAST_LIFETIME + delay)
         }
 
-        const TOAST_LIFETIME = 2000 // 2 seconds
+        const TOAST_LIFETIME = 1600 // 1.6 seconds
         let toasts = container ? Array.from(container.children) : []
 
         try {

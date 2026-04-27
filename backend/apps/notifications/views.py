@@ -9,6 +9,7 @@ import json
 from common.view_cache import bust_dashboard_related_caches
 from .models import Notification, StockAlertRule
 from .services import (
+    build_stock_alerts,
     build_stock_alert_rule_list,
     build_stock_rule_catalog,
     get_default_threshold_for_item,
@@ -222,7 +223,7 @@ def notifications_page(request):
     for notif in completed:
         notif.relative_date = _relative_date(notif.due_date)
 
-    stock_rule_catalog = build_stock_rule_catalog(stock_items)
+    stock_rule_catalog = build_stock_rule_catalog(stock_items, user=request.user)
     stock_alert_rules = build_stock_alert_rule_list(request.user, stock_items=stock_items)
 
     context = {

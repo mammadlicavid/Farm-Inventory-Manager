@@ -5,6 +5,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="x-dns-prefetch-control" content="on" />
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
     <title>{% block title %}{% trans "Ferma İdarəsi" %}{% endblock %}</title>
     {% if LANGUAGE_CODE != 'az' %}
       <script>
@@ -267,6 +269,9 @@
       {% include 'scripts/base/6.js' %}
     </script>
     <script>
+      {% include 'scripts/base/7.js' %}
+    </script>
+    <script>
       (function () {
         function currentDateTimeLocalValue() {
           const now = new Date();
@@ -391,34 +396,12 @@
       })();
     </script>
     {% if LANGUAGE_CODE != 'az' %}
-      <script src="{% url 'javascript-catalog' %}"></script>
+      <script src="{% url 'javascript-catalog' %}" defer></script>
+      <script src="{% static 'js/runtime_i18n.js' %}" defer onerror="window.__releaseI18nPending && window.__releaseI18nPending()"></script>
     {% endif %}
-    <script src="{% static 'js/runtime_i18n.js' %}" onerror="window.__releaseI18nPending && window.__releaseI18nPending()"></script>
 
     {% if user.is_authenticated %}
-      <script>
-        (function () {
-          const src = "{% static 'js/offline_sync.js' %}";
-          let loaded = false;
-
-          function loadOfflineSync() {
-            if (loaded) return;
-            loaded = true;
-            const script = document.createElement("script");
-            script.src = src;
-            script.async = true;
-            document.body.appendChild(script);
-          }
-
-          if ("requestIdleCallback" in window) {
-            window.requestIdleCallback(loadOfflineSync, { timeout: 1200 });
-          } else {
-            window.addEventListener("load", function () {
-              window.setTimeout(loadOfflineSync, 150);
-            }, { once: true });
-          }
-        })();
-      </script>
+      <script src="{% static 'js/offline_sync.js' %}" defer></script>
     {% endif %}
   </body>
 </html>

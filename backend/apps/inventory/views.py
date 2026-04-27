@@ -1077,7 +1077,7 @@ def _build_add_page_context(request=None):
     add_page_weekly_total = Decimal("0")
     if request is not None:
         voice_input_language = (request.session.get("voice_input_language") or request.COOKIES.get("voice_input_language") or "system").strip().lower()
-        requested_form = (request.GET.get("form") or "").strip().lower()
+        requested_form = (request.GET.get("form") or request.GET.get("type") or "").strip().lower()
         if requested_form in {"income", "expense"}:
             add_page_mode = requested_form
             initial_form = requested_form
@@ -2060,7 +2060,7 @@ def update_stock_quantity(request):
     update_type = request.POST.get("update_type")
     update_id = request.POST.get("update_id")
     target_raw = request.POST.get("target_quantity")
-    cache.delete(f"inventory:stocks-page:v3:user:{request.user.id}")
+    cache.delete(f"inventory:stocks-page:v4:user:{request.user.id}:lang:{get_language() or 'az'}")
 
     if not update_type or not update_id or target_raw is None:
         messages.error(request, _("Məlumatlar natamamdır."))
@@ -2075,17 +2075,20 @@ def update_stock_quantity(request):
     note = "Stok səhifəsindən düzəliş"
 
     if update_type == "seed":
-        seed_qs = Seed.objects.filter(created_by=request.user, item_id=update_id)
-        current_total = Decimal("0")
-        for seed in seed_qs:
-            if seed.unit in {"kg", "kq"}:
-                current_total += Decimal(seed.quantity)
-            elif seed.unit == "ton":
-                current_total += Decimal(seed.quantity) * Decimal("1000")
-            elif seed.unit == "qram":
-                current_total += Decimal(seed.quantity) / Decimal("1000")
-            else:
-                current_total += Decimal(seed.quantity)
+        seed_total_expr = Sum(
+            Case(
+                When(unit__in=["kg", "kq"], then=F("quantity")),
+                When(unit="ton", then=F("quantity") * Value(Decimal("1000"))),
+                When(unit="qram", then=F("quantity") / Value(Decimal("1000"))),
+                default=F("quantity"),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            )
+        )
+        current_total = (
+            Seed.objects.filter(created_by=request.user, item_id=update_id)
+            .aggregate(total=seed_total_expr)
+            .get("total")
+        ) or Decimal("0")
 
         delta = target_value - current_total
         if delta != 0:
@@ -2101,20 +2104,23 @@ def update_stock_quantity(request):
         return redirect("inventory:stocks")
 
     if update_type == "seed_other":
-        seed_qs = Seed.objects.filter(
-            created_by=request.user,
-            manual_name=update_id,
-        ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
-        current_total = Decimal("0")
-        for seed in seed_qs:
-            if seed.unit in {"kg", "kq"}:
-                current_total += Decimal(seed.quantity)
-            elif seed.unit == "ton":
-                current_total += Decimal(seed.quantity) * Decimal("1000")
-            elif seed.unit == "qram":
-                current_total += Decimal(seed.quantity) / Decimal("1000")
-            else:
-                current_total += Decimal(seed.quantity)
+        seed_total_expr = Sum(
+            Case(
+                When(unit__in=["kg", "kq"], then=F("quantity")),
+                When(unit="ton", then=F("quantity") * Value(Decimal("1000"))),
+                When(unit="qram", then=F("quantity") / Value(Decimal("1000"))),
+                default=F("quantity"),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            )
+        )
+        current_total = (
+            Seed.objects.filter(
+                created_by=request.user,
+                manual_name=update_id,
+            ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
+            .aggregate(total=seed_total_expr)
+            .get("total")
+        ) or Decimal("0")
 
         delta = target_value - current_total
         if delta != 0:
@@ -2131,12 +2137,15 @@ def update_stock_quantity(request):
         return redirect("inventory:stocks")
 
     if update_type == "tool":
-        tool_qs = Tool.objects.filter(created_by=request.user, item_id=update_id)
         if target_value % 1 != 0:
             messages.error(request, _("Alətlər üçün miqdar tam ədəd olmalıdır."))
             return redirect("inventory:stocks")
-        current_total = sum(int(t.quantity) for t in tool_qs)
-        delta = int(target_value) - current_total
+        current_total = (
+            Tool.objects.filter(created_by=request.user, item_id=update_id)
+            .aggregate(total=Sum("quantity"))
+            .get("total")
+        ) or 0
+        delta = int(target_value) - int(current_total)
         if delta != 0:
             Tool.objects.create(
                 item_id=update_id,
@@ -2149,15 +2158,18 @@ def update_stock_quantity(request):
         return redirect("inventory:stocks")
 
     if update_type == "tool_other":
-        tool_qs = Tool.objects.filter(
-            created_by=request.user,
-            manual_name=update_id,
-        ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
         if target_value % 1 != 0:
             messages.error(request, _("Alətlər üçün miqdar tam ədəd olmalıdır."))
             return redirect("inventory:stocks")
-        current_total = sum(int(t.quantity) for t in tool_qs)
-        delta = int(target_value) - current_total
+        current_total = (
+            Tool.objects.filter(
+                created_by=request.user,
+                manual_name=update_id,
+            ).filter(Q(item__isnull=True) | Q(item__name__iexact="Digər"))
+            .aggregate(total=Sum("quantity"))
+            .get("total")
+        ) or 0
+        delta = int(target_value) - int(current_total)
         if delta != 0:
             Tool.objects.create(
                 item=None,
@@ -2261,8 +2273,8 @@ def update_stock_quantity(request):
                 manual_name=update_id,
             ).exclude(quantity=0).filter(Q(subcategory__isnull=True) | Q(subcategory__name__iexact="Digər"))
 
-        current_male = sum(int(getattr(a, "quantity", 1) or 1) for a in animals_qs.filter(gender="erkek"))
-        current_female = sum(int(getattr(a, "quantity", 1) or 1) for a in animals_qs.filter(gender="disi"))
+        current_male = animals_qs.filter(gender="erkek").aggregate(total=Sum("quantity")).get("total") or 0
+        current_female = animals_qs.filter(gender="disi").aggregate(total=Sum("quantity")).get("total") or 0
 
         male_delta = male_target - current_male
         female_delta = female_target - current_female

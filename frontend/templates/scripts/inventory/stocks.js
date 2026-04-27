@@ -263,6 +263,38 @@
         })).filter((entry) => entry.text);
     }
 
+    function messageTypeFromTags(tags) {
+        const tagText = String(tags || "");
+        if (tagText.includes("error")) return "error";
+        if (tagText.includes("warning")) return "warning";
+        if (tagText.includes("success")) return "success";
+        return "info";
+    }
+
+    async function parseToastMessagesFromResponse(response) {
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+            const payload = await response.json();
+            const messages = Array.isArray(payload.messages)
+                ? payload.messages.map((entry) => ({
+                    text: String(entry.text || "").trim(),
+                    isError: messageTypeFromTags(entry.tags) === "error",
+                    type: messageTypeFromTags(entry.tags),
+                })).filter((entry) => entry.text)
+                : [];
+            return {
+                ok: payload.ok !== false,
+                messages,
+            };
+        }
+
+        const htmlText = await response.text();
+        return {
+            ok: response.ok,
+            messages: parseToastMessagesFromHtml(htmlText),
+        };
+    }
+
     function formatDisplayNumber(value) {
         const numberValue = Number.parseFloat(String(value || "0").replace(",", "."));
         if (!Number.isFinite(numberValue)) return String(value || "0");
@@ -305,10 +337,10 @@
                 "X-Requested-With": "XMLHttpRequest",
             },
         });
-        const htmlText = await response.text();
-        const responseMessages = parseToastMessagesFromHtml(htmlText);
+        const result = await parseToastMessagesFromResponse(response);
+        const responseMessages = result.messages;
         const errorMessage = responseMessages.find((entry) => entry.isError);
-        if (!response.ok || errorMessage) {
+        if (!response.ok || !result.ok || errorMessage) {
             throw new Error(errorMessage?.text || "{% trans 'Stok yenilənmədi.' %}");
         }
         const firstMessage = responseMessages[0];

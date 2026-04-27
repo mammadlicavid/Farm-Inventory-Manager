@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.translation import override
 
 from animals.models import Animal, AnimalCategory, AnimalSubCategory
 from farm_products.models import FarmProduct, FarmProductCategory, FarmProductItem
@@ -78,6 +79,36 @@ class StockAlertTests(TestCase):
         self.assertEqual(rule.item_name, "Generator yağı")
         self.assertContains(response, "Generator yağı")
         self.assertContains(response, "Fərdi limit")
+
+    def test_manual_name_under_other_item_is_shown_as_limitable_product_name(self):
+        category = FarmProductCategory.objects.create(name="Yağlar")
+        other_item = FarmProductItem.objects.create(category=category, name="Digər", unit="litr")
+        FarmProduct.objects.create(
+            item=other_item,
+            manual_name="Hidravlik yağ",
+            quantity="6",
+            unit="litr",
+            created_by=self.user,
+        )
+
+        stock_items = get_stock_items_for_user(self.user)
+        catalog = build_stock_rule_catalog(stock_items, user=self.user)
+
+        farm_items = next(source for source in catalog if source["value"] == StockAlertRule.SOURCE_FARM)
+        yaglar_items = next(category for category in farm_items["categories"] if category["value"] == "Yağlar")
+
+        self.assertEqual([item["label"] for item in yaglar_items["items"]], ["Hidravlik yağ"])
+        self.assertEqual(yaglar_items["items"][0]["item_key"], "farm:Hidravlik yağ:litr")
+
+    def test_generic_other_item_is_hidden_from_limit_catalog(self):
+        category = FarmProductCategory.objects.create(name="Yağlar")
+        FarmProductItem.objects.create(category=category, name="Digər", unit="litr")
+
+        stock_items = get_stock_items_for_user(self.user)
+        catalog = build_stock_rule_catalog(stock_items, user=self.user)
+
+        farm_items = next(source for source in catalog if source["value"] == StockAlertRule.SOURCE_FARM)
+        self.assertFalse(any(category["value"] == "Yağlar" for category in farm_items["categories"]))
 
     def test_stock_alert_creates_daily_system_notification(self):
         seed_category = SeedCategory.objects.create(name="Taxıl toxumları")
@@ -314,6 +345,37 @@ class StockAlertTests(TestCase):
         animal_source = next(entry for entry in catalog if entry["label"] == "Heyvan")
         self.assertEqual(tool_source["categories"][0]["items"][0]["label"], tool_item.name)
         self.assertEqual(animal_source["categories"][0]["items"][0]["label"], animal_subcategory.name)
+
+    def test_stock_rule_catalog_translates_piece_unit_label(self):
+        tool_category = ToolCategory.objects.create(name="Texnika")
+        ToolItem.objects.create(category=tool_category, name="Traktor")
+
+        with override("en"):
+            catalog = build_stock_rule_catalog(get_stock_items_for_user(self.user))
+
+        piece_unit_labels = {
+            item["unit_label"]
+            for source in catalog
+            for category in source["categories"]
+            for item in category["items"]
+            if item["unit"] == "ədəd"
+        }
+        self.assertIn("pcs", piece_unit_labels)
+
+    def test_stock_rule_catalog_hides_generic_other_item(self):
+        tool_category = ToolCategory.objects.create(name="Texnika")
+        ToolItem.objects.create(category=tool_category, name="Digər")
+        ToolItem.objects.create(category=tool_category, name="Kultivator")
+
+        catalog = build_stock_rule_catalog(get_stock_items_for_user(self.user))
+
+        tool_source = next(entry for entry in catalog if entry["label"] == "Alət")
+        tool_items = [
+            item["label"]
+            for category in tool_source["categories"]
+            for item in category["items"]
+        ]
+        self.assertEqual(tool_items, ["Kultivator"])
 
     def test_stock_rule_catalog_includes_zero_stock_seed_and_farm_items(self):
         seed_category = SeedCategory.objects.create(name="Paxlalı toxumlar")
